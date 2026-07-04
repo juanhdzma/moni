@@ -1,0 +1,126 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+input, select, textarea, button { font-family: inherit; font-size: inherit; }
+
+:root {
+  /* ── Surfaces ── */
+  --bg:           #f8f7f6;
+  --bg-card:      #ffffff;
+  --bg-muted:     #f2f0ee;
+  --border:       #e8e6e3;
+  --border-hover: #d2cfcc;
+  --bg-header:    rgba(248,247,246,0.94);
+  --overlay:      rgba(28,25,23,0.32);
+  --white:        #ffffff;
+
+  /* ── Texto ── */
+  --text:           #1c1917;
+  --text-secondary: #6b6560;
+  --text-muted:     #a8a29e;
+
+  /* ── Verde ── */
+  --green:        #16a34a;
+  --green-bg:     rgba(34,197,94,0.12);
+  --green-border: rgba(34,197,94,0.35);
+  --green-dark:        #0d6b34;
+  --green-dark-bg:     rgba(13,107,52,0.10);
+  --green-dark-border: rgba(13,107,52,0.30);
+
+  /* ── Rojo ── */
+  --red:          #d44f3d;
+  --red-bg:       rgba(212,79,61,0.07);
+  --red-border:   rgba(212,79,61,0.20);
+
+  /* ── CTA ── */
+  --cta:          var(--green);
+  --cta-fg:       #ffffff;
+  --shadow-cta:   0 1px 3px rgba(22,163,74,0.25), 0 4px 12px rgba(22,163,74,0.18);
+  --shadow-cta-hover: 0 2px 6px rgba(22,163,74,0.30), 0 6px 18px rgba(22,163,74,0.22);
+
+  /* ── Compat aliases ── */
+  --positive:      var(--green);
+  --positive-dim:  var(--green-bg);
+  --negative:      var(--red);
+  --negative-dim:  var(--red-bg);
+  --accent:        var(--cta);
+  --accent-dim:    var(--green-bg);
+  --income:        var(--green);
+  --income-mid:    var(--green);
+  --income-dim:    var(--green-bg);
+  --income-border: var(--green-border);
+  --expense:       var(--red);
+  --expense-mid:   var(--red);
+  --expense-dim:   var(--red-bg);
+  --expense-border:var(--red-border);
+  --debt:          var(--red);
+  --debt-mid:      var(--red);
+  --debt-dim:      var(--red-bg);
+  --debt-border:   var(--red-border);
+  --inv:           var(--green);
+  --inv-mid:       var(--green);
+  --inv-dim:       var(--green-bg);
+  --inv-border:    var(--green-border);
+  --asset:         var(--green);
+  --asset-mid:     var(--green);
+  --asset-dim:     var(--green-bg);
+  --asset-border:  var(--green-border);
+  --transfer:      var(--text-secondary);
+  --transfer-dim:  var(--bg-muted);
+
+  /* ── Tipografía ── */
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: var(--font-mono);
+
+  --text-hero: 44px;
+  --text-2xs:  10px;
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   14px;
+  --text-lg:   15px;
+  --text-xl:   16px;
+  --text-2xl:  20px;
+  --text-3xl:  22px;
+  --text-4xl:  28px;
+  --text-5xl:  30px;
+
+  /* ── Espaciado ── */
+  --sp-1:  4px;
+  --sp-2:  6px;
+  --sp-3:  8px;
+  --sp-4:  10px;
+  --sp-5:  12px;
+  --sp-6:  14px;
+  --sp-7:  16px;
+  --sp-8:  18px;
+  --sp-9:  20px;
+  --sp-10: 24px;
+  --sp-11: 28px;
+  --sp-12: 32px;
+  --sp-13: 36px;
+
+  /* ── Forma ── */
+  --radius:    16px;
+  --radius-sm: 12px;
+  --radius-xs:  8px;
+
+  /* ── Sombras ── */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.06);
+  --shadow:    0 4px 8px rgba(0,0,0,0.04), 0 12px 36px rgba(0,0,0,0.08);
+  --shadow-md: 0 8px 20px rgba(0,0,0,0.06), 0 20px 60px rgba(0,0,0,0.10);
+}
+
+body {
+  font-family: var(--font-mono);
+  font-optical-sizing: auto;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+body::-webkit-scrollbar { display: none; }
+*::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
