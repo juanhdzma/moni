@@ -1,0 +1,11 @@
+services:
+  moni-page:
+    build: .
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    volumes:
+      - moni-data:/app/backend/data
+
+volumes:
+  moni-data:
