@@ -2,39 +2,44 @@
 input, select, textarea, button { font-family: inherit; font-size: inherit; }
 
 :root {
-  /* ── Surfaces ── */
-  --bg:           #f8f7f6;
-  --bg-card:      #ffffff;
-  --bg-muted:     #f2f0ee;
-  --border:       #e8e6e3;
-  --border-hover: #d2cfcc;
-  --bg-header:    rgba(248,247,246,0.94);
-  --overlay:      rgba(28,25,23,0.32);
+  /* ── Surfaces (dark, híbrido GitHub/Notion) ── */
+  --bg:           #131518;
+  --bg-card:      #1b1e21;
+  --bg-muted:     #24272b;
+  --border:       #323538;
+  --border-hover: #494d52;
+  --bg-header:    rgba(19,21,24,0.94);
+  --overlay:      rgba(0,0,0,0.6);
   --white:        #ffffff;
 
   /* ── Texto ── */
-  --text:           #1c1917;
-  --text-secondary: #6b6560;
-  --text-muted:     #a8a29e;
+  --text:           #f2f2f3;
+  --text-secondary: #a5a8ac;
+  --text-muted:     #8c9096;
 
   /* ── Verde ── */
-  --green:        #16a34a;
-  --green-bg:     rgba(34,197,94,0.12);
-  --green-border: rgba(34,197,94,0.35);
-  --green-dark:        #0d6b34;
-  --green-dark-bg:     rgba(13,107,52,0.10);
-  --green-dark-border: rgba(13,107,52,0.30);
+  --green:        #46b25e;
+  --green-bg:     rgba(70,178,94,0.15);
+  --green-border: rgba(70,178,94,0.4);
+  --green-dark:        #3d8f52;
+  --green-dark-bg:     rgba(61,143,82,0.15);
+  --green-dark-border: rgba(61,143,82,0.35);
 
   /* ── Rojo ── */
-  --red:          #d44f3d;
-  --red-bg:       rgba(212,79,61,0.07);
-  --red-border:   rgba(212,79,61,0.20);
+  --red:          #ef5c53;
+  --red-bg:       rgba(239,92,83,0.15);
+  --red-border:   rgba(239,92,83,0.4);
+
+  /* ── Ámbar (warnings) ── */
+  --warning:        #f0a020;
+  --warning-bg:     rgba(240,160,32,0.15);
+  --warning-border: rgba(240,160,32,0.4);
 
   /* ── CTA ── */
   --cta:          var(--green);
   --cta-fg:       #ffffff;
-  --shadow-cta:   0 1px 3px rgba(22,163,74,0.25), 0 4px 12px rgba(22,163,74,0.18);
-  --shadow-cta-hover: 0 2px 6px rgba(22,163,74,0.30), 0 6px 18px rgba(22,163,74,0.22);
+  --shadow-cta:   0 1px 3px rgba(70,178,94,0.3), 0 4px 12px rgba(70,178,94,0.22);
+  --shadow-cta-hover: 0 2px 6px rgba(70,178,94,0.35), 0 6px 18px rgba(70,178,94,0.28);
 
   /* ── Compat aliases ── */
   --positive:      var(--green);
@@ -103,13 +108,14 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
   --radius-sm: 12px;
   --radius-xs:  8px;
 
-  /* ── Sombras ── */
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04);
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.06);
-  --shadow:    0 4px 8px rgba(0,0,0,0.04), 0 12px 36px rgba(0,0,0,0.08);
-  --shadow-md: 0 8px 20px rgba(0,0,0,0.06), 0 20px 60px rgba(0,0,0,0.10);
+  /* ── Sombras (dark mode: elevación por superficie, no por sombra) ── */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow:    none;
+  --shadow-md: 0 20px 60px rgba(0,0,0,0.5);
 }
 
+html, body, * { touch-action: pan-x pan-y; }
 body {
   font-family: var(--font-mono);
   font-optical-sizing: auto;
@@ -120,6 +126,7 @@ body {
   font-feature-settings: 'kern' 1, 'liga' 1;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  touch-action: pan-x pan-y;
 }
 body::-webkit-scrollbar { display: none; }
 *::-webkit-scrollbar { display: none; }
