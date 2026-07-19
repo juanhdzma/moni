@@ -350,6 +350,7 @@ function renderInversionesEvolChart() {
 // ── Próximas operaciones ──────────────────────────────────────────────────────
 const PROX_OP_OVERDUE_DAYS = 10;
 let _proxOpsIndex = {};
+let _pendingProxOpKey = null;
 
 function _loadSkippedOps() {
   try { return new Set(JSON.parse(localStorage.getItem('moni_skipped_ops') || '[]')); }
@@ -369,10 +370,18 @@ function skipProximaOperacion(key) {
 function materializeProximaOperacion(key) {
   const op = _proxOpsIndex[key];
   if (!op) return;
-  skipProximaOperacion(key);
+  _pendingProxOpKey = key;
   if (op.type === 'deuda') openDeudaPayFormById(op.sourceId);
   else if (op.type === 'inversion') openInvYieldFormById(op.sourceId);
   else if (op.type === 'recurrente') openRecurrenteMaterializeFormById(op.sourceId, op.dateISO);
+}
+
+// Called by crudOp/apiAction right after a save succeeds, and by closeModal
+// on cancel — only marks the op as done if it was actually registered.
+function resolvePendingProxOp() {
+  if (!_pendingProxOpKey) return;
+  skipProximaOperacion(_pendingProxOpKey);
+  _pendingProxOpKey = null;
 }
 
 function renderProximasOperaciones() {

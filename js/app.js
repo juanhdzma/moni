@@ -23,6 +23,7 @@ function openModal(title, bodyHtml) {
 }
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
+  _pendingProxOpKey = null;
 }
 function setModalStatus(cls, msg) {
   const el = document.getElementById('m-status');

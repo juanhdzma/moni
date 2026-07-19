@@ -41,6 +41,7 @@ async function crudOp(entity, action, payload) {
   } else if (action === 'delete') {
     await apiFetch(`${base}/${payload._id}`, { method: 'DELETE' });
   }
+  resolvePendingProxOp();
   closeModal();
   await fetchAll();
 }
@@ -49,6 +50,7 @@ async function crudOp(entity, action, payload) {
 // dedicated backend route instead of the generic entity CRUD above.
 async function apiAction(path, payload) {
   await apiFetch(path, { method: 'POST', body: payload });
+  resolvePendingProxOp();
   closeModal();
   await fetchAll();
 }
