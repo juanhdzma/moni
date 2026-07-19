@@ -2,6 +2,11 @@
 
 Personal finance tracker (Spanish UI, Colombian peso). Vanilla JS/HTML/CSS frontend served as static files by a FastAPI backend backed by SQLite. No build step, no frontend framework, no bundler.
 
+> ## ⚠️ LOCAL USE ONLY — NO AUTH
+> This app has **no authentication or login system**. Anyone who can reach it can read and modify all data, including `/api/admin/truncate`, which wipes the entire database with no confirmation. It is meant to run on your local machine or a private/home network you trust.
+>
+> **Do not expose this to the public internet** (no open port-forward, no public reverse proxy) without putting your own auth layer in front of it (e.g. a reverse proxy with basic auth, a VPN/Tailscale, etc.).
+
 ## Running locally
 
 ```bash
