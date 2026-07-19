@@ -75,21 +75,18 @@ function renderDashboard() {
   const cur  = ofMonth(curM);
   const prev = ofMonth(prevM);
 
-  const sumTipo = (list, tipo) => list.filter(t => t.tipo === tipo).reduce((s,t) => s+t.monto, 0);
+  const sumTipo    = (list, tipo) => list.filter(t => t.tipo === tipo).reduce((s,t) => s+t.monto, 0);
+  const esGastoCartera = t => t.tipo === 'gasto' && !t.tarjeta_id; // los gastos con tarjeta no salen de la cartera todavía
 
   const ingresos  = sumTipo(cur, 'ingreso');
-  const gastos    = sumTipo(cur, 'gasto');
-  const balance   = ingresos - gastos;
+  const gastos    = cur.filter(esGastoCartera).reduce((s,t) => s+t.monto, 0);
 
   const totalDeuda   = S.deudas.reduce((s,d) => s + d.saldo_actual, 0);
   const totalInv     = S.inversiones.reduce((s,i) => s + i.valor_actual, 0);
   const totalActivos = S.activos.reduce((s,a) => s + a.valor_actual, 0);
   const efectivo     = S.transacciones.filter(t => t.tipo === 'ingreso').reduce((s,t) => s+t.monto, 0)
-                     - S.transacciones.filter(t => t.tipo === 'gasto').reduce((s,t) => s+t.monto, 0);
+                     - S.transacciones.filter(esGastoCartera).reduce((s,t) => s+t.monto, 0);
   const patrimonio   = totalInv + totalActivos - totalDeuda;
-
-  const prevIngresos = sumTipo(prev, 'ingreso');
-  const prevGastos   = sumTipo(prev, 'gasto');
 
   const statCard = (id, value, sub, colorVar) => {
     const el = document.getElementById(id);
