@@ -1,5 +1,12 @@
+const FRANQUICIA_ICONS = {
+  Visa:       'assets/franquicias/visa.svg',
+  Mastercard: 'assets/franquicias/mastercard.svg',
+  Amex:       'assets/franquicias/americanexpress.svg',
+  Otra:       'assets/franquicias/otra.svg',
+};
+
 const CATEGORIES = {
-  ingreso:  ['Salario', 'Freelance', 'Arriendo recibido', 'Dividendos', 'Ventas', 'Reembolso', 'Crédito recibido', 'Venta activos', 'Otros ingresos'],
+  ingreso:  ['Salario', 'Freelance', 'Arriendo recibido', 'Dividendos', 'Ventas', 'Reembolso', 'Crédito recibido', 'Avance de tarjeta', 'Venta activos', 'Otros ingresos'],
   gasto:    ['Alimentación', 'Vivienda', 'Transporte', 'Salud', 'Entretenimiento', 'Educación', 'Ropa', 'Servicios', 'Restaurantes', 'Inversión', 'Compra activos', 'Otros gastos'],
   transfer: ['Ahorro', 'Inversión', 'Pago deuda', 'Otro'],
 };
