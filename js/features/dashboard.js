@@ -451,16 +451,16 @@ function renderProximasOperaciones() {
     const daysColor = overdue ? 'var(--red)' : 'var(--text-muted)';
     const prefix    = e.monto >= 0 ? '+' : '−';
     return `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-4) 0;border-bottom:1px solid var(--border);gap:var(--sp-3)">
-      <div style="display:flex;align-items:center;gap:var(--sp-4);min-width:0;flex:1">
-        <div style="font-size:var(--text-xs);font-weight:700;color:${daysColor};flex-shrink:0;min-width:52px">${daysStr}</div>
-        <div style="display:flex;flex-direction:column;gap:var(--sp-1);min-width:0">
-          <div style="font-size:var(--text-base);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(e.label)}</div>
-          <div style="font-size:var(--text-xs);color:var(--text-muted)">${e.sub}</div>
-        </div>
+    <div class="prox-op-row" style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-4) 0;border-bottom:1px solid var(--border);gap:var(--sp-3)">
+      <div class="prox-op-main" style="display:flex;flex-direction:column;gap:var(--sp-1);min-width:0;flex:1">
+        <div style="font-size:var(--text-base);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(e.label)}</div>
+        <div style="font-size:var(--text-xs);color:var(--text-muted)">${e.sub}</div>
       </div>
-      <div style="font-size:var(--text-base);font-weight:700;color:${e.color};white-space:nowrap;flex-shrink:0;font-family:var(--font-mono)">${prefix}${cop(Math.abs(e.monto))}</div>
-      <div style="display:flex;gap:var(--sp-2);flex-shrink:0">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:var(--sp-1);flex-shrink:0">
+        <div style="font-size:var(--text-base);font-weight:700;color:${e.color};white-space:nowrap;font-family:var(--font-mono)">${prefix}${cop(Math.abs(e.monto))}</div>
+        <div style="font-size:var(--text-xs);font-weight:700;color:${daysColor};white-space:nowrap">${daysStr}</div>
+      </div>
+      <div class="prox-op-actions" style="display:flex;gap:var(--sp-2);flex-shrink:0;margin-left:var(--sp-3)">
         <button class="btn btn-dim btn-sm" style="color:var(--red)" onclick="skipProximaOperacion('${e.key}')" title="No tomar esta vez">✕</button>
         <button class="btn btn-accent btn-sm" onclick="materializeProximaOperacion('${e.key}')" title="Registrar">✓</button>
       </div>

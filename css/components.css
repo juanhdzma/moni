@@ -532,6 +532,12 @@ details.advanced-toggle > summary::-webkit-details-marker { display: none; }
   .modal-footer { flex-direction: column; align-items: stretch; }
   .modal-footer .btn { width: 100%; }
 
+  .prox-op-actions { gap: var(--sp-1); }
+  .prox-op-actions .btn-sm {
+    padding: 0; width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
   /* ── Bottom sheet modal ── */
   .modal-overlay { align-items: flex-end; padding: 0; }
   .modal {
