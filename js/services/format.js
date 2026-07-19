@@ -44,6 +44,12 @@ function txMonth(t) {
 function todayStr() {
   return new Date().toISOString().split('T')[0];
 }
+function isStale(dateStr, days = 30) {
+  if (!dateStr) return false;
+  const d = new Date(normDate(dateStr).split('T')[0] + 'T12:00:00');
+  if (isNaN(d)) return false;
+  return (Date.now() - d.getTime()) / 86400000 >= days;
+}
 function nowStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;

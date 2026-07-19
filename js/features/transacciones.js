@@ -65,6 +65,14 @@ function openTxForm(tx = null) {
           value="${tx ? numToInput(tx.monto) : ''}" placeholder="0" oninput="fmtMoneyInput(this)" />
       </div>
     </div>
+    <div class="form-group" id="wrap-tarjeta" style="${tipo==='gasto'?'':'display:none'}">
+      <label class="form-label">Pagado con</label>
+      <select class="form-input" id="m-tarjeta">
+        <option value="">Efectivo / Débito</option>
+        ${S.deudas.filter(d => d.es_tarjeta).map(d =>
+          `<option value="${d._id}" ${tx?.tarjeta_id===d._id?'selected':''}>${escHtml(d.nombre)}</option>`).join('')}
+      </select>
+    </div>
     <div class="form-group">
       <label class="form-label">Fecha</label>
       <input class="form-input" type="datetime-local" id="m-fecha" value="${tx ? normDate(tx.fecha) : nowStr()}" />
@@ -90,6 +98,8 @@ function txTipoChange(tipo) {
     (CATEGORIES[tipo] || []).map(c => `<option>${escHtml(c)}</option>`).join('');
   const wrap = document.getElementById('new-cat-wrap');
   if (wrap) wrap.style.display = 'none';
+  const wrapTarjeta = document.getElementById('wrap-tarjeta');
+  if (wrapTarjeta) wrapTarjeta.style.display = tipo === 'gasto' ? '' : 'none';
 }
 
 function toggleNewCat() {
@@ -123,13 +133,15 @@ async function saveTx(id) {
   const monto       = parseMoneyInput(document.getElementById('m-monto'));
   const fechaDate   = document.getElementById('m-fecha').value;
   const notas       = document.getElementById('m-notas').value.trim();
+  const tarjetaVal  = document.getElementById('m-tarjeta')?.value;
+  const tarjeta_id  = tipo === 'gasto' && tarjetaVal ? Number(tarjetaVal) : null;
 
   if (!monto || monto <= 0) { setModalStatus('err', 'Ingresá un monto válido'); return; }
   if (!fechaDate)           { setModalStatus('err', 'Fecha requerida'); return; }
 
   const fecha = fechaDate.includes('T') ? fechaDate : `${fechaDate}T00:00`;
 
-  const data = { fecha, tipo, categoria, descripcion, monto, notas };
+  const data = { fecha, tipo, categoria, descripcion, monto, notas, tarjeta_id };
 
   setModalStatus('', 'Guardando...');
   try {
@@ -171,6 +183,20 @@ function txDateBucket(fecha, now) {
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
+function pmCellHtml(t) {
+  const tarjeta = t.tipo === 'gasto' && t.tarjeta_id ? S.deudas.find(d => d._id === t.tarjeta_id) : null;
+  if (!tarjeta) {
+    return `
+      <span class="icon-chip"><img src="assets/icons/efectivo.svg" width="18" height="18" alt="" /></span>
+      <span>Efectivo / Débito</span>`;
+  }
+  const icon   = FRANQUICIA_ICONS[tarjeta.franquicia] || FRANQUICIA_ICONS.Otra;
+  const nombre = tarjeta.nombre.length > 20 ? tarjeta.nombre.slice(0, 20) + '…' : tarjeta.nombre;
+  return `
+    <span class="icon-chip"><img src="${icon}" width="18" height="18" alt="" /></span>
+    <span style="color:var(--text-secondary)" title="${escHtml(tarjeta.nombre)}">${escHtml(nombre)}</span>`;
+}
+
 function txRow(t) {
   const label     = t.tipo === 'ingreso' ? 'Ingreso' : t.tipo === 'gasto' ? 'Gasto' : 'Auto';
   const color     = t.tipo === 'ingreso' ? 'var(--positive)' : t.tipo === 'gasto' ? 'var(--negative)' : 'var(--transfer)';
@@ -183,6 +209,7 @@ function txRow(t) {
       <td data-label="Categoría">${escHtml(t.categoria)}</td>
       <td data-label="Descripción">${escHtml(t.descripcion) || '—'}</td>
       <td data-label="Monto" style="font-weight:600;color:${color}">${prefix}${cop(t.monto)}</td>
+      <td data-label="Método de pago"><div style="display:flex;align-items:center;gap:6px">${pmCellHtml(t)}</div></td>
     </tr>`;
 }
 
@@ -190,6 +217,7 @@ function renderTransacciones() {
   const tipo = document.getElementById('f-tipo-filter')?.value || '';
   const mes  = document.getElementById('f-mes-filter')?.value  || '';
   const cat  = document.getElementById('f-cat-filter')?.value  || '';
+  renderTxFilterPills();
 
   let list = S.transacciones
     .filter(t => t.tipo !== 'transfer')
@@ -206,7 +234,7 @@ function renderTransacciones() {
   if (!tbody) return;
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:56px">
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:56px">
       <div style="font-size:var(--text-4xl);margin-bottom:10px;opacity:.3">📋</div>
       <div style="font-size:var(--text-md);font-weight:600;margin-bottom:4px">Sin movimientos</div>
       <div style="font-size:var(--text-sm)">Agregá un ingreso o gasto con el botón de arriba.</div>
@@ -225,7 +253,7 @@ function renderTransacciones() {
   list.forEach(t => {
     const bucket = txDateBucket(t.fecha, now);
     if (bucket !== lastBucket) {
-      rows.push(`<tr class="tx-group-row"><td class="tx-group-label" colspan="5">${bucket}</td></tr>`);
+      rows.push(`<tr class="tx-group-row"><td class="tx-group-label" colspan="6">${bucket}</td></tr>`);
       lastBucket = bucket;
     }
     rows.push(txRow(t));
@@ -255,3 +283,39 @@ function buildTxFilters() {
 }
 
 function initTransacciones() { buildTxFilters(); renderTransacciones(); }
+
+// ── Filtros mobile: panel colapsable + pills ─────────────────────────────────
+function toggleTxFilterPanel() {
+  const panel = document.getElementById('tx-filter-panel');
+  const btn   = document.getElementById('filter-toggle-btn');
+  if (!panel) return;
+  const open = !panel.classList.contains('open');
+  panel.classList.toggle('open', open);
+  btn?.classList.toggle('active', open);
+}
+
+function clearTxFilter(filterId) {
+  const el = document.getElementById(filterId);
+  if (!el) return;
+  el.value = '';
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function renderTxFilterPills() {
+  const pillsEl = document.getElementById('tx-filter-pills');
+  const btn     = document.getElementById('filter-toggle-btn');
+  if (!pillsEl) return;
+
+  const filters = [
+    document.getElementById('f-mes-filter'),
+    document.getElementById('f-tipo-filter'),
+    document.getElementById('f-cat-filter'),
+  ].filter(el => el?.value);
+
+  pillsEl.innerHTML = filters.map(el => `
+    <span class="filter-pill">${escHtml(el.options[el.selectedIndex].textContent)}
+      <button type="button" class="filter-pill-remove" onclick="clearTxFilter('${el.id}')" aria-label="Quitar filtro">✕</button>
+    </span>`).join('');
+
+  btn?.classList.toggle('has-filters', filters.length > 0);
+}

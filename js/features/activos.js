@@ -11,7 +11,7 @@ function openActivoForm(activo = null) {
       <label class="form-label">Nombre</label>
       <input class="form-input" type="text" id="m-nombre" maxlength="40" value="${escHtml(activo?.nombre||'')}" placeholder="Ej. Apartamento Bogotá" />
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="form-row-2">
       <div class="form-group">
         <label class="form-label">${isEdit ? 'Valor inicial' : 'Precio de compra'} (COP)</label>
         <div class="money-wrap"><span class="money-pfx">$</span>
@@ -51,8 +51,14 @@ async function saveActivo(id) {
   if (!nombre) { setModalStatus('err', 'Nombre requerido'); return; }
   if (!valIni) { setModalStatus('err', 'Precio de compra requerido'); return; }
 
+  const existente  = id !== null ? S.activos.find(x => x._id === id) : null;
+  const valorActual = valAct || valIni;
+  const valorActualizadoEn = !existente ? fechaAdq
+    : existente.valor_actual === valorActual ? existente.valor_actualizado_en : todayStr();
+
   const data = { nombre, valor_inicial: valIni,
-    valor_actual: valAct || valIni, fecha_adquisicion: fechaAdq };
+    valor_actual: valorActual, fecha_adquisicion: fechaAdq,
+    valor_actualizado_en: valorActualizadoEn };
 
   setModalStatus('', 'Guardando...');
   try {
@@ -133,12 +139,13 @@ function calcActivoUpdate(valorAnterior, valorInicial) {
 
 async function saveActivoUpdate(id) {
   const nuevo = parseMoneyInput(document.getElementById('m-nuevo-valor'));
+  const fecha = document.getElementById('m-fecha').value;
   const a     = S.activos.find(x => x._id === id);
   if (!nuevo || nuevo <= 0) { setModalStatus('err', 'Valor inválido'); return; }
   if (!a) return;
   setModalStatus('', 'Guardando...');
   try {
-    await crudOp('activo', 'update', { ...a, valor_actual: nuevo, _id: id });
+    await crudOp('activo', 'update', { ...a, valor_actual: nuevo, valor_actualizado_en: fecha, _id: id });
   } catch(err) { setModalStatus('err', '❌ ' + err.message); }
 }
 
@@ -233,21 +240,23 @@ function renderActivos() {
   const varPct    = totalIni > 0 ? variacion / totalIni * 100 : 0;
 
   if (sumEl) sumEl.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr">
-      <div style="padding:0 20px;border-right:1px solid var(--border);text-align:center">
+    <div class="stat-summary stat-summary-3">
+      <div class="stat-summary-item stat-hero">
         <div class="stat-label">Valor actual</div>
         <div class="stat-value" style="color:var(--asset-mid)">${cop(totalAct)}</div>
         <div class="stat-sub">${S.activos.length} activo${S.activos.length!==1?'s':''}</div>
       </div>
-      <div style="padding:0 20px;border-right:1px solid var(--border);text-align:center">
-        <div class="stat-label">Costo inicial</div>
-        <div class="stat-value">${cop(totalIni)}</div>
-        <div class="stat-sub">invertido</div>
-      </div>
-      <div style="padding:0 20px;text-align:center">
-        <div class="stat-label">Variación</div>
-        <div class="stat-value" style="color:${variacion>=0?'var(--income-mid)':'var(--expense-mid)'}">${signStr(variacion)}${cop(Math.abs(variacion))}</div>
-        <div class="stat-sub"><span class="gain-badge ${variacion>=0?'gain-pos':'gain-neg'}">${signStr(varPct)}${pct(Math.abs(varPct))}%</span></div>
+      <div class="stat-pair">
+        <div class="stat-summary-item">
+          <div class="stat-label">Costo inicial</div>
+          <div class="stat-value">${cop(totalIni)}</div>
+          <div class="stat-sub">invertido</div>
+        </div>
+        <div class="stat-summary-item">
+          <div class="stat-label">Variación</div>
+          <div class="stat-value" style="color:${variacion>=0?'var(--income-mid)':'var(--expense-mid)'}">${signStr(variacion)}${cop(Math.abs(variacion))}</div>
+          <div class="stat-sub"><span class="gain-badge ${variacion>=0?'gain-pos':'gain-neg'}">${signStr(varPct)}${pct(Math.abs(varPct))}%</span></div>
+        </div>
       </div>
     </div>`;
 
@@ -272,7 +281,8 @@ function renderActivos() {
         <div style="font-size:var(--text-base);font-weight:600;color:${cambio>=0?'var(--income)':'var(--expense)'}">${signStr(cambio)}${cop(Math.abs(cambio))}</div>
       </div>
       ${a.fecha_adquisicion ? `<div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:4px">Adquirido ${fmtDate(a.fecha_adquisicion)}</div>` : ''}
-      <div style="display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      ${isStale(a.valor_actualizado_en) ? `<div class="stale-warning">⚠ Valor sin actualizar hace más de 1 mes</div>` : ''}
+      <div class="card-actions">
         <button class="btn btn-accent btn-sm" style="flex:1" onclick="openActivoUpdateFormById(${a._id})">Actualizar valor</button>
         <button class="btn btn-dim btn-sm" style="color:var(--expense)" onclick="openActivoSellFormById(${a._id})">Vender</button>
         <button class="btn btn-dim btn-sm" onclick="openActivoFormById(${a._id})">Editar</button>

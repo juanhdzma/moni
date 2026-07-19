@@ -16,7 +16,9 @@ function advancedToggle(label = 'Registrar como nuevo en transacciones', hint = 
 // ── Modal ────────────────────────────────────────────────────────────────────
 function openModal(title, bodyHtml) {
   document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML = bodyHtml;
+  const body = document.getElementById('modal-body');
+  body.innerHTML = bodyHtml;
+  enhanceFormControls(body);
   document.getElementById('modal-overlay').classList.add('open');
 }
 function closeModal() {
@@ -32,9 +34,38 @@ function setModalStatus(cls, msg) {
 // ── Navigation ───────────────────────────────────────────────────────────────
 function setTab(tab) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn, .nav-drawer-item').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + tab)?.classList.add('active');
-  document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+  document.querySelectorAll(`[data-tab="${tab}"]`).forEach(el => el.classList.add('active'));
+  updateFab(tab);
+  closeNavDrawer();
+}
+
+// ── Nav drawer (mobile hamburger menu) ────────────────────────────────────────
+function openNavDrawer() {
+  document.getElementById('nav-drawer-overlay')?.classList.add('open');
+}
+function closeNavDrawer() {
+  document.getElementById('nav-drawer-overlay')?.classList.remove('open');
+}
+
+// ── FAB (mobile primary action, mirrors each tab's own + button) ─────────────
+const FAB_ACTIONS = {
+  transacciones: () => openTxForm(),
+  deudas: () => openDeudaForm(),
+  inversiones: () => openInvForm(),
+  activos: () => openActivoForm(),
+  recurrentes: () => openRecurrenteForm(),
+};
+function updateFab(tab) {
+  const fab = document.getElementById('fab-btn');
+  if (!fab) return;
+  fab.dataset.tab = tab;
+  fab.style.display = FAB_ACTIONS[tab] ? '' : 'none';
+}
+function fabAction() {
+  const tab = document.getElementById('fab-btn')?.dataset.tab;
+  FAB_ACTIONS[tab]?.();
 }
 
 // ── Banners ──────────────────────────────────────────────────────────────────
@@ -56,6 +87,15 @@ function renderAll() {
   renderInversiones();
   renderActivos();
   renderRecurrentes();
+  updateNavWarnings();
+}
+
+// ── Warnings de precios desactualizados ──────────────────────────────────────
+function updateNavWarnings() {
+  const activosStale = S.activos.some(a => isStale(a.valor_actualizado_en));
+  const invStale = S.inversiones.some(i => i.tipo === 'variable' && isStale(i.valor_actualizado_en));
+  document.querySelectorAll('[data-tab="activos"]').forEach(el => el.classList.toggle('has-warning', activosStale));
+  document.querySelectorAll('[data-tab="inversiones"]').forEach(el => el.classList.toggle('has-warning', invStale));
 }
 
 // ── Refresh ──────────────────────────────────────────────────────────────────
@@ -67,9 +107,11 @@ async function refreshData() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  enhanceFormControls(document.body);
   loadCustomCategories();
   fetchAll();
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') { closeModal(); closeNavDrawer(); }
   });
+  updateFab('dashboard');
 });

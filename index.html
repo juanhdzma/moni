@@ -2,7 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <script>
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener('gesturechange', function (e) { e.preventDefault(); }, { passive: false });
+    function blockMultiTouch(e) { if (e.touches.length > 1) e.preventDefault(); }
+    window.addEventListener('touchstart', blockMultiTouch, { passive: false, capture: true });
+    window.addEventListener('touchmove', blockMultiTouch, { passive: false, capture: true });
+    document.addEventListener('touchstart', blockMultiTouch, { passive: false, capture: true });
+    document.addEventListener('touchmove', blockMultiTouch, { passive: false, capture: true });
+  </script>
   <title>Moni</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -26,7 +35,9 @@
 </div>
 
 <header class="header">
-  <nav class="header-nav">
+  <button class="hamburger-btn" id="hamburger-btn" onclick="openNavDrawer()" aria-label="Menú">☰</button>
+  <div class="header-title-mobile">Moni</div>
+  <nav class="header-nav" id="header-nav">
     <button class="nav-btn active" data-tab="dashboard"     onclick="setTab('dashboard')">Dashboard</button>
     <button class="nav-btn"        data-tab="transacciones" onclick="setTab('transacciones')">Transacciones</button>
     <button class="nav-btn"        data-tab="deudas"        onclick="setTab('deudas')">Deudas</button>
@@ -34,7 +45,27 @@
     <button class="nav-btn"        data-tab="activos"       onclick="setTab('activos')">Activos</button>
     <button class="nav-btn"        data-tab="recurrentes"   onclick="setTab('recurrentes')">Recurrentes</button>
   </nav>
+  <div class="header-admin">
+    <button class="btn btn-dim btn-sm" onclick="seedTestData()">🧪 Datos de prueba</button>
+    <button class="btn btn-danger btn-sm" onclick="truncateAllData()">🗑 Vaciar DB</button>
+  </div>
 </header>
+
+<div class="nav-drawer-overlay" id="nav-drawer-overlay" onclick="if(event.target===this)closeNavDrawer()">
+  <nav class="nav-drawer" id="nav-drawer">
+    <div class="nav-drawer-header">
+      <span class="nav-drawer-title">Menú</span>
+      <button class="icon-btn" onclick="closeNavDrawer()">✕</button>
+    </div>
+    <button class="nav-drawer-item active" data-tab="dashboard"     onclick="setTab('dashboard')">Dashboard</button>
+    <button class="nav-drawer-item"        data-tab="transacciones" onclick="setTab('transacciones')">Movimientos</button>
+    <button class="nav-drawer-item"        data-tab="deudas"        onclick="setTab('deudas')">Deudas</button>
+    <button class="nav-drawer-item"        data-tab="inversiones"   onclick="setTab('inversiones')">Inversiones</button>
+    <button class="nav-drawer-item"        data-tab="activos"       onclick="setTab('activos')">Activos</button>
+    <button class="nav-drawer-item"        data-tab="recurrentes"   onclick="setTab('recurrentes')">Recurrentes</button>
+  </nav>
+</div>
+<button class="fab" id="fab-btn" onclick="fabAction()" aria-label="Agregar" style="display:none">+</button>
 
 <main class="main">
   <div class="error-banner" id="err-banner"></div>
@@ -43,30 +74,34 @@
   <div id="tab-dashboard" class="tab-content active">
 
     <div class="grid-5 dash-kpis">
-      <div class="card" id="stat-networth">
+      <div class="card stat-hero" id="stat-networth">
         <div class="stat-label">Net worth</div>
         <div class="stat-value"><span class="skeleton" style="width:110px;height:32px"></span></div>
         <div class="stat-sub"></div>
       </div>
-      <div class="card" id="stat-balance">
-        <div class="stat-label">Cartera</div>
-        <div class="stat-value"><span class="skeleton" style="width:90px;height:32px"></span></div>
-        <div class="stat-sub"></div>
+      <div class="stat-pair">
+        <div class="card" id="stat-balance">
+          <div class="stat-label">Cartera</div>
+          <div class="stat-value"><span class="skeleton" style="width:90px;height:32px"></span></div>
+          <div class="stat-sub"></div>
+        </div>
+        <div class="card" id="stat-inversiones">
+          <div class="stat-label">Inversiones</div>
+          <div class="stat-value"><span class="skeleton" style="width:90px;height:32px"></span></div>
+          <div class="stat-sub"></div>
+        </div>
       </div>
-      <div class="card" id="stat-inversiones">
-        <div class="stat-label">Inversiones</div>
-        <div class="stat-value"><span class="skeleton" style="width:90px;height:32px"></span></div>
-        <div class="stat-sub"></div>
-      </div>
-      <div class="card" id="stat-activos">
-        <div class="stat-label">Activos</div>
-        <div class="stat-value"><span class="skeleton" style="width:90px;height:32px"></span></div>
-        <div class="stat-sub"></div>
-      </div>
-      <div class="card" id="stat-deudas">
-        <div class="stat-label">Deudas</div>
-        <div class="stat-value"><span class="skeleton" style="width:90px;height:32px"></span></div>
-        <div class="stat-sub"></div>
+      <div class="stat-pair">
+        <div class="card" id="stat-activos">
+          <div class="stat-label">Activos</div>
+          <div class="stat-value"><span class="skeleton" style="width:90px;height:32px"></span></div>
+          <div class="stat-sub"></div>
+        </div>
+        <div class="card" id="stat-deudas">
+          <div class="stat-label">Deudas</div>
+          <div class="stat-value"><span class="skeleton" style="width:90px;height:32px"></span></div>
+          <div class="stat-sub"></div>
+        </div>
       </div>
     </div>
 
@@ -83,7 +118,7 @@
             <button class="period-btn"     data-period="ALL" onclick="setGastosPeriod('ALL')">ALL</button>
           </div>
         </div>
-        <div id="gastos-bar-wrap" style="position:relative;flex:1;min-height:0">
+        <div id="gastos-bar-wrap" class="chart-wrap">
           <canvas id="chart-gastos-bar"></canvas>
           <div id="gastos-tooltip" class="chart-tooltip"></div>
         </div>
@@ -138,18 +173,24 @@
   <!-- ── TRANSACCIONES ── -->
   <div id="tab-transacciones" class="tab-content">
     <div class="filters-bar" style="margin-bottom:18px">
-      <select class="select-styled" id="f-mes-filter"  onchange="renderTransacciones()">
-        <option value="">Todos los meses</option>
-      </select>
-      <select class="select-styled" id="f-tipo-filter" onchange="renderTransacciones()">
-        <option value="">Todos los tipos</option>
-        <option value="ingreso">Ingresos</option>
-        <option value="gasto">Gastos</option>
-      </select>
-      <select class="select-styled" id="f-cat-filter"  onchange="renderTransacciones()">
-        <option value="">Todas las categorías</option>
-      </select>
-      <button class="btn btn-accent btn-sm" style="margin-left:auto;white-space:nowrap" onclick="openTxForm()">+ Nuevo movimiento</button>
+      <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="toggleTxFilterPanel()" aria-label="Filtros">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
+      </button>
+      <div class="tx-filter-pills" id="tx-filter-pills"></div>
+      <div class="tx-filter-panel" id="tx-filter-panel">
+        <select class="select-styled" id="f-mes-filter"  onchange="renderTransacciones()">
+          <option value="">Todos los meses</option>
+        </select>
+        <select class="select-styled" id="f-tipo-filter" onchange="renderTransacciones()">
+          <option value="">Todos los tipos</option>
+          <option value="ingreso">Ingresos</option>
+          <option value="gasto">Gastos</option>
+        </select>
+        <select class="select-styled" id="f-cat-filter"  onchange="renderTransacciones()">
+          <option value="">Todas las categorías</option>
+        </select>
+      </div>
+      <button class="btn btn-accent btn-sm add-btn" style="margin-left:auto;white-space:nowrap" onclick="openTxForm()">+ Nuevo movimiento</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -160,10 +201,11 @@
             <th class="th-sort"             data-col="categoria"    onclick="setTxSort('categoria')">Categoría</th>
             <th class="th-sort"             data-col="descripcion"  onclick="setTxSort('descripcion')">Descripción</th>
             <th class="th-sort"             data-col="monto"        onclick="setTxSort('monto')">Monto</th>
+            <th>Método de pago</th>
           </tr>
         </thead>
         <tbody id="tx-tbody">
-          <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:48px">Cargando...</td></tr>
+          <tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:48px">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
@@ -172,7 +214,7 @@
   <!-- ── DEUDAS ── -->
   <div id="tab-deudas" class="tab-content">
     <div class="tab-header">
-      <button class="btn btn-accent" onclick="openDeudaForm()">+ Nueva deuda</button>
+      <button class="btn btn-accent add-btn" onclick="openDeudaForm()">+ Nueva deuda</button>
     </div>
     <div class="card" style="margin-bottom:16px" id="deudas-total">
       <div class="stat-label">Total en deudas</div>
@@ -185,20 +227,20 @@
   <!-- ── INVERSIONES ── -->
   <div id="tab-inversiones" class="tab-content">
     <div class="tab-header">
-      <button class="btn btn-accent" onclick="openInvForm()">+ Nueva inversión</button>
+      <button class="btn btn-accent add-btn" onclick="openInvForm()">+ Nueva inversión</button>
     </div>
     <div class="card" style="margin-bottom:16px" id="inv-total">
       <div class="stat-label">Portfolio</div>
       <div class="stat-value"><span class="skeleton" style="width:140px;height:28px"></span></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+    <div class="grid-2">
       <div>
         <div class="section-title" style="margin-bottom:12px">Fijas</div>
-        <div id="inv-grid-fija" style="display:flex;flex-direction:column;gap:16px"></div>
+        <div id="inv-grid-fija" class="inv-list"></div>
       </div>
       <div>
         <div class="section-title" style="margin-bottom:12px">Variables</div>
-        <div id="inv-grid-variable" style="display:flex;flex-direction:column;gap:16px"></div>
+        <div id="inv-grid-variable" class="inv-list"></div>
       </div>
     </div>
   </div>
@@ -206,7 +248,7 @@
   <!-- ── ACTIVOS ── -->
   <div id="tab-activos" class="tab-content">
     <div class="tab-header">
-      <button class="btn btn-accent" onclick="openActivoForm()">+ Nuevo activo</button>
+      <button class="btn btn-accent add-btn" onclick="openActivoForm()">+ Nuevo activo</button>
     </div>
     <div class="card" style="margin-bottom:16px" id="activos-total">
       <div class="stat-label">Activos</div>
@@ -219,13 +261,13 @@
   <!-- ── RECURRENTES ── -->
   <div id="tab-recurrentes" class="tab-content">
     <div class="tab-header">
-      <button class="btn btn-accent" onclick="openRecurrenteForm()">+ Nuevo</button>
+      <button class="btn btn-accent add-btn" onclick="openRecurrenteForm()">+ Nuevo</button>
     </div>
     <div class="card" style="margin-bottom:var(--sp-7)" id="rec-total">
       <div class="stat-label">Resumen mensual</div>
       <div class="stat-value"><span class="skeleton" style="width:140px;height:28px"></span></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-9)">
+    <div class="grid-2">
       <div>
         <div class="section-title">Ingresos recurrentes</div>
         <div id="rec-ingresos" style="display:flex;flex-direction:column;gap:var(--sp-3)"></div>
@@ -250,6 +292,7 @@
 <script src="js/features/admin.js"></script>
 <script src="js/features/activos.js"></script>
 <script src="js/features/recurrentes.js"></script>
+<script src="js/ui-controls.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -66,7 +66,7 @@ function openInvForm(inv = null) {
       </div>`}
       <input type="hidden" id="m-inv-tipo" value="${tipo}" />
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="form-row-2">
       <div class="form-group">
         <label class="form-label">Monto invertido</label>
         <div class="money-wrap"><span class="money-pfx">$</span>
@@ -155,8 +155,14 @@ async function saveInv(id) {
   if (!nombre)    { setModalStatus('err', 'Nombre requerido'); return; }
   if (!invertido) { setModalStatus('err', 'Monto invertido requerido'); return; }
 
+  const existente  = id !== null ? S.inversiones.find(x => x._id === id) : null;
+  const valorActual = actual || invertido;
+  const valorActualizadoEn = !existente ? fecha
+    : existente.valor_actual === valorActual ? existente.valor_actualizado_en : todayStr();
+
   const data = { nombre, tipo, monto_invertido: invertido,
-    valor_actual: actual || invertido, tasa_ea, fecha_inicio: fecha, pago, dia_pago };
+    valor_actual: valorActual, tasa_ea, fecha_inicio: fecha, pago, dia_pago,
+    valor_actualizado_en: valorActualizadoEn };
 
   setModalStatus('', 'Guardando...');
   try {
@@ -298,13 +304,14 @@ function calcInvValueUpdate(valorAnterior, montoInvertido) {
 
 async function saveInvValueUpdate(id) {
   const nuevo = parseMoneyInput(document.getElementById('m-nuevo-valor'));
+  const fecha = document.getElementById('m-fecha').value;
   const inv   = S.inversiones.find(x => x._id === id);
   if (!nuevo || nuevo <= 0) { setModalStatus('err', 'Valor inválido'); return; }
   if (!inv) return;
 
   setModalStatus('', 'Guardando...');
   try {
-    await crudOp('inv', 'update', { ...inv, valor_actual: nuevo, _id: id });
+    await crudOp('inv', 'update', { ...inv, valor_actual: nuevo, valor_actualizado_en: fecha, _id: id });
   } catch(err) { setModalStatus('err', '❌ ' + err.message); }
 }
 
@@ -508,21 +515,23 @@ function renderInversiones() {
   const ganPct      = totalInv > 0 ? ganancia / totalInv * 100 : 0;
 
   if (sumEl) sumEl.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr">
-      <div style="padding:0 20px;border-right:1px solid var(--border);text-align:center">
+    <div class="stat-summary stat-summary-3">
+      <div class="stat-summary-item stat-hero">
         <div class="stat-label">Valor actual</div>
         <div class="stat-value" style="color:var(--inv)">${cop(totalActual)}</div>
         <div class="stat-sub">${S.inversiones.length} posición${S.inversiones.length!==1?'es':''}</div>
       </div>
-      <div style="padding:0 20px;border-right:1px solid var(--border);text-align:center">
-        <div class="stat-label">Invertido</div>
-        <div class="stat-value">${cop(totalInv)}</div>
-        <div class="stat-sub">capital</div>
-      </div>
-      <div style="padding:0 20px;text-align:center">
-        <div class="stat-label">Ganancia</div>
-        <div class="stat-value" style="color:${ganancia>=0?'var(--income)':'var(--expense)'}">${signStr(ganancia)}${cop(Math.abs(ganancia))}</div>
-        <div class="stat-sub"><span class="gain-badge ${ganancia>=0?'gain-pos':'gain-neg'}">${signStr(ganPct)}${pct(Math.abs(ganPct))}%</span></div>
+      <div class="stat-pair">
+        <div class="stat-summary-item">
+          <div class="stat-label">Invertido</div>
+          <div class="stat-value">${cop(totalInv)}</div>
+          <div class="stat-sub">capital</div>
+        </div>
+        <div class="stat-summary-item">
+          <div class="stat-label">Ganancia</div>
+          <div class="stat-value" style="color:${ganancia>=0?'var(--income)':'var(--expense)'}">${signStr(ganancia)}${cop(Math.abs(ganancia))}</div>
+          <div class="stat-sub"><span class="gain-badge ${ganancia>=0?'gain-pos':'gain-neg'}">${signStr(ganPct)}${pct(Math.abs(ganPct))}%</span></div>
+        </div>
       </div>
     </div>`;
 
@@ -562,7 +571,8 @@ function invCardHtml(inv) {
         <div style="font-size:var(--text-base);font-weight:600;color:${gan>=0?'var(--income)':'var(--expense)'}">${signStr(gan)}${cop(Math.abs(gan))}</div>
       </div>
       ${inv.fecha_inicio ? `<div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:4px">Desde ${fmtDate(inv.fecha_inicio)}</div>` : ''}
-      <div style="display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      ${inv.tipo === 'variable' && isStale(inv.valor_actualizado_en) ? `<div class="stale-warning">⚠ Valor sin actualizar hace más de 1 mes</div>` : ''}
+      <div class="card-actions">
         ${actionBtn}
         <button class="btn btn-dim btn-sm" onclick="openInvAddMoreFormById(${inv._id})">+ Más</button>
         <button class="btn btn-dim btn-sm" style="color:var(--expense)" onclick="openInvRetirarFormById(${inv._id})">Retirar</button>

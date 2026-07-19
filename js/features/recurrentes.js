@@ -36,7 +36,7 @@ function openRecurrenteForm(item = null) {
       </div>
       <input type="hidden" id="m-rec-tipo" value="${tipo !== 'ingreso' ? 'gasto' : tipo}" />
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-5)">
+    <div class="form-row-2">
       <div class="form-group">
         <label class="form-label">Monto (COP)</label>
         <div class="money-wrap"><span class="money-pfx">$</span>
@@ -210,21 +210,23 @@ function renderRecurrentes() {
   const neto     = totalIng - totalGas;
 
   sumEl.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr">
-      <div style="padding:0 var(--sp-9);border-right:1px solid var(--border);text-align:center">
+    <div class="stat-summary stat-summary-3">
+      <div class="stat-summary-item stat-hero">
         <div class="stat-label">Ingresos/mes</div>
         <div class="stat-value" style="color:var(--green)">${cop(totalIng)}</div>
         <div class="stat-sub">recurrentes activos</div>
       </div>
-      <div style="padding:0 var(--sp-9);border-right:1px solid var(--border);text-align:center">
-        <div class="stat-label">Gastos/mes</div>
-        <div class="stat-value" style="color:var(--red)">${cop(totalGas)}</div>
-        <div class="stat-sub">recurrentes activos</div>
-      </div>
-      <div style="padding:0 var(--sp-9);text-align:center">
-        <div class="stat-label">Neto mensual</div>
-        <div class="stat-value" style="color:${neto>=0?'var(--green)':'var(--red)'}">${signStr(neto)}${cop(Math.abs(neto))}</div>
-        <div class="stat-sub">ingresos − gastos</div>
+      <div class="stat-pair">
+        <div class="stat-summary-item">
+          <div class="stat-label">Gastos/mes</div>
+          <div class="stat-value" style="color:var(--red)">${cop(totalGas)}</div>
+          <div class="stat-sub">recurrentes activos</div>
+        </div>
+        <div class="stat-summary-item">
+          <div class="stat-label">Neto mensual</div>
+          <div class="stat-value" style="color:${neto>=0?'var(--green)':'var(--red)'}">${signStr(neto)}${cop(Math.abs(neto))}</div>
+          <div class="stat-sub">ingresos − gastos</div>
+        </div>
       </div>
     </div>`;
 
@@ -235,21 +237,21 @@ function renderRecurrentes() {
     const valColor = isIng ? 'var(--green)' : 'var(--red)';
     const nextStr   = r.activo ? nextPaymentStr(r.fecha_inicio, r.frecuencia) : null;
     return `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--sp-5) var(--sp-7);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-xs);opacity:${r.activo?1:0.45};transition:opacity 0.2s">
-      <div style="min-width:0;flex:1">
-        <div style="font-size:var(--text-md);font-weight:700;color:var(--text);margin-bottom:var(--sp-1)">${escHtml(r.nombre)}</div>
-        <div style="display:flex;align-items:center;gap:var(--sp-3)">
-          <span style="font-size:var(--text-xs);color:var(--text-muted)">${frecLabel} · ${cop(r.monto)}</span>
-          ${nextStr ? `<span style="font-size:var(--text-xs);color:var(--text-secondary);font-weight:600">${nextStr}</span>` : ''}
+    <div class="rec-item${r.activo?'':' inactive'}">
+      <div class="rec-item-left">
+        <div class="rec-name">${escHtml(r.nombre)}</div>
+        <div class="rec-meta">
+          <span class="rec-meta-freq">${frecLabel} · ${cop(r.monto)}</span>
+          ${nextStr ? `<span class="rec-meta-next">${nextStr}</span>` : ''}
         </div>
-        ${r.notas ? `<div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--sp-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(r.notas)}</div>` : ''}
+        ${r.notas ? `<div class="rec-notas">${escHtml(r.notas)}</div>` : ''}
       </div>
-      <div style="display:flex;align-items:center;gap:var(--sp-5);flex-shrink:0;margin-left:var(--sp-5)">
-        <div style="text-align:right">
-          <div style="font-size:var(--text-xl);font-weight:700;color:${valColor};font-family:var(--font-mono)">${cop(mensual)}</div>
-          <div style="font-size:var(--text-xs);color:var(--text-muted)">por mes</div>
+      <div class="rec-item-right">
+        <div class="rec-amount-wrap">
+          <div class="rec-amount" style="color:${valColor}">${cop(mensual)}</div>
+          <div class="rec-amount-label">por mes</div>
         </div>
-        <div style="display:flex;gap:var(--sp-2)">
+        <div class="rec-actions">
           <button class="btn btn-dim btn-sm" onclick="toggleRecurrente(${r._id})" title="${r.activo?'Pausar':'Activar'}">${r.activo ? '⏸' : '▶'}</button>
           <button class="btn btn-dim btn-sm" onclick="openRecurrenteFormById(${r._id})">Editar</button>
         </div>
