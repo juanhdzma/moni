@@ -1,3 +1,5 @@
+import logging
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -6,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import db
+
+logger = logging.getLogger("moni")
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,6 +29,7 @@ class TxIn(BaseModel):
     descripcion: str = ""
     monto: float
     notas: str = ""
+    tarjeta_id: Optional[int] = None
 
 
 class DeudaIn(BaseModel):
@@ -35,12 +40,25 @@ class DeudaIn(BaseModel):
     cuota_mensual: float = 0
     fecha_inicio: str = ""
     proxima_cuota: str = ""
+    es_tarjeta: bool = False
+    cupo: float = 0
+    franquicia: str = ""
     crear_tx: bool = False
+
+
+class DeudaAdelanto(BaseModel):
+    monto: float
+    nuevo_saldo: float
+    fecha: str
+    descripcion: str
+    notas: str = ""
+    registrar_tx: bool = True
 
 
 class DeudaPago(BaseModel):
     nuevo_saldo: float
     total_pagado: float
+    intereses: float = 0
     fecha: str
     descripcion: str
     notas: str = ""
@@ -56,6 +74,7 @@ class InvIn(BaseModel):
     fecha_inicio: str = ""
     pago: Optional[str] = None
     dia_pago: Optional[int] = None
+    valor_actualizado_en: str = ""
     crear_tx: bool = False
 
 
@@ -88,6 +107,7 @@ class ActivoIn(BaseModel):
     valor_inicial: float
     valor_actual: float
     fecha_adquisicion: str = ""
+    valor_actualizado_en: str = ""
     crear_tx: bool = False
 
 
@@ -108,14 +128,13 @@ class RecIn(BaseModel):
     notas: str = ""
 
 
-TX_COLS = ["fecha", "tipo", "categoria", "descripcion", "monto", "notas"]
-DEUDA_COLS = ["nombre", "monto_inicial", "saldo_actual", "tasa_ea", "cuota_mensual", "fecha_inicio", "proxima_cuota"]
-INV_COLS = ["nombre", "tipo", "monto_invertido", "valor_actual", "tasa_ea", "fecha_inicio", "pago", "dia_pago"]
-ACTIVO_COLS = ["nombre", "valor_inicial", "valor_actual", "fecha_adquisicion"]
+TX_COLS = ["fecha", "tipo", "categoria", "descripcion", "monto", "notas", "tarjeta_id"]
+DEUDA_COLS = ["nombre", "monto_inicial", "saldo_actual", "tasa_ea", "cuota_mensual", "fecha_inicio", "proxima_cuota", "es_tarjeta", "cupo", "franquicia"]
+INV_COLS = ["nombre", "tipo", "monto_invertido", "valor_actual", "tasa_ea", "fecha_inicio", "pago", "dia_pago", "valor_actualizado_en"]
+ACTIVO_COLS = ["nombre", "valor_inicial", "valor_actual", "fecha_adquisicion", "valor_actualizado_en"]
 REC_COLS = ["nombre", "tipo", "monto", "frecuencia", "activo", "fecha_inicio", "notas"]
 
 TABLES = {
-    "tx": ("transacciones", TX_COLS),
     "deuda": ("deudas", DEUDA_COLS),
     "inv": ("inversiones", INV_COLS),
     "activo": ("activos", ACTIVO_COLS),
@@ -184,7 +203,7 @@ def register_crud(path, model, linked_tx=None):
             data = body.model_dump()
             crear_tx = data.pop("crear_tx", False)
             new_id = insert_row(conn, table, cols, data)
-            if crear_tx and linked_tx:
+            if crear_tx and linked_tx and not data.get("es_tarjeta"):
                 insert_row(conn, "transacciones", TX_COLS, {
                     "fecha": data.get(linked_tx["fecha_field"]) or "",
                     "tipo": linked_tx["tipo"],
@@ -220,7 +239,6 @@ def register_crud(path, model, linked_tx=None):
             conn.close()
 
 
-register_crud("tx", TxIn)
 register_crud("deuda", DeudaIn, linked_tx={
     "tipo": "ingreso", "categoria": "Crédito recibido", "fecha_field": "fecha_inicio",
     "desc_fn": lambda d: f"Crédito · {d['nombre']}",
@@ -239,19 +257,106 @@ register_crud("activo", ActivoIn, linked_tx={
 register_crud("rec", RecIn)
 
 
+# ── Transacciones (CRUD dedicado: un gasto pagado con tarjeta ajusta la deuda) ─
+def _ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
+    if tarjeta_id is None or delta == 0:
+        return
+    tarjeta = conn.execute("SELECT * FROM deudas WHERE id = ?", (tarjeta_id,)).fetchone()
+    if tarjeta is None or not tarjeta["es_tarjeta"]:
+        raise HTTPException(400, f"tarjeta_id {tarjeta_id} no es una tarjeta válida")
+    nuevo_saldo = tarjeta["saldo_actual"] + delta
+    conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (nuevo_saldo, tarjeta_id))
+    logger.info(
+        "tarjeta %s: saldo_actual %.2f -> %.2f (delta %.2f)",
+        tarjeta_id, tarjeta["saldo_actual"], nuevo_saldo, delta,
+    )
+
+
+@app.post("/api/tx", name="create_tx")
+def create_tx(body: TxIn):
+    conn = db.get_conn()
+    try:
+        data = body.model_dump()
+        new_id = insert_row(conn, "transacciones", TX_COLS, data)
+        if data["tipo"] == "gasto":
+            _ajustar_saldo_tarjeta(conn, data["tarjeta_id"], data["monto"])
+        conn.commit()
+        return get_row(conn, "transacciones", new_id)
+    finally:
+        conn.close()
+
+
+@app.put("/api/tx/{row_id}", name="update_tx")
+def update_tx(row_id: int, body: TxIn):
+    conn = db.get_conn()
+    try:
+        old = get_row(conn, "transacciones", row_id)
+        if old["tipo"] == "gasto":
+            _ajustar_saldo_tarjeta(conn, old["tarjeta_id"], -old["monto"])
+        data = body.model_dump()
+        update_row(conn, "transacciones", TX_COLS, row_id, data)
+        if data["tipo"] == "gasto":
+            _ajustar_saldo_tarjeta(conn, data["tarjeta_id"], data["monto"])
+        conn.commit()
+        return get_row(conn, "transacciones", row_id)
+    finally:
+        conn.close()
+
+
+@app.delete("/api/tx/{row_id}", status_code=204, name="delete_tx")
+def delete_tx(row_id: int):
+    conn = db.get_conn()
+    try:
+        old = get_row(conn, "transacciones", row_id)
+        if old["tipo"] == "gasto":
+            _ajustar_saldo_tarjeta(conn, old["tarjeta_id"], -old["monto"])
+        delete_row(conn, "transacciones", row_id)
+        conn.commit()
+    finally:
+        conn.close()
+
+
 # ── Composite actions (multi-table writes, one SQLite transaction each) ──────
 @app.post("/api/deuda/{deuda_id}/pago")
 def pagar_deuda(deuda_id: int, body: DeudaPago):
     conn = db.get_conn()
     try:
         get_row(conn, "deudas", deuda_id)
-        conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (body.nuevo_saldo, deuda_id))
+        conn.execute(
+            "UPDATE deudas SET saldo_actual = ?, total_intereses = total_intereses + ? WHERE id = ?",
+            (body.nuevo_saldo, body.intereses, deuda_id),
+        )
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
                 "fecha": body.fecha, "tipo": "transfer", "categoria": "Pago deuda",
                 "descripcion": body.descripcion, "monto": body.total_pagado, "notas": body.notas,
             })
         conn.commit()
+        return get_row(conn, "deudas", deuda_id)
+    finally:
+        conn.close()
+
+
+@app.post("/api/deuda/{deuda_id}/adelanto")
+def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
+    conn = db.get_conn()
+    try:
+        tarjeta = get_row(conn, "deudas", deuda_id)
+        if not tarjeta["es_tarjeta"]:
+            raise HTTPException(400, "Solo las tarjetas admiten adelantos")
+        if body.nuevo_saldo < tarjeta["saldo_actual"]:
+            raise HTTPException(400, "El saldo después del adelanto no puede ser menor al saldo actual")
+        conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (body.nuevo_saldo, deuda_id))
+        if body.registrar_tx:
+            insert_row(conn, "transacciones", TX_COLS, {
+                "fecha": body.fecha, "tipo": "ingreso", "categoria": "Avance de tarjeta",
+                "descripcion": body.descripcion, "monto": body.monto, "notas": body.notas,
+            })
+        conn.commit()
+        logger.info(
+            "tarjeta %s: adelanto %.2f, saldo_actual %.2f -> %.2f",
+            deuda_id, body.monto, tarjeta["saldo_actual"], body.nuevo_saldo,
+        )
         return get_row(conn, "deudas", deuda_id)
     finally:
         conn.close()
@@ -282,8 +387,8 @@ def aportar_inv(inv_id: int, body: InvAporte):
         inv = get_row(conn, "inversiones", inv_id)
         nuevo_invertido = inv["monto_invertido"] + body.monto
         conn.execute(
-            "UPDATE inversiones SET monto_invertido = ?, valor_actual = ? WHERE id = ?",
-            (nuevo_invertido, body.nuevo_valor, inv_id),
+            "UPDATE inversiones SET monto_invertido = ?, valor_actual = ?, valor_actualizado_en = ? WHERE id = ?",
+            (nuevo_invertido, body.nuevo_valor, body.fecha, inv_id),
         )
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
@@ -310,8 +415,8 @@ def retirar_inv(inv_id: int, body: InvRetiro):
             pct_retiro = (body.monto / inv["valor_actual"]) if inv["valor_actual"] > 0 else 0
             nuevo_invertido = max(0.0, inv["monto_invertido"] * (1 - pct_retiro))
             conn.execute(
-                "UPDATE inversiones SET valor_actual = ?, monto_invertido = ? WHERE id = ?",
-                (body.saldo_queda, nuevo_invertido, inv_id),
+                "UPDATE inversiones SET valor_actual = ?, monto_invertido = ?, valor_actualizado_en = ? WHERE id = ?",
+                (body.saldo_queda, nuevo_invertido, body.fecha, inv_id),
             )
             descripcion = f"Retiro parcial · {inv['nombre']}"
         if body.registrar_tx:
@@ -336,6 +441,91 @@ def vender_activo(activo_id: int, body: ActivoVenta):
                 "fecha": body.fecha, "tipo": "ingreso", "categoria": "Venta activos",
                 "descripcion": f"Venta · {activo['nombre']}", "monto": body.precio, "notas": body.notas,
             })
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+
+# ── Admin: seed / truncate (para pruebas locales) ────────────────────────────
+SEEDABLE_TABLES = ["transacciones", "deudas", "inversiones", "activos", "recurrentes"]
+
+
+@app.post("/api/admin/seed")
+def seed_data():
+    conn = db.get_conn()
+    try:
+        today = datetime.now()
+
+        def days_ago(n):
+            return (today - timedelta(days=n)).strftime("%Y-%m-%d")
+
+        tarjeta_id = insert_row(conn, "deudas", DEUDA_COLS, {
+            "nombre": "Tarjeta Visa Principal", "monto_inicial": 0, "saldo_actual": 850000,
+            "tasa_ea": 24.5, "cuota_mensual": 0, "fecha_inicio": days_ago(200),
+            "proxima_cuota": "", "es_tarjeta": 1, "cupo": 5000000, "franquicia": "Visa",
+        })
+        insert_row(conn, "deudas", DEUDA_COLS, {
+            "nombre": "Crédito hipotecario", "monto_inicial": 180000000, "saldo_actual": 152000000,
+            "tasa_ea": 11.2, "cuota_mensual": 2100000, "fecha_inicio": days_ago(600),
+            "proxima_cuota": days_ago(-15), "es_tarjeta": 0, "cupo": 0, "franquicia": "",
+        })
+
+        insert_row(conn, "inversiones", INV_COLS, {
+            "nombre": "CDT Bancolombia", "tipo": "fija", "monto_invertido": 10000000,
+            "valor_actual": 10450000, "tasa_ea": 11.5, "fecha_inicio": days_ago(180),
+            "pago": "vencimiento", "dia_pago": None, "valor_actualizado_en": days_ago(180),
+        })
+        insert_row(conn, "inversiones", INV_COLS, {
+            "nombre": "Fondo Acciones Globales", "tipo": "variable", "monto_invertido": 6000000,
+            "valor_actual": 6800000, "tasa_ea": None, "fecha_inicio": days_ago(300),
+            "pago": None, "dia_pago": None, "valor_actualizado_en": days_ago(45),
+        })
+        insert_row(conn, "inversiones", INV_COLS, {
+            "nombre": "Cripto (ETH)", "tipo": "variable", "monto_invertido": 2000000,
+            "valor_actual": 1750000, "tasa_ea": None, "fecha_inicio": days_ago(90),
+            "pago": None, "dia_pago": None, "valor_actualizado_en": days_ago(5),
+        })
+
+        insert_row(conn, "activos", ACTIVO_COLS, {
+            "nombre": "Apartamento Bogotá", "valor_inicial": 320000000, "valor_actual": 350000000,
+            "fecha_adquisicion": days_ago(900), "valor_actualizado_en": days_ago(50),
+        })
+        insert_row(conn, "activos", ACTIVO_COLS, {
+            "nombre": "Carro Mazda 3", "valor_inicial": 90000000, "valor_actual": 72000000,
+            "fecha_adquisicion": days_ago(400), "valor_actualizado_en": days_ago(10),
+        })
+
+        for tx in [
+            {"fecha": days_ago(2),  "tipo": "ingreso",  "categoria": "Salario",         "descripcion": "Nómina",       "monto": 6500000, "notas": "", "tarjeta_id": None},
+            {"fecha": days_ago(1),  "tipo": "gasto",     "categoria": "Alimentación",    "descripcion": "Supermercado", "monto": 320000,  "notas": "", "tarjeta_id": tarjeta_id},
+            {"fecha": days_ago(3),  "tipo": "gasto",     "categoria": "Transporte",      "descripcion": "Gasolina",     "monto": 150000,  "notas": "", "tarjeta_id": None},
+            {"fecha": days_ago(5),  "tipo": "gasto",     "categoria": "Entretenimiento", "descripcion": "Cine",         "monto": 60000,   "notas": "", "tarjeta_id": tarjeta_id},
+            {"fecha": days_ago(10), "tipo": "transfer",  "categoria": "Ahorro",          "descripcion": "Ahorro mensual","monto": 500000, "notas": "", "tarjeta_id": None},
+        ]:
+            insert_row(conn, "transacciones", TX_COLS, tx)
+
+        insert_row(conn, "recurrentes", REC_COLS, {
+            "nombre": "Salario", "tipo": "ingreso", "monto": 6500000, "frecuencia": "mensual",
+            "activo": 1, "fecha_inicio": days_ago(365), "notas": "",
+        })
+        insert_row(conn, "recurrentes", REC_COLS, {
+            "nombre": "Netflix", "tipo": "gasto", "monto": 45000, "frecuencia": "mensual",
+            "activo": 1, "fecha_inicio": days_ago(200), "notas": "",
+        })
+
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+
+@app.post("/api/admin/truncate")
+def truncate_all():
+    conn = db.get_conn()
+    try:
+        for table in SEEDABLE_TABLES:
+            conn.execute(f"DELETE FROM {table}")
         conn.commit()
         return {"ok": True}
     finally:
