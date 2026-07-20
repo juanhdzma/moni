@@ -9,10 +9,6 @@
   display: flex; align-items: center; justify-content: center;
 }
 .header-left { display: flex; align-items: center; gap: var(--sp-4); }
-.header-admin {
-  position: absolute; right: var(--sp-12); top: 50%; transform: translateY(-50%);
-  display: flex; align-items: center; gap: var(--sp-2);
-}
 .logo {
   width: 30px; height: 30px;
   background: var(--green);
@@ -127,7 +123,6 @@
   }
   .header-title { display: none; }
   .header-nav { display: none; }
-  .header-admin { display: none; }
   .hamburger-btn {
     display: flex; align-items: center; justify-content: center;
     background: none; border: none; color: var(--text); font-size: 19px;

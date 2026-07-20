@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -441,91 +440,6 @@ def vender_activo(activo_id: int, body: ActivoVenta):
                 "fecha": body.fecha, "tipo": "ingreso", "categoria": "Venta activos",
                 "descripcion": f"Venta · {activo['nombre']}", "monto": body.precio, "notas": body.notas,
             })
-        conn.commit()
-        return {"ok": True}
-    finally:
-        conn.close()
-
-
-# ── Admin: seed / truncate (para pruebas locales) ────────────────────────────
-SEEDABLE_TABLES = ["transacciones", "deudas", "inversiones", "activos", "recurrentes"]
-
-
-@app.post("/api/admin/seed")
-def seed_data():
-    conn = db.get_conn()
-    try:
-        today = datetime.now()
-
-        def days_ago(n):
-            return (today - timedelta(days=n)).strftime("%Y-%m-%d")
-
-        tarjeta_id = insert_row(conn, "deudas", DEUDA_COLS, {
-            "nombre": "Tarjeta Visa Principal", "monto_inicial": 0, "saldo_actual": 850000,
-            "tasa_ea": 24.5, "cuota_mensual": 0, "fecha_inicio": days_ago(200),
-            "proxima_cuota": "", "es_tarjeta": 1, "cupo": 5000000, "franquicia": "Visa",
-        })
-        insert_row(conn, "deudas", DEUDA_COLS, {
-            "nombre": "Crédito hipotecario", "monto_inicial": 180000000, "saldo_actual": 152000000,
-            "tasa_ea": 11.2, "cuota_mensual": 2100000, "fecha_inicio": days_ago(600),
-            "proxima_cuota": days_ago(-15), "es_tarjeta": 0, "cupo": 0, "franquicia": "",
-        })
-
-        insert_row(conn, "inversiones", INV_COLS, {
-            "nombre": "CDT Bancolombia", "tipo": "fija", "monto_invertido": 10000000,
-            "valor_actual": 10450000, "tasa_ea": 11.5, "fecha_inicio": days_ago(180),
-            "pago": "vencimiento", "dia_pago": None, "valor_actualizado_en": days_ago(180),
-        })
-        insert_row(conn, "inversiones", INV_COLS, {
-            "nombre": "Fondo Acciones Globales", "tipo": "variable", "monto_invertido": 6000000,
-            "valor_actual": 6800000, "tasa_ea": None, "fecha_inicio": days_ago(300),
-            "pago": None, "dia_pago": None, "valor_actualizado_en": days_ago(45),
-        })
-        insert_row(conn, "inversiones", INV_COLS, {
-            "nombre": "Cripto (ETH)", "tipo": "variable", "monto_invertido": 2000000,
-            "valor_actual": 1750000, "tasa_ea": None, "fecha_inicio": days_ago(90),
-            "pago": None, "dia_pago": None, "valor_actualizado_en": days_ago(5),
-        })
-
-        insert_row(conn, "activos", ACTIVO_COLS, {
-            "nombre": "Apartamento Bogotá", "valor_inicial": 320000000, "valor_actual": 350000000,
-            "fecha_adquisicion": days_ago(900), "valor_actualizado_en": days_ago(50),
-        })
-        insert_row(conn, "activos", ACTIVO_COLS, {
-            "nombre": "Carro Mazda 3", "valor_inicial": 90000000, "valor_actual": 72000000,
-            "fecha_adquisicion": days_ago(400), "valor_actualizado_en": days_ago(10),
-        })
-
-        for tx in [
-            {"fecha": days_ago(2),  "tipo": "ingreso",  "categoria": "Salario",         "descripcion": "Nómina",       "monto": 6500000, "notas": "", "tarjeta_id": None},
-            {"fecha": days_ago(1),  "tipo": "gasto",     "categoria": "Alimentación",    "descripcion": "Supermercado", "monto": 320000,  "notas": "", "tarjeta_id": tarjeta_id},
-            {"fecha": days_ago(3),  "tipo": "gasto",     "categoria": "Transporte",      "descripcion": "Gasolina",     "monto": 150000,  "notas": "", "tarjeta_id": None},
-            {"fecha": days_ago(5),  "tipo": "gasto",     "categoria": "Entretenimiento", "descripcion": "Cine",         "monto": 60000,   "notas": "", "tarjeta_id": tarjeta_id},
-            {"fecha": days_ago(10), "tipo": "transfer",  "categoria": "Ahorro",          "descripcion": "Ahorro mensual","monto": 500000, "notas": "", "tarjeta_id": None},
-        ]:
-            insert_row(conn, "transacciones", TX_COLS, tx)
-
-        insert_row(conn, "recurrentes", REC_COLS, {
-            "nombre": "Salario", "tipo": "ingreso", "monto": 6500000, "frecuencia": "mensual",
-            "activo": 1, "fecha_inicio": days_ago(365), "notas": "",
-        })
-        insert_row(conn, "recurrentes", REC_COLS, {
-            "nombre": "Netflix", "tipo": "gasto", "monto": 45000, "frecuencia": "mensual",
-            "activo": 1, "fecha_inicio": days_ago(200), "notas": "",
-        })
-
-        conn.commit()
-        return {"ok": True}
-    finally:
-        conn.close()
-
-
-@app.post("/api/admin/truncate")
-def truncate_all():
-    conn = db.get_conn()
-    try:
-        for table in SEEDABLE_TABLES:
-            conn.execute(f"DELETE FROM {table}")
         conn.commit()
         return {"ok": True}
     finally:
