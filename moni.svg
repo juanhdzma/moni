@@ -1,0 +1,41 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="bg"><rect width="512" height="512"/></clipPath>
+    <linearGradient id="w" x1="88" y1="200" x2="424" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4ADE80"/><stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+    <linearGradient id="flap" x1="88" y1="200" x2="424" y2="268" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#86EFAC"/><stop offset="1" stop-color="#4ADE80"/>
+    </linearGradient>
+  </defs>
+
+  <g clip-path="url(#bg)">
+    <rect width="512" height="512" fill="#1b1e21"/>
+
+    <!-- BILLETE (atrás, inclinado a la izquierda) -->
+    <g transform="rotate(-17 256 256)">
+      <rect x="126" y="104" width="212" height="132" rx="6" fill="#BBF7D0"/>
+      <rect x="140" y="118" width="184" height="104" rx="4" fill="none" stroke="#4ADE80" stroke-width="4"/>
+      <circle cx="232" cy="170" r="26" fill="#4ADE80" opacity="0.55"/>
+      <rect x="156" y="158" width="34" height="8" rx="4" fill="#4ADE80" opacity="0.7"/>
+      <rect x="274" y="174" width="34" height="8" rx="4" fill="#4ADE80" opacity="0.7"/>
+    </g>
+
+    <!-- TARJETA (adelante, inclinada a la derecha) -->
+    <g transform="rotate(8 256 256)">
+      <rect x="196" y="112" width="216" height="136" rx="18" fill="#F2F4F2"/>
+      <rect x="196" y="150" width="216" height="26" fill="#111111"/>
+      <rect x="216" y="196" width="46" height="34" rx="8" fill="#22C55E"/>
+      <rect x="284" y="206" width="76" height="10" rx="5" fill="#C9CFC9"/>
+    </g>
+
+    <!-- BILLETERA -->
+    <rect x="88" y="216" width="336" height="208" rx="44" fill="url(#w)"/>
+    <path d="M88 260 A44 44 0 0 1 132 216 H380 A44 44 0 0 1 424 260 V278 H88 Z" fill="url(#flap)" opacity="0.5"/>
+
+    <!-- BROCHE -->
+    <path d="M424 288 H468 A24 24 0 0 1 492 312 V360 A24 24 0 0 1 468 384 H424 Z" fill="#15803D"/>
+    <circle cx="452" cy="336" r="19" fill="#1b1e21"/>
+    <circle cx="452" cy="336" r="7" fill="#4ADE80"/>
+  </g>
+</svg>
