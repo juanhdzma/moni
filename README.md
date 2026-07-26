@@ -4,7 +4,7 @@ Personal finance tracker for a single household: spending, credit cards, loans, 
 
 ![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue) ![Python](https://img.shields.io/badge/backend-FastAPI%20%2B%20SQLite-009688) ![Frontend](https://img.shields.io/badge/frontend-vanilla%20JS-f7df1e)
 
-![Dashboard](img/dashboard.png)
+![Dashboard](docs/img/dashboard.png)
 
 > ## ⚠️ LOCAL USE ONLY — NO AUTH
 > This app has **no authentication or login system**. Anyone who can reach it can read and modify all data. It is meant to run on your local machine or a private/home network you trust.
@@ -28,23 +28,23 @@ Six tabs, all reading from and writing to the same dataset — a debt payment, a
 
 **Transacciones** — the income/expense ledger, filterable by month, type, and category, grouped by date (ayer / este mes / …), tracking payment method (cash/debit vs. a specific card).
 
-![Transacciones](img/transacciones.png)
+![Transacciones](docs/img/transacciones.png)
 
 **Deudas** — loans and credit cards (`es_tarjeta`), with pending balance, monthly installment, interest paid, per-debt cuota payments, card advances (adelanto), and payoff (liquidar).
 
-![Deudas](img/deudas.png)
+![Deudas](docs/img/deudas.png)
 
 **Inversiones** — fixed-rate (CDT-style, with EA/MV rate conversion and yield tracking) and variable investments (funds, crypto), each with capital invested, current value, gain/loss, and contribution/withdrawal actions.
 
-![Inversiones](img/inversiones.png)
+![Inversiones](docs/img/inversiones.png)
 
 **Activos** — physical/other assets (real estate, vehicles, …) with purchase cost vs. current value, value updates, and sale tracking.
 
-![Activos](img/activos.png)
+![Activos](docs/img/activos.png)
 
 **Recurrentes** — recurring incomes and fixed expenses (subscriptions, salary, …), with monthly income/expense/net totals and pause/resume.
 
-![Recurrentes](img/recurrentes.png)
+![Recurrentes](docs/img/recurrentes.png)
 
 Screenshots use dummy data inserted directly via the API for illustration, not real figures.
 
@@ -54,8 +54,8 @@ Below 640px the header nav collapses into a hamburger + slide-out drawer.
 
 <table>
 <tr>
-<td><img src="img/mobile-dashboard.png" width="260" alt="Dashboard, mobile"></td>
-<td><img src="img/mobile-menu.png" width="260" alt="Nav drawer, mobile"></td>
+<td><img src="docs/img/mobile-dashboard.png" width="260" alt="Dashboard, mobile"></td>
+<td><img src="docs/img/mobile-menu.png" width="260" alt="Nav drawer, mobile"></td>
 </tr>
 </table>
 
