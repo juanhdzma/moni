@@ -5,9 +5,7 @@ on:
     branches: [main]
     paths:
       - index.html
-      - moni.svg
-      - moni.ico
-      - moni.png
+      - assets/**
       - Dockerfile
       - css/**
       - js/**
