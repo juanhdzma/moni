@@ -41,7 +41,8 @@ function openTxForm(tx = null) {
       <label class="form-label">Categoría</label>
       <div style="display:flex;gap:8px;align-items:center">
         <select class="form-input" id="m-cat" style="flex:1">
-          ${cats.map(c => `<option ${tx?.categoria===c?'selected':''}>${escHtml(c)}</option>`).join('')}
+          ${cats.length ? cats.map(c => `<option ${tx?.categoria===c?'selected':''}>${escHtml(c)}</option>`).join('')
+            : `<option value="" disabled selected>Sin categorías — agregá una con +</option>`}
         </select>
         <button type="button" class="btn btn-dim btn-sm" style="flex-shrink:0;font-size:var(--text-xl);padding:var(--sp-2) var(--sp-5)"
           onclick="toggleNewCat()" title="Agregar categoría">+</button>
@@ -94,8 +95,10 @@ function txTipoChange(tipo) {
   document.getElementById('m-tipo').value = tipo;
   document.querySelectorAll('.tipo-toggle .tipo-btn').forEach(b => b.classList.remove('sel'));
   document.querySelector(`.tipo-btn.${tipo}`)?.classList.add('sel');
-  document.getElementById('m-cat').innerHTML =
-    (CATEGORIES[tipo] || []).map(c => `<option>${escHtml(c)}</option>`).join('');
+  const catsForTipo = CATEGORIES[tipo] || [];
+  document.getElementById('m-cat').innerHTML = catsForTipo.length
+    ? catsForTipo.map(c => `<option>${escHtml(c)}</option>`).join('')
+    : `<option value="" disabled selected>Sin categorías — agregá una con +</option>`;
   const wrap = document.getElementById('new-cat-wrap');
   if (wrap) wrap.style.display = 'none';
   const wrapTarjeta = document.getElementById('wrap-tarjeta');
@@ -136,6 +139,7 @@ async function saveTx(id) {
   const tarjetaVal  = document.getElementById('m-tarjeta')?.value;
   const tarjeta_id  = tipo === 'gasto' && tarjetaVal ? Number(tarjetaVal) : null;
 
+  if (!categoria)           { setModalStatus('err', 'Agregá una categoría con el botón +'); return; }
   if (!monto || monto <= 0) { setModalStatus('err', 'Ingresá un monto válido'); return; }
   if (!fechaDate)           { setModalStatus('err', 'Fecha requerida'); return; }
 

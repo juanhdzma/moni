@@ -47,6 +47,7 @@
     <button class="nav-btn"        data-tab="inversiones"   onclick="setTab('inversiones')">Inversiones</button>
     <button class="nav-btn"        data-tab="activos"       onclick="setTab('activos')">Activos</button>
     <button class="nav-btn"        data-tab="recurrentes"   onclick="setTab('recurrentes')">Recurrentes</button>
+    <button class="nav-btn"        data-tab="settings"      onclick="setTab('settings')">Ajustes</button>
   </nav>
 </header>
 
@@ -62,6 +63,7 @@
     <button class="nav-drawer-item"        data-tab="inversiones"   onclick="setTab('inversiones')">Inversiones</button>
     <button class="nav-drawer-item"        data-tab="activos"       onclick="setTab('activos')">Activos</button>
     <button class="nav-drawer-item"        data-tab="recurrentes"   onclick="setTab('recurrentes')">Recurrentes</button>
+    <button class="nav-drawer-item"        data-tab="settings"      onclick="setTab('settings')">Ajustes</button>
   </nav>
 </div>
 <button class="fab" id="fab-btn" onclick="fabAction()" aria-label="Agregar" style="display:none">+</button>
@@ -278,6 +280,30 @@
     </div>
   </div>
 
+  <!-- ── AJUSTES ── -->
+  <div id="tab-settings" class="tab-content">
+    <div class="card settings-card">
+      <div class="section-title">🏷️ Categorías</div>
+      <div id="settings-categorias"></div>
+    </div>
+    <div class="card settings-card">
+      <div class="section-title">🕓 Próximas operaciones ocultas</div>
+      <div id="settings-skipped"></div>
+    </div>
+    <div class="card settings-card">
+      <div class="section-title">💱 Moneda</div>
+      <div id="settings-currency"></div>
+    </div>
+    <div class="card settings-card">
+      <div class="section-title">💾 Backup</div>
+      <div id="settings-backup"></div>
+    </div>
+    <div class="card settings-card settings-danger-card">
+      <div class="section-title">⚠️ Zona de peligro</div>
+      <div id="settings-danger"></div>
+    </div>
+  </div>
+
 </main>
 
 <script src="js/config.js"></script>
@@ -289,6 +315,7 @@
 <script src="js/features/deudas.js"></script>
 <script src="js/features/inversiones.js"></script><script src="js/features/activos.js"></script>
 <script src="js/features/recurrentes.js"></script>
+<script src="js/features/settings.js"></script>
 <script src="js/ui-controls.js"></script>
 <script src="js/app.js"></script>
 </body>

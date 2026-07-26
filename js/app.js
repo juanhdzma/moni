@@ -88,6 +88,7 @@ function renderAll() {
   renderInversiones();
   renderActivos();
   renderRecurrentes();
+  renderSettings();
   updateNavWarnings();
 }
 

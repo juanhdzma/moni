@@ -1,4 +1,5 @@
 import logging
+import sqlite3
 from pathlib import Path
 from typing import Optional
 
@@ -127,6 +128,14 @@ class RecIn(BaseModel):
     notas: str = ""
 
 
+class ImportPayload(BaseModel):
+    transacciones: list[dict] = []
+    deudas: list[dict] = []
+    inversiones: list[dict] = []
+    activos: list[dict] = []
+    recurrentes: list[dict] = []
+
+
 TX_COLS = ["fecha", "tipo", "categoria", "descripcion", "monto", "notas", "tarjeta_id"]
 DEUDA_COLS = ["nombre", "monto_inicial", "saldo_actual", "tasa_ea", "cuota_mensual", "fecha_inicio", "proxima_cuota", "es_tarjeta", "cupo", "franquicia"]
 INV_COLS = ["nombre", "tipo", "monto_invertido", "valor_actual", "tasa_ea", "fecha_inicio", "pago", "dia_pago", "valor_actualizado_en"]
@@ -139,6 +148,16 @@ TABLES = {
     "activo": ("activos", ACTIVO_COLS),
     "rec": ("recurrentes", REC_COLS),
 }
+
+# Column lists (incl. id) matching db.SCHEMA, used for full-table export/import/truncate.
+# Import order matters: transacciones.tarjeta_id references deudas.id.
+IMPORT_TABLES = [
+    ("deudas", ["id"] + DEUDA_COLS + ["total_intereses"]),
+    ("inversiones", ["id"] + INV_COLS),
+    ("activos", ["id"] + ACTIVO_COLS),
+    ("recurrentes", ["id"] + REC_COLS),
+    ("transacciones", ["id"] + TX_COLS),
+]
 
 
 # ── SQL helpers ───────────────────────────────────────────────────────────────
@@ -440,6 +459,45 @@ def vender_activo(activo_id: int, body: ActivoVenta):
                 "fecha": body.fecha, "tipo": "ingreso", "categoria": "Venta activos",
                 "descripcion": f"Venta · {activo['nombre']}", "monto": body.precio, "notas": body.notas,
             })
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+
+# ── Backup: import / truncate ─────────────────────────────────────────────────
+@app.post("/api/import")
+def import_data(body: ImportPayload):
+    conn = db.get_conn()
+    try:
+        payload = body.model_dump()
+        counts = {}
+        for table, cols in IMPORT_TABLES:
+            rows = payload.get(table) or []
+            col_list = ", ".join(cols)
+            placeholders = ", ".join("?" * len(cols))
+            for row in rows:
+                conn.execute(
+                    f"INSERT INTO {table} ({col_list}) VALUES ({placeholders})",
+                    [row.get(c) for c in cols],
+                )
+            counts[table] = len(rows)
+        conn.commit()
+        return counts
+    except sqlite3.IntegrityError as e:
+        conn.rollback()
+        raise HTTPException(400, f"Import falló (¿ids duplicados? borrá los datos existentes primero): {e}")
+    finally:
+        conn.close()
+
+
+@app.post("/api/truncate")
+def truncate_all():
+    conn = db.get_conn()
+    try:
+        for table, _cols in IMPORT_TABLES:
+            conn.execute(f"DELETE FROM {table}")
+            conn.execute("DELETE FROM sqlite_sequence WHERE name = ?", (table,))
         conn.commit()
         return {"ok": True}
     finally:

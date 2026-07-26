@@ -1,11 +1,16 @@
+function getCurrencySymbol() {
+  try { return localStorage.getItem('moni_currency_symbol') || '$'; }
+  catch (_) { return '$'; }
+}
 function cop(n) {
-  return '$' + new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n || 0);
+  return getCurrencySymbol() + new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n || 0);
 }
 function copShort(n) {
   const abs = Math.abs(n), s = n < 0 ? '−' : '';
-  if (abs >= 1e9) return s + '$' + (abs / 1e9).toFixed(1).replace('.', ',') + 'B';
-  if (abs >= 1e6) return s + '$' + (abs / 1e6).toFixed(1).replace('.', ',') + 'M';
-  if (abs >= 1e3) return s + '$' + Math.round(abs / 1e3) + 'k';
+  const sym = getCurrencySymbol();
+  if (abs >= 1e9) return s + sym + (abs / 1e9).toFixed(1).replace('.', ',') + 'B';
+  if (abs >= 1e6) return s + sym + (abs / 1e6).toFixed(1).replace('.', ',') + 'M';
+  if (abs >= 1e3) return s + sym + Math.round(abs / 1e3) + 'k';
   return s + cop(abs);
 }
 function pct(n, d = 1) {

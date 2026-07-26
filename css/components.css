@@ -579,6 +579,43 @@ details.advanced-toggle > summary::-webkit-details-marker { display: none; }
   .rec-amount-wrap { text-align: left; }
 }
 
+/* ── Ajustes ── */
+.settings-card + .settings-card { margin-top: var(--sp-7); }
+.settings-danger-card { border-color: var(--red-border); background: var(--red-bg); }
+.settings-danger-card .section-title { color: var(--red); }
+
+.settings-chip-group { margin-bottom: var(--sp-8); }
+.settings-chip-group:last-child { margin-bottom: 0; }
+.settings-chip-label {
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--text-xs); font-weight: 700; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--sp-4);
+}
+.cat-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.cat-dot-ingreso  { background: var(--green); }
+.cat-dot-gasto    { background: var(--red); }
+.cat-dot-transfer { background: var(--text-muted); }
+
+.settings-chips { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.settings-chip-empty { font-size: var(--text-sm); color: var(--text-muted); padding: var(--sp-2) 0; }
+.settings-chip {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: 5px var(--sp-2) 5px var(--sp-5); border-radius: 99px;
+  font-size: var(--text-sm); font-weight: 500;
+  background: var(--bg-muted); border: 1px solid var(--border);
+}
+.settings-chip-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; border: none; background: none; padding: 0;
+  color: var(--text-muted); cursor: pointer; font-size: 10px; line-height: 1; transition: background 0.1s, color 0.1s;
+}
+.settings-add-row { display: flex; gap: var(--sp-3); }
+.settings-add-row .form-input { flex: 1; }
+.settings-hint { font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5; margin-top: var(--sp-4); }
+
+.settings-list { display: flex; flex-direction: column; }
+.settings-list .recent-item:last-child { border-bottom: none; }
+
 /* ── Hover-only interactions (skip on touch: no stuck :hover state) ── */
 @media (hover: hover) and (pointer: fine) {
   .debt-card:hover  { box-shadow: var(--shadow-sm); border-left-color: var(--red); }
@@ -587,6 +624,7 @@ details.advanced-toggle > summary::-webkit-details-marker { display: none; }
   tbody tr:hover { background: var(--bg-muted); }
   .tx-group-row:hover { background: var(--bg-card) !important; }
   .cdd-option:hover { background: var(--bg-muted); }
+  .settings-chip-x:hover { background: var(--red-bg); color: var(--red); }
   .cdp-nav-btn:hover { background: var(--bg-muted); color: var(--text); }
   .cdp-day:hover { background: var(--bg-muted); }
   .btn:hover:not(:disabled) { opacity: 0.88; }
