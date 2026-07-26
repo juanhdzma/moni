@@ -28,7 +28,7 @@ There are **no tests, linter, or type checker configured** in this repo. Verify 
 
 ## Deploying
 
-`.github/workflows/build-push.yml` builds and pushes to `ghcr.io/<owner>/moni` (tags `latest` + commit SHA) on every push to `main` touching `index.html`, `Dockerfile`, `css/**`, `js/**`, or `backend/**`. Production `docker-compose.yml` (on the home server, via Portainer) points `image:` at that GHCR tag instead of `build: .`; local dev keeps `build: .`. Don't rename the image without updating both — the workflow used to publish as `fondo-familiar` (copy-pasted from the sibling `fondi` repo) before being corrected to `moni`.
+`.github/workflows/build-push.yml` builds and pushes to `ghcr.io/<owner>/moni` (tags `latest` + commit SHA) on every push to `main`. Production `docker-compose.yml` (on the home server, via Portainer) points `image:` at that GHCR tag instead of `build: .`; local dev keeps `build: .`. Don't rename the image without updating both — the workflow used to publish as `fondo-familiar` (copy-pasted from the sibling `fondi` repo) before being corrected to `moni`.
 
 ## Architecture
 
