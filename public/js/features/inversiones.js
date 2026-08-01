@@ -178,11 +178,29 @@ async function deleteInv(id) {
 }
 
 // ── Rendimiento — solo para inversiones FIJAS ────────────────────────────────
+// Un rendimiento va a un lado o al otro, nunca a los dos: o queda adentro de la
+// inversión y sube su valor, o te lo pagan y entra a la cartera. Contarlo de los
+// dos lados infla el patrimonio por el mismo monto dos veces.
+const REND_HINT = {
+  capitaliza: 'Sube el valor de la inversión. No entra plata a tu cartera.',
+  cuenta:     'Entra como ingreso a tu cartera. El valor de la inversión no cambia.',
+};
+
+function setRendimientoDestino(capitaliza) {
+  document.getElementById('m-capitaliza').value = capitaliza ? 1 : 0;
+  document.getElementById('rend-cuenta').classList.toggle('sel', !capitaliza);
+  document.getElementById('rend-capitaliza').classList.toggle('sel', capitaliza);
+  document.getElementById('wrap-rend-advanced').style.display = capitaliza ? 'none' : '';
+  document.getElementById('rend-hint').textContent = capitaliza ? REND_HINT.capitaliza : REND_HINT.cuenta;
+}
+
 function openInvYieldFormById(id) {
   const inv = S.inversiones.find(x => x._id === id);
   if (!inv) return;
   const mv       = inv.tasa_ea ? eaToMv(inv.tasa_ea) : 0;
   const expected = inv.tasa_ea ? Math.round(inv.valor_actual * mv / 100) : 0;
+  // Un CDT al vencimiento capitaliza hasta que vence; uno mensual te paga.
+  const capitaliza = inv.pago === 'vencimiento';
 
   openModal(`Registrar rendimiento · ${inv.nombre}`, `
     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;display:flex;justify-content:space-between">
@@ -205,6 +223,15 @@ function openInvYieldFormById(id) {
       ${expected ? `<div style="font-size:var(--text-xs);color:var(--text-secondary);margin-top:5px">Pre-llenado con el rendimiento esperado del período.</div>` : ''}
     </div>
     <div class="form-group">
+      <label class="form-label">¿Dónde queda el rendimiento?</label>
+      <div class="tipo-toggle">
+        <button type="button" id="rend-cuenta"     class="tipo-btn ingreso  ${capitaliza?'':'sel'}" onclick="setRendimientoDestino(false)">Me lo pagan</button>
+        <button type="button" id="rend-capitaliza" class="tipo-btn transfer ${capitaliza?'sel':''}" onclick="setRendimientoDestino(true)">Capitaliza</button>
+      </div>
+      <input type="hidden" id="m-capitaliza" value="${capitaliza ? 1 : 0}" />
+      <div id="rend-hint" style="font-size:var(--text-xs);color:var(--text-secondary);margin-top:5px">${capitaliza ? REND_HINT.capitaliza : REND_HINT.cuenta}</div>
+    </div>
+    <div class="form-group">
       <label class="form-label">Fecha</label>
       <input class="form-input" type="datetime-local" id="m-fecha" value="${nowStr()}" />
     </div>
@@ -212,7 +239,7 @@ function openInvYieldFormById(id) {
       <label class="form-label" style="text-transform:none;letter-spacing:0;font-size:var(--text-sm);color:var(--text-secondary)">Notas (opcional)</label>
       <input class="form-input" type="text" id="m-notas" maxlength="30" placeholder="Ej. Intereses mes de junio" />
     </div>
-    ${advancedToggle('Registrar en transacciones', 'Desactivá si ya lo registraste en otra parte.')}
+    <div id="wrap-rend-advanced" style="${capitaliza?'display:none':''}">${advancedToggle('Registrar en transacciones', 'Desactivá si ya lo registraste en otra parte.')}</div>
     <div class="modal-footer">
       <button class="btn btn-accent" onclick="saveInvYield(${inv._id})">Registrar</button>
       <button class="btn btn-dim" onclick="closeModal();openInvFormById(${inv._id})">Editar inversión</button>
@@ -231,10 +258,13 @@ async function saveInvYield(id) {
   if (!monto || monto <= 0) { setModalStatus('err', 'Ingresá un monto válido'); return; }
   if (!inv) return;
 
-  const registrarTx = document.getElementById('m-es-nueva')?.checked ?? true;
+  // Si capitaliza no hay plata que entre a la cartera, así que no hay tx que
+  // registrar: el flag de registro solo aplica cuando te lo pagan.
+  const capitaliza  = document.getElementById('m-capitaliza').value === '1';
+  const registrarTx = !capitaliza && (document.getElementById('m-es-nueva')?.checked ?? true);
   setModalStatus('', 'Guardando...');
   try {
-    await apiAction(`/api/inv/${id}/rendimiento`, { monto, fecha, notas, registrar_tx: registrarTx });
+    await apiAction(`/api/inv/${id}/rendimiento`, { monto, fecha, notas, capitaliza, registrar_tx: registrarTx });
   } catch(err) { setModalStatus('err', '❌ ' + err.message); }
 }
 

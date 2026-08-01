@@ -263,10 +263,17 @@ function _invPeriodMonths() {
   ]);
 }
 
+// Lo que mueve el valor del portafolio y además deja rastro en el ledger: los
+// aportes suman, los retiros restan. Los rendimientos no entran acá: si te los
+// pagan salieron de la inversión sin cambiarle el valor, y si capitalizan no
+// dejan transacción — como las revalorizaciones, la curva no puede verlos y
+// solo los tiene el punto final.
 function monthlyInvDelta(count) {
-  return monthlySeries(count, tx => tx
-    .filter(t => t.categoria === 'Inversión' || (t.tipo === 'ingreso' && t.categoria === 'Intereses'))
-    .reduce((s, t) => s + t.monto, 0));
+  return monthlySeries(count, tx => tx.reduce((s, t) => {
+    if (t.categoria === 'Inversión')  return s + t.monto;
+    if (t.categoria === 'Dividendos') return s - t.monto;
+    return s;
+  }, 0));
 }
 
 let chartInvEvol = null;

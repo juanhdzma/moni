@@ -67,13 +67,57 @@ def test_aporte_suma_a_invertido_y_fija_el_valor(client):
     assert i["valor_actualizado_en"] == "2026-07-05"
 
 
-def test_rendimiento_suma_al_valor_actual(client):
-    inv = client.post(
+def _cdt(client):
+    return client.post(
         "/api/inv",
         json={"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 1000, "tasa_ea": 12},
     ).json()
+
+
+# El rendimiento cuenta de UN lado, nunca de los dos: antes subía valor_actual y
+# además insertaba el ingreso, y el patrimonio subía dos veces por el mismo peso.
+def test_rendimiento_que_capitaliza_sube_el_valor_y_no_toca_el_ledger(client):
+    inv = _cdt(client)
+    client.post(
+        f"/api/inv/{inv['id']}/rendimiento",
+        json={"monto": 95, "fecha": "2026-07-01", "capitaliza": True},
+    )
+    i = _uno(client, "inversiones", inv["id"])
+    assert i["valor_actual"] == 1095
+    assert i["valor_actualizado_en"] == "2026-07-01"
+    assert _tx(client) == []
+
+
+def test_rendimiento_pagado_entra_al_ledger_y_no_toca_el_valor(client):
+    inv = _cdt(client)
     client.post(f"/api/inv/{inv['id']}/rendimiento", json={"monto": 95, "fecha": "2026-07-01"})
-    assert _uno(client, "inversiones", inv["id"])["valor_actual"] == 1095
+    assert _uno(client, "inversiones", inv["id"])["valor_actual"] == 1000
+    tx = _tx(client)
+    assert len(tx) == 1
+    assert (tx[0]["tipo"], tx[0]["monto"], tx[0]["categoria"]) == ("ingreso", 95, "Intereses")
+
+
+def test_el_rendimiento_nunca_cuenta_de_los_dos_lados(client):
+    inv = _cdt(client)
+    for capitaliza in (True, False):
+        client.post(
+            f"/api/inv/{inv['id']}/rendimiento",
+            json={"monto": 95, "fecha": "2026-07-01", "capitaliza": capitaliza},
+        )
+    # 95 adentro de la inversión + 95 en el ledger = 95 cada uno, no 190 de cada.
+    valor = _uno(client, "inversiones", inv["id"])["valor_actual"]
+    ledger = sum(t["monto"] for t in _tx(client))
+    assert (valor, ledger) == (1095, 95)
+
+
+def test_rendimiento_pagado_sin_registrar_no_cambia_nada(client):
+    inv = _cdt(client)
+    client.post(
+        f"/api/inv/{inv['id']}/rendimiento",
+        json={"monto": 95, "fecha": "2026-07-01", "registrar_tx": False},
+    )
+    assert _uno(client, "inversiones", inv["id"])["valor_actual"] == 1000
+    assert _tx(client) == []
 
 
 def test_retiro_parcial_reduce_capital_a_prorrata(client):

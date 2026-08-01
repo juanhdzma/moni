@@ -95,3 +95,24 @@ test('un residuo flotante no mantiene viva una deuda pagada', () => {
   assert.equal(tieneSaldo({ saldo_actual: 1 }), true);
   assert.equal(tieneSaldo({ saldo_actual: 250_000 }), true);
 });
+
+test('el rendimiento no infla el patrimonio por los dos lados', () => {
+  // Un CDT de 1.000.000 que paga 95.000: se cuenta una vez, no dos.
+  const pagado = conTx([tx('ingreso', 'Intereses', 95_000)]);
+  pagado.S.inversiones = [{ valor_actual: 1_000_000 }];   // el valor no se movió
+  assert.equal(pagado.netWorth(), 1_095_000);
+
+  const capitalizado = conTx([]);                          // no deja transacción
+  capitalizado.S.inversiones = [{ valor_actual: 1_095_000 }];
+  assert.equal(capitalizado.netWorth(), 1_095_000);
+});
+
+test('la curva de inversiones sigue los aportes y los retiros, no los rendimientos', () => {
+  const ctx = conTx([
+    tx('gasto', 'Inversión', 500_000, { fecha: '2026-08-04' }),
+    tx('ingreso', 'Dividendos', 200_000, { fecha: '2026-08-06' }),
+    // Pagado a la cuenta: salió de la inversión, su valor no cambió.
+    tx('ingreso', 'Intereses', 95_000, { fecha: '2026-08-08' }),
+  ]);
+  assert.deepEqual([...ctx.monthlyInvDelta(2)], [0, 300_000]);
+});

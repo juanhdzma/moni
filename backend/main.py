@@ -154,6 +154,9 @@ class InvRendimiento(BaseModel):
     fecha: str
     notas: str = ""
     registrar_tx: bool = True
+    # Dónde queda el rendimiento: adentro de la inversión (capitaliza) o en tu
+    # cuenta. Son excluyentes y hay que saber cuál es — ver registrar_rendimiento.
+    capitaliza: bool = False
 
     _v_fecha = fecha_requerida("fecha")
 
@@ -511,12 +514,23 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
 
 @app.post("/api/inv/{inv_id}/rendimiento")
 def registrar_rendimiento(inv_id: int, body: InvRendimiento):
+    """Un rendimiento cuenta de UN solo lado, nunca de los dos.
+
+    Antes esto subía valor_actual y además insertaba el ingreso, así que el
+    patrimonio subía dos veces por el mismo peso: un CDT de 1.000.000 que paga
+    95.000 quedaba mostrando 1.190.000. Si capitaliza, la plata sigue adentro de
+    la inversión y no entró a la cartera; si te la pagan, salió de la inversión
+    y su valor no se mueve.
+    """
     conn = db.get_conn()
     try:
         inv = get_row(conn, "inversiones", inv_id)
-        nuevo_valor = pesos(inv["valor_actual"] + body.monto)
-        conn.execute("UPDATE inversiones SET valor_actual = ? WHERE id = ?", (nuevo_valor, inv_id))
-        if body.registrar_tx:
+        if body.capitaliza:
+            conn.execute(
+                "UPDATE inversiones SET valor_actual = ?, valor_actualizado_en = ? WHERE id = ?",
+                (pesos(inv["valor_actual"] + body.monto), body.fecha, inv_id),
+            )
+        elif body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
                 "fecha": body.fecha, "tipo": "ingreso", "categoria": "Intereses",
                 "descripcion": f"Rendimiento · {inv['nombre']}", "monto": body.monto, "notas": body.notas,
