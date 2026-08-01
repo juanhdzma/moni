@@ -1,11 +1,14 @@
 import logging
+import re
 import sqlite3
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Literal, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from . import db
 
@@ -13,119 +16,193 @@ logger = logging.getLogger("moni")
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent
 
-app = FastAPI(title="Moni API")
 
-
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     db.init_db()
+    yield
+
+
+app = FastAPI(title="Moni API", lifespan=lifespan)
+
+# ── Anti-CSRF ─────────────────────────────────────────────────────────────────
+# Moni no tiene login: cualquiera en la LAN que pueda alcanzar el puerto puede
+# usar la API. Lo que sí hay que cerrar es el vector remoto: sin esto, cualquier
+# página web que abras podía hacer un <form method=POST> contra /api/truncate y
+# borrarte todo (un form cross-origin no necesita leer la respuesta). Un form no
+# puede mandar headers custom, y un fetch que sí puede dispara un preflight que
+# nadie contesta porque no hay CORS middleware. Con exigir el header alcanza.
+CSRF_HEADER = "x-moni-request"
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+
+@app.middleware("http")
+async def require_csrf_header(request, call_next):
+    if (
+        request.method not in SAFE_METHODS
+        and request.url.path.startswith("/api/")
+        and CSRF_HEADER not in request.headers
+    ):
+        return JSONResponse({"detail": f"Falta el header {CSRF_HEADER}"}, status_code=403)
+    return await call_next(request)
+
+
+# ── Validación compartida ─────────────────────────────────────────────────────
+# Las fechas se guardan como YYYY-MM-DD o YYYY-MM-DDTHH:MM (ver normDate en el
+# frontend). Sin este check entraba cualquier string y rompía los charts.
+_FECHA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?$")
+
+TipoTx = Literal["ingreso", "gasto", "transfer"]
+Monto = Annotated[float, Field(gt=0)]
+MontoCero = Annotated[float, Field(ge=0)]
+
+
+def _check_fecha(v: str, *, requerida: bool) -> str:
+    v = (v or "").strip()
+    if not v:
+        if requerida:
+            raise ValueError("fecha requerida")
+        return ""
+    if not _FECHA_RE.match(v):
+        raise ValueError("fecha debe ser YYYY-MM-DD o YYYY-MM-DDTHH:MM")
+    return v
+
+
+def fecha_requerida(*fields: str):
+    return field_validator(*fields)(lambda v: _check_fecha(v, requerida=True))
+
+
+def fecha_opcional(*fields: str):
+    return field_validator(*fields)(lambda v: _check_fecha(v, requerida=False))
 
 
 # ── Models ────────────────────────────────────────────────────────────────────
 class TxIn(BaseModel):
     fecha: str
-    tipo: str
-    categoria: str
+    tipo: TipoTx
+    categoria: str = Field(min_length=1)
     descripcion: str = ""
-    monto: float
+    monto: Monto
     notas: str = ""
     tarjeta_id: Optional[int] = None
 
+    _v_fecha = fecha_requerida("fecha")
+
 
 class DeudaIn(BaseModel):
-    nombre: str
-    monto_inicial: float
-    saldo_actual: float
-    tasa_ea: float = 0
-    cuota_mensual: float = 0
+    nombre: str = Field(min_length=1)
+    monto_inicial: MontoCero
+    saldo_actual: MontoCero
+    tasa_ea: MontoCero = 0
+    cuota_mensual: MontoCero = 0
     fecha_inicio: str = ""
     proxima_cuota: str = ""
     es_tarjeta: bool = False
-    cupo: float = 0
+    cupo: MontoCero = 0
     franquicia: str = ""
     crear_tx: bool = False
 
+    _v_fecha = fecha_opcional("fecha_inicio", "proxima_cuota")
+
 
 class DeudaAdelanto(BaseModel):
-    monto: float
-    nuevo_saldo: float
+    monto: Monto
+    nuevo_saldo: MontoCero
     fecha: str
     descripcion: str
     notas: str = ""
     registrar_tx: bool = True
+
+    _v_fecha = fecha_requerida("fecha")
 
 
 class DeudaPago(BaseModel):
-    nuevo_saldo: float
-    total_pagado: float
-    intereses: float = 0
+    nuevo_saldo: MontoCero
+    total_pagado: Monto
+    intereses: MontoCero = 0
     fecha: str
     descripcion: str
     notas: str = ""
     registrar_tx: bool = True
 
+    _v_fecha = fecha_requerida("fecha")
+
 
 class InvIn(BaseModel):
-    nombre: str
-    tipo: str
-    monto_invertido: float
-    valor_actual: float
-    tasa_ea: Optional[float] = None
+    nombre: str = Field(min_length=1)
+    tipo: Literal["fija", "variable"]
+    monto_invertido: MontoCero
+    valor_actual: MontoCero
+    tasa_ea: Optional[MontoCero] = None
     fecha_inicio: str = ""
-    pago: Optional[str] = None
-    dia_pago: Optional[int] = None
+    pago: Optional[Literal["mensual", "vencimiento"]] = None
+    dia_pago: Optional[Annotated[int, Field(ge=1, le=31)]] = None
     valor_actualizado_en: str = ""
     crear_tx: bool = False
 
+    _v_fecha = fecha_opcional("fecha_inicio", "valor_actualizado_en")
+
 
 class InvRendimiento(BaseModel):
-    monto: float
+    monto: Monto
     fecha: str
     notas: str = ""
     registrar_tx: bool = True
+
+    _v_fecha = fecha_requerida("fecha")
 
 
 class InvAporte(BaseModel):
-    monto: float
-    nuevo_valor: float
+    monto: Monto
+    nuevo_valor: MontoCero
     fecha: str
     notas: str = ""
     registrar_tx: bool = True
+
+    _v_fecha = fecha_requerida("fecha")
 
 
 class InvRetiro(BaseModel):
-    tipo: str  # 'total' | 'parcial'
-    monto: float
-    saldo_queda: Optional[float] = None
+    tipo: Literal["total", "parcial"]
+    monto: Monto
+    saldo_queda: Optional[MontoCero] = None
     fecha: str
     notas: str = ""
     registrar_tx: bool = True
 
+    _v_fecha = fecha_requerida("fecha")
+
 
 class ActivoIn(BaseModel):
-    nombre: str
-    valor_inicial: float
-    valor_actual: float
+    nombre: str = Field(min_length=1)
+    valor_inicial: MontoCero
+    valor_actual: MontoCero
     fecha_adquisicion: str = ""
     valor_actualizado_en: str = ""
     crear_tx: bool = False
 
+    _v_fecha = fecha_opcional("fecha_adquisicion", "valor_actualizado_en")
+
 
 class ActivoVenta(BaseModel):
-    precio: float
+    precio: Monto
     fecha: str
     notas: str = ""
     registrar_tx: bool = True
 
+    _v_fecha = fecha_requerida("fecha")
+
 
 class RecIn(BaseModel):
-    nombre: str
-    tipo: str
-    monto: float
-    frecuencia: str
+    nombre: str = Field(min_length=1)
+    tipo: Literal["ingreso", "gasto"]
+    monto: Monto
+    frecuencia: Literal["semanal", "quincenal", "mensual", "bimestral", "trimestral", "semestral", "anual"]
     activo: bool = True
     fecha_inicio: str = ""
     notas: str = ""
+
+    _v_fecha = fecha_opcional("fecha_inicio")
 
 
 class ImportPayload(BaseModel):
@@ -150,13 +227,14 @@ TABLES = {
 }
 
 # Column lists (incl. id) matching db.SCHEMA, used for full-table export/import/truncate.
-# Import order matters: transacciones.tarjeta_id references deudas.id.
+# Import order matters: transacciones.tarjeta_id apunta a deudas.id.
+# El modelo es el que valida cada fila del backup — sin él entraba cualquier cosa.
 IMPORT_TABLES = [
-    ("deudas", ["id"] + DEUDA_COLS + ["total_intereses"]),
-    ("inversiones", ["id"] + INV_COLS),
-    ("activos", ["id"] + ACTIVO_COLS),
-    ("recurrentes", ["id"] + REC_COLS),
-    ("transacciones", ["id"] + TX_COLS),
+    ("deudas", ["id"] + DEUDA_COLS + ["total_intereses"], DeudaIn),
+    ("inversiones", ["id"] + INV_COLS, InvIn),
+    ("activos", ["id"] + ACTIVO_COLS, ActivoIn),
+    ("recurrentes", ["id"] + REC_COLS, RecIn),
+    ("transacciones", ["id"] + TX_COLS, TxIn),
 ]
 
 
@@ -252,6 +330,9 @@ def register_crud(path, model, linked_tx=None):
         conn = db.get_conn()
         try:
             delete_row(conn, table, row_id)
+            if table == "deudas":
+                # Sin esto las tx de la tarjeta quedan apuntando a un id muerto.
+                conn.execute("UPDATE transacciones SET tarjeta_id = NULL WHERE tarjeta_id = ?", (row_id,))
             conn.commit()
         finally:
             conn.close()
@@ -280,7 +361,13 @@ def _ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
     if tarjeta_id is None or delta == 0:
         return
     tarjeta = conn.execute("SELECT * FROM deudas WHERE id = ?", (tarjeta_id,)).fetchone()
-    if tarjeta is None or not tarjeta["es_tarjeta"]:
+    # Una tarjeta borrada deja tx huérfanas apuntando a ella. Si acá tiramos 400
+    # esas tx quedan imposibles de editar Y de borrar (delete_tx pasa por aquí):
+    # no hay saldo que ajustar, así que se sigue de largo.
+    if tarjeta is None:
+        logger.warning("tx apunta a tarjeta %s inexistente; se ignora el ajuste de saldo", tarjeta_id)
+        return
+    if not tarjeta["es_tarjeta"]:
         raise HTTPException(400, f"tarjeta_id {tarjeta_id} no es una tarjeta válida")
     nuevo_saldo = tarjeta["saldo_actual"] + delta
     conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (nuevo_saldo, tarjeta_id))
@@ -339,7 +426,9 @@ def delete_tx(row_id: int):
 def pagar_deuda(deuda_id: int, body: DeudaPago):
     conn = db.get_conn()
     try:
-        get_row(conn, "deudas", deuda_id)
+        deuda = get_row(conn, "deudas", deuda_id)
+        if body.nuevo_saldo > deuda["saldo_actual"]:
+            raise HTTPException(400, "El saldo después del pago no puede superar el saldo actual")
         conn.execute(
             "UPDATE deudas SET saldo_actual = ?, total_intereses = total_intereses + ? WHERE id = ?",
             (body.nuevo_saldo, body.intereses, deuda_id),
@@ -430,6 +519,8 @@ def retirar_inv(inv_id: int, body: InvRetiro):
         else:
             if body.saldo_queda is None:
                 raise HTTPException(400, "saldo_queda requerido para retiro parcial")
+            if body.saldo_queda > inv["valor_actual"]:
+                raise HTTPException(400, "El saldo que queda no puede superar el valor actual")
             pct_retiro = (body.monto / inv["valor_actual"]) if inv["valor_actual"] > 0 else 0
             nuevo_invertido = max(0.0, inv["monto_invertido"] * (1 - pct_retiro))
             conn.execute(
@@ -466,14 +557,34 @@ def vender_activo(activo_id: int, body: ActivoVenta):
 
 
 # ── Backup: import / truncate ─────────────────────────────────────────────────
+def _validar_fila_import(table, model, row, idx):
+    if not isinstance(row, dict):
+        raise HTTPException(400, f"{table}[{idx}]: se esperaba un objeto")
+    try:
+        limpia = model.model_validate(row).model_dump()
+    except Exception as e:
+        raise HTTPException(400, f"{table}[{idx}] inválido: {e}")
+    # El modelo no cubre id ni total_intereses (no se mandan al crear).
+    for extra in ("id", "total_intereses"):
+        if extra in row and row[extra] is not None:
+            if not isinstance(row[extra], (int, float)) or isinstance(row[extra], bool):
+                raise HTTPException(400, f"{table}[{idx}].{extra} debe ser numérico")
+            limpia[extra] = row[extra]
+    return limpia
+
+
 @app.post("/api/import")
 def import_data(body: ImportPayload):
+    payload = body.model_dump()
+    validadas = {
+        table: [_validar_fila_import(table, model, r, i) for i, r in enumerate(payload.get(table) or [])]
+        for table, _cols, model in IMPORT_TABLES
+    }
     conn = db.get_conn()
     try:
-        payload = body.model_dump()
         counts = {}
-        for table, cols in IMPORT_TABLES:
-            rows = payload.get(table) or []
+        for table, cols, _model in IMPORT_TABLES:
+            rows = validadas[table]
             col_list = ", ".join(cols)
             placeholders = ", ".join("?" * len(cols))
             for row in rows:
@@ -495,7 +606,7 @@ def import_data(body: ImportPayload):
 def truncate_all():
     conn = db.get_conn()
     try:
-        for table, _cols in IMPORT_TABLES:
+        for table, _cols, _model in IMPORT_TABLES:
             conn.execute(f"DELETE FROM {table}")
             conn.execute("DELETE FROM sqlite_sequence WHERE name = ?", (table,))
         conn.commit()
