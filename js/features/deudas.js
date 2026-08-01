@@ -127,7 +127,7 @@ async function saveDeuda(id) {
 async function deleteDeuda(id) {
   const d = S.deudas.find(x => x._id === id);
   if (!confirm(`¿Eliminar "${d?.nombre}"?`)) return;
-  await crudOp('deuda', 'delete', { _id: id });
+  await crudOpOrBanner('deuda', 'delete', { _id: id });
 }
 
 // ── Pago de cuota / Liquidar ──────────────────────────────────────────────────
@@ -367,6 +367,19 @@ async function saveDeudaAdelanto(id) {
   } catch(err) { setModalStatus('err', '❌ ' + err.message); }
 }
 
+// El backend acumula el interés exacto de cada pago en deudas.total_intereses
+// (ver pagar_deuda). Solo se cae al estimado de amortización cuando esa cifra
+// todavía está en cero: deuda cargada a mano, sin pagos hechos dentro de Moni.
+function interesesPagados(d) {
+  if (d.total_intereses > 0) return { valor: d.total_intereses, exacto: true };
+  const est = estimarInteresesPagados(d.monto_inicial, d.saldo_actual, d.tasa_ea, d.cuota_mensual);
+  return est === null ? null : { valor: est, exacto: false };
+}
+
+function fmtIntereses(info) {
+  return (info.exacto ? '' : '~') + cop(info.valor);
+}
+
 function estimarInteresesPagados(montoInicial, saldoActual, tasaEA, cuotaMensual) {
   if (!tasaEA || !cuotaMensual || !montoInicial || saldoActual >= montoInicial) return null;
   const tasaMV = Math.pow(1 + tasaEA / 100, 1 / 12) - 1;
@@ -387,7 +400,7 @@ function prestamoCardHtml(d) {
   const progress         = d.monto_inicial > 0 ? (1 - d.saldo_actual / d.monto_inicial) * 100 : 0;
   const pagado           = d.monto_inicial - d.saldo_actual;
   const mesesLeft        = d.cuota_mensual > 0 ? Math.ceil(d.saldo_actual / d.cuota_mensual) : null;
-  const interesesPagados = estimarInteresesPagados(d.monto_inicial, d.saldo_actual, d.tasa_ea, d.cuota_mensual);
+  const intereses        = interesesPagados(d);
   const barColor         = progress >= 75 ? 'var(--income-mid)' : progress >= 40 ? 'var(--debt-mid)' : 'var(--expense-mid)';
   return `
   <div class="debt-card">
@@ -408,10 +421,10 @@ function prestamoCardHtml(d) {
         <div style="font-size:var(--text-2xs);font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Capital</div>
         <div style="font-size:var(--text-sm);font-weight:600">${cop(pagado)}</div>
       </div>
-      ${interesesPagados !== null ? `
+      ${intereses !== null ? `
       <div style="text-align:center">
         <div style="font-size:var(--text-2xs);font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Intereses</div>
-        <div style="font-size:var(--text-sm);font-weight:600;color:var(--expense)">~${cop(interesesPagados)}</div>
+        <div style="font-size:var(--text-sm);font-weight:600;color:var(--expense)" title="${intereses.exacto ? 'Suma de los pagos registrados en Moni' : 'Estimado por amortización — todavía no hay pagos registrados'}">${fmtIntereses(intereses)}</div>
       </div>` : ''}
       <div style="text-align:right">
         <div style="font-size:var(--text-2xs);font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Total</div>
@@ -462,10 +475,9 @@ function renderDeudas() {
   const terminadas  = S.deudas.filter(d => !d.es_tarjeta && d.saldo_actual <= 0);
   const total       = activas.reduce((s,d) => s + d.saldo_actual, 0);
   const totalCuotas = activas.reduce((s,d) => s + d.cuota_mensual, 0);
-  const totalIntereses = S.deudas.reduce((s,d) => {
-    const i = estimarInteresesPagados(d.monto_inicial, d.saldo_actual, d.tasa_ea, d.cuota_mensual);
-    return s + (i || 0);
-  }, 0);
+  const infoIntereses  = S.deudas.map(interesesPagados).filter(Boolean);
+  const totalIntereses = infoIntereses.reduce((s, i) => s + i.valor, 0);
+  const totalExacto    = infoIntereses.every(i => i.exacto);
 
   if (sumEl) sumEl.innerHTML = `
     <div class="stat-summary stat-summary-4">
@@ -488,7 +500,7 @@ function renderDeudas() {
       </div>
       <div class="stat-summary-item">
         <div class="stat-label">Intereses pagados</div>
-        <div class="stat-value" style="color:var(--expense)">~${cop(totalIntereses)}</div>
+        <div class="stat-value" style="color:var(--expense)">${totalExacto ? '' : '~'}${cop(totalIntereses)}</div>
         <div class="stat-sub">costo del crédito</div>
       </div>
     </div>`;
@@ -518,7 +530,7 @@ function renderDeudas() {
         <div class="section-title" style="margin-bottom:12px">Préstamos terminados</div>
         <div class="grid-2">
           ${terminadas.map(d => {
-            const intereses = estimarInteresesPagados(d.monto_inicial, 0, d.tasa_ea, d.cuota_mensual);
+            const intereses = interesesPagados(d);
             return `
             <div class="debt-card" style="opacity:0.7">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
@@ -528,7 +540,7 @@ function renderDeudas() {
               <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:12px">${pct(d.tasa_ea)}% EA</div>
               <div style="font-size:var(--text-2xl);font-weight:700;letter-spacing:-0.02em;line-height:1">${cop(d.monto_inicial)}</div>
               <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:4px">capital total pagado</div>
-              ${intereses !== null ? `<div style="font-size:var(--text-sm);color:var(--expense);margin-top:4px">~${cop(intereses)} en intereses</div>` : ''}
+              ${intereses !== null ? `<div style="font-size:var(--text-sm);color:var(--expense);margin-top:4px">${fmtIntereses(intereses)} en intereses</div>` : ''}
               <div class="card-actions">
                 <button class="btn btn-dim btn-sm" style="flex:1" onclick="openDeudaFormById(${d._id})">Ver / Editar</button>
               </div>
