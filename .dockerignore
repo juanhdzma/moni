@@ -1,5 +1,27 @@
-backend/data/
+# Entornos y caches de Python
+.venv/
+venv/
 __pycache__/
 *.pyc
-.DS_Store
+.pytest_cache/
+
+# Estado local: la db de dev NO va dentro de la imagen
+data/
+backend/data/
+*.db
+*.db-wal
+*.db-shm
+
+# Repo / tooling
+.git/
+.github/
+.gitignore
+.dockerignore
 .claude/
+.DS_Store
+
+# Docs y tests: no se sirven ni se corren en runtime
+docs/
+backend/tests/
+*.md
+LICENSE
