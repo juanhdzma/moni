@@ -1,11 +1,11 @@
 const FRECUENCIAS = {
-  semanal:    { label: 'Semanal',    factor: 52 / 12 },
-  quincenal:  { label: 'Quincenal', factor: 2 },
-  mensual:    { label: 'Mensual',   factor: 1 },
-  bimestral:  { label: 'Bimestral', factor: 1 / 2 },
-  trimestral: { label: 'Trimestral',factor: 1 / 3 },
-  semestral:  { label: 'Semestral', factor: 1 / 6 },
-  anual:      { label: 'Anual',     factor: 1 / 12 },
+  semanal:    { label: 'Semanal',    factor: 52 / 12, dias: 7 },
+  quincenal:  { label: 'Quincenal',  factor: 2,       dias: 14 },
+  mensual:    { label: 'Mensual',    factor: 1,       meses: 1 },
+  bimestral:  { label: 'Bimestral',  factor: 1 / 2,   meses: 2 },
+  trimestral: { label: 'Trimestral', factor: 1 / 3,   meses: 3 },
+  semestral:  { label: 'Semestral',  factor: 1 / 6,   meses: 6 },
+  anual:      { label: 'Anual',      factor: 1 / 12,  meses: 12 },
 };
 
 function toMensual(monto, frecuencia) {
@@ -73,23 +73,43 @@ function setRecTipo(tipo) {
   });
 }
 
-function nextPaymentDate(fechaInicio, frecuencia) {
-  if (!fechaInicio) return null;
-  const start = new Date(fechaInicio);
-  if (isNaN(start)) return null;
-  const now = new Date(); now.setHours(0,0,0,0);
+// new Date('2026-08-15') se parsea como medianoche UTC, que en GMT-5 es el 14 a
+// las 19:00: el pago de hoy quedaba en el pasado y saltaba al período siguiente.
+// El resto del código arma las fechas con el truco 'T12:00:00'; acá se arman
+// desde los componentes, que es lo mismo sin depender del mediodía.
+function _fechaLocal(fecha) {
+  const m = normDate(fecha).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
 
-  if (frecuencia === 'semanal' || frecuencia === 'quincenal') {
-    const days = frecuencia === 'semanal' ? 7 : 14;
-    let next = new Date(start);
-    while (next < now) next = new Date(next.getTime() + days * 86400000);
+// setMonth(+1) sobre un día 29-31 se desborda al mes siguiente (31 de enero →
+// 3 de marzo) y de ahí en más el recurrente queda corrido. Se ancla el día al
+// original, recortándolo al último día del mes cuando no existe.
+function _sumarMeses(base, n, dia) {
+  const d = new Date(base.getFullYear(), base.getMonth() + n, 1);
+  d.setDate(Math.min(dia, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+  return d;
+}
+
+function nextPaymentDate(fechaInicio, frecuencia) {
+  const start = _fechaLocal(fechaInicio);
+  if (!start) return null;
+  const now = new Date(); now.setHours(0,0,0,0);
+  const frec = FRECUENCIAS[frecuencia];
+  if (!frec) return null;
+
+  if (frec.dias) {
+    const periodos = Math.max(0, Math.ceil((now - start) / (frec.dias * 86400000)));
+    const next = new Date(start);
+    next.setDate(start.getDate() + periodos * frec.dias);
     return next;
   }
-  const monthMap = { mensual:1, bimestral:2, trimestral:3, semestral:6, anual:12 };
-  const months = monthMap[frecuencia];
-  if (!months) return null;
-  let next = new Date(start);
-  while (next < now) { next = new Date(next); next.setMonth(next.getMonth() + months); }
+
+  const dia   = start.getDate();
+  const meses = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  let k = Math.max(0, Math.ceil(meses / frec.meses));
+  let next = _sumarMeses(start, k * frec.meses, dia);
+  while (next < now) next = _sumarMeses(start, ++k * frec.meses, dia);
   return next;
 }
 

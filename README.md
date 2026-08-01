@@ -116,6 +116,12 @@ pip install -r backend/requirements-dev.txt
 python -m pytest backend/tests -q
 ```
 
+The frontend has a smaller suite covering the money and date math — net worth flows, recurring-payment dates, frequency normalization. It runs on Node's built-in test runner, with no dependencies and no install step; the harness loads the plain `public/js/` scripts into a `node:vm` context and pins the timezone, so date bugs don't depend on where you run it.
+
+```bash
+node --test tests/frontend
+```
+
 Each test gets a throwaway SQLite file, so runs never touch your real data. The frontend has no automated tests — verify UI changes by exercising the app.
 
 ### Calling the API by hand
