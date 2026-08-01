@@ -49,8 +49,14 @@ export function loadMoni(files, { now = null, state = {} } = {}) {
   return ctx;
 }
 
+// Ojo: solo las declaraciones `function` quedan colgadas del objeto de contexto.
+// Un `const` de nivel superior vive en el scope léxico global, que los scripts
+// comparten entre sí pero no expone; para leerlo desde un test hay que
+// evaluarlo con vm.runInContext(nombre, ctx).
+
 // Los helpers de plata viven repartidos entre format/dashboard/recurrentes.
 export const MONEY_FILES = [
+  'config.js',
   'services/format.js',
   'features/dashboard.js',
   'features/recurrentes.js',

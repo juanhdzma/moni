@@ -84,3 +84,14 @@ test('la serie mensual respeta la ventana de meses', () => {
   // El spread saca el array del realm del vm: deepStrictEqual compara prototipos.
   assert.deepEqual([...ctx.monthlyPatrimonio(3)], [0, 2_000, 1_000]);
 });
+
+test('un residuo flotante no mantiene viva una deuda pagada', () => {
+  // saldo_actual es REAL en SQLite y las cuentas del backend dejan fracciones;
+  // con "> 0" una deuda saldada seguía contando como activa para siempre.
+  const { tieneSaldo } = conTx([]);
+  assert.equal(tieneSaldo({ saldo_actual: 1.16e-10 }), false);
+  assert.equal(tieneSaldo({ saldo_actual: 0 }), false);
+  assert.equal(tieneSaldo({ saldo_actual: 0.4 }), false);
+  assert.equal(tieneSaldo({ saldo_actual: 1 }), true);
+  assert.equal(tieneSaldo({ saldo_actual: 250_000 }), true);
+});

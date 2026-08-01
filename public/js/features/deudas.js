@@ -474,8 +474,8 @@ function renderDeudas() {
   const sumEl = document.getElementById('deudas-total');
   if (!grid) return;
 
-  const activas     = S.deudas.filter(d => d.es_tarjeta || d.saldo_actual > 0);
-  const terminadas  = S.deudas.filter(d => !d.es_tarjeta && d.saldo_actual <= 0);
+  const activas     = S.deudas.filter(d => d.es_tarjeta || tieneSaldo(d));
+  const terminadas  = S.deudas.filter(d => !d.es_tarjeta && !tieneSaldo(d));
   const total       = activas.reduce((s,d) => s + d.saldo_actual, 0);
   const totalCuotas = activas.reduce((s,d) => s + d.cuota_mensual, 0);
   const infoIntereses  = S.deudas.map(interesesPagados).filter(Boolean);

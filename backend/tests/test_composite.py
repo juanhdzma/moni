@@ -168,3 +168,31 @@ def test_la_tarjeta_no_tiene_vencimiento_que_correr(client, tarjeta):
     r = _pago(client, tarjeta["id"], nuevo_saldo=0, total_pagado=50_000, avanzar_cuota=True)
     assert r.status_code == 200
     assert r.json()["proxima_cuota"] == ""
+
+
+# ── Redondeo a pesos ─────────────────────────────────────────────────────────
+def test_el_retiro_parcial_deja_el_capital_en_pesos_enteros(client):
+    inv = client.post(
+        "/api/inv",
+        json={"nombre": "Fondo", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 3000},
+    ).json()
+    # 1/3 del valor: la prorrata da 666.6666… y esa fracción quedaba guardada.
+    client.post(
+        f"/api/inv/{inv['id']}/retiro",
+        json={"tipo": "parcial", "monto": 1000, "saldo_queda": 2000, "fecha": "2026-07-01"},
+    )
+    i = _uno(client, "inversiones", inv["id"])
+    assert i["monto_invertido"] == 667
+    assert i["monto_invertido"] == int(i["monto_invertido"])
+
+
+def test_saldar_la_deuda_deja_el_saldo_exacto_en_cero(client, prestamo):
+    client.post(
+        f"/api/deuda/{prestamo['id']}/pago",
+        json={
+            "nuevo_saldo": 0.0000000001, "total_pagado": 1_000_000, "intereses": 0,
+            "fecha": "2026-08-01", "descripcion": "Liquidación", "registrar_tx": False,
+        },
+    )
+    d = _uno(client, "deudas", prestamo["id"])
+    assert d["saldo_actual"] == 0

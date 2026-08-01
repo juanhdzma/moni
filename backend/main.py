@@ -244,6 +244,16 @@ IMPORT_TABLES = [
 ]
 
 
+def pesos(v: float) -> float:
+    """Redondea a pesos enteros, que es la unidad en la que Moni guarda plata.
+
+    Los montos son REAL en SQLite y la prorrata del retiro parcial produce
+    fracciones siempre. Sin redondear, un saldo "en cero" termina valiendo
+    1.16e-10: la deuda nunca figura como saldada y sigue contando como activa.
+    """
+    return float(round(v))
+
+
 # ── SQL helpers ───────────────────────────────────────────────────────────────
 def insert_row(conn, table, cols, values):
     col_list = ", ".join(cols)
@@ -375,7 +385,7 @@ def _ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
         return
     if not tarjeta["es_tarjeta"]:
         raise HTTPException(400, f"tarjeta_id {tarjeta_id} no es una tarjeta válida")
-    nuevo_saldo = tarjeta["saldo_actual"] + delta
+    nuevo_saldo = pesos(tarjeta["saldo_actual"] + delta)
     conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (nuevo_saldo, tarjeta_id))
     logger.info(
         "tarjeta %s: saldo_actual %.2f -> %.2f (delta %.2f)",
@@ -458,7 +468,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
             raise HTTPException(400, "El saldo después del pago no puede superar el saldo actual")
         conn.execute(
             "UPDATE deudas SET saldo_actual = ?, total_intereses = total_intereses + ? WHERE id = ?",
-            (body.nuevo_saldo, body.intereses, deuda_id),
+            (pesos(body.nuevo_saldo), pesos(body.intereses), deuda_id),
         )
         proxima = _proxima_cuota_despues_del_pago(deuda, body)
         if proxima is not None:
@@ -483,7 +493,7 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
             raise HTTPException(400, "Solo las tarjetas admiten adelantos")
         if body.nuevo_saldo < tarjeta["saldo_actual"]:
             raise HTTPException(400, "El saldo después del adelanto no puede ser menor al saldo actual")
-        conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (body.nuevo_saldo, deuda_id))
+        conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (pesos(body.nuevo_saldo), deuda_id))
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
                 "fecha": body.fecha, "tipo": "ingreso", "categoria": "Avance de tarjeta",
@@ -504,7 +514,7 @@ def registrar_rendimiento(inv_id: int, body: InvRendimiento):
     conn = db.get_conn()
     try:
         inv = get_row(conn, "inversiones", inv_id)
-        nuevo_valor = inv["valor_actual"] + body.monto
+        nuevo_valor = pesos(inv["valor_actual"] + body.monto)
         conn.execute("UPDATE inversiones SET valor_actual = ? WHERE id = ?", (nuevo_valor, inv_id))
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
@@ -522,10 +532,10 @@ def aportar_inv(inv_id: int, body: InvAporte):
     conn = db.get_conn()
     try:
         inv = get_row(conn, "inversiones", inv_id)
-        nuevo_invertido = inv["monto_invertido"] + body.monto
+        nuevo_invertido = pesos(inv["monto_invertido"] + body.monto)
         conn.execute(
             "UPDATE inversiones SET monto_invertido = ?, valor_actual = ?, valor_actualizado_en = ? WHERE id = ?",
-            (nuevo_invertido, body.nuevo_valor, body.fecha, inv_id),
+            (nuevo_invertido, pesos(body.nuevo_valor), body.fecha, inv_id),
         )
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
@@ -552,10 +562,10 @@ def retirar_inv(inv_id: int, body: InvRetiro):
             if body.saldo_queda > inv["valor_actual"]:
                 raise HTTPException(400, "El saldo que queda no puede superar el valor actual")
             pct_retiro = (body.monto / inv["valor_actual"]) if inv["valor_actual"] > 0 else 0
-            nuevo_invertido = max(0.0, inv["monto_invertido"] * (1 - pct_retiro))
+            nuevo_invertido = pesos(max(0.0, inv["monto_invertido"] * (1 - pct_retiro)))
             conn.execute(
                 "UPDATE inversiones SET valor_actual = ?, monto_invertido = ?, valor_actualizado_en = ? WHERE id = ?",
-                (body.saldo_queda, nuevo_invertido, body.fecha, inv_id),
+                (pesos(body.saldo_queda), nuevo_invertido, body.fecha, inv_id),
             )
             descripcion = f"Retiro parcial · {inv['nombre']}"
         if body.registrar_tx:

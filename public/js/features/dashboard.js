@@ -100,7 +100,7 @@ function renderDashboard() {
   const proySign    = proyDelta >= 0 ? '+' : '−';
   const proyStr     = `${proySign}${copShort(Math.abs(proyDelta))} proyectados próx. 12 meses`;
 
-  const deudasActivas  = S.deudas.filter(d => d.saldo_actual > 0);
+  const deudasActivas  = S.deudas.filter(tieneSaldo);
   const cuotaTotal     = deudasActivas.reduce((s,d) => s+d.cuota_mensual, 0);
   const totalInvertido = S.inversiones.reduce((s,i) => s + i.monto_invertido, 0);
   const gananciaInv    = totalInv - totalInvertido;
@@ -386,7 +386,7 @@ function renderProximasOperaciones() {
   let events = [];
 
   // Deudas — proxima_cuota
-  S.deudas.filter(d => d.saldo_actual > 0 && d.proxima_cuota).forEach(d => {
+  S.deudas.filter(d => tieneSaldo(d) && d.proxima_cuota).forEach(d => {
     const date = new Date(d.proxima_cuota.split('T')[0] + 'T12:00:00'); date.setHours(0,0,0,0);
     if (date >= past && date <= limit)
       events.push({ date, label: d.nombre, sub: 'Cuota deuda', monto: -d.cuota_mensual, color: 'var(--red)', type: 'deuda', sourceId: d._id });

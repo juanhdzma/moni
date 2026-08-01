@@ -1,3 +1,10 @@
+// Los montos son pesos enteros, pero SQLite los guarda como REAL y las cuentas
+// del backend (la prorrata de un retiro, un ajuste de saldo) dejan fracciones.
+// Un residuo por debajo de $1 es ruido de coma flotante, no plata que se deba:
+// sin este umbral, una deuda pagada del todo seguía contando como activa.
+const SALDO_MINIMO = 1;
+function tieneSaldo(d) { return d.saldo_actual >= SALDO_MINIMO; }
+
 const FRANQUICIA_ICONS = {
   Visa:       'assets/franquicias/visa.svg',
   Mastercard: 'assets/franquicias/mastercard.svg',
