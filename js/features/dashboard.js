@@ -1,18 +1,30 @@
 // ── CSS variable helper ───────────────────────────────────────────────────────
 const cv = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-// ── Instancias de sparklines ──────────────────────────────────────────────────
-const _sparks = {};
+// ── Flujo de cartera ──────────────────────────────────────────────────────────
+// Qué entra y sale de la plata disponible. Un gasto con tarjeta NO la toca (mueve
+// el saldo de la deuda); un pago de deuda ('transfer') SÍ la toca aunque no sea
+// un gasto. Esta es la única definición: los KPIs y la serie histórica del chart
+// tienen que usarla igual o la curva no cierra con su propio punto final.
+const esGastoCartera = t => t.tipo === 'gasto' && !t.tarjeta_id;
 
-function monthlyTotals(tipo, count = 7) {
-  const now = new Date();
-  return Array.from({ length: count }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
-    const m = isoMonth(d);
-    return S.transacciones
-      .filter(t => txMonth(t) === m && t.tipo === tipo)
-      .reduce((s, t) => s + t.monto, 0);
-  });
+function flujoCartera(list) {
+  return list.reduce((s, t) => {
+    if (t.tipo === 'ingreso')   return s + t.monto;
+    if (esGastoCartera(t))      return s - t.monto;
+    if (t.tipo === 'transfer')  return s - t.monto;
+    return s;
+  }, 0);
+}
+
+// Cartera + inversiones + activos − deudas. El chart de evolución arranca de acá
+// y camina hacia atrás restando monthlyBalance, así que ambos tienen que salir
+// de la misma fórmula.
+function netWorth() {
+  return flujoCartera(S.transacciones)
+       + S.inversiones.reduce((s, i) => s + i.valor_actual, 0)
+       + S.activos.reduce((s, a) => s + a.valor_actual, 0)
+       - S.deudas.reduce((s, d) => s + d.saldo_actual, 0);
 }
 
 function monthlyBalance(count = 7) {
@@ -20,48 +32,7 @@ function monthlyBalance(count = 7) {
   return Array.from({ length: count }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
     const m = isoMonth(d);
-    const tx = S.transacciones.filter(t => txMonth(t) === m);
-    return tx.filter(t => t.tipo === 'ingreso').reduce((s,t) => s+t.monto, 0)
-         - tx.filter(t => t.tipo === 'gasto').reduce((s,t) => s+t.monto, 0);
-  });
-}
-
-function renderSparkline(id, data, hexColor) {
-  const canvas = document.getElementById(id);
-  if (!canvas) return;
-  if (_sparks[id]) { _sparks[id].destroy(); delete _sparks[id]; }
-  if (!data.some(v => v > 0)) return;
-
-  _sparks[id] = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels: data.map((_, i) => i),
-      datasets: [{
-        data,
-        borderColor: hexColor,
-        backgroundColor: (ctx) => {
-          const { chart } = ctx;
-          if (!chart.chartArea) return 'transparent';
-          const g = chart.ctx.createLinearGradient(0, chart.chartArea.top, 0, chart.chartArea.bottom);
-          g.addColorStop(0, hexColor + '33');
-          g.addColorStop(1, hexColor + '00');
-          return g;
-        },
-        fill: true, borderWidth: 2,
-        pointRadius: 0, pointHoverRadius: 0,
-        tension: 0.4,
-      }]
-    },
-    options: {
-      responsive: false, maintainAspectRatio: false,
-      animation: { duration: 800, easing: 'easeInOutQuart' },
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      scales: {
-        x: { display: false },
-        y: { display: false, beginAtZero: true },
-      },
-      layout: { padding: 0 },
-    }
+    return flujoCartera(S.transacciones.filter(t => txMonth(t) === m));
   });
 }
 
@@ -76,7 +47,6 @@ function renderDashboard() {
   const prev = ofMonth(prevM);
 
   const sumTipo    = (list, tipo) => list.filter(t => t.tipo === tipo).reduce((s,t) => s+t.monto, 0);
-  const esGastoCartera = t => t.tipo === 'gasto' && !t.tarjeta_id; // los gastos con tarjeta no salen de la cartera todavía
 
   const ingresos  = sumTipo(cur, 'ingreso');
   const gastos    = cur.filter(esGastoCartera).reduce((s,t) => s+t.monto, 0);
@@ -84,9 +54,8 @@ function renderDashboard() {
   const totalDeuda   = S.deudas.reduce((s,d) => s + d.saldo_actual, 0);
   const totalInv     = S.inversiones.reduce((s,i) => s + i.valor_actual, 0);
   const totalActivos = S.activos.reduce((s,a) => s + a.valor_actual, 0);
-  const efectivo     = S.transacciones.filter(t => t.tipo === 'ingreso').reduce((s,t) => s+t.monto, 0)
-                     - S.transacciones.filter(esGastoCartera).reduce((s,t) => s+t.monto, 0);
-  const patrimonio   = totalInv + totalActivos - totalDeuda;
+  const efectivo     = flujoCartera(S.transacciones);
+  const patrimonio   = netWorth();
 
   const statCard = (id, value, sub, colorVar) => {
     const el = document.getElementById(id);
@@ -178,10 +147,7 @@ function renderNetWorthChart() {
   const canvas = document.getElementById('chart-evolution');
   if (!canvas) return;
 
-  const totalDeuda   = S.deudas.reduce((s, d) => s + d.saldo_actual, 0);
-  const totalInv     = S.inversiones.reduce((s, i) => s + i.valor_actual, 0);
-  const totalActivos = S.activos.reduce((s, a) => s + a.valor_actual, 0);
-  const patrimonio   = totalInv + totalActivos - totalDeuda;
+  const patrimonio = netWorth();
 
   const count = _periodMonths(_nwPeriod, S.transacciones.map(t => normDate(t.fecha).slice(0, 10)));
   const monthlyBal = monthlyBalance(count);
