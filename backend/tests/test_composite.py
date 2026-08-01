@@ -125,3 +125,46 @@ def test_crear_tarjeta_nunca_registra_tx(client):
         json={"nombre": "Visa", "monto_inicial": 0, "saldo_actual": 0, "es_tarjeta": True, "crear_tx": True},
     )
     assert _tx(client) == []
+
+
+# ── proxima_cuota ────────────────────────────────────────────────────────────
+# Sin avanzar la fecha, el dashboard mostraba la cuota vencida para siempre y,
+# al pasar la ventana de atrasos, la deuda desaparecía de próximas operaciones
+# y no volvía nunca.
+def _pago(client, deuda_id, **extra):
+    body = {
+        "nuevo_saldo": 900_000, "total_pagado": 100_000, "intereses": 0,
+        "fecha": "2026-08-01", "descripcion": "Cuota", "registrar_tx": False,
+    }
+    body.update(extra)
+    return client.post(f"/api/deuda/{deuda_id}/pago", json=body)
+
+
+def test_pagar_la_cuota_corre_el_vencimiento_un_mes(client, prestamo):
+    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-08-05"})
+    r = _pago(client, prestamo["id"], avanzar_cuota=True)
+    assert r.json()["proxima_cuota"] == "2026-09-05"
+
+
+def test_el_abono_extraordinario_no_corre_el_vencimiento(client, prestamo):
+    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-08-05"})
+    r = _pago(client, prestamo["id"])
+    assert r.json()["proxima_cuota"] == "2026-08-05"
+
+
+def test_el_vencimiento_ancla_el_dia_en_meses_cortos(client, prestamo):
+    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-01-31"})
+    r = _pago(client, prestamo["id"], avanzar_cuota=True)
+    assert r.json()["proxima_cuota"] == "2026-02-28"
+
+
+def test_saldar_la_deuda_limpia_el_vencimiento(client, prestamo):
+    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-08-05"})
+    r = _pago(client, prestamo["id"], nuevo_saldo=0, total_pagado=1_000_000)
+    assert r.json()["proxima_cuota"] == ""
+
+
+def test_la_tarjeta_no_tiene_vencimiento_que_correr(client, tarjeta):
+    r = _pago(client, tarjeta["id"], nuevo_saldo=0, total_pagado=50_000, avanzar_cuota=True)
+    assert r.status_code == 200
+    assert r.json()["proxima_cuota"] == ""

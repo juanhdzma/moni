@@ -190,7 +190,7 @@ function openDeudaPayFormById(id, liquidar = false) {
     </div>
     ${advancedToggle('Registrar en transacciones', 'Desactivá si ya lo registraste en otra parte.')}
     <div class="modal-footer">
-      <button class="btn btn-accent" onclick="saveDeudaPay(${d._id})">${liquidar ? 'Abonar' : 'Registrar pago'}</button>
+      <button class="btn btn-accent" onclick="saveDeudaPay(${d._id}, ${!liquidar})">${liquidar ? 'Abonar' : 'Registrar pago'}</button>
       <button class="btn btn-dim" onclick="closeModal();openDeudaFormById(${d._id})">Editar deuda</button>
       <button class="btn btn-dim" style="margin-left:auto" onclick="closeModal()">Cancelar</button>
     </div>
@@ -213,7 +213,9 @@ function calcDeudaPay() {
   document.getElementById('pay-intereses').textContent = cop(intereses);
 }
 
-async function saveDeudaPay(id) {
+// avanzarCuota corre proxima_cuota un mes en el backend: aplica al pago de la
+// cuota mensual, no a un abono extraordinario ni a un pago de tarjeta.
+async function saveDeudaPay(id, avanzarCuota = false) {
   const saldoAnterior = parseMoneyInput(document.getElementById('m-saldo-anterior'));
   const total         = parseMoneyInput(document.getElementById('m-monto'));
   const saldoNuevo    = parseMoneyInput(document.getElementById('m-saldo-nuevo'));
@@ -237,7 +239,8 @@ async function saveDeudaPay(id) {
   setModalStatus('', 'Guardando...');
   try {
     await apiAction(`/api/deuda/${id}/pago`, {
-      nuevo_saldo: saldoNuevo, total_pagado: total, intereses, fecha, notas, descripcion: desc, registrar_tx: registrarTx,
+      nuevo_saldo: saldoNuevo, total_pagado: total, intereses, fecha, notas, descripcion: desc,
+      registrar_tx: registrarTx, avanzar_cuota: avanzarCuota,
     });
   } catch(err) { setModalStatus('err', '❌ ' + err.message); }
 }

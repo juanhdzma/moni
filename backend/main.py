@@ -1,3 +1,5 @@
+import calendar
+import datetime
 import logging
 import re
 import sqlite3
@@ -126,6 +128,8 @@ class DeudaPago(BaseModel):
     descripcion: str
     notas: str = ""
     registrar_tx: bool = True
+    # Solo la cuota mensual corre el vencimiento; un abono extraordinario no.
+    avanzar_cuota: bool = False
 
     _v_fecha = fecha_requerida("fecha")
 
@@ -424,6 +428,27 @@ def delete_tx(row_id: int):
 
 
 # ── Composite actions (multi-table writes, one SQLite transaction each) ──────
+def _sumar_un_mes(fecha: str) -> str:
+    """Corre la fecha un mes calendario, anclando el día (31 ene → 28/29 feb)."""
+    d = datetime.date.fromisoformat(fecha[:10])
+    y, m = (d.year + 1, 1) if d.month == 12 else (d.year, d.month + 1)
+    return d.replace(year=y, month=m, day=min(d.day, calendar.monthrange(y, m)[1])).isoformat()
+
+
+def _proxima_cuota_despues_del_pago(deuda: dict, body: DeudaPago) -> Optional[str]:
+    """Nueva proxima_cuota, o None si no hay que tocarla.
+
+    Sin esto la fecha quedaba congelada: el dashboard mostraba la cuota como
+    vencida para siempre y, al pasar la ventana de atrasos, la deuda dejaba de
+    aparecer en próximas operaciones y no volvía nunca.
+    """
+    if deuda["es_tarjeta"] or not deuda["proxima_cuota"]:
+        return None
+    if body.nuevo_saldo <= 0:
+        return ""  # saldada: ya no hay próxima cuota
+    return _sumar_un_mes(deuda["proxima_cuota"]) if body.avanzar_cuota else None
+
+
 @app.post("/api/deuda/{deuda_id}/pago")
 def pagar_deuda(deuda_id: int, body: DeudaPago):
     conn = db.get_conn()
@@ -435,6 +460,9 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
             "UPDATE deudas SET saldo_actual = ?, total_intereses = total_intereses + ? WHERE id = ?",
             (body.nuevo_saldo, body.intereses, deuda_id),
         )
+        proxima = _proxima_cuota_despues_del_pago(deuda, body)
+        if proxima is not None:
+            conn.execute("UPDATE deudas SET proxima_cuota = ? WHERE id = ?", (proxima, deuda_id))
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
                 "fecha": body.fecha, "tipo": "transfer", "categoria": "Pago deuda",
