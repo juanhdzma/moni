@@ -17,9 +17,37 @@ function flujoCartera(list) {
   }, 0);
 }
 
+// ── Flujo de patrimonio ───────────────────────────────────────────────────────
+// Categorías que el backend asigna solo en las acciones compuestas: mueven plata
+// de un bolsillo a otro, no cambian cuánto tenés. Un pago de deuda vacía la
+// cartera pero cancela deuda por el mismo monto; un aporte sale de la cartera y
+// entra a la inversión; un crédito recibido entra a la cartera y sube la deuda.
+const CATEGORIAS_NEUTRAS_PATRIMONIO = new Set([
+  'Pago deuda', 'Inversión', 'Compra activos',
+  'Crédito recibido', 'Avance de tarjeta', 'Venta activos', 'Dividendos',
+]);
+
+// Lo que mueve el patrimonio, que NO es lo que mueve la cartera: un gasto con
+// tarjeta no toca la cartera pero sube la deuda, así que acá sí resta. Es la
+// serie con la que se camina hacia atrás la curva de evolución — con el flujo de
+// cartera, cada pago de deuda se dibujaba como si el mes anterior hubieras
+// tenido esa plata de más.
+//
+// Lo que esta serie no puede ver: las revalorizaciones de activos e inversiones
+// variables no dejan transacción, así que la curva histórica las ignora y solo
+// el punto final (netWorth) las tiene.
+function flujoPatrimonio(list) {
+  return list.reduce((s, t) => {
+    if (CATEGORIAS_NEUTRAS_PATRIMONIO.has(t.categoria)) return s;
+    if (t.tipo === 'ingreso') return s + t.monto;
+    if (t.tipo === 'gasto')   return s - t.monto;
+    return s;
+  }, 0);
+}
+
 // Cartera + inversiones + activos − deudas. El chart de evolución arranca de acá
-// y camina hacia atrás restando monthlyBalance, así que ambos tienen que salir
-// de la misma fórmula.
+// y camina hacia atrás restando monthlyPatrimonio, así que ambos tienen que
+// salir de la misma fórmula.
 function netWorth() {
   return flujoCartera(S.transacciones)
        + S.inversiones.reduce((s, i) => s + i.valor_actual, 0)
@@ -27,14 +55,16 @@ function netWorth() {
        - S.deudas.reduce((s, d) => s + d.saldo_actual, 0);
 }
 
-function monthlyBalance(count = 7) {
+function monthlySeries(count, flujo) {
   const now = new Date();
   return Array.from({ length: count }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
     const m = isoMonth(d);
-    return flujoCartera(S.transacciones.filter(t => txMonth(t) === m));
+    return flujo(S.transacciones.filter(t => txMonth(t) === m));
   });
 }
+
+function monthlyPatrimonio(count = 7) { return monthlySeries(count, flujoPatrimonio); }
 
 // ── Dashboard main ────────────────────────────────────────────────────────────
 function renderDashboard() {
@@ -64,8 +94,8 @@ function renderDashboard() {
     if (sub !== null) el.querySelector('.stat-sub').innerHTML = sub;
   };
 
-  const monthlyBal = monthlyBalance(12);
-  const avgMonthly  = monthlyBal.reduce((s,v) => s+v, 0) / monthlyBal.length;
+  const ultimos12   = monthlyPatrimonio(12);
+  const avgMonthly  = ultimos12.reduce((s,v) => s+v, 0) / ultimos12.length;
   const proyDelta   = avgMonthly * 12;
   const proySign    = proyDelta >= 0 ? '+' : '−';
   const proyStr     = `${proySign}${copShort(Math.abs(proyDelta))} proyectados próx. 12 meses`;
@@ -79,7 +109,9 @@ function renderDashboard() {
     ? `${gananciaInv >= 0 ? '+' : ''}${copShort(gananciaInv)} (${signStr(ganPct)}${pct(Math.abs(ganPct))}%)`
     : `${S.inversiones.length} posición${S.inversiones.length!==1?'es':''}`;
 
-  const ahorroPct = ingresos > 0 ? efectivo / ingresos * 100 : 0;
+  // Del mes, no de toda la vida: dividir la cartera acumulada por los ingresos
+  // de este mes daba porcentajes de ahorro de tres cifras.
+  const ahorroPct = ingresos > 0 ? flujoCartera(cur) / ingresos * 100 : 0;
 
   statCard('stat-networth',    patrimonio,   proyStr,                                                                                      patrimonio >= 0 ? 'var(--income)' : 'var(--expense)');
   statCard('stat-balance',     efectivo,     `↑${copShort(ingresos)} · ↓${copShort(gastos)} · ${signStr(ahorroPct)}${pct(Math.abs(ahorroPct))}% ahorro`, efectivo >= 0 ? 'var(--income)' : 'var(--expense)');
@@ -149,11 +181,11 @@ function renderNetWorthChart() {
 
   const patrimonio = netWorth();
 
-  const count = _periodMonths(_nwPeriod, S.transacciones.map(t => normDate(t.fecha).slice(0, 10)));
-  const monthlyBal = monthlyBalance(count);
+  const count  = _periodMonths(_nwPeriod, S.transacciones.map(t => normDate(t.fecha).slice(0, 10)));
+  const deltas = monthlyPatrimonio(count);
   const data = new Array(count);
   data[count - 1] = patrimonio;
-  for (let i = count - 2; i >= 0; i--) data[i] = data[i + 1] - monthlyBal[i + 1];
+  for (let i = count - 2; i >= 0; i--) data[i] = data[i + 1] - deltas[i + 1];
 
   const now    = new Date();
   const labels = Array.from({length: count}, (_, i) => {
@@ -232,15 +264,9 @@ function _invPeriodMonths() {
 }
 
 function monthlyInvDelta(count) {
-  const now = new Date();
-  return Array.from({ length: count }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
-    const m = isoMonth(d);
-    const tx = S.transacciones.filter(t => txMonth(t) === m);
-    const aportes     = tx.filter(t => t.categoria === 'Inversión').reduce((s, t) => s + t.monto, 0);
-    const rendimiento = tx.filter(t => t.tipo === 'ingreso' && t.categoria === 'Intereses').reduce((s, t) => s + t.monto, 0);
-    return aportes + rendimiento;
-  });
+  return monthlySeries(count, tx => tx
+    .filter(t => t.categoria === 'Inversión' || (t.tipo === 'ingreso' && t.categoria === 'Intereses'))
+    .reduce((s, t) => s + t.monto, 0));
 }
 
 let chartInvEvol = null;
