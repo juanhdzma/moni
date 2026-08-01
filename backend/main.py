@@ -14,7 +14,9 @@ from . import db
 
 logger = logging.getLogger("moni")
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent
+# Docroot dedicado. Montar la raíz del repo dejaba /backend/data/moni.db, el
+# código y el .git descargables por HTTP con un GET y sin auth.
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "public"
 
 
 @asynccontextmanager

@@ -63,9 +63,9 @@ Below 640px the header nav collapses into a hamburger + slide-out drawer.
 
 FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/db.py`) and, at the same time, serves the frontend itself as static files — one process, one port, no separate frontend dev server and no build step.
 
-The frontend (`index.html`, `js/`, `css/`) is plain JS: no framework, no bundler, no modules. Every tab is one file under `js/features/` that owns its own render function and modal forms; all of them read from a single global state object populated wholesale from `GET /api/all`. Any change — a new transaction, a debt payment, an edited category — goes through the API and then refetches and re-renders everything. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes.
+The frontend (everything under `public/`) is plain JS: no framework, no bundler, no modules. Every tab is one file under `public/js/features/` that owns its own render function and modal forms; all of them read from a single global state object populated wholesale from `GET /api/all`. Any change — a new transaction, a debt payment, an edited category — goes through the API and then refetches and re-renders everything. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes.
 
-Chart.js and the JetBrains Mono webfont are vendored under `vendor/` and `assets/fonts/`, so the app works on a LAN with no internet access.
+Chart.js and the JetBrains Mono webfont are vendored under `public/vendor/` and `public/assets/fonts/`, so the app works on a LAN with no internet access.
 
 See `CLAUDE.md` for the full architecture rundown (schema/migrations, composite money-moving actions, per-tab conventions).
 
@@ -79,7 +79,7 @@ pip install -r backend/requirements.txt
 uvicorn backend.main:app --reload --port 8080
 ```
 
-Open `http://localhost:8080` — FastAPI serves `index.html` and `js/`/`css/` directly, so there's no separate frontend dev server.
+Open `http://localhost:8080` — FastAPI serves the `public/` directory directly, so there's no separate frontend dev server. Only what lives under `public/` is reachable over HTTP; the backend code and the SQLite file are not.
 
 ## Running via Docker
 

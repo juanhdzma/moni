@@ -16,7 +16,7 @@ pip install -r backend/requirements.txt
 uvicorn backend.main:app --reload --port 8080
 ```
 
-Then open `http://localhost:8080` — FastAPI serves `index.html` and `js/`/`css/` directly via `StaticFiles` mounted at `/` (backend/main.py:536), so there is no separate frontend dev server.
+Then open `http://localhost:8080` — FastAPI serves `public/` via `StaticFiles` mounted at `/` (`FRONTEND_DIR` in backend/main.py), so there is no separate frontend dev server. **The docroot is `public/`, not the repo root**: everything under it is downloadable by anyone who can reach the port, and everything outside it (backend code, the SQLite file, `.git`) is not. Don't move served assets out of `public/`, and don't put anything else in.
 
 Via Docker:
 ```bash
@@ -45,15 +45,15 @@ There is no linter or type checker, and no frontend tests — verify UI changes 
 - "Composite actions" (main.py:319+) are POST endpoints beyond plain CRUD that touch two tables in one SQLite transaction — e.g. `/api/deuda/{id}/pago` (loan payment), `/api/inv/{id}/aporte` (investment contribution), `/api/activo/{id}/venta` (asset sale). Each optionally inserts a linked row into `transacciones` (`registrar_tx` flag on the request body) so the ledger stays consistent with debt/investment/asset state. When adding a new money-moving action, follow this pattern rather than mutating state from the frontend.
 - Every route opens its own `sqlite3` connection via `db.get_conn()` and closes it in a `finally` — no connection pooling/dependency injection.
 
-**Frontend (`js/`, `css/`, `index.html`)** — no modules, no bundler. Every file is loaded as a plain `<script>` tag in `index.html` in dependency order (config → state → services → features → ui-controls → app), and all functions/consts live in global scope. When adding a new file, add its `<script>` tag in the right position relative to what it depends on.
-  - Chart.js + the treemap plugin live in `vendor/`, and JetBrains Mono in `assets/fonts/` (`css/fonts.css`). **Don't reintroduce CDN `<script>`/`<link>` tags** — this runs self-hosted on a LAN, and a missing `Chart` global used to take the whole UI down with it.
-  - `js/config.js` — static config: `CATEGORIES` by tx type, franquicia icon paths, custom-category persistence (localStorage).
-  - `js/state.js` — the single global state object `S` (`transacciones`, `deudas`, `inversiones`, `activos`, `recurrentes`), populated wholesale from `/api/all`.
-  - `js/services/api.js` — `apiFetch` (fetch wrapper + error parsing), `fetchAll()` (repopulates `S` and calls `renderAll()`), `crudOp()`/`apiAction()` generic helpers every feature form submits through.
-  - `js/services/format.js` — money/date/percent formatting helpers (`cop`, `copShort`, `pct`, `fmtDate`, `normDate`, money-input masking, `escHtml`, etc.) used throughout.
-  - `js/features/*.js` — one file per domain tab (`dashboard`, `transacciones`, `deudas`, `inversiones`, `activos`, `recurrentes`). Each owns its own render function(s) and modal form builder(s) that generate HTML via template literals and open through `openModal()`.
-  - `js/ui-controls.js` — generic form-control enhancements (custom selects/inputs) applied to modal content via `enhanceFormControls()`.
-  - `js/app.js` — glue: modal open/close, tab navigation, the FAB button (mobile primary action, mapped per-tab via `FAB_ACTIONS`), `renderAll()` (calls every feature's render fn), stale-price nav warnings, `DOMContentLoaded` bootstrap.
+**Frontend (`public/`: `index.html`, `js/`, `css/`, `assets/`, `vendor/`)** — no modules, no bundler. Every file is loaded as a plain `<script>` tag in `index.html` in dependency order (config → state → services → features → ui-controls → app), and all functions/consts live in global scope. When adding a new file, add its `<script>` tag in the right position relative to what it depends on.
+  - Chart.js + the treemap plugin live in `public/vendor/`, and JetBrains Mono in `public/assets/fonts/` (`public/css/fonts.css`). **Don't reintroduce CDN `<script>`/`<link>` tags** — this runs self-hosted on a LAN, and a missing `Chart` global used to take the whole UI down with it.
+  - `public/js/config.js` — static config: `CATEGORIES` by tx type, franquicia icon paths, custom-category persistence (localStorage).
+  - `public/js/state.js` — the single global state object `S` (`transacciones`, `deudas`, `inversiones`, `activos`, `recurrentes`), populated wholesale from `/api/all`.
+  - `public/js/services/api.js` — `apiFetch` (fetch wrapper + error parsing), `fetchAll()` (repopulates `S` and calls `renderAll()`), `crudOp()`/`apiAction()` generic helpers every feature form submits through.
+  - `public/js/services/format.js` — money/date/percent formatting helpers (`cop`, `copShort`, `pct`, `fmtDate`, `normDate`, money-input masking, `escHtml`, etc.) used throughout.
+  - `public/js/features/*.js` — one file per domain tab (`dashboard`, `transacciones`, `deudas`, `inversiones`, `activos`, `recurrentes`). Each owns its own render function(s) and modal form builder(s) that generate HTML via template literals and open through `openModal()`.
+  - `public/js/ui-controls.js` — generic form-control enhancements (custom selects/inputs) applied to modal content via `enhanceFormControls()`.
+  - `public/js/app.js` — glue: modal open/close, tab navigation, the FAB button (mobile primary action, mapped per-tab via `FAB_ACTIONS`), `renderAll()` (calls every feature's render fn), stale-price nav warnings, `DOMContentLoaded` bootstrap.
 - **State flow is unidirectional and coarse**: any mutation (`crudOp`/`apiAction`) POSTs/PUTs/DELETEs to the backend, then calls `fetchAll()` to refetch *all* data and re-render everything (`renderAll()`). There is no optimistic update or partial re-render — don't try to patch `S` locally and expect it to stick.
 - `crudOp` propagates errors so modal forms can show them inline via `setModalStatus`. For mutations fired **outside** a modal (deleting from a card, pausing a recurrente) use `crudOpOrBanner` — a bare `crudOp` there leaves a rejected promise nobody handles and the user sees nothing.
 - `renderAll()` runs each tab's renderer inside its own try/catch (`RENDERERS` in app.js) so one broken tab degrades instead of blanking the page. Keep new renderers on that list rather than calling them directly.
