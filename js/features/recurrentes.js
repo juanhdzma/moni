@@ -126,15 +126,16 @@ async function saveRecurrente(id) {
 async function deleteRecurrente(id) {
   const r = S.recurrentes.find(x => x._id === id);
   if (!confirm(`¿Eliminar "${r?.nombre}"?`)) return;
-  await crudOp('rec', 'delete', { _id: id });
+  await crudOpOrBanner('rec', 'delete', { _id: id });
 }
 
 function toggleRecurrente(id) {
   const idx = S.recurrentes.findIndex(r => r._id === id);
   if (idx < 0) return;
+  // Se pinta optimista y crudOpOrBanner revierte con un fetchAll si el PUT falla.
   S.recurrentes[idx] = { ...S.recurrentes[idx], activo: !S.recurrentes[idx].activo };
   renderRecurrentes();
-  crudOp('rec', 'update', { ...S.recurrentes[idx], _id: id });
+  crudOpOrBanner('rec', 'update', { ...S.recurrentes[idx], _id: id });
 }
 
 // ── Materializar (desde próximas operaciones) ────────────────────────────────

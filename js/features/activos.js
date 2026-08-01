@@ -70,7 +70,7 @@ async function saveActivo(id) {
 async function deleteActivo(id) {
   const a = S.activos.find(x => x._id === id);
   if (!confirm(`¿Eliminar "${a?.nombre}"?`)) return;
-  await crudOp('activo', 'delete', { _id: id });
+  await crudOpOrBanner('activo', 'delete', { _id: id });
 }
 
 // ── Actualizar valor ──────────────────────────────────────────────────────────

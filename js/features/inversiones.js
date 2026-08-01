@@ -174,7 +174,7 @@ async function saveInv(id) {
 async function deleteInv(id) {
   const inv = S.inversiones.find(i => i._id === id);
   if (!confirm(`¿Eliminar "${inv?.nombre}"?`)) return;
-  await crudOp('inv', 'delete', { _id: id });
+  await crudOpOrBanner('inv', 'delete', { _id: id });
 }
 
 // ── Rendimiento — solo para inversiones FIJAS ────────────────────────────────
@@ -319,7 +319,6 @@ async function saveInvValueUpdate(id) {
 function openInvAddMoreFormById(id) {
   const inv = S.inversiones.find(x => x._id === id);
   if (!inv) return;
-  const estimado = inv.valor_actual; // se actualiza con JS cuando ingresen el monto
   openModal(`Invertir más · ${inv.nombre}`, `
     <div class="modal-panel">
       <div class="modal-panel-col">

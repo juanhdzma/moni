@@ -1,7 +1,14 @@
 async function apiFetch(path, opts = {}) {
+  const method = opts.method || 'GET';
+  // El backend exige este header en toda mutación: es lo que impide que un
+  // <form> cross-origin dispare un /api/truncate (ver require_csrf_header).
+  const headers = {};
+  if (method !== 'GET') headers['X-Moni-Request'] = '1';
+  if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+
   const res = await fetch(path, {
-    method: opts.method || 'GET',
-    headers: opts.body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+    method,
+    headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   });
   if (!res.ok) {
@@ -53,4 +60,16 @@ async function apiAction(path, payload) {
   resolvePendingProxOp();
   closeModal();
   await fetchAll();
+}
+
+// Para las acciones que corren fuera de un modal (borrar desde una card, pausar
+// un recurrente): sin esto un fallo quedaba en una promesa rechazada sin dueño y
+// el usuario no se enteraba de nada.
+async function crudOpOrBanner(entity, action, payload) {
+  try {
+    await crudOp(entity, action, payload);
+  } catch (err) {
+    showBanner(err.message);
+    await fetchAll();
+  }
 }
