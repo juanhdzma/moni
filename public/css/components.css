@@ -171,6 +171,7 @@ thead th {
 tbody td { padding: var(--sp-5) var(--sp-8); font-size: var(--text-base); border-bottom: 1px solid var(--border); }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr { background: var(--bg-card); transition: background 0.1s; }
+tbody tr[tabindex]:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
 
 .tx-group-row { background: var(--bg-card) !important; }
 .tx-group-row td { border-bottom: none !important; }

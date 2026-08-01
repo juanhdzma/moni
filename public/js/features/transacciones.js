@@ -205,7 +205,12 @@ function txRow(t) {
   const label     = t.tipo === 'ingreso' ? 'Ingreso' : t.tipo === 'gasto' ? 'Gasto' : 'Auto';
   const color     = t.tipo === 'ingreso' ? 'var(--positive)' : t.tipo === 'gasto' ? 'var(--negative)' : 'var(--transfer)';
   const prefix    = t.tipo === 'ingreso' ? '+' : '−';
-  const clickAttr = t.tipo === 'transfer' ? '' : `onclick="openTxFormById(${t._id})" style="cursor:pointer"`;
+  // Una <tr onclick> sin tabindex no se puede enfocar: editar un movimiento era
+  // imposible sin mouse. Mismo problema que ya se arregló en los th ordenables.
+  const abrir     = `openTxFormById(${t._id})`;
+  const clickAttr = t.tipo === 'transfer' ? '' :
+    `onclick="${abrir}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${abrir}}"
+     tabindex="0" role="button" aria-label="Editar ${escHtml(t.descripcion || t.categoria)}" style="cursor:pointer"`;
   return `
     <tr ${clickAttr}>
       <td data-label="Fecha">${fmtDate(t.fecha)}</td>
