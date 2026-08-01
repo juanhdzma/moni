@@ -1,7 +1,13 @@
+// Cacheado: cop() se llama cientos de veces por render y localStorage es síncrono.
+// setCurrencySymbol() invalida con clearCurrencySymbolCache().
+let _currencySymbol = null;
 function getCurrencySymbol() {
-  try { return localStorage.getItem('moni_currency_symbol') || '$'; }
-  catch (_) { return '$'; }
+  if (_currencySymbol !== null) return _currencySymbol;
+  try { _currencySymbol = localStorage.getItem('moni_currency_symbol') || '$'; }
+  catch (_) { _currencySymbol = '$'; }
+  return _currencySymbol;
 }
+function clearCurrencySymbolCache() { _currencySymbol = null; }
 function cop(n) {
   return getCurrencySymbol() + new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n || 0);
 }

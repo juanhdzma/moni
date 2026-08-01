@@ -111,6 +111,7 @@ function renderSettingsCurrency() {
 
 function setCurrencySymbol(symbol) {
   try { localStorage.setItem('moni_currency_symbol', symbol); } catch (_) {}
+  clearCurrencySymbolCache();
   renderAll();
 }
 
