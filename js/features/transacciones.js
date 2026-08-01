@@ -10,9 +10,9 @@ function setTxSort(col) {
   }
   document.querySelectorAll('.th-sort').forEach(th => {
     th.classList.remove('active', 'asc', 'desc');
-    if (th.dataset.col === txSort.col) {
-      th.classList.add('active', txSort.dir === 1 ? 'asc' : 'desc');
-    }
+    const activo = th.dataset.col === txSort.col;
+    if (activo) th.classList.add('active', txSort.dir === 1 ? 'asc' : 'desc');
+    th.setAttribute('aria-sort', activo ? (txSort.dir === 1 ? 'ascending' : 'descending') : 'none');
   });
   renderTransacciones();
 }

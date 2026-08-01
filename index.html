@@ -2,36 +2,26 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <script>
-    document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
-    document.addEventListener('gesturechange', function (e) { e.preventDefault(); }, { passive: false });
-    function blockMultiTouch(e) { if (e.touches.length > 1) e.preventDefault(); }
-    window.addEventListener('touchstart', blockMultiTouch, { passive: false, capture: true });
-    window.addEventListener('touchmove', blockMultiTouch, { passive: false, capture: true });
-    document.addEventListener('touchstart', blockMultiTouch, { passive: false, capture: true });
-    document.addEventListener('touchmove', blockMultiTouch, { passive: false, capture: true });
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Moni</title>
   <link rel="icon" href="assets/icons/moni.ico" sizes="any" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/moni.svg" />
   <link rel="apple-touch-icon" href="assets/icons/moni.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@2.3.0/dist/chartjs-chart-treemap.min.js"></script>
+  <link rel="stylesheet" href="css/fonts.css" />
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/layout.css" />
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="vendor/chartjs-chart-treemap.min.js"></script>
 </head>
 <body>
 
 <!-- ── Modal ── -->
 <div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-header">
-      <div class="modal-title" id="modal-title"></div>
-      <button class="icon-btn" onclick="closeModal()" style="font-size:16px;line-height:1">✕</button>
+      <h2 class="modal-title" id="modal-title"></h2>
+      <button class="icon-btn" onclick="closeModal()" aria-label="Cerrar" style="font-size:16px;line-height:1">✕</button>
     </div>
     <div id="modal-body"></div>
   </div>
@@ -197,11 +187,11 @@
       <table>
         <thead>
           <tr>
-            <th class="th-sort active desc" data-col="fecha"        onclick="setTxSort('fecha')">Fecha</th>
-            <th class="th-sort"             data-col="tipo"         onclick="setTxSort('tipo')">Tipo</th>
-            <th class="th-sort"             data-col="categoria"    onclick="setTxSort('categoria')">Categoría</th>
-            <th class="th-sort"             data-col="descripcion"  onclick="setTxSort('descripcion')">Descripción</th>
-            <th class="th-sort"             data-col="monto"        onclick="setTxSort('monto')">Monto</th>
+            <th class="th-sort active desc" data-col="fecha" tabindex="0" role="columnheader" aria-sort="descending" onclick="setTxSort('fecha')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setTxSort('fecha')}">Fecha</th>
+            <th class="th-sort" data-col="tipo" tabindex="0" role="columnheader" aria-sort="none" onclick="setTxSort('tipo')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setTxSort('tipo')}">Tipo</th>
+            <th class="th-sort" data-col="categoria" tabindex="0" role="columnheader" aria-sort="none" onclick="setTxSort('categoria')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setTxSort('categoria')}">Categoría</th>
+            <th class="th-sort" data-col="descripcion" tabindex="0" role="columnheader" aria-sort="none" onclick="setTxSort('descripcion')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setTxSort('descripcion')}">Descripción</th>
+            <th class="th-sort" data-col="monto" tabindex="0" role="columnheader" aria-sort="none" onclick="setTxSort('monto')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setTxSort('monto')}">Monto</th>
             <th>Método de pago</th>
           </tr>
         </thead>

@@ -14,16 +14,45 @@ function advancedToggle(label = 'Registrar como nuevo en transacciones', hint = 
 }
 
 // ── Modal ────────────────────────────────────────────────────────────────────
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+let _focoPrevio = null;
+
+function modalFocusables() {
+  const overlay = document.getElementById('modal-overlay');
+  return [...overlay.querySelectorAll(FOCUSABLE)].filter(el => el.offsetParent !== null);
+}
+
+// Tab dentro del modal no debe llevarte a la página de atrás.
+function trapModalFocus(e) {
+  if (e.key !== 'Tab') return;
+  const focusables = modalFocusables();
+  if (!focusables.length) return;
+  const primero = focusables[0], ultimo = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+  else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
+}
+
 function openModal(title, bodyHtml) {
+  _focoPrevio = document.activeElement;
   document.getElementById('modal-title').textContent = title;
   const body = document.getElementById('modal-body');
   body.innerHTML = bodyHtml;
   enhanceFormControls(body);
-  document.getElementById('modal-overlay').classList.add('open');
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.add('open');
+  overlay.addEventListener('keydown', trapModalFocus);
+  modalFocusables()[0]?.focus();
 }
+
 function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.remove('open');
+  overlay.removeEventListener('keydown', trapModalFocus);
   _pendingProxOpKey = null;
+  // Los popups de ui-controls viven fuera del modal: sin esto quedan colgados.
+  closeAnyOpenPopup();
+  _focoPrevio?.focus?.();
+  _focoPrevio = null;
 }
 function setModalStatus(cls, msg) {
   const el = document.getElementById('m-status');
@@ -80,16 +109,31 @@ function hideBanner() {
 }
 
 // ── Render all ───────────────────────────────────────────────────────────────
+// Cada tab se renderiza aislado: antes, si uno tiraba (p.ej. Chart.js sin cargar),
+// los siguientes nunca corrían y la app quedaba en blanco en vez de degradada.
+const RENDERERS = [
+  ['dashboard', renderDashboard],
+  ['gastos', renderGastosBar],
+  ['transacciones', initTransacciones],
+  ['deudas', renderDeudas],
+  ['inversiones', renderInversiones],
+  ['activos', renderActivos],
+  ['recurrentes', renderRecurrentes],
+  ['settings', renderSettings],
+  ['warnings', updateNavWarnings],
+];
+
 function renderAll() {
-  renderDashboard();
-  renderGastosBar();
-  initTransacciones();
-  renderDeudas();
-  renderInversiones();
-  renderActivos();
-  renderRecurrentes();
-  renderSettings();
-  updateNavWarnings();
+  const fallaron = [];
+  RENDERERS.forEach(([nombre, fn]) => {
+    try {
+      fn();
+    } catch (err) {
+      fallaron.push(nombre);
+      console.error(`render ${nombre} falló:`, err);
+    }
+  });
+  if (fallaron.length) showBanner(`No se pudo dibujar: ${fallaron.join(', ')}. Mirá la consola.`);
 }
 
 // ── Warnings de precios desactualizados ──────────────────────────────────────
