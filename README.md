@@ -30,11 +30,11 @@ Six tabs, all reading from and writing to the same dataset — a debt payment, a
 
 ![Transacciones](docs/img/transacciones.png)
 
-**Deudas** — loans and credit cards (`es_tarjeta`), with pending balance, monthly installment, interest paid, per-debt cuota payments, card advances (adelanto), and payoff (liquidar).
+**Deudas** — loans and credit cards (`es_tarjeta`), with pending balance, monthly installment, interest paid, per-debt cuota payments, card advances (adelanto), and payoff (liquidar). Registering the monthly cuota rolls the due date forward a month and clears it once the debt is settled; an extraordinary abono pays down the balance without moving the date.
 
 ![Deudas](docs/img/deudas.png)
 
-**Inversiones** — fixed-rate (CDT-style, with EA/MV rate conversion and yield tracking) and variable investments (funds, crypto), each with capital invested, current value, gain/loss, and contribution/withdrawal actions.
+**Inversiones** — fixed-rate (CDT-style, with EA/MV rate conversion and yield tracking) and variable investments (funds, crypto), each with capital invested, current value, gain/loss, and contribution/withdrawal actions. A yield is recorded as either capitalizing (raises the investment's value, no ledger entry) or paid out (income in the ledger, investment value unchanged) — never both, since counting it twice would inflate net worth.
 
 ![Inversiones](docs/img/inversiones.png)
 
@@ -116,13 +116,13 @@ pip install -r backend/requirements-dev.txt
 python -m pytest backend/tests -q
 ```
 
-The frontend has a smaller suite covering the money and date math — net worth flows, recurring-payment dates, frequency normalization. It runs on Node's built-in test runner, with no dependencies and no install step; the harness loads the plain `public/js/` scripts into a `node:vm` context and pins the timezone, so date bugs don't depend on where you run it.
+The frontend has a smaller suite covering the money and date math — cartera vs. net worth flows, recurring-payment dates, frequency normalization, money-input masking and escaping. It runs on Node's built-in test runner, with no dependencies and no install step; the harness loads the plain `public/js/` scripts into a `node:vm` context and pins the timezone, so date bugs don't depend on where you run it.
 
 ```bash
 node --test tests/frontend
 ```
 
-Each test gets a throwaway SQLite file, so runs never touch your real data. The frontend has no automated tests — verify UI changes by exercising the app.
+Each backend test gets a throwaway SQLite file, so runs never touch your real data. Neither suite covers rendering: there is no DOM test, no linter and no type checker, so verify UI changes by exercising the app.
 
 ### Calling the API by hand
 
