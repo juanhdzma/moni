@@ -76,13 +76,22 @@ function fmtDateTime(s) {
 }
 
 function fmtMoneyInput(el) {
+  // Los dígitos a la izquierda del caret son lo único estable: los puntos de
+  // miles se insertan y se borran solos al reformatear. Contando caracteres, el
+  // caret se iba al final en cada tecla y no se podía corregir un dígito del
+  // medio sin volver a escribir el monto entero.
+  const digitosAntes = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, '').length;
+
   let raw = el.value.replace(/[^\d,]/g, '');
   const parts = raw.split(',');
   if (parts.length > 2) raw = parts[0] + ',' + parts.slice(1).join('');
-  const intStr = (raw.split(',')[0] || '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  el.value = intStr;
-  const len = el.value.length;
-  el.setSelectionRange(len, len);
+  el.value = (raw.split(',')[0] || '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  let pos = 0;
+  for (let vistos = 0; pos < el.value.length && vistos < digitosAntes; pos++) {
+    if (el.value[pos] >= '0' && el.value[pos] <= '9') vistos++;
+  }
+  el.setSelectionRange(pos, pos);
 }
 function parseMoneyInput(el) {
   return parseFloat(el.value.replace(/\./g, '').replace(',', '.')) || 0;
@@ -90,6 +99,11 @@ function parseMoneyInput(el) {
 function numToInput(n) {
   return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n || 0);
 }
+// La comilla simple también: el HTML se arma con template literals y hay
+// atributos delimitados con ' (los onclick generados), así que sin escaparla el
+// escape solo servía para la mitad de los casos.
 function escHtml(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }

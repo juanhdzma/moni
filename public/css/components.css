@@ -46,6 +46,9 @@
 }
 .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-8); }
 .chart-title  { font-size: var(--text-base); font-weight: 600; color: var(--text); }
+/* El treemap cuenta todos los gastos; el KPI "Cartera" solo los que mueven
+   efectivo. Son dos definiciones distintas a propósito: hay que decirlo. */
+.chart-title-note { font-size: var(--text-2xs); font-weight: 500; color: var(--text-muted); }
 .chart-wrap    { position: relative; flex: 1; min-height: 200px; }
 .chart-wrap-sm { position: relative; height: 190px; }
 
