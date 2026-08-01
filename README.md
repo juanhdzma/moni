@@ -65,6 +65,8 @@ FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/db.py`
 
 The frontend (`index.html`, `js/`, `css/`) is plain JS: no framework, no bundler, no modules. Every tab is one file under `js/features/` that owns its own render function and modal forms; all of them read from a single global state object populated wholesale from `GET /api/all`. Any change — a new transaction, a debt payment, an edited category — goes through the API and then refetches and re-renders everything. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes.
 
+Chart.js and the JetBrains Mono webfont are vendored under `vendor/` and `assets/fonts/`, so the app works on a LAN with no internet access.
+
 See `CLAUDE.md` for the full architecture rundown (schema/migrations, composite money-moving actions, per-tab conventions).
 
 ## Running locally
@@ -89,7 +91,7 @@ Serves on port 8080 (mapped to container port 80). SQLite file persists in the `
 
 ## Deploying
 
-`.github/workflows/build-push.yml` builds and pushes the image to `ghcr.io/<owner>/moni` (tags `latest` and the commit SHA) on every push to `main` that touches `index.html`, `Dockerfile`, `css/**`, `js/**`, or `backend/**`. In production, point `docker-compose.yml` at that image instead of `build: .`:
+`.github/workflows/build-push.yml` runs the test suite and, if it passes, builds and pushes the image to `ghcr.io/<owner>/moni` (tags `latest` and the commit SHA) on every push to `main`. In production, point `docker-compose.yml` at that image instead of `build: .`:
 
 ```yaml
 services:
@@ -107,7 +109,24 @@ volumes:
 
 ## Testing
 
-There are no automated tests, linter, or type checker configured. Verify changes by running the app and exercising the UI manually, or `curl` against `/api/*`.
+The backend has a pytest suite covering the money-moving paths — card balance adjustments, the composite actions (payment, contribution, withdrawal, sale), input validation and the export/import round-trip. CI runs it before building the image.
+
+```bash
+pip install -r backend/requirements-dev.txt
+python -m pytest backend/tests -q
+```
+
+Each test gets a throwaway SQLite file, so runs never touch your real data. The frontend has no automated tests — verify UI changes by exercising the app.
+
+### Calling the API by hand
+
+Mutating requests need an `X-Moni-Request` header. Without it the backend answers `403`; this is what stops a cross-origin `<form>` from hitting a destructive endpoint (see `require_csrf_header` in `backend/main.py`). Reads need nothing.
+
+```bash
+curl localhost:8080/api/all
+curl -X POST localhost:8080/api/tx -H 'X-Moni-Request: 1' -H 'Content-Type: application/json' \
+  -d '{"fecha":"2026-07-31","tipo":"gasto","categoria":"Mercado","monto":50000}'
+```
 
 ## License
 
