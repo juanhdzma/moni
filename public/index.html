@@ -211,7 +211,16 @@
       <div class="stat-label">Total en deudas</div>
       <div class="stat-value"><span class="skeleton" style="width:110px;height:28px"></span></div>
     </div>
-    <div class="grid-2" id="deudas-grid"></div>
+    <div class="grid-2">
+      <div>
+        <div class="section-title" style="margin-bottom:12px">Créditos</div>
+        <div id="deudas-grid-credito" class="card-list"></div>
+      </div>
+      <div>
+        <div class="section-title" style="margin-bottom:12px">Tarjetas</div>
+        <div id="deudas-grid-tarjeta" class="card-list"></div>
+      </div>
+    </div>
     <div id="deudas-terminados"></div>
   </div>
 
@@ -227,11 +236,11 @@
     <div class="grid-2">
       <div>
         <div class="section-title" style="margin-bottom:12px">Fijas</div>
-        <div id="inv-grid-fija" class="inv-list"></div>
+        <div id="inv-grid-fija" class="card-list"></div>
       </div>
       <div>
         <div class="section-title" style="margin-bottom:12px">Variables</div>
-        <div id="inv-grid-variable" class="inv-list"></div>
+        <div id="inv-grid-variable" class="card-list"></div>
       </div>
     </div>
   </div>

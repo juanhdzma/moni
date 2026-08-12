@@ -470,10 +470,13 @@ function tarjetaCardHtml(d) {
 }
 
 function renderDeudas() {
-  const grid  = document.getElementById('deudas-grid');
-  const sumEl = document.getElementById('deudas-total');
-  if (!grid) return;
+  const gridCredito = document.getElementById('deudas-grid-credito');
+  const gridTarjeta = document.getElementById('deudas-grid-tarjeta');
+  const sumEl       = document.getElementById('deudas-total');
+  if (!gridCredito || !gridTarjeta) return;
 
+  // Una tarjeta con saldo 0 sigue existiendo (el cupo está disponible); un
+  // crédito sin saldo está saldado y se va a la sección de terminados.
   const activas     = S.deudas.filter(d => d.es_tarjeta || tieneSaldo(d));
   const terminadas  = S.deudas.filter(d => !d.es_tarjeta && !tieneSaldo(d));
   const total       = activas.reduce((s,d) => s + d.saldo_actual, 0);
@@ -510,21 +513,22 @@ function renderDeudas() {
 
   const terminadosEl = document.getElementById('deudas-terminados');
 
-  if (!S.deudas.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
-      <div class="empty-icon">🎉</div><div class="empty-title">Sin deudas</div>
-      <div class="empty-text">Agregá una deuda con el botón + de arriba.</div></div>`;
-    if (terminadosEl) terminadosEl.innerHTML = '';
-    return;
-  }
+  const emptyCard = (icon, titulo, texto) => `<div class="empty" style="grid-column:1/-1">
+    <div class="empty-icon">${icon}</div>
+    <div class="empty-title">${titulo}</div>
+    <div class="empty-text">${texto}</div></div>`;
 
-  if (!activas.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
-      <div class="empty-icon">🎉</div><div class="empty-title">Sin deudas activas</div>
-      <div class="empty-text">¡Todos los créditos están saldados!</div></div>`;
-  } else {
-    grid.innerHTML = activas.map(d => d.es_tarjeta ? tarjetaCardHtml(d) : prestamoCardHtml(d)).join('');
-  }
+  const creditos = activas.filter(d => !d.es_tarjeta);
+  const tarjetas = activas.filter(d => d.es_tarjeta);
+
+  gridCredito.innerHTML = creditos.length
+    ? creditos.map(prestamoCardHtml).join('')
+    : emptyCard('🎉', terminadas.length ? 'Sin créditos activos' : 'Sin créditos',
+        terminadas.length ? '¡Todos los créditos están saldados!' : 'Agregá uno con el botón + de arriba.');
+
+  gridTarjeta.innerHTML = tarjetas.length
+    ? tarjetas.map(tarjetaCardHtml).join('')
+    : emptyCard('💳', 'Sin tarjetas', 'Agregá una para cargarle gastos y seguir su cupo.');
 
   if (terminadosEl) {
     if (!terminadas.length) { terminadosEl.innerHTML = ''; return; }
