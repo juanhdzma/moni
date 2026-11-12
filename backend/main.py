@@ -257,6 +257,30 @@ def pesos(v: float) -> float:
     return float(round(v))
 
 
+# Categorías que el backend asigna solo en las acciones compuestas. El frontend
+# las espeja en web/src/lib/config.ts (SYSTEM_CATEGORIES); test_categorias.py
+# verifica que las dos listas coincidan.
+CATEGORIAS_SISTEMA = {
+    "ingreso": {
+        "credito_recibido": "Crédito recibido",
+        "avance_tarjeta": "Avance de tarjeta",
+        "intereses": "Intereses",
+        "dividendos": "Dividendos",
+        "venta_activos": "Venta activos",
+    },
+    "gasto": {
+        "inversion": "Inversión",
+        "compra_activos": "Compra activos",
+    },
+    "transfer": {
+        "pago_deuda": "Pago deuda",
+    },
+}
+CAT_INGRESO = CATEGORIAS_SISTEMA["ingreso"]
+CAT_GASTO = CATEGORIAS_SISTEMA["gasto"]
+CAT_TRANSFER = CATEGORIAS_SISTEMA["transfer"]
+
+
 # ── SQL helpers ───────────────────────────────────────────────────────────────
 def insert_row(conn, table, cols, values):
     col_list = ", ".join(cols)
@@ -358,17 +382,17 @@ def register_crud(path, model, linked_tx=None):
 
 
 register_crud("deuda", DeudaIn, linked_tx={
-    "tipo": "ingreso", "categoria": "Crédito recibido", "fecha_field": "fecha_inicio",
+    "tipo": "ingreso", "categoria": CAT_INGRESO["credito_recibido"], "fecha_field": "fecha_inicio",
     "desc_fn": lambda d: f"Crédito · {d['nombre']}",
     "monto_fn": lambda d: d.get("monto_inicial") or d["saldo_actual"],
 })
 register_crud("inv", InvIn, linked_tx={
-    "tipo": "gasto", "categoria": "Inversión", "fecha_field": "fecha_inicio",
+    "tipo": "gasto", "categoria": CAT_GASTO["inversion"], "fecha_field": "fecha_inicio",
     "desc_fn": lambda d: f"Nueva inversión · {d['nombre']}",
     "monto_fn": lambda d: d["monto_invertido"],
 })
 register_crud("activo", ActivoIn, linked_tx={
-    "tipo": "gasto", "categoria": "Compra activos", "fecha_field": "fecha_adquisicion",
+    "tipo": "gasto", "categoria": CAT_GASTO["compra_activos"], "fecha_field": "fecha_adquisicion",
     "desc_fn": lambda d: f"Compra · {d['nombre']}",
     "monto_fn": lambda d: d["valor_inicial"],
 })
@@ -478,7 +502,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
             conn.execute("UPDATE deudas SET proxima_cuota = ? WHERE id = ?", (proxima, deuda_id))
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
-                "fecha": body.fecha, "tipo": "transfer", "categoria": "Pago deuda",
+                "fecha": body.fecha, "tipo": "transfer", "categoria": CAT_TRANSFER["pago_deuda"],
                 "descripcion": body.descripcion, "monto": body.total_pagado, "notas": body.notas,
             })
         conn.commit()
@@ -499,7 +523,7 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
         conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (pesos(body.nuevo_saldo), deuda_id))
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
-                "fecha": body.fecha, "tipo": "ingreso", "categoria": "Avance de tarjeta",
+                "fecha": body.fecha, "tipo": "ingreso", "categoria": CAT_INGRESO["avance_tarjeta"],
                 "descripcion": body.descripcion, "monto": body.monto, "notas": body.notas,
             })
         conn.commit()
@@ -532,7 +556,7 @@ def registrar_rendimiento(inv_id: int, body: InvRendimiento):
             )
         elif body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
-                "fecha": body.fecha, "tipo": "ingreso", "categoria": "Intereses",
+                "fecha": body.fecha, "tipo": "ingreso", "categoria": CAT_INGRESO["intereses"],
                 "descripcion": f"Rendimiento · {inv['nombre']}", "monto": body.monto, "notas": body.notas,
             })
         conn.commit()
@@ -553,7 +577,7 @@ def aportar_inv(inv_id: int, body: InvAporte):
         )
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
-                "fecha": body.fecha, "tipo": "gasto", "categoria": "Inversión",
+                "fecha": body.fecha, "tipo": "gasto", "categoria": CAT_GASTO["inversion"],
                 "descripcion": f"Aporte · {inv['nombre']}", "monto": body.monto, "notas": body.notas,
             })
         conn.commit()
@@ -584,7 +608,7 @@ def retirar_inv(inv_id: int, body: InvRetiro):
             descripcion = f"Retiro parcial · {inv['nombre']}"
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
-                "fecha": body.fecha, "tipo": "ingreso", "categoria": "Dividendos",
+                "fecha": body.fecha, "tipo": "ingreso", "categoria": CAT_INGRESO["dividendos"],
                 "descripcion": descripcion, "monto": body.monto, "notas": body.notas,
             })
         conn.commit()
@@ -601,7 +625,7 @@ def vender_activo(activo_id: int, body: ActivoVenta):
         conn.execute("DELETE FROM activos WHERE id = ?", (activo_id,))
         if body.registrar_tx:
             insert_row(conn, "transacciones", TX_COLS, {
-                "fecha": body.fecha, "tipo": "ingreso", "categoria": "Venta activos",
+                "fecha": body.fecha, "tipo": "ingreso", "categoria": CAT_INGRESO["venta_activos"],
                 "descripcion": f"Venta · {activo['nombre']}", "monto": body.precio, "notas": body.notas,
             })
         conn.commit()

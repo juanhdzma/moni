@@ -23,6 +23,8 @@ backend/data/
 # Docs y tests: no se sirven ni se corren en runtime
 docs/
 backend/tests/
+web/
 tests/
+web/
 *.md
 LICENSE

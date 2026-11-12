@@ -21,3 +21,7 @@ backend/data/
 
 # Claude Code local state
 .claude/
+
+# Frontend React (web/)
+web/node_modules/
+web/dist/
