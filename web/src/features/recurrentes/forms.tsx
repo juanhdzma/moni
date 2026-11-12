@@ -26,11 +26,6 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const { crudOp, crudOpOrBanner } = useMutations()
   const [nombre, setNombre] = useState(item?.nombre || '')
   const [tipo, setTipo] = useState<TipoRec>(tipoInicial !== 'ingreso' ? 'gasto' : 'ingreso')
-  const [sel, setSel] = useState<TipoRec | null>(tipoInicial === 'ingreso' || tipoInicial === 'gasto' ? tipoInicial : null)
-  const pick = (t: TipoRec) => {
-    setTipo(t)
-    setSel(t)
-  }
   const [monto, setMonto] = useState(item ? numToInput(item.monto) : '')
   const [frecuencia, setFrecuencia] = useState<string>(item?.frecuencia || 'mensual')
   const [fecha, setFecha] = useState(item?.fecha_inicio?.split('T')[0] || '')
@@ -87,16 +82,16 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
           <button
             type="button"
             id="rt-ingreso"
-            className={`tipo-btn ingreso ${sel === 'ingreso' ? 'sel' : ''}`}
-            onClick={() => pick('ingreso')}
+            className={`tipo-btn ingreso ${tipo === 'ingreso' ? 'sel' : ''}`}
+            onClick={() => setTipo('ingreso')}
           >
             Ingreso
           </button>
           <button
             type="button"
             id="rt-gasto"
-            className={`tipo-btn gasto ${sel === 'gasto' ? 'sel' : ''}`}
-            onClick={() => pick('gasto')}
+            className={`tipo-btn gasto ${tipo === 'gasto' ? 'sel' : ''}`}
+            onClick={() => setTipo('gasto')}
           >
             Gasto
           </button>

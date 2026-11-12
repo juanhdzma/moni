@@ -86,3 +86,9 @@ test('textoDias y diasHasta', () => {
   expect(textoDias(7)).toBe('en 7d')
   expect(diasHasta(new Date(2026, 7, 20), HOY)).toBe(5)
 })
+
+test('inversion con dia_pago 31 en febrero cae el 28 y no en marzo', () => {
+  const inv = inversion({ _id: 5, tipo: 'fija', pago: 'mensual', dia_pago: 31, tasa_ea: 12, monto_invertido: 1_000_000 })
+  const ops = calcularProximasOperaciones({ deudas: [], inversiones: [inv], recurrentes: [] }, new Date(2026, 1, 10))
+  expect(ops.map((o) => o.key)).toEqual(['inversion:5:2026-02-28'])
+})

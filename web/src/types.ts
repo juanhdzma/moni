@@ -117,7 +117,7 @@ export interface DeudaIn {
   es_tarjeta: boolean
   cupo: number
   franquicia: string
-  crear_tx: boolean
+  crear_tx?: boolean
 }
 
 export interface InvIn {
@@ -130,7 +130,7 @@ export interface InvIn {
   pago: PagoInv | null
   dia_pago: number | null
   valor_actualizado_en: string
-  crear_tx: boolean
+  crear_tx?: boolean
 }
 
 export interface ActivoIn {
@@ -139,7 +139,7 @@ export interface ActivoIn {
   valor_actual: number
   fecha_adquisicion: string
   valor_actualizado_en: string
-  crear_tx: boolean
+  crear_tx?: boolean
 }
 
 export interface RecIn {

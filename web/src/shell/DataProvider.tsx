@@ -6,6 +6,7 @@ export const ESTADO_VACIO: Estado = { transacciones: [], deudas: [], inversiones
 
 export interface DataApi {
   estado: Estado
+  loaded: boolean
   version: number
   reload: () => Promise<void>
   refresh: () => void
@@ -26,9 +27,11 @@ export function useData(): DataApi {
 interface Props {
   children: ReactNode
   initialEstado?: Estado
+  initialLoaded?: boolean
 }
 
-export function DataProvider({ children, initialEstado }: Props) {
+export function DataProvider({ children, initialEstado, initialLoaded }: Props) {
+  const [loaded, setLoaded] = useState(initialLoaded ?? initialEstado !== undefined)
   const [estado, setEstado] = useState<Estado>(initialEstado ?? ESTADO_VACIO)
   const [version, setVersion] = useState(0)
   const [banner, setBanner] = useState<string | null>(null)
@@ -40,11 +43,15 @@ export function DataProvider({ children, initialEstado }: Props) {
   const applyData = useCallback((data: Estado) => {
     failed.current.clear()
     setEstado(data)
+    setLoaded(true)
     setBanner(null)
   }, [])
 
   const onLoadError = useCallback(
-    (err: unknown) => showBanner(err instanceof Error ? err.message : String(err)),
+    (err: unknown) => {
+      setLoaded(true)
+      showBanner(err instanceof Error ? err.message : String(err))
+    },
     [showBanner],
   )
 
@@ -68,8 +75,8 @@ export function DataProvider({ children, initialEstado }: Props) {
   }, [initialEstado, applyData, onLoadError])
 
   const value = useMemo(
-    () => ({ estado, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure }),
-    [estado, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure],
+    () => ({ estado, loaded, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure }),
+    [estado, loaded, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure],
   )
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

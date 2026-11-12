@@ -103,7 +103,7 @@ function InvCard({ inv }: { inv: Inversion }) {
 
 export function Inversiones({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado } = useData()
+  const { estado, loaded } = useData()
   const lista = estado.inversiones
   const totalInv = lista.reduce((s, i) => s + i.monto_invertido, 0)
   const totalActual = lista.reduce((s, i) => s + i.valor_actual, 0)
@@ -119,7 +119,8 @@ export function Inversiones({ active }: TabProps) {
           + Nueva inversión
         </button>
       </div>
-      <div className="card" style={{ marginBottom: 16 }} id="inv-total">
+      {loaded ? (
+        <div className="card" style={{ marginBottom: 16 }} id="inv-total">
         <div className="stat-summary stat-summary-3">
           <div className="stat-summary-item stat-hero">
             <div className="stat-label">Valor actual</div>
@@ -127,7 +128,7 @@ export function Inversiones({ active }: TabProps) {
               {cop(totalActual)}
             </div>
             <div className="stat-sub">
-              {lista.length} posición{lista.length !== 1 ? 'es' : ''}
+              {lista.length} {lista.length === 1 ? 'posición' : 'posiciones'}
             </div>
           </div>
           <div className="stat-pair">
@@ -152,6 +153,14 @@ export function Inversiones({ active }: TabProps) {
           </div>
         </div>
       </div>
+      ) : (
+        <div className="card" style={{ marginBottom: 16 }} id="inv-total">
+          <div className="stat-label">Portfolio</div>
+          <div className="stat-value">
+            <span className="skeleton" style={{ width: 140, height: 28 }}></span>
+          </div>
+        </div>
+      )}
       <div className="grid-2">
         <div>
           <div className="section-title" style={{ marginBottom: 12 }}>

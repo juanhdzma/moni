@@ -68,7 +68,7 @@ function Section({ items, emptyMsg }: { items: Recurrente[]; emptyMsg: string })
 
 export function Recurrentes({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado } = useData()
+  const { estado, loaded } = useData()
   const activos = estado.recurrentes.filter((r) => r.activo)
   const totalGas = activos.filter((r) => r.tipo !== 'ingreso').reduce((s, r) => s + toMensual(r.monto, r.frecuencia), 0)
   const totalIng = activos.filter((r) => r.tipo === 'ingreso').reduce((s, r) => s + toMensual(r.monto, r.frecuencia), 0)
@@ -80,7 +80,8 @@ export function Recurrentes({ active }: TabProps) {
           + Nuevo
         </button>
       </div>
-      <div className="card" style={{ marginBottom: 'var(--sp-7)' }} id="rec-total">
+      {loaded ? (
+        <div className="card" style={{ marginBottom: 'var(--sp-7)' }} id="rec-total">
         <div className="stat-summary stat-summary-3">
           <div className="stat-summary-item stat-hero">
             <div className="stat-label">Ingresos/mes</div>
@@ -104,6 +105,14 @@ export function Recurrentes({ active }: TabProps) {
           </div>
         </div>
       </div>
+      ) : (
+        <div className="card" style={{ marginBottom: 'var(--sp-7)' }} id="rec-total">
+          <div className="stat-label">Resumen mensual</div>
+          <div className="stat-value">
+            <span className="skeleton" style={{ width: 140, height: 28 }}></span>
+          </div>
+        </div>
+      )}
       <div className="grid-2">
         <div>
           <div className="section-title">Ingresos recurrentes</div>

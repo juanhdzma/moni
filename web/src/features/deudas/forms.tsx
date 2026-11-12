@@ -9,7 +9,7 @@ import { cop, nowStr, numToInput, parseMoney } from '../../lib/format'
 import { useModal } from '../../shell/ModalProvider'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useMutations } from '../../shell/useMutations'
-import type { Deuda, DeudaIn, WithId } from '../../types'
+import type { Deuda } from '../../types'
 
 const FRANQUICIAS = ['Visa', 'Mastercard', 'Amex', 'Otra'].map((f) => ({ value: f, label: f }))
 
@@ -110,7 +110,7 @@ function DeudaForm({ d }: { d: Deuda | null }) {
         }
     setModalStatus('', 'Guardando...')
     try {
-      if (d) await crudOp('deuda', 'update', { ...data, _id: d._id } as DeudaIn & WithId)
+      if (d) await crudOp('deuda', 'update', { ...data, _id: d._id })
       else await crudOp('deuda', 'add', { ...data, crear_tx: esTarjeta ? false : esNueva })
     } catch (err) {
       setModalStatus('err', errMsg(err))
@@ -238,7 +238,7 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
     ? 'Ajustá si el banco cobra intereses adicionales al cancelar.'
     : 'Pre-llenado con la cuota mensual — ajustá si aplica.'
 
-  const saldoAnterior = parseMoney(String(d.saldo_actual))
+  const saldoAnterior = d.saldo_actual
   const total = parseMoney(monto)
   const showBreakdown = Boolean(total) && saldoNuevo.trim() !== ''
   const { capital, intereses } = desglosePago(saldoAnterior, total, parseMoney(saldoNuevo))
@@ -367,11 +367,11 @@ function AdelantoForm({ d }: { d: Deuda }) {
   const [notas, setNotas] = useState('')
   const [registrarTx, setRegistrarTx] = useState(true)
 
-  const saldoAnterior = parseMoney(String(d.saldo_actual))
+  const saldoAnterior = d.saldo_actual
   const montoV = parseMoney(monto)
   const saldoNuevo: number | null = tieneCupo
     ? disponible.trim()
-      ? parseMoney(String(d.cupo)) - parseMoney(disponible)
+      ? d.cupo - parseMoney(disponible)
       : null
     : saldoNuevoIn.trim()
       ? parseMoney(saldoNuevoIn)

@@ -101,7 +101,7 @@ function TxRow({ t, onEdit }: { t: Transaccion; onEdit: (id: number) => void }) 
 
 export function Transacciones({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado } = useData()
+  const { estado, loaded } = useData()
   const [sort, setSort] = useState<TxSort>({ col: 'fecha', dir: -1 })
   const [panelOpen, setPanelOpen] = useState(false)
   const [mesSel, setMesSel] = useState('')
@@ -124,7 +124,15 @@ export function Transacciones({ active }: TabProps) {
   ].filter((p) => p.value)
 
   const rows: React.ReactNode[] = []
-  if (!list.length) {
+  if (!loaded) {
+    rows.push(
+      <tr key="loading">
+        <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 48 }}>
+          Cargando...
+        </td>
+      </tr>,
+    )
+  } else if (!list.length) {
     rows.push(
       <tr key="empty">
         <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 56 }}>

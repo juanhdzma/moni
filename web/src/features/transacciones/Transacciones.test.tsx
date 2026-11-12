@@ -35,6 +35,13 @@ describe('Transacciones tab', () => {
     expect(document.querySelector('img[src="assets/franquicias/visa.svg"]')).toBeTruthy()
   })
 
+  it('shows the loading row until the first load finishes', () => {
+    mockFetch()
+    renderWithProviders(<Transacciones active />, { loaded: false })
+    expect(screen.getByText('Cargando...')).toBeInTheDocument()
+    expect(screen.queryByText('Sin movimientos')).toBeNull()
+  })
+
   it('shows empty state', () => {
     mockFetch()
     ui(estado())
@@ -89,6 +96,32 @@ describe('Transacciones tab', () => {
     await user.keyboard('{Enter}')
     expect(await screen.findByText('Editar movimiento')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Eliminar' })).toBeTruthy()
+  })
+})
+
+describe('tx form: edición de datos atípicos', () => {
+  const editar = async (t: ReturnType<typeof tx>) => {
+    const user = userEvent.setup()
+    ui(estado({ transacciones: [t] }))
+    await user.click(screen.getByRole('button', { name: /Editar/ }))
+    return user
+  }
+
+  it('conserva la categoría que ya no está en la lista', async () => {
+    const f = mockFetch({ 'PUT /api/tx/9': { ok: true } })
+    const user = await editar(tx('gasto', 'Categoría vieja', 100, { _id: 9, id: 9, fecha: '2026-03-10T10:00', descripcion: 'x' }))
+    expect(document.getElementById('m-cat')).toHaveValue('Categoría vieja')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]?.body).toMatchObject({ categoria: 'Categoría vieja', monto: 100 })
+  })
+
+  it('una fecha sin hora abre con T00:00 y guarda', async () => {
+    const f = mockFetch({ 'PUT /api/tx/9': { ok: true } })
+    const user = await editar(tx('gasto', 'Comida', 100, { _id: 9, id: 9, fecha: '2026-03-10', descripcion: 'x' }))
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]?.body).toMatchObject({ fecha: '2026-03-10T00:00' })
   })
 })
 
@@ -166,7 +199,7 @@ describe('tx form', () => {
       method: 'PUT',
       url: '/api/tx/1',
       headers: { 'X-Moni-Request': '1' },
-      body: { fecha: '2026-03-10T10:00', tipo: 'gasto', categoria: 'Inversión', descripcion: 'Nuevo', monto: 5000, tarjeta_id: 5 },
+      body: { fecha: '2026-03-10T10:00', tipo: 'gasto', categoria: 'Comida', descripcion: 'Nuevo', monto: 5000, tarjeta_id: 5 },
     })
     expect(f.mutations()[0]?.body).not.toHaveProperty('_id')
   })

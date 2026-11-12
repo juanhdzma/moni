@@ -53,6 +53,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const prevFocus = useRef<HTMLElement | null>(null)
   const isOpen = useRef(false)
+  const justClosed = useRef<HTMLElement | null>(null)
   const pending = useRef<string | null>(null)
 
   usePopupOutsideClick()
@@ -67,7 +68,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 
   const openModal = useCallback((title: string, content: ReactNode) => {
     if (!isOpen.current) {
-      prevFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      prevFocus.current = justClosed.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null)
+      justClosed.current = null
       isOpen.current = true
     }
     setStatus({ cls: '', msg: '' })
@@ -76,6 +78,10 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 
   const closeModal = useCallback(() => {
     isOpen.current = false
+    justClosed.current = prevFocus.current
+    queueMicrotask(() => {
+      justClosed.current = null
+    })
     setModal(null)
     pending.current = null
     closeAnyOpenPopup()

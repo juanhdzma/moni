@@ -6,9 +6,9 @@ import { ModalProvider } from '../shell/ModalProvider'
 import type { Estado } from '../types'
 import { estado as estadoVacio } from './factories'
 
-export function Providers({ children, estado }: { children: ReactNode; estado?: Estado }) {
+export function Providers({ children, estado, loaded }: { children: ReactNode; estado?: Estado; loaded?: boolean }) {
   return (
-    <DataProvider initialEstado={estado ?? estadoVacio()}>
+    <DataProvider initialEstado={estado ?? estadoVacio()} initialLoaded={loaded ?? true}>
       <CategoriasProvider>
         <ModalProvider>{children}</ModalProvider>
       </CategoriasProvider>
@@ -16,6 +16,6 @@ export function Providers({ children, estado }: { children: ReactNode; estado?: 
   )
 }
 
-export function renderWithProviders(ui: ReactElement, opts: { estado?: Estado } = {}): RenderResult {
-  return render(ui, { wrapper: ({ children }) => <Providers estado={opts.estado}>{children}</Providers> })
+export function renderWithProviders(ui: ReactElement, opts: { estado?: Estado; loaded?: boolean } = {}): RenderResult {
+  return render(ui, { wrapper: ({ children }) => <Providers estado={opts.estado} loaded={opts.loaded}>{children}</Providers> })
 }

@@ -47,7 +47,47 @@ function Harness() {
 beforeEach(() => localStorage.clear())
 afterEach(() => vi.unstubAllGlobals())
 
+function Reopen() {
+  const { openModal, closeModal, setPendingProxOp } = useModal()
+  return (
+    <>
+      <button
+        onClick={() => {
+          setPendingProxOp('deuda:1:2026-08-01')
+          openModal(
+            'Primero',
+            <button
+              onClick={() => {
+                closeModal()
+                openModal('Segundo', <input aria-label="campo" />)
+              }}
+            >
+              editar
+            </button>,
+          )
+        }}
+      >
+        abrir
+      </button>
+    </>
+  )
+}
+
 describe('modal', () => {
+  it('cerrar y reabrir en el mismo tick devuelve el foco al abridor original aunque closeModal no pueda enfocarlo', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<Reopen />)
+    const abrir = screen.getByText('abrir')
+    await user.click(abrir)
+    abrir.focus = () => undefined
+    await user.click(screen.getByText('editar'))
+    expect(screen.getByText('Segundo')).toBeInTheDocument()
+    delete (abrir as { focus?: unknown }).focus
+    await user.click(screen.getByLabelText('Cerrar'))
+    expect(abrir).toHaveFocus()
+    expect(loadSkippedOps().size).toBe(0)
+  })
+
   it('markup, foco al abrir y restauración al cerrar', async () => {
     const user = userEvent.setup()
     renderWithProviders(<Harness />)

@@ -6,7 +6,7 @@ import { openActivoForm, openActivoFormById, openActivoSellFormById, openActivoU
 
 export function Activos({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado } = useData()
+  const { estado, loaded } = useData()
   const activos = estado.activos
 
   const totalIni = activos.reduce((s, a) => s + a.valor_inicial, 0)
@@ -21,7 +21,8 @@ export function Activos({ active }: TabProps) {
           + Nuevo activo
         </button>
       </div>
-      <div className="card" style={{ marginBottom: 16 }} id="activos-total">
+      {loaded ? (
+        <div className="card" style={{ marginBottom: 16 }} id="activos-total">
         <div className="stat-summary stat-summary-3">
           <div className="stat-summary-item stat-hero">
             <div className="stat-label">Valor actual</div>
@@ -46,6 +47,14 @@ export function Activos({ active }: TabProps) {
           </div>
         </div>
       </div>
+      ) : (
+        <div className="card" style={{ marginBottom: 16 }} id="activos-total">
+          <div className="stat-label">Activos</div>
+          <div className="stat-value">
+            <span className="skeleton" style={{ width: 140, height: 28 }}></span>
+          </div>
+        </div>
+      )}
       <div className="grid-2" id="activos-grid">
         {!activos.length && (
           <div className="empty" style={{ gridColumn: '1/-1' }}>

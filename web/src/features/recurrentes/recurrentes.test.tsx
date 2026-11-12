@@ -121,7 +121,7 @@ describe('create / edit / delete', () => {
     view()
     await userEvent.click(screen.getByText('+ Nuevo'))
     expect(screen.getByText('Nuevo recurrente')).toBeTruthy()
-    expect(document.querySelector('.tipo-btn.sel')).toBeNull()
+    expect(document.querySelector('.tipo-btn.sel')).toBe(document.getElementById('rt-gasto'))
     await userEvent.click(screen.getByText('Agregar'))
     expect(document.getElementById('m-status')?.textContent).toBe('Nombre requerido')
     await userEvent.type(screen.getByPlaceholderText('Ej. Netflix'), '  Spotify ')

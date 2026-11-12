@@ -81,10 +81,14 @@ describe('Dashboard KPIs', () => {
     expect(stat('stat-networth').querySelector('.stat-sub')).toHaveTextContent('proyectados próx. 12 meses')
   })
 
-  it('shows skeletons before the first load', async () => {
-    const { ESTADO_VACIO } = await import('../../shell/DataProvider')
-    renderWithProviders(<Dashboard active />, { estado: ESTADO_VACIO })
+  it('shows skeletons before the first load', () => {
+    renderWithProviders(<Dashboard active />, { loaded: false })
     expect(stat('stat-networth').querySelector('.skeleton')).toBeInTheDocument()
+  })
+
+  it('shows values, not skeletons, when loaded with empty data', () => {
+    renderWithProviders(<Dashboard active />)
+    expect(stat('stat-networth').querySelector('.skeleton')).toBeNull()
   })
 
   it('counts positions when nothing was invested', () => {

@@ -288,6 +288,16 @@ describe('pago', () => {
     expect((m?.body as { descripcion: string }).descripcion).toContain('Cuota · Crédito carro (capital')
   })
 
+  it('un saldo fraccionario no se multiplica por 10 al calcular el desglose', async () => {
+    const user = userEvent.setup()
+    mockFetch({ 'POST /api/deuda/1/pago': {} })
+    renderWithProviders(<Deudas active />, { estado: estado({ deudas: [{ ...credito, saldo_actual: 1234.5, cuota_mensual: 500 }] }) })
+    await user.click(pagar('Pagar cuota'))
+    await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '1000')
+    expect(document.getElementById('pay-capital')).toHaveTextContent('$235')
+    expect(document.getElementById('pay-intereses')).toHaveTextContent('$266')
+  })
+
   it('pagar sin registrar_tx', async () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/deuda/1/pago': {} })

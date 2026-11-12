@@ -16,6 +16,7 @@ const SIN_CATEGORIAS = 'Sin categorías — agregá una con +'
 function initialFecha(tx: Transaccion | null): string {
   if (!tx) return nowStr()
   const f = normDate(tx.fecha)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(f)) return `${f}T00:00`
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(f) ? f : ''
 }
 
@@ -30,7 +31,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
   const [tipo, setTipo] = useState<'ingreso' | 'gasto'>(tx?.tipo === 'ingreso' ? 'ingreso' : 'gasto')
   const [categoria, setCategoria] = useState(() => {
     const cats = categorias[tx?.tipo === 'ingreso' ? 'ingreso' : 'gasto'] || []
-    return tx && cats.includes(tx.categoria) ? tx.categoria : (cats[0] ?? '')
+    return tx?.categoria || (cats[0] ?? '')
   })
   const [newCatOpen, setNewCatOpen] = useState(false)
   const [newCat, setNewCat] = useState('')
@@ -42,7 +43,9 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
   const [fecha, setFecha] = useState(() => initialFecha(tx))
   const [notas, setNotas] = useState(tx?.notas || '')
 
-  const cats = categorias[tipo] || []
+  const baseCats = categorias[tipo] || []
+  const tipoOriginal = tx?.tipo === 'ingreso' ? 'ingreso' : 'gasto'
+  const cats = tx?.categoria && tipo === tipoOriginal && !baseCats.includes(tx.categoria) ? [...baseCats, tx.categoria] : baseCats
 
   const changeTipo = (t: 'ingreso' | 'gasto') => {
     setTipo(t)

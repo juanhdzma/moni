@@ -8,7 +8,7 @@ import { eaToMv, mvToEa, tasaEaDesdeInput } from '../../lib/inversiones'
 import { useModal } from '../../shell/ModalProvider'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useMutations } from '../../shell/useMutations'
-import type { InvIn, Inversion, PagoInv, TipoInv, WithId } from '../../types'
+import type { Inversion, PagoInv, TipoInv } from '../../types'
 
 const errMsg = (e: unknown): string => '❌ ' + (e instanceof Error ? e.message : String(e))
 
@@ -102,7 +102,7 @@ function InvForm({ inv }: { inv: Inversion | null }) {
 
     setModalStatus('', 'Guardando...')
     try {
-      if (inv) await crudOp('inv', 'update', { ...data, _id: inv._id } as InvIn & WithId)
+      if (inv) await crudOp('inv', 'update', { ...data, _id: inv._id })
       else await crudOp('inv', 'add', { ...data, crear_tx: esNueva })
     } catch (err) {
       setModalStatus('err', errMsg(err))
@@ -410,7 +410,7 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
     }
     setModalStatus('', 'Guardando...')
     try {
-      await crudOp('inv', 'update', { ...inv, valor_actual: nuevo, valor_actualizado_en: fecha, _id: inv._id } as InvIn & Inversion)
+      await crudOp('inv', 'update', { ...inv, valor_actual: nuevo, valor_actualizado_en: fecha, _id: inv._id })
     } catch (err) {
       setModalStatus('err', errMsg(err))
     }

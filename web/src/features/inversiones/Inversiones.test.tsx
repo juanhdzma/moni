@@ -52,7 +52,7 @@ describe('render', () => {
   it('resumen y tarjetas', () => {
     setup()
     const total = document.getElementById('inv-total') as HTMLElement
-    expect(total).toHaveTextContent('2 posiciónes')
+    expect(total).toHaveTextContent('2 posiciones')
     expect(total).toHaveTextContent('capital')
     const fija = document.getElementById('inv-grid-fija') as HTMLElement
     expect(within(fija).getByText('CDT Uno')).toBeInTheDocument()
@@ -74,7 +74,7 @@ describe('render', () => {
     setup([])
     expect(screen.getByText('Sin inversiones fijas')).toBeInTheDocument()
     expect(screen.getByText('Sin inversiones variables')).toBeInTheDocument()
-    expect(document.getElementById('inv-total')).toHaveTextContent('0 posiciónes')
+    expect(document.getElementById('inv-total')).toHaveTextContent('0 posiciones')
   })
 
   it('botones accesibles por teclado', async () => {

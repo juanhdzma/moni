@@ -8,7 +8,7 @@ import { cambioValor } from '../../lib/inversiones'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useModal } from '../../shell/ModalProvider'
 import { useMutations } from '../../shell/useMutations'
-import type { Activo, ActivoIn, WithId } from '../../types'
+import type { Activo } from '../../types'
 
 const errMsg = (e: unknown) => '❌ ' + (e instanceof Error ? e.message : String(e))
 const tone = (n: number) => (n >= 0 ? 'var(--income-mid)' : 'var(--expense-mid)')
@@ -61,7 +61,7 @@ function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
     const data = { nombre: nom, valor_inicial: ini, valor_actual: valorActual, fecha_adquisicion: fechaAdq, valor_actualizado_en: valorActualizadoEn }
     setModalStatus('', 'Guardando...')
     try {
-      if (activo) await crudOp('activo', 'update', { ...data, _id: activo._id } as unknown as ActivoIn & WithId)
+      if (activo) await crudOp('activo', 'update', { ...data, _id: activo._id })
       else await crudOp('activo', 'add', { ...data, crear_tx: esNueva })
     } catch (err) { setModalStatus('err', errMsg(err)) }
   }
@@ -118,7 +118,7 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
     if (!nuevo || nuevo <= 0) { setModalStatus('err', 'Valor inválido'); return }
     setModalStatus('', 'Guardando...')
     try {
-      await crudOp('activo', 'update', { ...a, valor_actual: nuevo, valor_actualizado_en: fecha, _id: a._id } as unknown as ActivoIn & WithId)
+      await crudOp('activo', 'update', { ...a, valor_actual: nuevo, valor_actualizado_en: fecha, _id: a._id })
     } catch (err) { setModalStatus('err', errMsg(err)) }
   }
 

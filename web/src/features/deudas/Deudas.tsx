@@ -176,7 +176,7 @@ function Terminada({ d }: { d: Deuda }) {
 
 export function Deudas({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado } = useData()
+  const { estado, loaded } = useData()
   const deudas = estado.deudas
   const activas = deudas.filter((d) => d.es_tarjeta || tieneSaldo(d))
   const terminadas = deudas.filter((d) => !d.es_tarjeta && !tieneSaldo(d))
@@ -195,7 +195,8 @@ export function Deudas({ active }: TabProps) {
           + Nueva deuda
         </button>
       </div>
-      <div className="card" style={{ marginBottom: 16 }} id="deudas-total">
+      {loaded ? (
+        <div className="card" style={{ marginBottom: 16 }} id="deudas-total">
         <div className="stat-summary stat-summary-4">
           <div className="stat-summary-item stat-hero">
             <div className="stat-label">Saldo pendiente</div>
@@ -228,6 +229,14 @@ export function Deudas({ active }: TabProps) {
           </div>
         </div>
       </div>
+      ) : (
+        <div className="card" style={{ marginBottom: 16 }} id="deudas-total">
+          <div className="stat-label">Total en deudas</div>
+          <div className="stat-value">
+            <span className="skeleton" style={{ width: 110, height: 28 }}></span>
+          </div>
+        </div>
+      )}
       <div className="grid-2">
         <div>
           <div className="section-title" style={{ marginBottom: 12 }}>

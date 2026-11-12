@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { TabContent, type TabProps } from '../../shell/TabContent'
-import { useData, ESTADO_VACIO } from '../../shell/DataProvider'
+import { useData } from '../../shell/DataProvider'
 import {
   fechasInversiones,
   fechasTransacciones,
@@ -36,11 +36,11 @@ function Kpi({ id, label, hero, loading, value, color, sub }: { id: string; labe
 const plural = (n: number, s: string, p: string) => `${n} ${n !== 1 ? p : s}`
 
 export function Dashboard({ active }: TabProps) {
-  const { estado } = useData()
+  const { estado, loaded } = useData()
   const [nwPeriod, setNwPeriod] = useState<PeriodoEvolucion>('6M')
   const [invPeriod, setInvPeriod] = useState<PeriodoEvolucion>('6M')
 
-  const loading = estado === ESTADO_VACIO
+  const loading = !loaded
   const r = resumenDashboard(estado)
   const proyStr = `${signStr(r.proyDelta)}${copShort(Math.abs(r.proyDelta))} proyectados próx. 12 meses`
   const invStr =

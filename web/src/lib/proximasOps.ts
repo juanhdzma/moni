@@ -1,6 +1,7 @@
 import type { Estado } from '../types'
 import { isoDate } from './format'
 import { tieneSaldo } from './config'
+import { nextInvPaymentDate } from './inversiones'
 import { FRECUENCIAS, nextPaymentDate } from './recurrentes'
 
 export const PROX_OP_OVERDUE_DAYS = 10
@@ -80,8 +81,7 @@ export function calcularProximasOperaciones(
     .filter((i) => i.tipo === 'fija' && i.pago === 'mensual' && i.dia_pago && i.tasa_ea)
     .forEach((inv) => {
       const dia = inv.dia_pago ?? 0
-      let next = new Date(now.getFullYear(), now.getMonth(), dia)
-      if (next < now) next = new Date(now.getFullYear(), now.getMonth() + 1, dia)
+      const next = nextInvPaymentDate(dia, hoy)
       if (next <= limit) {
         const mv = ((1 + (inv.tasa_ea ?? 0) / 100) ** (1 / 12) - 1) * 100
         const rend = Math.round((inv.monto_invertido * mv) / 100)
