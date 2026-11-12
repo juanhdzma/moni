@@ -183,7 +183,7 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
   const label = !value ? 'Seleccionar fecha' : isDateTime ? fmtDateTime(value) : fmtDate(value)
 
   return (
-    <div className="cdp" style={style} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
+    <div className="cdp" style={style}>
       <input
         className="cdp-enhanced cdp-native"
         type={type}

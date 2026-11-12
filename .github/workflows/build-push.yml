@@ -18,18 +18,11 @@ jobs:
           python-version: '3.12'
           cache: pip
 
-      - run: pip install -r backend/requirements-dev.txt
-
-      - run: python -m pytest backend/tests -q
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: web/package-lock.json
-
-      # Sin deps ni install: el runner de Node alcanza (ver tests/frontend/harness.mjs).
-      - run: node --test tests/frontend/*.test.mjs
 
       - run: npm ci
         working-directory: web
@@ -45,6 +38,10 @@ jobs:
 
       - run: npm run build
         working-directory: web
+
+      - run: pip install -r backend/requirements-dev.txt
+
+      - run: python -m pytest backend/tests -q
 
   build:
     needs: test

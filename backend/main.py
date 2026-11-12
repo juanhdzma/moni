@@ -16,9 +16,10 @@ from . import db
 
 logger = logging.getLogger("moni")
 
-# Docroot dedicado. Montar la raíz del repo dejaba /backend/data/moni.db, el
-# código y el .git descargables por HTTP con un GET y sin auth.
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "public"
+# Docroot dedicado: solo el build de React (web/dist). Montar la raíz del repo
+# dejaba /backend/data/moni.db, el código y el .git descargables por HTTP con un
+# GET y sin auth; web/src y web/package.json tampoco se sirven.
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "web" / "dist"
 
 
 @asynccontextmanager
@@ -694,4 +695,7 @@ def truncate_all():
 
 
 # ── Static frontend (must come last so /api/* routes above take priority) ───
-app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="static")
+if FRONTEND_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="static")
+else:
+    logger.error("%s no existe: el frontend responde 404. Corré `npm run build` en web/.", FRONTEND_DIR)

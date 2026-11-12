@@ -60,9 +60,10 @@ export function normDate(s: string | null | undefined): string {
 export function mediodia(s: string): Date {
   const m = (normDate(s).split('T')[0] ?? '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
   if (!m) return new Date(NaN)
-  const month = +(m[2] ?? 0) - 1
-  const d = new Date(+(m[1] ?? 0), month, +(m[3] ?? 0), 12)
-  return d.getMonth() === month ? d : new Date(NaN)
+  const month = +(m[2] ?? 0)
+  const day = +(m[3] ?? 0)
+  if (month < 1 || month > 12 || day < 1 || day > 31) return new Date(NaN)
+  return new Date(+(m[1] ?? 0), month - 1, day, 12)
 }
 
 export function fmtDate(s: string | null | undefined): string {

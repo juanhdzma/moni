@@ -120,11 +120,18 @@ describe('formato', () => {
     expect(fechaLocal('basura')).toBeNull()
   })
 
-  test('mediodia arma las 12:00 locales y rechaza fechas imposibles', () => {
+  test('mediodia desborda el día como el parseo viejo (2026-02-31 -> 3 mar) y rechaza mes o día fuera de rango', () => {
+    expect(mediodia('2026-02-31').getMonth()).toBe(2)
+    expect(mediodia('2026-02-31').getDate()).toBe(3)
+    expect(Number.isNaN(mediodia('2026-13-01').getTime())).toBe(true)
+    expect(Number.isNaN(mediodia('2026-01-32').getTime())).toBe(true)
+    expect(Number.isNaN(mediodia('2026-01-00').getTime())).toBe(true)
+  })
+
+  test('mediodia arma las 12:00 locales y rechaza basura', () => {
     const d = mediodia('2026-08-01T09:05')
     expect([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()]).toEqual([2026, 7, 1, 12])
     expect(mediodia('15/08/2026').getDate()).toBe(15)
-    expect(Number.isNaN(mediodia('2026-02-31').getTime())).toBe(true)
     expect(Number.isNaN(mediodia('basura').getTime())).toBe(true)
   })
 

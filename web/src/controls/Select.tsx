@@ -46,7 +46,7 @@ export function Select({ value, onChange, options, compact = false, id, style, a
   }
 
   return (
-    <div className={'cdd' + (compact ? ' cdd-inline' : '')} style={style} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
+    <div className={'cdd' + (compact ? ' cdd-inline' : '')} style={style}>
       <select
         className={'cdd-enhanced cdd-native' + (compact ? ' select-styled' : '')}
         value={value}

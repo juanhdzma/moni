@@ -1,3 +1,14 @@
+FROM node:22.23.4-slim AS build
+
+WORKDIR /app/web
+
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+
+COPY web/ ./
+RUN npm run build
+
+
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -5,7 +16,8 @@ WORKDIR /app
 COPY backend/requirements.txt backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-COPY . .
+COPY backend backend
+COPY --from=build /app/web/dist /app/web/dist
 
 # El volumen de datos se monta acá; el usuario sin privilegios tiene que poder escribirlo.
 RUN useradd --create-home --uid 1000 moni \

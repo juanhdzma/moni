@@ -26,8 +26,17 @@ export function usePopupOutsideClick(): void {
       if (e.target instanceof Element && e.target.closest('.cdd, .cdp, .cdd-menu, .cdp-panel')) return
       closeAnyOpenPopup()
     }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || !activePopup) return
+      e.stopPropagation()
+      closeAnyOpenPopup()
+    }
     document.addEventListener('click', onClick, true)
-    return () => document.removeEventListener('click', onClick, true)
+    document.addEventListener('keydown', onKey, true)
+    return () => {
+      document.removeEventListener('click', onClick, true)
+      document.removeEventListener('keydown', onKey, true)
+    }
   }, [])
 }
 
