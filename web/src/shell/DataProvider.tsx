@@ -7,6 +7,7 @@ export const ESTADO_VACIO: Estado = { transacciones: [], deudas: [], inversiones
 export interface DataApi {
   estado: Estado
   loaded: boolean
+  loadOk: boolean
   version: number
   reload: () => Promise<void>
   refresh: () => void
@@ -32,10 +33,12 @@ interface Props {
 
 export function DataProvider({ children, initialEstado, initialLoaded }: Props) {
   const [loaded, setLoaded] = useState(initialLoaded ?? initialEstado !== undefined)
+  const [loadOk, setLoadOk] = useState(loaded)
   const [estado, setEstado] = useState<Estado>(initialEstado ?? ESTADO_VACIO)
   const [version, setVersion] = useState(0)
   const [banner, setBanner] = useState<string | null>(null)
   const failed = useRef(new Set<string>())
+  const lastRequest = useRef(0)
 
   const showBanner = useCallback((msg: string) => setBanner('⚠ ' + msg), [])
   const hideBanner = useCallback(() => setBanner(null), [])
@@ -44,18 +47,30 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
     failed.current.clear()
     setEstado(data)
     setLoaded(true)
+    setLoadOk(true)
     setBanner(null)
   }, [])
 
   const onLoadError = useCallback(
     (err: unknown) => {
       setLoaded(true)
+      setLoadOk(false)
       showBanner(err instanceof Error ? err.message : String(err))
     },
     [showBanner],
   )
 
-  const reload = useCallback(() => loadAll().then(applyData, onLoadError), [applyData, onLoadError])
+  const reload = useCallback(() => {
+    const id = ++lastRequest.current
+    return loadAll().then(
+      (data) => {
+        if (id === lastRequest.current) applyData(data)
+      },
+      (err: unknown) => {
+        if (id === lastRequest.current) onLoadError(err)
+      },
+    )
+  }, [applyData, onLoadError])
 
   const refresh = useCallback(() => {
     failed.current.clear()
@@ -71,12 +86,12 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
   )
 
   useEffect(() => {
-    if (!initialEstado) void loadAll().then(applyData, onLoadError)
-  }, [initialEstado, applyData, onLoadError])
+    if (!initialEstado) void reload()
+  }, [initialEstado, reload])
 
   const value = useMemo(
-    () => ({ estado, loaded, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure }),
-    [estado, loaded, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure],
+    () => ({ estado, loaded, loadOk, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure }),
+    [estado, loaded, loadOk, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure],
   )
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

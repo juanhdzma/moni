@@ -8,7 +8,7 @@ import { cambioValor } from '../../lib/inversiones'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useModal } from '../../shell/ModalProvider'
 import { useMutations } from '../../shell/useMutations'
-import type { Activo } from '../../types'
+import type { Activo, ActivoVenta } from '../../types'
 
 const errMsg = (e: unknown) => '❌ ' + (e instanceof Error ? e.message : String(e))
 const tone = (n: number) => (n >= 0 ? 'var(--income-mid)' : 'var(--expense-mid)')
@@ -89,7 +89,7 @@ function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Fecha de adquisición</label>
+        <label className="form-label" htmlFor="m-fecha-adq">Fecha de adquisición</label>
         <DatePicker id="m-fecha-adq" value={fechaAdq} onChange={setFechaAdq} />
       </div>
       {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
@@ -155,7 +155,7 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Fecha de valoración</label>
+        <label className="form-label" htmlFor="m-fecha">Fecha de valoración</label>
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="modal-footer">
@@ -183,7 +183,8 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
     if (!precio || precio <= 0) { setModalStatus('err', 'Precio de venta inválido'); return }
     setModalStatus('', 'Guardando...')
     try {
-      await apiAction(`/api/activo/${a._id}/venta`, { precio, fecha, notas: notas.trim(), registrar_tx: registrarTx })
+      const body: ActivoVenta = { precio, fecha, notas: notas.trim(), registrar_tx: registrarTx }
+      await apiAction(`/api/activo/${a._id}/venta`, body)
     } catch (err) { setModalStatus('err', errMsg(err)) }
   }
 
@@ -218,7 +219,7 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Fecha de venta</label>
+        <label className="form-label" htmlFor="m-fecha">Fecha de venta</label>
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">

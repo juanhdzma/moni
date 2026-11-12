@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeEach } from 'vitest'
+import { describe, expect, test, beforeEach, vi } from 'vitest'
 import {
   clearCurrencySymbolCache,
   cop,
@@ -10,11 +10,11 @@ import {
   fmtMoneyInput,
   isStale,
   isoDate,
+  mediodia,
   nowStr,
   numToInput,
   normDate,
   parseMoney,
-  parseMoneyInput,
   pct,
   setCurrencySymbol,
   todayStr,
@@ -61,7 +61,7 @@ test('se ignora todo lo que no sea dígito', () => {
   const el = input('12a3$4')
   fmtMoneyInput(el)
   expect(el.value).toBe('1.234')
-  expect(parseMoneyInput(el)).toBe(1234)
+  expect(parseMoney(el.value)).toBe(1234)
 })
 
 test('normDate lleva los formatos sueltos a ISO', () => {
@@ -120,6 +120,14 @@ describe('formato', () => {
     expect(fechaLocal('basura')).toBeNull()
   })
 
+  test('mediodia arma las 12:00 locales y rechaza fechas imposibles', () => {
+    const d = mediodia('2026-08-01T09:05')
+    expect([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()]).toEqual([2026, 7, 1, 12])
+    expect(mediodia('15/08/2026').getDate()).toBe(15)
+    expect(Number.isNaN(mediodia('2026-02-31').getTime())).toBe(true)
+    expect(Number.isNaN(mediodia('basura').getTime())).toBe(true)
+  })
+
   test('todayStr y nowStr son del día local aunque UTC ya sea el siguiente', () => {
     const tarde = new Date(2026, 7, 15, 21, 30)
     expect(todayStr(tarde)).toBe('2026-08-15')
@@ -128,9 +136,11 @@ describe('formato', () => {
   })
 
   test('isStale compara contra 30 días', () => {
-    const hace = (d: number) => isoDate(new Date(Date.now() - d * 86400000))
-    expect(isStale(hace(31))).toBe(true)
-    expect(isStale(hace(5))).toBe(false)
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) })
+    expect(isStale('2026-05-15')).toBe(true)
+    expect(isStale('2026-05-16')).toBe(false)
+    expect(isStale('2026-06-10')).toBe(false)
+    vi.useRealTimers()
     expect(isStale('')).toBe(false)
     expect(isStale('basura')).toBe(false)
   })

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { AdvancedToggle } from './AdvancedToggle'
 import { DatePicker, formatValue, parseValue } from './DatePicker'
 import { MoneyInput } from './MoneyInput'
@@ -24,6 +24,23 @@ function SelectHarness() {
 }
 
 describe('Select', () => {
+  it('con un valor desconocido muestra la primera opción y no llama a onChange', () => {
+    const onChange = vi.fn()
+    render(<Select value="zzz" onChange={onChange} options={OPTS} id="s" />)
+    expect(document.getElementById('s')).toHaveTextContent('Alfa')
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('el id va en el trigger, así que el label lo enfoca y lo nombra', () => {
+    render(
+      <>
+        <label htmlFor="s">Letra</label>
+        <Select value="a" onChange={() => undefined} options={OPTS} id="s" />
+      </>,
+    )
+    expect(screen.getByLabelText('Letra').tagName).toBe('BUTTON')
+  })
+
   it('Enter en el trigger abre, Enter en una opción elige y cierra', async () => {
     const user = userEvent.setup()
     renderWithProviders(<SelectHarness />)

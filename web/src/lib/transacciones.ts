@@ -1,12 +1,14 @@
-import type { TipoTx, Transaccion } from '../types'
-import { normDate, txMonth } from './format'
+import type { Transaccion } from '../types'
+import { mediodia, txMonth } from './format'
+
+export type TxSortCol = 'fecha' | 'tipo' | 'categoria' | 'descripcion' | 'monto'
 
 export interface TxSort {
-  col: string
+  col: TxSortCol
   dir: 1 | -1
 }
 
-export function nextSort(actual: TxSort, col: string): TxSort {
+export function nextSort(actual: TxSort, col: TxSortCol): TxSort {
   if (actual.col === col) return { col, dir: actual.dir === 1 ? -1 : 1 }
   return { col, dir: col === 'fecha' || col === 'monto' ? -1 : 1 }
 }
@@ -17,16 +19,12 @@ export interface TxFilters {
   cat?: string
 }
 
-const texto = (v: unknown): string => (typeof v === 'string' || typeof v === 'number' ? String(v) : '')
-
 export function listarTransacciones(transacciones: Transaccion[], sort: TxSort, f: TxFilters = {}): Transaccion[] {
   let list = transacciones
-    .filter((t) => t.tipo !== ('transfer' as TipoTx))
+    .filter((t) => t.tipo !== 'transfer')
     .sort((a, b) => {
-      const av: unknown = a[sort.col as keyof Transaccion]
-      const bv: unknown = b[sort.col as keyof Transaccion]
-      if (sort.col === 'monto') return ((av as number) - (bv as number)) * sort.dir
-      return texto(av).localeCompare(texto(bv)) * sort.dir
+      if (sort.col === 'monto') return (a.monto - b.monto) * sort.dir
+      return String(a[sort.col] ?? '').localeCompare(String(b[sort.col] ?? '')) * sort.dir
     })
   if (f.tipo) list = list.filter((t) => t.tipo === f.tipo)
   if (f.mes) list = list.filter((t) => txMonth(t) === f.mes)
@@ -52,7 +50,7 @@ export function startOfWeek(d: Date): Date {
 }
 
 export function txDateBucket(fecha: string, now: Date): string {
-  const d = new Date((normDate(fecha).split('T')[0] ?? '') + 'T12:00:00')
+  const d = mediodia(fecha)
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate())
   const diffDays = Math.round((today.getTime() - dOnly.getTime()) / 86400000)

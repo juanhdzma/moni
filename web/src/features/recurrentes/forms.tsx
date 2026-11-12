@@ -77,8 +77,8 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
         />
       </div>
       <div className="form-group">
-        <label className="form-label">Tipo</label>
-        <div className="tipo-toggle">
+        <div className="form-label" id="lbl-grp-1">Tipo</div>
+        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-1">
           <button
             type="button"
             id="rt-ingreso"
@@ -103,12 +103,12 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
           <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
         </div>
         <div className="form-group">
-          <label className="form-label">Frecuencia</label>
+          <label className="form-label" htmlFor="m-frecuencia">Frecuencia</label>
           <Select id="m-frecuencia" value={frecuencia} onChange={setFrecuencia} options={frecOptions} />
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Fecha inicio (opcional)</label>
+        <label className="form-label" htmlFor="m-fecha">Fecha inicio (opcional)</label>
         <DatePicker id="m-fecha" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
@@ -180,7 +180,7 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
   return (
     <>
       <div className="form-group">
-        <label className="form-label">Categoría</label>
+        <label className="form-label" htmlFor="m-cat">Categoría</label>
         <Select id="m-cat" value={categoria} onChange={setCategoria} options={cats.map((c) => ({ value: c, label: c }))} />
       </div>
       <div className="form-group">
@@ -202,7 +202,7 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Fecha</label>
+        <label className="form-label" htmlFor="m-fecha">Fecha</label>
         <DatePicker id="m-fecha" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">

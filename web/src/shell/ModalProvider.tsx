@@ -1,4 +1,5 @@
 import {
+  Component,
   createContext,
   useCallback,
   useContext,
@@ -11,6 +12,7 @@ import {
   type ReactNode,
 } from 'react'
 import { skipOp } from '../lib/proximasOps'
+import { useData } from './DataProvider'
 import { closeAnyOpenPopup, usePopupOutsideClick } from './popups'
 
 const FOCUSABLE =
@@ -47,6 +49,19 @@ export function useModalStatus(): Status {
   return useContext(StatusContext)
 }
 
+class ContentBoundary extends Component<{ onFail: (err: unknown) => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  componentDidCatch(err: unknown) {
+    this.props.onFail(err)
+  }
+  render() {
+    return this.state.failed ? null : this.props.children
+  }
+}
+
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [modal, setModal] = useState<ModalState | null>(null)
   const [status, setStatus] = useState<Status>({ cls: '', msg: '' })
@@ -55,6 +70,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const isOpen = useRef(false)
   const justClosed = useRef<HTMLElement | null>(null)
   const pending = useRef<string | null>(null)
+  const [boundaryKey, setBoundaryKey] = useState(0)
+  const { showBanner } = useData()
 
   usePopupOutsideClick()
 
@@ -88,6 +105,16 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     prevFocus.current?.focus()
     prevFocus.current = null
   }, [])
+
+  const onContentFail = useCallback(
+    (err: unknown) => {
+      console.error('formulario del modal falló:', err)
+      closeModal()
+      setBoundaryKey((k) => k + 1)
+      showBanner('No se pudo abrir el formulario. Mirá la consola.')
+    },
+    [closeModal, showBanner],
+  )
 
   const setModalStatus = useCallback((cls: string, msg: string) => setStatus({ cls, msg }), [])
   const setPendingProxOp = useCallback((key: string | null) => {
@@ -146,7 +173,11 @@ export function ModalProvider({ children }: { children: ReactNode }) {
                 ✕
               </button>
             </div>
-            <div id="modal-body">{modal?.content}</div>
+            <div id="modal-body">
+              <ContentBoundary key={boundaryKey} onFail={onContentFail}>
+                {modal?.content}
+              </ContentBoundary>
+            </div>
           </div>
         </div>
       </StatusContext.Provider>

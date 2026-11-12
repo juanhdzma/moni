@@ -26,7 +26,7 @@ export const CATEGORIAS_NEUTRAS_PATRIMONIO = new Set<string>([
   'Dividendos',
 ])
 
-// Mueve el patrimonio, no la cartera: un gasto con tarjeta resta porque sube la deuda. Las revalorizaciones no dejan transacción, así que la curva histórica no las ve.
+// Un gasto con tarjeta resta porque sube la deuda; las revalorizaciones no dejan transacción.
 export function flujoPatrimonio(list: Pick<Transaccion, 'tipo' | 'categoria' | 'monto'>[]): number {
   return list.reduce((s, t) => {
     if (CATEGORIAS_NEUTRAS_PATRIMONIO.has(t.categoria)) return s
@@ -64,7 +64,7 @@ export function monthlyPatrimonio(transacciones: Transaccion[], count = 7, now: 
   return monthlySeries(transacciones, count, flujoPatrimonio, now)
 }
 
-// Aportes suman y retiros restan; los rendimientos no entran: pagados no cambian el valor, capitalizados no dejan transacción.
+// Los rendimientos no entran: pagados no cambian el valor, capitalizados no dejan transacción.
 export function monthlyInvDelta(transacciones: Transaccion[], count: number, now: Date = new Date()): number[] {
   return monthlySeries(
     transacciones,
@@ -96,7 +96,6 @@ export function monthLabels(count: number, now: Date = new Date()): string[] {
 
 export type PeriodoEvolucion = '1M' | '3M' | '6M' | '1Y' | 'ALL'
 
-// El valor viejo hacía new Date('YYYY-MM-DD') (medianoche UTC): en GMT-5 la fecha más antigua caía el día anterior y podía correr el mes.
 export function periodMonths(period: string, extraDates: (string | null | undefined)[] = [], now: Date = new Date()): number {
   if (period === '1M') return 2
   if (period === '3M') return 3
@@ -192,7 +191,6 @@ function fechaHoraLocal(fecha: string): Date | null {
   return new Date(+(m[1] ?? 0), +(m[2] ?? 0) - 1, +(m[3] ?? 0), +(hh ?? 0), +(mm ?? 0))
 }
 
-// El original comparaba new Date(normDate(fecha)) (UTC para fechas sin hora) y usaba setMonth sin recorte; acá se arma en hora local y se recorta el día.
 export function gastosTxInPeriod(transacciones: Transaccion[], period: string, hoy: Date = new Date()): Transaccion[] {
   const gastos = transacciones.filter((t) => t.tipo === 'gasto')
   const now = new Date(hoy)

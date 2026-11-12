@@ -25,6 +25,5 @@ docs/
 backend/tests/
 web/
 tests/
-web/
 *.md
 LICENSE

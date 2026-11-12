@@ -109,8 +109,8 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
   return (
     <>
       <div className="form-group">
-        <label className="form-label">Tipo</label>
-        <div className="tipo-toggle">
+        <div className="form-label" id="lbl-grp-1">Tipo</div>
+        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-1">
           <button type="button" className={'tipo-btn ingreso' + (tipo === 'ingreso' ? ' sel' : '')} onClick={() => changeTipo('ingreso')}>
             Ingreso
           </button>
@@ -120,7 +120,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Categoría</label>
+        <label className="form-label" htmlFor="m-cat">Categoría</label>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Select
             id="m-cat"
@@ -164,7 +164,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
         )}
       </div>
       <div className="form-group">
-        <label className="form-label">Descripción</label>
+        <label className="form-label" htmlFor="m-desc">Descripción</label>
         <input
           className="form-input"
           type="text"
@@ -176,12 +176,12 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
         />
       </div>
       <div className="form-group">
-        <label className="form-label">Monto (COP)</label>
+        <label className="form-label" htmlFor="m-monto">Monto (COP)</label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} ariaLabel="Monto (COP)" />
       </div>
       {tipo === 'gasto' && (
         <div className="form-group" id="wrap-tarjeta">
-          <label className="form-label">Pagado con</label>
+          <label className="form-label" htmlFor="m-tarjeta">Pagado con</label>
           <Select
             id="m-tarjeta"
             value={tarjeta}
@@ -192,13 +192,14 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
         </div>
       )}
       <div className="form-group">
-        <label className="form-label">Fecha</label>
+        <label className="form-label" htmlFor="m-fecha">Fecha</label>
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
         <label
           className="form-label"
           style={{ textTransform: 'none', letterSpacing: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}
+          htmlFor="m-notas"
         >
           Notas (opcional)
         </label>

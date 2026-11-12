@@ -22,18 +22,14 @@ jobs:
 
       - run: python -m pytest backend/tests -q
 
-      # Sin deps ni install: el runner de Node alcanza (ver tests/frontend/harness.mjs).
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - run: node --test tests/frontend/*.test.mjs
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: web/package-lock.json
+
+      # Sin deps ni install: el runner de Node alcanza (ver tests/frontend/harness.mjs).
+      - run: node --test tests/frontend/*.test.mjs
 
       - run: npm ci
         working-directory: web

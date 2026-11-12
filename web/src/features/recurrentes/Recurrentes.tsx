@@ -82,29 +82,29 @@ export function Recurrentes({ active }: TabProps) {
       </div>
       {loaded ? (
         <div className="card" style={{ marginBottom: 'var(--sp-7)' }} id="rec-total">
-        <div className="stat-summary stat-summary-3">
-          <div className="stat-summary-item stat-hero">
-            <div className="stat-label">Ingresos/mes</div>
-            <div className="stat-value" style={{ color: 'var(--green)' }}>{cop(totalIng)}</div>
-            <div className="stat-sub">recurrentes activos</div>
-          </div>
-          <div className="stat-pair">
-            <div className="stat-summary-item">
-              <div className="stat-label">Gastos/mes</div>
-              <div className="stat-value" style={{ color: 'var(--red)' }}>{cop(totalGas)}</div>
+          <div className="stat-summary stat-summary-3">
+            <div className="stat-summary-item stat-hero">
+              <div className="stat-label">Ingresos/mes</div>
+              <div className="stat-value" style={{ color: 'var(--green)' }}>{cop(totalIng)}</div>
               <div className="stat-sub">recurrentes activos</div>
             </div>
-            <div className="stat-summary-item">
-              <div className="stat-label">Neto mensual</div>
-              <div className="stat-value" style={{ color: neto >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                {signStr(neto)}
-                {cop(Math.abs(neto))}
+            <div className="stat-pair">
+              <div className="stat-summary-item">
+                <div className="stat-label">Gastos/mes</div>
+                <div className="stat-value" style={{ color: 'var(--red)' }}>{cop(totalGas)}</div>
+                <div className="stat-sub">recurrentes activos</div>
               </div>
-              <div className="stat-sub">ingresos − gastos</div>
+              <div className="stat-summary-item">
+                <div className="stat-label">Neto mensual</div>
+                <div className="stat-value" style={{ color: neto >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                  {signStr(neto)}
+                  {cop(Math.abs(neto))}
+                </div>
+                <div className="stat-sub">ingresos − gastos</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       ) : (
         <div className="card" style={{ marginBottom: 'var(--sp-7)' }} id="rec-total">
           <div className="stat-label">Resumen mensual</div>
@@ -117,13 +117,13 @@ export function Recurrentes({ active }: TabProps) {
         <div>
           <div className="section-title">Ingresos recurrentes</div>
           <div id="rec-ingresos" style={col}>
-            <Section items={estado.recurrentes.filter((r) => r.tipo === 'ingreso')} emptyMsg="Sin ingresos recurrentes." />
+            {loaded && <Section items={estado.recurrentes.filter((r) => r.tipo === 'ingreso')} emptyMsg="Sin ingresos recurrentes." />}
           </div>
         </div>
         <div>
           <div className="section-title">Gastos fijos</div>
           <div id="rec-gastos" style={col}>
-            <Section items={estado.recurrentes.filter((r) => r.tipo !== 'ingreso')} emptyMsg="Sin gastos recurrentes." />
+            {loaded && <Section items={estado.recurrentes.filter((r) => r.tipo !== 'ingreso')} emptyMsg="Sin gastos recurrentes." />}
           </div>
         </div>
       </div>

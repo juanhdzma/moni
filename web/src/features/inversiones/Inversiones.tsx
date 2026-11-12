@@ -121,38 +121,38 @@ export function Inversiones({ active }: TabProps) {
       </div>
       {loaded ? (
         <div className="card" style={{ marginBottom: 16 }} id="inv-total">
-        <div className="stat-summary stat-summary-3">
-          <div className="stat-summary-item stat-hero">
-            <div className="stat-label">Valor actual</div>
-            <div className="stat-value" style={{ color: 'var(--inv)' }}>
-              {cop(totalActual)}
-            </div>
-            <div className="stat-sub">
-              {lista.length} {lista.length === 1 ? 'posición' : 'posiciones'}
-            </div>
-          </div>
-          <div className="stat-pair">
-            <div className="stat-summary-item">
-              <div className="stat-label">Invertido</div>
-              <div className="stat-value">{cop(totalInv)}</div>
-              <div className="stat-sub">capital</div>
-            </div>
-            <div className="stat-summary-item">
-              <div className="stat-label">Ganancia</div>
-              <div className="stat-value" style={{ color: ganancia >= 0 ? 'var(--income)' : 'var(--expense)' }}>
-                {signStr(ganancia)}
-                {cop(Math.abs(ganancia))}
+          <div className="stat-summary stat-summary-3">
+            <div className="stat-summary-item stat-hero">
+              <div className="stat-label">Valor actual</div>
+              <div className="stat-value" style={{ color: 'var(--inv)' }}>
+                {cop(totalActual)}
               </div>
               <div className="stat-sub">
-                <span className={'gain-badge ' + (ganancia >= 0 ? 'gain-pos' : 'gain-neg')}>
-                  {signStr(ganPct)}
-                  {pct(Math.abs(ganPct))}%
-                </span>
+                {lista.length} {lista.length === 1 ? 'posición' : 'posiciones'}
+              </div>
+            </div>
+            <div className="stat-pair">
+              <div className="stat-summary-item">
+                <div className="stat-label">Invertido</div>
+                <div className="stat-value">{cop(totalInv)}</div>
+                <div className="stat-sub">capital</div>
+              </div>
+              <div className="stat-summary-item">
+                <div className="stat-label">Ganancia</div>
+                <div className="stat-value" style={{ color: ganancia >= 0 ? 'var(--income)' : 'var(--expense)' }}>
+                  {signStr(ganancia)}
+                  {cop(Math.abs(ganancia))}
+                </div>
+                <div className="stat-sub">
+                  <span className={'gain-badge ' + (ganancia >= 0 ? 'gain-pos' : 'gain-neg')}>
+                    {signStr(ganPct)}
+                    {pct(Math.abs(ganPct))}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
       ) : (
         <div className="card" style={{ marginBottom: 16 }} id="inv-total">
           <div className="stat-label">Portfolio</div>
@@ -167,7 +167,7 @@ export function Inversiones({ active }: TabProps) {
             Fijas
           </div>
           <div id="inv-grid-fija" className="card-list">
-            {fijas.length ? fijas.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones fijas" />}
+            {loaded && (fijas.length ? fijas.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones fijas" />)}
           </div>
         </div>
         <div>
@@ -175,7 +175,7 @@ export function Inversiones({ active }: TabProps) {
             Variables
           </div>
           <div id="inv-grid-variable" className="card-list">
-            {variables.length ? variables.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones variables" />}
+            {loaded && (variables.length ? variables.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones variables" />)}
           </div>
         </div>
       </div>

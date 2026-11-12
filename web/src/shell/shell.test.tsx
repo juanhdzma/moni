@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { activo, estado, inversion } from '../test/factories'
 import { failure, mockFetch } from '../test/mockFetch'
 import { renderWithProviders } from '../test/render'
@@ -9,7 +9,11 @@ import { DataProvider } from './DataProvider'
 import { ModalProvider } from './ModalProvider'
 import { Shell } from './Shell'
 
-afterEach(() => vi.unstubAllGlobals())
+beforeEach(() => vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) }))
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
 
 const nav = () => document.getElementById('header-nav') as HTMLElement
 

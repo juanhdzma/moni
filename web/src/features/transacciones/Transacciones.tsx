@@ -9,6 +9,7 @@ import {
   nextSort,
   txDateBucket,
   type TxSort,
+  type TxSortCol,
 } from '../../lib/transacciones'
 import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
@@ -16,7 +17,7 @@ import { TabContent, type TabProps } from '../../shell/TabContent'
 import type { Transaccion } from '../../types'
 import { openTxForm, openTxFormById } from './forms'
 
-const COLUMNAS: { col: string; label: string }[] = [
+const COLUMNAS: { col: TxSortCol; label: string }[] = [
   { col: 'fecha', label: 'Fecha' },
   { col: 'tipo', label: 'Tipo' },
   { col: 'categoria', label: 'Categoría' },
@@ -112,6 +113,8 @@ export function Transacciones({ active }: TabProps) {
   const cats = categoriasDisponibles(estado.transacciones)
   const mes = meses.includes(mesSel) ? mesSel : ''
   const cat = cats.includes(catSel) ? catSel : ''
+  if (mes !== mesSel) setMesSel(mes)
+  if (cat !== catSel) setCatSel(cat)
   const tipo = tipoSel
 
   const list = listarTransacciones(estado.transacciones, sort, { tipo, mes, cat })

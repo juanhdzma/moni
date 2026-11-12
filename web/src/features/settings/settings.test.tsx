@@ -4,13 +4,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearCurrencySymbolCache } from '../../lib/format'
 import { json, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
+import { expectLabels, modalBody } from '../../test/labels'
+import { Dashboard } from '../dashboard'
 import { Settings } from '.'
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) })
   localStorage.clear()
   clearCurrencySymbolCache()
 })
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
 
 describe('categorias', () => {
   it('agrega y quita una categoria custom y persiste en moni_cats', async () => {
@@ -45,7 +51,31 @@ describe('operaciones ocultas', () => {
   })
 })
 
+describe('operaciones ocultas y recarga', () => {
+  it('siguen listadas tras montar la app antes de la primera carga', () => {
+    const guardadas = ['deuda:1:2026-01-01', 'rec:2:2026-02-01']
+    localStorage.setItem('moni_skipped_ops', JSON.stringify(guardadas))
+    renderWithProviders(
+      <>
+        <Dashboard active />
+        <Settings active />
+      </>,
+      { loaded: false },
+    )
+    expect(screen.getByText('deuda:1:2026-01-01')).toBeTruthy()
+    expect(screen.getByText('rec:2:2026-02-01')).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem('moni_skipped_ops') ?? '[]')).toEqual(guardadas)
+  })
+})
+
 describe('moneda', () => {
+  it('un símbolo guardado desconocido muestra la primera opción sin escribir nada', () => {
+    localStorage.setItem('moni_currency_symbol', 'CHF')
+    renderWithProviders(<Settings active />)
+    expect(screen.getByRole('button', { name: 'Símbolo mostrado junto a los montos' })).toHaveTextContent('Peso colombiano ($)')
+    expect(localStorage.getItem('moni_currency_symbol')).toBe('CHF')
+  })
+
   it('cambia el simbolo y lo persiste', async () => {
     renderWithProviders(<Settings active />)
     await userEvent.click(screen.getByRole('button', { name: 'Símbolo mostrado junto a los montos' }))
@@ -71,7 +101,7 @@ describe('backup', () => {
     const blob = (create.mock.calls[0] as unknown as [Blob])[0]
     expect(blob.type).toBe('application/json')
     expect(await blob.text()).toBe(JSON.stringify(data, null, 2))
-    expect(download).toMatch(/^moni-backup-\d{4}-\d{2}-\d{2}\.json$/)
+    expect(download).toBe('moni-backup-2026-06-15.json')
     expect(revoke).toHaveBeenCalledWith('blob:x')
     click.mockRestore()
   })
@@ -128,5 +158,14 @@ describe('teclado', () => {
     expect(document.activeElement?.textContent).toBe('Agregar')
     await userEvent.keyboard('{Enter}')
     for (const b of screen.getAllByRole('button')) expect(b.tabIndex).not.toBe(-1)
+  })
+})
+
+describe('labels', () => {
+  it('moneda y confirmación de borrado se encuentran por su label', async () => {
+    renderWithProviders(<Settings active />)
+    expectLabels(document.getElementById('settings-currency') as HTMLElement, { 'Símbolo mostrado junto a los montos': 'settings-currency-select' })
+    await userEvent.click(screen.getByRole('button', { name: 'Borrar todos los datos' }))
+    expectLabels(modalBody(), { 'Escribí BORRAR para confirmar': 'm-confirm-truncate' })
   })
 })

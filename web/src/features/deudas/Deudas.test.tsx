@@ -1,9 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { deuda, estado } from '../../test/factories'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
+import { expectLabels, modalBody } from '../../test/labels'
 import { Deudas } from './index'
 
 const credito = deuda({
@@ -22,7 +23,11 @@ const saldado = deuda({ _id: 3, id: 3, nombre: 'Moto', monto_inicial: 3000000, s
 
 const full = () => estado({ deudas: [credito, tarjeta, saldado] })
 
-afterEach(() => vi.unstubAllGlobals())
+beforeEach(() => vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 8, 5, 10, 30) }))
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
 
 const dialog = () => document.getElementById('modal-overlay') as HTMLElement
 const hdr = { 'X-Moni-Request': '1', 'Content-Type': 'application/json' }
@@ -284,7 +289,7 @@ describe('pago', () => {
       registrar_tx: true,
       avanzar_cuota: true,
     })
-    expect((m?.body as { fecha: string }).fecha).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
+    expect((m?.body as { fecha: string }).fecha).toBe('2026-09-05T10:30')
     expect((m?.body as { descripcion: string }).descripcion).toContain('Cuota · Crédito carro (capital')
   })
 
@@ -414,5 +419,39 @@ describe('adelanto', () => {
     await user.type(document.getElementById('m-monto') as HTMLElement, '100')
     await user.click(screen.getByText('Pedir adelanto'))
     expect(document.getElementById('m-status')).toHaveTextContent('Ingresá el cupo disponible después del adelanto')
+  })
+})
+
+describe('labels', () => {
+  it('el form de deuda se encuentra por sus labels', async () => {
+    mockFetch()
+    const user = userEvent.setup()
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await user.click(screen.getByText('+ Nueva deuda'))
+    expectLabels(modalBody(), {
+      Nombre: 'm-nombre',
+      'Monto del crédito (COP)': 'm-monto-ini',
+      'Cupo (COP)': 'm-cupo',
+      Franquicia: 'm-franquicia',
+      'Saldo actual (COP)': 'm-saldo',
+      'Tasa EA (%)': 'm-tasa',
+      'Cuota mensual': 'm-cuota',
+      'Fecha inicio': 'm-fecha-ini',
+      'Próxima cuota': 'm-proxima',
+    })
+    expect(within(modalBody()).getByRole('group', { name: 'Tipo' })).toBeInTheDocument()
+  })
+
+  it('el form de pago se encuentra por sus labels', async () => {
+    mockFetch()
+    const user = userEvent.setup()
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await user.click(within(document.getElementById('deudas-grid-credito') as HTMLElement).getByText('Pagar cuota'))
+    expectLabels(modalBody(), {
+      'Monto total pagado (COP)': 'm-monto',
+      'Saldo capital después del pago': 'm-saldo-nuevo',
+      'Fecha del pago': 'm-fecha',
+      'Notas (opcional)': 'm-notas',
+    })
   })
 })

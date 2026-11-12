@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { activo, estado } from '../../test/factories'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
+import { expectLabels, modalBody } from '../../test/labels'
 import { Activos } from './index'
 
 const H = { 'X-Moni-Request': '1' }
@@ -214,3 +215,16 @@ describe('Activos forms', () => {
 })
 
 void within
+
+describe('labels', () => {
+  it('el form de activo se encuentra por sus labels', async () => {
+    const { user } = setup([])
+    await user.click(screen.getByRole('button', { name: '+ Nuevo activo' }))
+    expectLabels(modalBody(), {
+      Nombre: 'm-nombre',
+      'Precio de compra (COP)': 'm-val-ini',
+      'Valor actual (COP)': 'm-val-act',
+      'Fecha de adquisición': 'm-fecha-adq',
+    })
+  })
+})

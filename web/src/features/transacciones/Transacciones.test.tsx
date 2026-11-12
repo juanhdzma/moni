@@ -1,9 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { deuda, estado, tx } from '../../test/factories'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
+import { expectLabels, modalBody } from '../../test/labels'
+import { useData } from '../../shell/DataProvider'
 import { Transacciones, openTxForm } from '.'
 
 const datos = () =>
@@ -21,7 +23,11 @@ const ui = (e = datos()) => {
   return r
 }
 
-afterEach(() => vi.unstubAllGlobals())
+beforeEach(() => vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) }))
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
 
 describe('Transacciones tab', () => {
   it('renders rows without transfers, with groups, sign and card chip', () => {
@@ -110,7 +116,7 @@ describe('tx form: edición de datos atípicos', () => {
   it('conserva la categoría que ya no está en la lista', async () => {
     const f = mockFetch({ 'PUT /api/tx/9': { ok: true } })
     const user = await editar(tx('gasto', 'Categoría vieja', 100, { _id: 9, id: 9, fecha: '2026-03-10T10:00', descripcion: 'x' }))
-    expect(document.getElementById('m-cat')).toHaveValue('Categoría vieja')
+    expect(document.getElementById('m-cat')).toHaveTextContent('Categoría vieja')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]?.body).toMatchObject({ categoria: 'Categoría vieja', monto: 100 })
@@ -122,6 +128,44 @@ describe('tx form: edición de datos atípicos', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]?.body).toMatchObject({ fecha: '2026-03-10T00:00' })
+  })
+})
+
+describe('filtros obsoletos', () => {
+  const fila = (t: string) => within(document.getElementById('tx-tbody') as HTMLElement).queryByText(t)
+
+  function Recargar() {
+    const { reload } = useData()
+    return <button onClick={() => void reload()}>recargar</button>
+  }
+
+  it('si la opción elegida desaparece el filtro se resetea para siempre', async () => {
+    const abril = tx('ingreso', 'Salario', 900000, { id: 2, _id: 2, fecha: '2026-04-02T08:00' })
+    const marzo = tx('gasto', 'Comida', 5000, { id: 1, _id: 1, fecha: '2026-03-10T10:00', descripcion: 'Mercado' })
+    const todo = (transacciones: unknown[]) => ({ transacciones, deudas: [], inversiones: [], activos: [], recurrentes: [] })
+    const f = mockFetch()
+    const user = userEvent.setup()
+    renderWithProviders(
+      <>
+        <Transacciones active />
+        <Recargar />
+      </>,
+      { estado: estado({ transacciones: [marzo, abril] }) },
+    )
+    await user.click(document.getElementById('f-mes-filter') as HTMLElement)
+    await user.click(screen.getByRole('option', { name: /marzo/i }))
+    expect(fila('Salario')).toBeNull()
+
+    f.set('GET /api/all', todo([abril]))
+    await user.click(screen.getByText('recargar'))
+    await waitFor(() => expect(fila('Salario')).toBeInTheDocument())
+    expect(document.getElementById('f-mes-filter')).toHaveTextContent('Todos los meses')
+
+    f.set('GET /api/all', todo([marzo, abril]))
+    await user.click(screen.getByText('recargar'))
+    await waitFor(() => expect(fila('Mercado')).toBeInTheDocument())
+    expect(fila('Salario')).toBeInTheDocument()
+    expect(document.querySelector('.filter-pill')).toBeNull()
   })
 })
 
@@ -138,11 +182,11 @@ describe('tx form', () => {
     const user = await abrirNuevo()
     await user.click(screen.getByRole('button', { name: 'Gasto' }))
     await user.click(screen.getByRole('button', { name: 'Gasto' }))
-    await user.click(document.querySelector('#m-cat + .cdd-trigger') as HTMLElement)
+    await user.click(document.querySelector('#m-cat') as HTMLElement)
     await user.click(screen.getByRole('option', { name: 'Inversión' }))
     await user.type(document.getElementById('m-desc') as HTMLElement, '  Algo  ')
     await user.type(document.getElementById('m-monto') as HTMLElement, '12500')
-    await user.click(document.querySelector('#m-tarjeta + .cdd-trigger') as HTMLElement)
+    await user.click(document.querySelector('#m-tarjeta') as HTMLElement)
     await user.click(screen.getByRole('option', { name: 'Visa Oro' }))
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
@@ -153,7 +197,7 @@ describe('tx form', () => {
       body: { tipo: 'gasto', categoria: 'Inversión', descripcion: 'Algo', monto: 12500, notas: '', tarjeta_id: 5 },
     })
     const body = f.mutations()[0]?.body as { fecha: string }
-    expect(body.fecha).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
+    expect(body.fecha).toBe('2026-06-15T10:30')
     await waitFor(() => expect(screen.queryByText('Nuevo movimiento')).toBeNull())
   })
 
@@ -182,7 +226,7 @@ describe('tx form', () => {
     await user.click(screen.getByTitle('Agregar categoría'))
     await user.type(document.getElementById('new-cat-name') as HTMLElement, 'Mascotas{Enter}')
     expect(document.getElementById('new-cat-wrap')).toBeNull()
-    expect(document.querySelector('#m-cat + .cdd-trigger .cdd-label')?.textContent).toBe('Mascotas')
+    expect(document.querySelector('#m-cat .cdd-label')?.textContent).toBe('Mascotas')
     localStorage.clear()
   })
 
@@ -234,5 +278,24 @@ describe('tx form', () => {
     const ctx = { openModal: vi.fn(), setPendingProxOp: vi.fn(), estado: datos() }
     openTxForm(ctx, datos().transacciones[2])
     expect(ctx.openModal).not.toHaveBeenCalled()
+  })
+})
+
+describe('labels', () => {
+  it('cada campo del form se encuentra por su label', async () => {
+    mockFetch()
+    const user = userEvent.setup()
+    renderWithProviders(<Transacciones active />, { estado: datos() })
+    await user.click(screen.getByRole('button', { name: '+ Nuevo movimiento' }))
+    await user.click(screen.getByRole('button', { name: 'Gasto' }))
+    expectLabels(modalBody(), {
+      Categoría: 'm-cat',
+      Descripción: 'm-desc',
+      'Monto (COP)': 'm-monto',
+      'Pagado con': 'm-tarjeta',
+      Fecha: 'm-fecha',
+      'Notas (opcional)': 'm-notas',
+    })
+    expect(within(modalBody()).getByRole('group', { name: 'Tipo' })).toBeInTheDocument()
   })
 })

@@ -45,3 +45,21 @@ test('un moni_cats corrupto o con tipos ajenos se ignora', () => {
   expect(cats.gasto).toContain('Viajes')
   expect(Object.keys(cats)).toEqual(['ingreso', 'gasto', 'transfer'])
 })
+
+test('moni_cats manipulado: solo arreglos de strings por tipo conocido', () => {
+  localStorage.setItem('moni_cats', JSON.stringify({ gasto: ['Viajes', 3, null, { a: 1 }], ingreso: 'Freelance', transfer: { x: 1 } }))
+  const cats = loadCustomCategories()
+  expect(cats.gasto).toEqual([...systemCategories().gasto, 'Viajes'])
+  expect(cats.ingreso).toEqual(systemCategories().ingreso)
+  expect(cats.transfer).toEqual(systemCategories().transfer)
+  localStorage.setItem('moni_cats', JSON.stringify(['gasto']))
+  expect(loadCustomCategories()).toEqual(systemCategories())
+  localStorage.setItem('moni_cats', 'null')
+  expect(loadCustomCategories()).toEqual(systemCategories())
+})
+
+test('agregar sobre un moni_cats manipulado reescribe solo datos válidos', () => {
+  localStorage.setItem('moni_cats', JSON.stringify({ gasto: 'x', ingreso: ['A', 2] }))
+  addCustomCategory(systemCategories(), 'gasto', 'Viajes')
+  expect(JSON.parse(localStorage.getItem('moni_cats') ?? '')).toEqual({ ingreso: ['A'], gasto: ['Viajes'] })
+})

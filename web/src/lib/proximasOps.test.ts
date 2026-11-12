@@ -3,6 +3,7 @@ import { deuda, inversion, recurrente } from '../test/factories'
 import {
   calcularProximasOperaciones,
   loadSkippedOps,
+  podarOcultas,
   proxOpKey,
   restoreAllOps,
   restoreOp,
@@ -69,14 +70,32 @@ test('junta cuotas, rendimientos y recurrentes dentro de la ventana, ordenados p
   expect(ops.find((o) => o.type === 'inversion')?.monto).toBe(9_489)
 })
 
-test('visibles oculta las saltadas y poda las claves que ya no son candidatas', () => {
-  const ops = calcularProximasOperaciones(
+const opsUnaDeuda = () =>
+  calcularProximasOperaciones(
     { deudas: [deuda({ _id: 1, saldo_actual: 100, proxima_cuota: '2026-08-20' })], inversiones: [], recurrentes: [] },
     HOY,
   )
+
+test('visibles oculta las saltadas y no escribe en storage', () => {
   saveSkippedOps(new Set(['deuda:1:2026-08-20', 'deuda:9:2026-01-01']))
-  expect(visibles(ops)).toEqual([])
+  expect(visibles(opsUnaDeuda())).toEqual([])
+  expect(visibles([])).toEqual([])
+  expect([...loadSkippedOps()]).toEqual(['deuda:1:2026-08-20', 'deuda:9:2026-01-01'])
+})
+
+test('podarOcultas deja solo las claves que siguen siendo candidatas', () => {
+  saveSkippedOps(new Set(['deuda:1:2026-08-20', 'deuda:9:2026-01-01']))
+  podarOcultas(opsUnaDeuda())
   expect([...loadSkippedOps()]).toEqual(['deuda:1:2026-08-20'])
+})
+
+test('moni_skipped_ops manipulado: solo se conservan strings', () => {
+  localStorage.setItem('moni_skipped_ops', JSON.stringify(['a', 1, null, { x: 1 }, 'b']))
+  expect([...loadSkippedOps()]).toEqual(['a', 'b'])
+  localStorage.setItem('moni_skipped_ops', JSON.stringify({ a: 1 }))
+  expect(loadSkippedOps().size).toBe(0)
+  localStorage.setItem('moni_skipped_ops', '"texto"')
+  expect(loadSkippedOps().size).toBe(0)
 })
 
 test('textoDias y diasHasta', () => {

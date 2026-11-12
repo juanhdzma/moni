@@ -48,7 +48,6 @@ export function Select({ value, onChange, options, compact = false, id, style, a
   return (
     <div className={'cdd' + (compact ? ' cdd-inline' : '')} style={style} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
       <select
-        id={id}
         className={'cdd-enhanced cdd-native' + (compact ? ' select-styled' : '')}
         value={value}
         tabIndex={-1}
@@ -64,13 +63,14 @@ export function Select({ value, onChange, options, compact = false, id, style, a
       <button
         type="button"
         ref={triggerRef}
+        id={id}
         className={'cdd-trigger ' + (compact ? 'select-styled' : 'form-input') + (open ? ' open' : '')}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
       >
-        <span className="cdd-label">{selected?.label ?? ''}</span>
+        <span className="cdd-label">{(selected ?? options[0])?.label ?? ''}</span>
         <span className="cdd-arrow">▾</span>
       </button>
       <div ref={menuRef} className={'cdd-menu' + (open ? ' open' : '')} role="listbox">

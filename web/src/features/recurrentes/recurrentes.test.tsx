@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { estado, recurrente } from '../../test/factories'
 import { mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
+import { expectLabels, modalBody } from '../../test/labels'
 import { useOpenerCtx } from '../../shell/openers'
 import { useData } from '../../shell/DataProvider'
 import { Recurrentes, openRecurrenteMaterializeFormById } from '.'
@@ -246,5 +247,21 @@ describe('materialize', () => {
     renderWithProviders(<Harness id={99} />, { estado: estado({ recurrentes: items }) })
     act(() => screen.getByText('open').click())
     expect(document.getElementById('m-desc')).toBeNull()
+  })
+})
+
+describe('labels', () => {
+  it('el form de recurrente se encuentra por sus labels', async () => {
+    mockFetch()
+    renderWithProviders(<Recurrentes active />, { estado: estado({ recurrentes: items }) })
+    await userEvent.click(screen.getByText('+ Nuevo'))
+    expectLabels(modalBody(), {
+      Nombre: 'm-nombre',
+      'Monto (COP)': 'm-monto',
+      Frecuencia: 'm-frecuencia',
+      'Fecha inicio (opcional)': 'm-fecha',
+      'Notas (opcional)': 'm-notas',
+    })
+    expect(within(modalBody()).getByRole('group', { name: 'Tipo' })).toBeInTheDocument()
   })
 })

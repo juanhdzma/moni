@@ -2,7 +2,7 @@ import type { ChartDataset } from 'chart.js'
 import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useData } from '../../shell/DataProvider'
 import { agruparGastos, gastosTxInPeriod, redHeat, type PeriodoGastos } from '../../lib/dinero'
-import { cop, copShort, normDate } from '../../lib/format'
+import { cop, copShort, fmtDate } from '../../lib/format'
 import type { Transaccion } from '../../types'
 import { Pills } from './Pills'
 import { Chart, monoFont } from './chartUtils'
@@ -32,10 +32,8 @@ function fillTooltip(box: HTMLElement, raw: Raw, all: Transaccion[]) {
   const sorted = all.slice().sort((a, b) => b.fecha.localeCompare(a.fecha))
   const nodes: HTMLElement[] = [el('div', 'tt-title', `${raw.g ?? ''} · ${cop(raw.v)}`)]
   sorted.slice(0, MAX).forEach((t) => {
-    const d = new Date((normDate(t.fecha).split('T')[0] ?? '') + 'T12:00:00')
-    const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
     const row = el('div', 'tt-row', '')
-    row.append(el('span', 'tt-date', dateStr), el('span', 'tt-desc', t.descripcion || t.categoria), el('span', 'tt-amt', cop(t.monto)))
+    row.append(el('span', 'tt-date', fmtDate(t.fecha)), el('span', 'tt-desc', t.descripcion || t.categoria), el('span', 'tt-amt', cop(t.monto)))
     nodes.push(row)
   })
   if (sorted.length > MAX) nodes.push(el('div', 'tt-more', `+${sorted.length - MAX} más`))
@@ -43,16 +41,16 @@ function fillTooltip(box: HTMLElement, raw: Raw, all: Transaccion[]) {
 }
 
 function GastosBody({ period }: { period: PeriodoGastos }) {
-  const { estado, version } = useData()
+  const { estado, version, loaded } = useData()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const tipRef = useRef<HTMLDivElement>(null)
 
   const grouped = useMemo(
     () => agruparGastos(gastosTxInPeriod(estado.transacciones, period)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- version busts the memo after a boundary reset
     [estado, period, version],
   )
-  const empty = !grouped.entries.length
+  const empty = loaded && !grouped.entries.length
 
   useEffect(() => {
     const canvas = canvasRef.current

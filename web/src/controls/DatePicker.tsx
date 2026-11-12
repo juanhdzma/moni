@@ -185,7 +185,6 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
   return (
     <div className="cdp" style={style} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
       <input
-        id={id}
         className="cdp-enhanced cdp-native"
         type={type}
         value={value}
@@ -196,6 +195,7 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
       <button
         type="button"
         ref={triggerRef}
+        id={id}
         className={'cdp-trigger form-input' + (open ? ' open' : '')}
         aria-haspopup="dialog"
         aria-expanded={open}

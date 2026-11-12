@@ -201,4 +201,36 @@ describe('modal', () => {
     await user.keyboard('{Escape}')
     expect(document.getElementById('modal-overlay')).not.toHaveClass('open')
   })
+
+  it('un form que lanza cierra el modal, loguea y muestra el banner', async () => {
+    const user = userEvent.setup()
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    function Rota(): never {
+      throw new Error('boom')
+    }
+    function Abrir() {
+      const { openModal } = useModal()
+      return (
+        <>
+          <button onClick={() => openModal('Rota', <Rota />)}>rota</button>
+          <button onClick={() => openModal('Sana', <input aria-label="sano" />)}>sana</button>
+        </>
+      )
+    }
+    mockFetch()
+    renderWithProviders(
+      <>
+        <Abrir />
+        <Shell />
+      </>,
+    )
+    await user.click(screen.getByText('rota'))
+    expect(document.getElementById('modal-overlay')).not.toHaveClass('open')
+    expect(document.getElementById('err-banner')).toHaveTextContent('⚠ No se pudo abrir el formulario. Mirá la consola.')
+    expect(spy).toHaveBeenCalledWith('formulario del modal falló:', expect.any(Error))
+    await user.click(screen.getByText('sana'))
+    expect(document.getElementById('modal-overlay')).toHaveClass('open')
+    expect(screen.getByLabelText('sano')).toBeInTheDocument()
+    spy.mockRestore()
+  })
 })

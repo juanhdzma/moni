@@ -125,7 +125,7 @@ function Currency() {
   const { refresh } = useData()
   return (
     <div className="form-group" style={{ marginBottom: 0 }}>
-      <label className="form-label">Símbolo mostrado junto a los montos</label>
+      <label className="form-label" htmlFor="settings-currency-select">Símbolo mostrado junto a los montos</label>
       <Select
         compact
         id="settings-currency-select"
@@ -229,7 +229,7 @@ function TruncateConfirm() {
         Esta acción no se puede deshacer. Exportá un backup antes si no estás seguro.
       </div>
       <div className="form-group">
-        <label className="form-label">Escribí BORRAR para confirmar</label>
+        <label className="form-label" htmlFor="m-confirm-truncate">Escribí BORRAR para confirmar</label>
         <input
           className="form-input"
           type="text"

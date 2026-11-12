@@ -191,7 +191,7 @@ export interface InvAporte {
 export interface InvRetiro {
   tipo: 'total' | 'parcial'
   monto: number
-  saldo_queda: number | null
+  saldo_queda?: number
   fecha: string
   notas: string
   registrar_tx: boolean
@@ -202,14 +202,6 @@ export interface ActivoVenta {
   fecha: string
   notas: string
   registrar_tx: boolean
-}
-
-export interface ImportPayload {
-  transacciones: Record<string, unknown>[]
-  deudas: Record<string, unknown>[]
-  inversiones: Record<string, unknown>[]
-  activos: Record<string, unknown>[]
-  recurrentes: Record<string, unknown>[]
 }
 
 export interface ImportResult {
@@ -232,31 +224,4 @@ export interface CrudPayloads {
   inv: InvIn
   activo: ActivoIn
   rec: RecIn
-}
-
-export interface ApiRoutes {
-  'GET /api/all': ApiAll
-  'POST /api/tx': ApiTransaccion
-  'PUT /api/tx/{id}': ApiTransaccion
-  'DELETE /api/tx/{id}': null
-  'POST /api/deuda': ApiDeuda
-  'PUT /api/deuda/{id}': ApiDeuda
-  'DELETE /api/deuda/{id}': null
-  'POST /api/inv': ApiInversion
-  'PUT /api/inv/{id}': ApiInversion
-  'DELETE /api/inv/{id}': null
-  'POST /api/activo': ApiActivo
-  'PUT /api/activo/{id}': ApiActivo
-  'DELETE /api/activo/{id}': null
-  'POST /api/rec': ApiRecurrente
-  'PUT /api/rec/{id}': ApiRecurrente
-  'DELETE /api/rec/{id}': null
-  'POST /api/deuda/{id}/pago': ApiDeuda
-  'POST /api/deuda/{id}/adelanto': ApiDeuda
-  'POST /api/inv/{id}/rendimiento': ApiInversion
-  'POST /api/inv/{id}/aporte': ApiInversion
-  'POST /api/inv/{id}/retiro': OkResponse
-  'POST /api/activo/{id}/venta': OkResponse
-  'POST /api/import': ImportResult
-  'POST /api/truncate': OkResponse
 }

@@ -1,7 +1,7 @@
 import type { Estado } from '../types'
-import { isoDate } from './format'
+import { isoDate, mediodia } from './format'
 import { tieneSaldo } from './config'
-import { nextInvPaymentDate } from './inversiones'
+import { nextInvPaymentDate, rendimientoMensualFija } from './inversiones'
 import { FRECUENCIAS, nextPaymentDate } from './recurrentes'
 
 export const PROX_OP_OVERDUE_DAYS = 10
@@ -26,7 +26,8 @@ export const proxOpKey = (type: ProxOpType, sourceId: number, dateISO: string): 
 
 export function loadSkippedOps(): Set<string> {
   try {
-    return new Set(JSON.parse(localStorage.getItem(SKIPPED_KEY) || '[]') as string[])
+    const parsed: unknown = JSON.parse(localStorage.getItem(SKIPPED_KEY) || '[]')
+    return new Set(Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [])
   } catch {
     return new Set()
   }
@@ -71,7 +72,7 @@ export function calcularProximasOperaciones(
   e.deudas
     .filter((d) => tieneSaldo(d) && d.proxima_cuota)
     .forEach((d) => {
-      const date = new Date((d.proxima_cuota.split('T')[0] ?? '') + 'T12:00:00')
+      const date = mediodia(d.proxima_cuota)
       date.setHours(0, 0, 0, 0)
       if (date >= past && date <= limit)
         events.push({ date, label: d.nombre, sub: 'Cuota deuda', monto: -d.cuota_mensual, color: 'var(--red)', type: 'deuda', sourceId: d._id })
@@ -83,8 +84,7 @@ export function calcularProximasOperaciones(
       const dia = inv.dia_pago ?? 0
       const next = nextInvPaymentDate(dia, hoy)
       if (next <= limit) {
-        const mv = ((1 + (inv.tasa_ea ?? 0) / 100) ** (1 / 12) - 1) * 100
-        const rend = Math.round((inv.monto_invertido * mv) / 100)
+        const rend = rendimientoMensualFija(inv.monto_invertido, inv.tasa_ea ?? 0)
         events.push({ date: next, label: inv.nombre, sub: 'Rendimiento', monto: rend, color: 'var(--green)', type: 'inversion', sourceId: inv._id })
       }
     })
@@ -115,19 +115,16 @@ export function calcularProximasOperaciones(
   })
 }
 
-// Poda del set de ocultas las claves que ya no son candidatas (efecto de render del original) y devuelve las visibles.
 export function visibles(candidatas: ProxOp[]): ProxOp[] {
-  const candidateKeys = new Set(candidatas.map((e) => e.key))
   const skipped = loadSkippedOps()
-  let pruned = false
-  for (const k of [...skipped]) {
-    if (!candidateKeys.has(k)) {
-      skipped.delete(k)
-      pruned = true
-    }
-  }
-  if (pruned) saveSkippedOps(skipped)
   return candidatas.filter((e) => !skipped.has(e.key))
+}
+
+export function podarOcultas(candidatas: ProxOp[]): void {
+  const keys = new Set(candidatas.map((e) => e.key))
+  const skipped = loadSkippedOps()
+  const vigentes = [...skipped].filter((k) => keys.has(k))
+  if (vigentes.length !== skipped.size) saveSkippedOps(new Set(vigentes))
 }
 
 export function diasHasta(date: Date, hoy: Date = new Date()): number {

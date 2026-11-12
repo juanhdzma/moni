@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { estado, inversion } from '../../test/factories'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
+import { expectLabels, modalBody } from '../../test/labels'
 import { Inversiones } from './index'
 
 const CDT = inversion({
@@ -454,5 +455,22 @@ describe('retiro', () => {
     await abrir(user)
     await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
     await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('❌ no'))
+  })
+})
+
+describe('labels', () => {
+  it('el form de inversión se encuentra por sus labels', async () => {
+    mockFetch()
+    const user = userEvent.setup()
+    renderWithProviders(<Inversiones active />, { estado: estado() })
+    await user.click(screen.getByRole('button', { name: '+ Nueva inversión' }))
+    expectLabels(modalBody(), {
+      Nombre: 'm-nombre',
+      'Monto invertido': 'm-invertido',
+      'Valor actual': 'm-actual',
+      'Tasa de rendimiento': 'm-tasa',
+      'Fecha inicio': 'm-fecha-ini',
+    })
+    expect(within(modalBody()).getByRole('group', { name: 'Tipo' })).toBeInTheDocument()
   })
 })

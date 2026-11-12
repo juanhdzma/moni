@@ -23,30 +23,30 @@ export function Activos({ active }: TabProps) {
       </div>
       {loaded ? (
         <div className="card" style={{ marginBottom: 16 }} id="activos-total">
-        <div className="stat-summary stat-summary-3">
-          <div className="stat-summary-item stat-hero">
-            <div className="stat-label">Valor actual</div>
-            <div className="stat-value" style={{ color: 'var(--asset-mid)' }}>{cop(totalAct)}</div>
-            <div className="stat-sub">{activos.length} activo{activos.length !== 1 ? 's' : ''}</div>
-          </div>
-          <div className="stat-pair">
-            <div className="stat-summary-item">
-              <div className="stat-label">Costo inicial</div>
-              <div className="stat-value">{cop(totalIni)}</div>
-              <div className="stat-sub">invertido</div>
+          <div className="stat-summary stat-summary-3">
+            <div className="stat-summary-item stat-hero">
+              <div className="stat-label">Valor actual</div>
+              <div className="stat-value" style={{ color: 'var(--asset-mid)' }}>{cop(totalAct)}</div>
+              <div className="stat-sub">{activos.length} activo{activos.length !== 1 ? 's' : ''}</div>
             </div>
-            <div className="stat-summary-item">
-              <div className="stat-label">Variación</div>
-              <div className="stat-value" style={{ color: variacion >= 0 ? 'var(--income-mid)' : 'var(--expense-mid)' }}>
-                {signStr(variacion)}{cop(Math.abs(variacion))}
+            <div className="stat-pair">
+              <div className="stat-summary-item">
+                <div className="stat-label">Costo inicial</div>
+                <div className="stat-value">{cop(totalIni)}</div>
+                <div className="stat-sub">invertido</div>
               </div>
-              <div className="stat-sub">
-                <span className={'gain-badge ' + (variacion >= 0 ? 'gain-pos' : 'gain-neg')}>{signStr(varPct)}{pct(Math.abs(varPct))}%</span>
+              <div className="stat-summary-item">
+                <div className="stat-label">Variación</div>
+                <div className="stat-value" style={{ color: variacion >= 0 ? 'var(--income-mid)' : 'var(--expense-mid)' }}>
+                  {signStr(variacion)}{cop(Math.abs(variacion))}
+                </div>
+                <div className="stat-sub">
+                  <span className={'gain-badge ' + (variacion >= 0 ? 'gain-pos' : 'gain-neg')}>{signStr(varPct)}{pct(Math.abs(varPct))}%</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
       ) : (
         <div className="card" style={{ marginBottom: 16 }} id="activos-total">
           <div className="stat-label">Activos</div>
@@ -56,7 +56,7 @@ export function Activos({ active }: TabProps) {
         </div>
       )}
       <div className="grid-2" id="activos-grid">
-        {!activos.length && (
+        {loaded && !activos.length && (
           <div className="empty" style={{ gridColumn: '1/-1' }}>
             <div className="empty-icon">🏠</div>
             <div className="empty-title">Sin activos</div>

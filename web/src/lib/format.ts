@@ -57,8 +57,12 @@ export function normDate(s: string | null | undefined): string {
   return s
 }
 
-function mediodia(s: string): Date {
-  return new Date((normDate(s).split('T')[0] ?? '') + 'T12:00:00')
+export function mediodia(s: string): Date {
+  const m = (normDate(s).split('T')[0] ?? '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return new Date(NaN)
+  const month = +(m[2] ?? 0) - 1
+  const d = new Date(+(m[1] ?? 0), month, +(m[3] ?? 0), 12)
+  return d.getMonth() === month ? d : new Date(NaN)
 }
 
 export function fmtDate(s: string | null | undefined): string {
@@ -110,8 +114,8 @@ export function nowStr(now: Date = new Date()): string {
 
 export function fmtDateTime(s: string | null | undefined): string {
   if (!s) return '—'
-  const [datePart, timePart] = normDate(s).split('T')
-  const d = new Date((datePart ?? '') + 'T12:00:00')
+  const timePart = normDate(s).split('T')[1]
+  const d = mediodia(s)
   if (Number.isNaN(d.getTime())) return s
   const dateStr = d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
   return timePart ? `${dateStr} ${timePart}` : dateStr
@@ -141,10 +145,6 @@ export function fmtMoneyInput(el: MoneyInputLike): void {
 
 export function parseMoney(value: string): number {
   return parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0
-}
-
-export function parseMoneyInput(el: { value: string }): number {
-  return parseMoney(el.value)
 }
 
 export function numToInput(n: number | null | undefined): string {

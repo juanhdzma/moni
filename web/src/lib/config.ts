@@ -33,20 +33,24 @@ export function isSystemCategory(tipo: TipoTx, nombre: string): boolean {
   return SYSTEM_CATEGORIES[tipo].includes(nombre)
 }
 
-function readCustom(): Record<string, string[]> {
+function readCustom(): Partial<Record<TipoTx, string[]>> {
   const parsed: unknown = JSON.parse(localStorage.getItem(CATS_KEY) ?? '{}')
-  return (typeof parsed === 'object' && parsed !== null ? parsed : {}) as Record<string, string[]>
+  const custom: Partial<Record<TipoTx, string[]>> = {}
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return custom
+  for (const tipo of TIPOS) {
+    const lista: unknown = (parsed as Record<string, unknown>)[tipo]
+    if (Array.isArray(lista)) custom[tipo] = lista.filter((c): c is string => typeof c === 'string')
+  }
+  return custom
 }
 
 export function loadCustomCategories(): Categorias {
   const cats = systemCategories()
   try {
     const custom = readCustom()
-    for (const tipo of Object.keys(custom)) {
-      if (!TIPOS.includes(tipo as TipoTx)) continue
+    for (const tipo of TIPOS) {
       for (const cat of custom[tipo] ?? []) {
-        const lista = cats[tipo as TipoTx]
-        if (!lista.includes(cat)) lista.push(cat)
+        if (!cats[tipo].includes(cat)) cats[tipo].push(cat)
       }
     }
   } catch {
@@ -55,7 +59,7 @@ export function loadCustomCategories(): Categorias {
   return cats
 }
 
-function persistir(fn: (custom: Record<string, string[]>) => void): void {
+function persistir(fn: (custom: Partial<Record<TipoTx, string[]>>) => void): void {
   try {
     const custom = readCustom()
     fn(custom)

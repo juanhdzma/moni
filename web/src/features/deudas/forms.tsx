@@ -9,7 +9,7 @@ import { cop, nowStr, numToInput, parseMoney } from '../../lib/format'
 import { useModal } from '../../shell/ModalProvider'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useMutations } from '../../shell/useMutations'
-import type { Deuda } from '../../types'
+import type { Deuda, DeudaAdelanto, DeudaPago } from '../../types'
 
 const FRANQUICIAS = ['Visa', 'Mastercard', 'Amex', 'Otra'].map((f) => ({ value: f, label: f }))
 
@@ -126,8 +126,8 @@ function DeudaForm({ d }: { d: Deuda | null }) {
   return (
     <>
       <div className="form-group">
-        <label className="form-label">Tipo</label>
-        <div className="tipo-toggle">
+        <div className="form-label" id="lbl-grp-1">Tipo</div>
+        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-1">
           <button type="button" className={'tipo-btn transfer prestamo ' + (!esTarjeta ? 'sel' : '')} onClick={() => setEsTarjeta(false)}>
             Préstamo
           </button>
@@ -137,7 +137,7 @@ function DeudaForm({ d }: { d: Deuda | null }) {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Nombre</label>
+        <label className="form-label" htmlFor="m-nombre">Nombre</label>
         <input
           className="form-input"
           type="text"
@@ -149,21 +149,21 @@ function DeudaForm({ d }: { d: Deuda | null }) {
         />
       </div>
       <div className="form-group" id="wrap-monto-ini" style={esTarjeta ? { display: 'none' } : undefined}>
-        <label className="form-label">{isEdit ? 'Monto inicial' : 'Monto del crédito'} (COP)</label>
+        <label className="form-label" htmlFor="m-monto-ini">{isEdit ? 'Monto inicial' : 'Monto del crédito'} (COP)</label>
         <MoneyInput id="m-monto-ini" value={montoIni} onChange={setMontoIni} />
       </div>
       <div id="wrap-cupo" style={esTarjeta ? undefined : { display: 'none' }}>
         <div className="form-group">
-          <label className="form-label">Cupo (COP)</label>
+          <label className="form-label" htmlFor="m-cupo">Cupo (COP)</label>
           <MoneyInput id="m-cupo" value={cupo} onChange={setCupo} />
         </div>
         <div className="form-group">
-          <label className="form-label">Franquicia</label>
+          <label className="form-label" htmlFor="m-franquicia">Franquicia</label>
           <Select id="m-franquicia" value={franquicia} onChange={setFranquicia} options={FRANQUICIAS} />
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label" id="saldo-label">
+        <label className="form-label" id="saldo-label" htmlFor="m-saldo">
           {esTarjeta ? 'Deuda actual' : 'Saldo actual'} (COP)
         </label>
         <MoneyInput id="m-saldo" value={saldo} onChange={setSaldo} />
@@ -177,7 +177,7 @@ function DeudaForm({ d }: { d: Deuda | null }) {
       <div id="wrap-prestamo-fields" style={esTarjeta ? { display: 'none' } : undefined}>
         <div className="form-row-2">
           <div className="form-group">
-            <label className="form-label">Tasa EA (%)</label>
+            <label className="form-label" htmlFor="m-tasa">Tasa EA (%)</label>
             <input
               className="form-input"
               type="number"
@@ -189,17 +189,17 @@ function DeudaForm({ d }: { d: Deuda | null }) {
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Cuota mensual</label>
+            <label className="form-label" htmlFor="m-cuota">Cuota mensual</label>
             <MoneyInput id="m-cuota" value={cuota} onChange={setCuota} />
           </div>
         </div>
         <div className="form-row-2">
           <div className="form-group">
-            <label className="form-label">Fecha inicio</label>
+            <label className="form-label" htmlFor="m-fecha-ini">Fecha inicio</label>
             <DatePicker id="m-fecha-ini" value={fechaIni} onChange={setFechaIni} />
           </div>
           <div className="form-group">
-            <label className="form-label">Próxima cuota</label>
+            <label className="form-label" htmlFor="m-proxima">Próxima cuota</label>
             <DatePicker id="m-proxima" value={proxima} onChange={setProxima} />
           </div>
         </div>
@@ -260,7 +260,7 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
     const desc = `Cuota · ${d.nombre} (capital ${cop(capital)}, intereses ${cop(intereses)})`
     setModalStatus('', 'Guardando...')
     try {
-      await apiAction(`/api/deuda/${d._id}/pago`, {
+      const body: DeudaPago = {
         nuevo_saldo: saldoNuevoV,
         total_pagado: total,
         intereses,
@@ -269,7 +269,8 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         descripcion: desc,
         registrar_tx: registrarTx,
         avanzar_cuota: !liquidar,
-      })
+      }
+      await apiAction(`/api/deuda/${d._id}/pago`, body)
     } catch (err) {
       setModalStatus('err', errMsg(err))
     }
@@ -288,12 +289,12 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Monto total pagado (COP)</label>
+        <label className="form-label" htmlFor="m-monto">Monto total pagado (COP)</label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
         <div style={hintStyle}>{hint}</div>
       </div>
       <div className="form-group">
-        <label className="form-label">Saldo capital después del pago</label>
+        <label className="form-label" htmlFor="m-saldo-nuevo">Saldo capital después del pago</label>
         <MoneyInput id="m-saldo-nuevo" value={saldoNuevo} onChange={setSaldoNuevo} placeholder="Lo que muestra tu banco después" />
       </div>
       <div id="pay-breakdown" style={{ ...breakdownBox, display: showBreakdown ? 'block' : 'none' }}>
@@ -311,11 +312,11 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Fecha del pago</label>
+        <label className="form-label" htmlFor="m-fecha">Fecha del pago</label>
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
-        <label className="form-label" style={notasLabel}>
+        <label className="form-label" style={notasLabel} htmlFor="m-notas">
           Notas (opcional)
         </label>
         <input
@@ -394,14 +395,15 @@ function AdelantoForm({ d }: { d: Deuda }) {
     }
     setModalStatus('', 'Guardando...')
     try {
-      await apiAction(`/api/deuda/${d._id}/adelanto`, {
+      const body: DeudaAdelanto = {
         monto: montoV,
         nuevo_saldo: saldoNuevo,
         fecha,
         notas: notas.trim(),
         descripcion: `Adelanto · ${d.nombre}`,
         registrar_tx: registrarTx,
-      })
+      }
+      await apiAction(`/api/deuda/${d._id}/adelanto`, body)
     } catch (err) {
       setModalStatus('err', errMsg(err))
     }
@@ -422,13 +424,13 @@ function AdelantoForm({ d }: { d: Deuda }) {
         )}
       </div>
       <div className="form-group">
-        <label className="form-label">Monto del adelanto (COP)</label>
+        <label className="form-label" htmlFor="m-monto">Monto del adelanto (COP)</label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
         <div style={hintStyle}>La plata que vas a recibir en tu cuenta.</div>
       </div>
       {tieneCupo ? (
         <div className="form-group">
-          <label className="form-label">Cupo disponible después del adelanto (COP)</label>
+          <label className="form-label" htmlFor="m-disponible-nuevo">Cupo disponible después del adelanto (COP)</label>
           <MoneyInput
             id="m-disponible-nuevo"
             value={disponible}
@@ -438,7 +440,7 @@ function AdelantoForm({ d }: { d: Deuda }) {
         </div>
       ) : (
         <div className="form-group">
-          <label className="form-label">Saldo en la tarjeta después del adelanto (COP)</label>
+          <label className="form-label" htmlFor="m-saldo-nuevo">Saldo en la tarjeta después del adelanto (COP)</label>
           <MoneyInput
             id="m-saldo-nuevo"
             value={saldoNuevoIn}
@@ -462,11 +464,11 @@ function AdelantoForm({ d }: { d: Deuda }) {
         </div>
       </div>
       <div className="form-group">
-        <label className="form-label">Fecha</label>
+        <label className="form-label" htmlFor="m-fecha">Fecha</label>
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
-        <label className="form-label" style={notasLabel}>
+        <label className="form-label" style={notasLabel} htmlFor="m-notas">
           Notas (opcional)
         </label>
         <input

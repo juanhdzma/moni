@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { cop, copShort } from '../../lib/format'
+import { useData } from '../../shell/DataProvider'
 import { Chart, cv, monoFont } from './chartUtils'
 
 interface Props {
@@ -12,8 +13,10 @@ interface Props {
 
 export function LineChart({ canvasId, labels, data, colorVar, duration }: Props) {
   const ref = useRef<HTMLCanvasElement>(null)
+  const { loaded } = useData()
 
   useEffect(() => {
+    if (!loaded) return
     const canvas = ref.current
     const ctx2d = canvas?.getContext('2d')
     if (!canvas || !ctx2d) return
@@ -78,7 +81,7 @@ export function LineChart({ canvasId, labels, data, colorVar, duration }: Props)
       },
     })
     return () => chart.destroy()
-  }, [canvasId, labels, data, colorVar, duration])
+  }, [loaded, canvasId, labels, data, colorVar, duration])
 
   return <canvas id={canvasId} ref={ref}></canvas>
 }

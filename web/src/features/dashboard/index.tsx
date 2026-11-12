@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TabContent, type TabProps } from '../../shell/TabContent'
 import { useData } from '../../shell/DataProvider'
 import {
@@ -36,12 +36,13 @@ function Kpi({ id, label, hero, loading, value, color, sub }: { id: string; labe
 const plural = (n: number, s: string, p: string) => `${n} ${n !== 1 ? p : s}`
 
 export function Dashboard({ active }: TabProps) {
-  const { estado, loaded } = useData()
+  const { estado, loaded, version } = useData()
   const [nwPeriod, setNwPeriod] = useState<PeriodoEvolucion>('6M')
   const [invPeriod, setInvPeriod] = useState<PeriodoEvolucion>('6M')
 
   const loading = !loaded
-  const r = resumenDashboard(estado)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- version recomputes against the clock after refresh()
+  const r = useMemo(() => resumenDashboard(estado), [estado, version])
   const proyStr = `${signStr(r.proyDelta)}${copShort(Math.abs(r.proyDelta))} proyectados próx. 12 meses`
   const invStr =
     r.totalInvertido > 0
@@ -49,10 +50,14 @@ export function Dashboard({ active }: TabProps) {
       : plural(estado.inversiones.length, 'posición', 'posiciones')
   const pos = (n: number) => (n >= 0 ? 'var(--income)' : 'var(--expense)')
 
-  const nwCount = periodMonths(nwPeriod, fechasTransacciones(estado.transacciones))
-  const nwData = serieHaciaAtras(r.patrimonio, monthlyPatrimonio(estado.transacciones, nwCount))
-  const invCount = periodMonths(invPeriod, [...fechasTransacciones(estado.transacciones), ...fechasInversiones(estado.inversiones)])
-  const invData = serieHaciaAtras(r.totalInv, monthlyInvDelta(estado.transacciones, invCount))
+  const nw = useMemo(() => {
+    const count = periodMonths(nwPeriod, fechasTransacciones(estado.transacciones))
+    return { labels: monthLabels(count), data: serieHaciaAtras(r.patrimonio, monthlyPatrimonio(estado.transacciones, count)) }
+  }, [estado, r, nwPeriod])
+  const inv = useMemo(() => {
+    const count = periodMonths(invPeriod, [...fechasTransacciones(estado.transacciones), ...fechasInversiones(estado.inversiones)])
+    return { labels: monthLabels(count), data: serieHaciaAtras(r.totalInv, monthlyInvDelta(estado.transacciones, count)) }
+  }, [estado, r, invPeriod])
   const recent = transaccionesRecientes(estado.transacciones)
 
   return (
@@ -93,9 +98,9 @@ export function Dashboard({ active }: TabProps) {
             <div className="chart-wrap" id="dash-evolution-wrap">
               <LineChart
                 canvasId="chart-evolution"
-                labels={monthLabels(nwCount)}
-                data={nwData}
-                colorVar={(nwData[nwData.length - 1] ?? 0) >= 0 ? '--green' : '--red'}
+                labels={nw.labels}
+                data={nw.data}
+                colorVar={(nw.data[nw.data.length - 1] ?? 0) >= 0 ? '--green' : '--red'}
                 duration={600}
               />
             </div>
@@ -106,7 +111,7 @@ export function Dashboard({ active }: TabProps) {
               <Pills id="inv-period-pills" options={PERIODOS_EVOL} value={invPeriod} onChange={setInvPeriod} />
             </div>
             <div className="chart-wrap" id="chart-inversiones-evol-wrap">
-              <LineChart canvasId="chart-inversiones-evol" labels={monthLabels(invCount)} data={invData} colorVar="--green" duration={400} />
+              <LineChart canvasId="chart-inversiones-evol" labels={inv.labels} data={inv.data} colorVar="--green" duration={400} />
             </div>
           </div>
         </div>
@@ -114,7 +119,7 @@ export function Dashboard({ active }: TabProps) {
           <div className="card dash-list-card dash-stack-item">
             <div className="section-title">Últimos movimientos</div>
             <div className="recent-list" id="recent-list">
-              {recent.length ? (
+              {!loaded ? null : recent.length ? (
                 recent.map((t, i) => (
                   <div className="recent-item" key={`${t._id}-${i}`}>
                     <div className="recent-left">

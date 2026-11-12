@@ -1,6 +1,10 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '../../test/render'
+import { failure, mockFetch } from '../../test/mockFetch'
+import { CategoriasProvider } from '../../shell/CategoriasProvider'
+import { DataProvider, useData } from '../../shell/DataProvider'
+import { ModalProvider } from '../../shell/ModalProvider'
 import { activo, deuda, estado, inversion, recurrente, tx } from '../../test/factories'
 import { Dashboard } from './index'
 
@@ -63,7 +67,10 @@ beforeEach(() => {
   HTMLCanvasElement.prototype.getContext = (() => ({ createLinearGradient: () => ({ addColorStop: () => undefined }) })) as never
 })
 
-afterEach(() => vi.useRealTimers())
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+})
 
 describe('Dashboard KPIs', () => {
   it('shows values from the old math', () => {
@@ -230,5 +237,70 @@ describe('Próximas operaciones', () => {
     buttons.forEach((b) => expect(b.tagName).toBe('BUTTON'))
     const pills = within(document.getElementById('gastos-period-pills') as HTMLElement).getAllByRole('button')
     pills.forEach((b) => expect(b).toHaveAttribute('type', 'button'))
+  })
+})
+
+describe('antes de la primera carga', () => {
+  const STORED = ['deuda:1:2026-08-20', 'deuda:9:2020-01-01']
+  const stored = () => JSON.parse(localStorage.getItem('moni_skipped_ops') ?? '[]') as string[]
+  const live = () =>
+    render(
+      <DataProvider>
+        <CategoriasProvider>
+          <ModalProvider>
+            <Dashboard active />
+          </ModalProvider>
+        </CategoriasProvider>
+      </DataProvider>,
+    )
+
+  it('no dibuja listas, mensajes vacíos ni charts, y no toca moni_skipped_ops', () => {
+    localStorage.setItem('moni_skipped_ops', JSON.stringify(STORED))
+    renderWithProviders(<Dashboard active />, { loaded: false, estado: estado() })
+    expect(document.getElementById('dash-upcoming')).toBeEmptyDOMElement()
+    expect(document.getElementById('recent-list')).toBeEmptyDOMElement()
+    expect(screen.queryByText('Sin gastos para este período')).toBeNull()
+    expect(screen.queryByText('Sin transacciones')).toBeNull()
+    expect(charts).toHaveLength(0)
+    expect(stored()).toEqual(STORED)
+  })
+
+  it('una carga fallida muestra los vacíos pero no poda moni_skipped_ops', async () => {
+    localStorage.setItem('moni_skipped_ops', JSON.stringify(STORED))
+    mockFetch({ 'GET /api/all': failure(500, 'caído') })
+    live()
+    expect(await screen.findByText('Sin operaciones en los próximos 45 días.')).toBeInTheDocument()
+    expect(screen.getByText('Sin gastos para este período')).toBeInTheDocument()
+    expect(stored()).toEqual(STORED)
+  })
+
+  it('una carga exitosa poda las claves que ya no son candidatas', async () => {
+    localStorage.setItem('moni_skipped_ops', JSON.stringify(STORED))
+    mockFetch({ 'GET /api/all': { transacciones: [], deudas: [deuda({ id: 1, saldo_actual: 100, proxima_cuota: '2026-08-20' })], inversiones: [], activos: [], recurrentes: [] } })
+    live()
+    await waitFor(() => expect(stored()).toEqual(['deuda:1:2026-08-20']))
+    expect(screen.queryByText('Banco')).toBeNull()
+  })
+})
+
+describe('charts estables', () => {
+  function Ruido() {
+    const { showBanner } = useData()
+    return <button onClick={() => showBanner('x')}>ruido</button>
+  }
+
+  it('un re-render con los mismos datos no destruye ni recrea los line charts', () => {
+    renderWithProviders(
+      <>
+        <Dashboard active />
+        <Ruido />
+      </>,
+      { estado: fixture() },
+    )
+    const before = charts.filter((c) => c.type === 'line').length
+    fireEvent.click(screen.getByText('ruido'))
+    expect(screen.getByText('ruido')).toBeInTheDocument()
+    expect(charts.filter((c) => c.type === 'line')).toHaveLength(before)
+    expect(charts.filter((c) => c.type === 'line' && c.destroyed)).toHaveLength(0)
   })
 })

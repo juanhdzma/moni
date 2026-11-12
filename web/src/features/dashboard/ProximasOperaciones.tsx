@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { cop } from '../../lib/format'
-import { calcularProximasOperaciones, diasHasta, skipOp, textoDias, visibles } from '../../lib/proximasOps'
+import { calcularProximasOperaciones, diasHasta, podarOcultas, skipOp, textoDias, visibles } from '../../lib/proximasOps'
 import { useModal } from '../../shell/ModalProvider'
 import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
@@ -8,10 +9,14 @@ import { openInvYieldFormById } from '../inversiones'
 import { openRecurrenteMaterializeFormById } from '../recurrentes'
 
 export function ProximasOperaciones() {
-  const { estado, refresh } = useData()
+  const { estado, refresh, loaded, loadOk } = useData()
   const { setPendingProxOp } = useModal()
   const ctx = useOpenerCtx()
-  const events = visibles(calcularProximasOperaciones(estado))
+  const events = loaded ? visibles(calcularProximasOperaciones(estado)) : []
+
+  useEffect(() => {
+    if (loadOk) podarOcultas(calcularProximasOperaciones(estado))
+  }, [loadOk, estado])
 
   const materialize = (key: string) => {
     const op = events.find((e) => e.key === key)
@@ -26,6 +31,8 @@ export function ProximasOperaciones() {
     skipOp(key)
     refresh()
   }
+
+  if (!loaded) return null
 
   if (!events.length)
     return (

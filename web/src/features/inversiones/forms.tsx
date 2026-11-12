@@ -4,11 +4,11 @@ import { DatePicker } from '../../controls/DatePicker'
 import { FormStatus } from '../../controls/FormStatus'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { cop, nowStr, numToInput, parseMoney, pct, signStr, todayStr } from '../../lib/format'
-import { eaToMv, mvToEa, tasaEaDesdeInput } from '../../lib/inversiones'
+import { eaToMv, mvToEa, rendimientoMensualFija, tasaEaDesdeInput } from '../../lib/inversiones'
 import { useModal } from '../../shell/ModalProvider'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useMutations } from '../../shell/useMutations'
-import type { Inversion, PagoInv, TipoInv } from '../../types'
+import type { InvAporte, InvRendimiento, InvRetiro, Inversion, PagoInv, TipoInv } from '../../types'
 
 const errMsg = (e: unknown): string => '❌ ' + (e instanceof Error ? e.message : String(e))
 
@@ -132,7 +132,7 @@ function InvForm({ inv }: { inv: Inversion | null }) {
         />
       </div>
       <div className="form-group">
-        <label className="form-label">Tipo</label>
+        <div className="form-label" id="lbl-grp-1">Tipo</div>
         {isEdit ? (
           <div
             style={{
@@ -148,7 +148,7 @@ function InvForm({ inv }: { inv: Inversion | null }) {
             {tipo === 'fija' ? 'Fija' : 'Variable'}
           </div>
         ) : (
-          <div className="tipo-toggle">
+          <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-1">
             <button type="button" className={'tipo-btn ingreso ' + (tipo === 'fija' ? 'sel' : '')} onClick={() => setTipo('fija')}>
               Fija
             </button>
@@ -209,8 +209,8 @@ function InvForm({ inv }: { inv: Inversion | null }) {
         </div>
       </div>
       <div id="m-pago-wrap" className="form-group" style={tipo === 'fija' ? undefined : { display: 'none' }}>
-        <label className="form-label">Pago de rendimientos</label>
-        <div className="tipo-toggle">
+        <div className="form-label" id="lbl-grp-2">Pago de rendimientos</div>
+        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-2">
           <button type="button" id="rp-mensual" className={'tipo-btn ingreso  ' + (pago === 'mensual' ? 'sel' : '')} onClick={() => setPago('mensual')}>
             Mensual
           </button>
@@ -264,7 +264,7 @@ function YieldForm({ inv }: { inv: Inversion }) {
   const { closeModal, setModalStatus } = useModal()
   const { apiAction } = useMutations()
   const mv = inv.tasa_ea ? eaToMv(inv.tasa_ea) : 0
-  const expected = inv.tasa_ea ? Math.round((inv.valor_actual * mv) / 100) : 0
+  const expected = inv.tasa_ea ? rendimientoMensualFija(inv.valor_actual, inv.tasa_ea) : 0
   const [monto, setMonto] = useState(expected ? numToInput(expected) : '')
   const [capitaliza, setCapitaliza] = useState(inv.pago === 'vencimiento')
   const [fecha, setFecha] = useState(nowStr())
@@ -280,13 +280,14 @@ function YieldForm({ inv }: { inv: Inversion }) {
     const registrarTx = !capitaliza && registrar
     setModalStatus('', 'Guardando...')
     try {
-      await apiAction(`/api/inv/${inv._id}/rendimiento`, {
+      const body: InvRendimiento = {
         monto: valor,
         fecha,
         notas: notas.trim(),
         capitaliza,
         registrar_tx: registrarTx,
-      })
+      }
+      await apiAction(`/api/inv/${inv._id}/rendimiento`, body)
     } catch (err) {
       setModalStatus('err', errMsg(err))
     }
@@ -326,8 +327,8 @@ function YieldForm({ inv }: { inv: Inversion }) {
         {expected ? <div style={hintStyle}>Pre-llenado con el rendimiento esperado del período.</div> : null}
       </div>
       <div className="form-group">
-        <label className="form-label">¿Dónde queda el rendimiento?</label>
-        <div className="tipo-toggle">
+        <div className="form-label" id="lbl-grp-3">¿Dónde queda el rendimiento?</div>
+        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-3">
           <button type="button" id="rend-cuenta" className={'tipo-btn ingreso  ' + (capitaliza ? '' : 'sel')} onClick={() => setCapitaliza(false)}>
             Me lo pagan
           </button>
@@ -563,13 +564,14 @@ function AddMoreForm({ inv }: { inv: Inversion }) {
     }
     setModalStatus('', 'Guardando...')
     try {
-      await apiAction(`/api/inv/${inv._id}/aporte`, {
+      const body: InvAporte = {
         monto: aporte,
         nuevo_valor: nuevoVal,
         fecha,
         notas: notas.trim(),
         registrar_tx: registrar,
-      })
+      }
+      await apiAction(`/api/inv/${inv._id}/aporte`, body)
     } catch (err) {
       setModalStatus('err', errMsg(err))
     }
@@ -660,7 +662,8 @@ function RetirarForm({ inv }: { inv: Inversion }) {
       }
       setModalStatus('', 'Guardando...')
       try {
-        await apiAction(`/api/inv/${inv._id}/retiro`, { tipo: 'total', monto, fecha, notas: notasFinal, registrar_tx: registrar })
+        const body: InvRetiro = { tipo: 'total', monto, fecha, notas: notasFinal, registrar_tx: registrar }
+        await apiAction(`/api/inv/${inv._id}/retiro`, body)
       } catch (err) {
         setModalStatus('err', errMsg(err))
       }
@@ -677,14 +680,15 @@ function RetirarForm({ inv }: { inv: Inversion }) {
       }
       setModalStatus('', 'Guardando...')
       try {
-        await apiAction(`/api/inv/${inv._id}/retiro`, {
+        const body: InvRetiro = {
           tipo: 'parcial',
           monto,
           saldo_queda: saldo,
           fecha,
           notas: notasFinal,
           registrar_tx: registrar,
-        })
+        }
+        await apiAction(`/api/inv/${inv._id}/retiro`, body)
       } catch (err) {
         setModalStatus('err', errMsg(err))
       }
@@ -695,8 +699,8 @@ function RetirarForm({ inv }: { inv: Inversion }) {
     <>
       <InvPanel inv={inv} />
       <div className="form-group">
-        <label className="form-label">Tipo de retiro</label>
-        <div className="tipo-toggle">
+        <div className="form-label" id="lbl-grp-4">Tipo de retiro</div>
+        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-4">
           <button type="button" className={'tipo-btn ingreso' + (tipo === 'total' ? ' sel' : '')} data-retiro="total" onClick={() => setTipo('total')}>
             Total
           </button>

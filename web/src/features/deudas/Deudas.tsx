@@ -197,38 +197,38 @@ export function Deudas({ active }: TabProps) {
       </div>
       {loaded ? (
         <div className="card" style={{ marginBottom: 16 }} id="deudas-total">
-        <div className="stat-summary stat-summary-4">
-          <div className="stat-summary-item stat-hero">
-            <div className="stat-label">Saldo pendiente</div>
-            <div className="stat-value" style={{ color: 'var(--red)' }}>
-              {cop(total)}
+          <div className="stat-summary stat-summary-4">
+            <div className="stat-summary-item stat-hero">
+              <div className="stat-label">Saldo pendiente</div>
+              <div className="stat-value" style={{ color: 'var(--red)' }}>
+                {cop(total)}
+              </div>
+              <div className="stat-sub">pendiente</div>
             </div>
-            <div className="stat-sub">pendiente</div>
-          </div>
-          <div className="stat-pair">
-            <div className="stat-summary-item">
-              <div className="stat-label">Cuota mensual</div>
-              <div className="stat-value">{cop(totalCuotas)}</div>
-              <div className="stat-sub">total/mes</div>
-            </div>
-            <div className="stat-summary-item">
-              <div className="stat-label">Activas</div>
-              <div className="stat-value">{activas.length}</div>
-              <div className="stat-sub">
-                {terminadas.length} terminada{terminadas.length !== 1 ? 's' : ''}
+            <div className="stat-pair">
+              <div className="stat-summary-item">
+                <div className="stat-label">Cuota mensual</div>
+                <div className="stat-value">{cop(totalCuotas)}</div>
+                <div className="stat-sub">total/mes</div>
+              </div>
+              <div className="stat-summary-item">
+                <div className="stat-label">Activas</div>
+                <div className="stat-value">{activas.length}</div>
+                <div className="stat-sub">
+                  {terminadas.length} terminada{terminadas.length !== 1 ? 's' : ''}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="stat-summary-item">
-            <div className="stat-label">Intereses pagados</div>
-            <div className="stat-value" style={{ color: 'var(--expense)' }}>
-              {totalExacto ? '' : '~'}
-              {cop(totalIntereses)}
+            <div className="stat-summary-item">
+              <div className="stat-label">Intereses pagados</div>
+              <div className="stat-value" style={{ color: 'var(--expense)' }}>
+                {totalExacto ? '' : '~'}
+                {cop(totalIntereses)}
+              </div>
+              <div className="stat-sub">costo del crédito</div>
             </div>
-            <div className="stat-sub">costo del crédito</div>
           </div>
         </div>
-      </div>
       ) : (
         <div className="card" style={{ marginBottom: 16 }} id="deudas-total">
           <div className="stat-label">Total en deudas</div>
@@ -243,15 +243,16 @@ export function Deudas({ active }: TabProps) {
             Créditos
           </div>
           <div id="deudas-grid-credito" className="card-list">
-            {creditos.length ? (
-              creditos.map((d) => <PrestamoCard key={d._id} d={d} />)
-            ) : (
-              <Empty
-                icon="🎉"
-                titulo={terminadas.length ? 'Sin créditos activos' : 'Sin créditos'}
-                texto={terminadas.length ? '¡Todos los créditos están saldados!' : 'Agregá uno con el botón + de arriba.'}
-              />
-            )}
+            {loaded &&
+              (creditos.length ? (
+                creditos.map((d) => <PrestamoCard key={d._id} d={d} />)
+              ) : (
+                <Empty
+                  icon="🎉"
+                  titulo={terminadas.length ? 'Sin créditos activos' : 'Sin créditos'}
+                  texto={terminadas.length ? '¡Todos los créditos están saldados!' : 'Agregá uno con el botón + de arriba.'}
+                />
+              ))}
           </div>
         </div>
         <div>
@@ -259,16 +260,17 @@ export function Deudas({ active }: TabProps) {
             Tarjetas
           </div>
           <div id="deudas-grid-tarjeta" className="card-list">
-            {tarjetas.length ? (
-              tarjetas.map((d) => <TarjetaCard key={d._id} d={d} />)
-            ) : (
-              <Empty icon="💳" titulo="Sin tarjetas" texto="Agregá una para cargarle gastos y seguir su cupo." />
-            )}
+            {loaded &&
+              (tarjetas.length ? (
+                tarjetas.map((d) => <TarjetaCard key={d._id} d={d} />)
+              ) : (
+                <Empty icon="💳" titulo="Sin tarjetas" texto="Agregá una para cargarle gastos y seguir su cupo." />
+              ))}
           </div>
         </div>
       </div>
       <div id="deudas-terminados">
-        {terminadas.length > 0 && (
+        {loaded && terminadas.length > 0 && (
           <div style={{ marginTop: 24 }}>
             <div className="section-title" style={{ marginBottom: 12 }}>
               Préstamos terminados
