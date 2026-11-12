@@ -19,3 +19,11 @@ if (typeof localStorage === 'undefined' || typeof localStorage.clear !== 'functi
   }
   Object.defineProperty(globalThis, 'localStorage', { value: fake, configurable: true })
 }
+
+// jsdom no calcula layout: offsetParent siempre es null y el focus trap del modal no vería nada.
+Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
+  configurable: true,
+  get(this: HTMLElement) {
+    return this.parentElement
+  },
+})
