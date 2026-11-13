@@ -39,20 +39,19 @@ describe('render', () => {
     mockFetch()
     view()
     const card = document.getElementById('rec-total') as HTMLElement
-    expect(card.textContent).toContain('Ingresos/mes')
-    expect(within(card).getAllByText(/\$/)[0]?.textContent).toContain('1.000.000')
+    expect(card.textContent).toContain('Neto mensual')
+    expect(card.textContent).toContain('1.000.000')
     expect(card.textContent).toContain('30.000')
     expect(card.textContent).toContain('+')
     expect(card.textContent).toContain('970.000')
   })
 
-  it('opens with a sentence that interprets the net', () => {
+  it('header shows a negative net and the fixed costs in the legend', () => {
     mockFetch()
-    view()
-    expect(document.getElementById('rec-total')?.textContent).toContain('Entran $1.000.000 al mes y salen $30.000 en fijos; te quedan $970.000.')
-    document.body.innerHTML = ''
-    view([recurrente({ _id: 9, id: 9, tipo: 'gasto', monto: 50000, frecuencia: 'mensual' })])
-    expect(document.getElementById('rec-total')?.textContent).toContain('superan a tus ingresos recurrentes por $50.000 al mes')
+    view([recurrente({ _id: 9, id: 9, nombre: 'Arriendo', tipo: 'gasto', monto: 50000, frecuencia: 'mensual' })])
+    const card = document.getElementById('rec-total') as HTMLElement
+    expect(card.textContent).toContain('−$50.000')
+    expect(within(card).getByRole('list', { name: 'De qué está hecho' })).toHaveTextContent('Arriendo')
   })
 
   it('next payment relative to today, none when paused', () => {
@@ -195,7 +194,7 @@ describe('create / edit / delete', () => {
     const f = mockFetch({ 'DELETE /api/rec/2': null })
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
     view()
-    const row = screen.getByText('Netflix').closest('[data-rec]') as HTMLElement
+    const row = document.querySelector('[data-rec="2"]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
     await userEvent.click(screen.getByText('Eliminar'))
     expect(confirmSpy).toHaveBeenCalledWith('¿Eliminar "Netflix"?')
@@ -209,7 +208,7 @@ describe('create / edit / delete', () => {
     mockFetch({ 'DELETE /api/rec/2': new Response(JSON.stringify({ detail: 'no' }), { status: 500 }) })
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     view()
-    const row = screen.getByText('Netflix').closest('[data-rec]') as HTMLElement
+    const row = document.querySelector('[data-rec="2"]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
     await userEvent.click(screen.getByText('Eliminar'))
     await waitFor(() => expect(screen.getByTestId('banner').textContent).toContain('no'))

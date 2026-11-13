@@ -88,7 +88,7 @@ describe('Transacciones tab', () => {
     const pills = document.getElementById('tx-filter-pills') as HTMLElement
     expect(pills.textContent).toContain('Gastos')
     expect(document.getElementById('filter-toggle-btn')?.className).toContain('has-filters')
-    expect(screen.getByText(/1 movimiento con estos filtros/)).toBeTruthy()
+    expect(screen.getByText('Te quedó con estos filtros')).toBeTruthy()
     await user.click(within(pills).getByRole('button', { name: 'Quitar filtro' }))
     expect(screen.getByText('Salario', { selector: 'td' })).toBeTruthy()
   })

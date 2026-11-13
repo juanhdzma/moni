@@ -1,11 +1,11 @@
 import { ArrowDown, ArrowUp, Filter, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Panel } from '@/components/panel'
+import { Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
 import { Select } from '../../controls/Select'
 import { FRANQUICIA_ICONS } from '../../lib/config'
-import { cop, fmtDate } from '../../lib/format'
+import { cop, fmtDate, signStr } from '../../lib/format'
 import {
   categoriasDisponibles,
   listarTransacciones,
@@ -20,7 +20,7 @@ import { useOpenerCtx } from '../../shell/openers'
 import { TabContent, type TabProps } from '../../shell/TabContent'
 import type { Transaccion } from '../../types'
 import { openTxForm, openTxFormById } from './forms'
-import { fraseTransacciones } from './resumen'
+import { resumenTx } from './resumen'
 
 const COLUMNAS: { col: TxSortCol; label: string }[] = [
   { col: 'fecha', label: 'Fecha' },
@@ -173,21 +173,37 @@ export function Transacciones({ active }: TabProps) {
     })
   }
 
-  const frase = loaded ? fraseTransacciones(list, pills.length > 0) : ''
+  const r = resumenTx(list)
 
   return (
     <TabContent id="transacciones" active={active}>
-      <Panel
-        id="tx-movimientos"
-        titulo="Movimientos"
-        frase={frase || undefined}
+      <div className="space-y-4">
+      <Resumen
+        id="tx-resumen"
+        titulo={pills.length ? 'Te quedó con estos filtros' : 'Te quedó'}
+        loaded={loaded}
+        valor={
+          <>
+            {signStr(r.neto)}
+            {cop(Math.abs(r.neto))}
+          </>
+        }
+        valorClassName={r.neto < 0 ? 'text-deudas' : undefined}
+        color="bg-muted-foreground"
+        segmentos={r.categorias}
+        dato={
+          <span className="text-muted-foreground">
+            entró <strong className="font-semibold text-cartera">{cop(r.ingresos)}</strong> · salió <strong className="font-semibold text-foreground">{cop(r.gastos)}</strong>
+          </span>
+        }
         extra={
           <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openTxForm(ctx)}>
             <Plus aria-hidden="true" />
             Nuevo movimiento
           </Button>
         }
-      >
+      />
+      <Panel id="tx-movimientos" titulo="Movimientos">
         <div className="filters-bar mb-3 flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -286,6 +302,7 @@ export function Transacciones({ active }: TabProps) {
           </table>
         </div>
       </Panel>
+      </div>
     </TabContent>
   )
 }

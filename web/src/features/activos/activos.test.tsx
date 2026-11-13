@@ -5,7 +5,6 @@ import { activo, estado } from '../../test/factories'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
 import { expectLabels, modalBody } from '../../test/labels'
-import { fraseActivos } from './frase'
 import { Activos } from './index'
 
 const H = { 'X-Moni-Request': '1' }
@@ -31,15 +30,14 @@ describe('Activos render', () => {
   it('shows empty state and totals', () => {
     setup([])
     expect(screen.getByText('Sin activos')).toBeInTheDocument()
-    expect(screen.getByText('0 activos')).toBeInTheDocument()
-    expect(screen.getByText('Todavía no registraste activos.')).toBeInTheDocument()
+    expect(document.getElementById('activos-total')).toHaveTextContent('0 activos')
   })
 
   it('renders card figures', () => {
     setup()
-    expect(screen.getByText('1 activo')).toBeInTheDocument()
-    expect(screen.getByText(/Tus activos valen .*150\.000.*50\.000 más de lo que pagaste \(50,0%\)\./)).toBeInTheDocument()
-    expect(screen.getByText('Casa')).toBeInTheDocument()
+    expect(document.getElementById('activos-total')).toHaveTextContent('1 activo')
+    expect(document.getElementById('activos-total')).toHaveTextContent(/150\.000.*50,0% sobre lo pagado/)
+    expect(screen.getByText('Casa', { selector: 'h3' })).toBeInTheDocument()
     expect(screen.getAllByText('+50,0%').length).toBeGreaterThan(0)
     expect(screen.getByText(/Adquirido/)).toBeInTheDocument()
     expect(screen.queryByText(/sin actualizar/)).toBeNull()
@@ -229,14 +227,5 @@ describe('labels', () => {
       'Valor actual (COP)': 'm-val-act',
       'Fecha de adquisición': 'm-fecha-adq',
     })
-  })
-})
-
-describe('fraseActivos', () => {
-  it('cubre vacío, igual, ganancia y pérdida', () => {
-    expect(fraseActivos(0, 0, 0)).toBe('Todavía no registraste activos.')
-    expect(fraseActivos(1, 100, 100)).toContain('lo mismo que pagaste')
-    expect(fraseActivos(1, 150, 100)).toContain('más de lo que pagaste (50,0%)')
-    expect(fraseActivos(1, 50, 100)).toContain('menos de lo que pagaste (50,0%)')
   })
 })

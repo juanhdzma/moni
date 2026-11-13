@@ -6,7 +6,6 @@ import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
 import { expectLabels, modalBody } from '../../test/labels'
 import { Inversiones } from './index'
-import { fraseResumen } from './Inversiones'
 
 const CDT = inversion({
   _id: 5,
@@ -50,20 +49,12 @@ async function typeMoney(user: ReturnType<typeof userEvent.setup>, id: string, t
   await user.type(el, text)
 }
 
-describe('fraseResumen', () => {
-  it('ganancia, pérdida e igual', () => {
-    expect(fraseResumen(1_000_000, 1_200_000)).toBe('Tus inversiones valen $1,2M: ganaste $200k (20,0%) sobre lo que pusiste.')
-    expect(fraseResumen(1_000_000, 900_000)).toBe('Tus inversiones valen $900k: van $100k (10,0%) por debajo de lo que pusiste.')
-    expect(fraseResumen(1_000_000, 1_000_000)).toBe('Tus inversiones valen $1,0M, lo mismo que pusiste.')
-  })
-})
-
 describe('render', () => {
   it('resumen y tarjetas', () => {
     setup()
     const total = document.getElementById('inv-total') as HTMLElement
     expect(total).toHaveTextContent('2 posiciones')
-    expect(total).toHaveTextContent('capital')
+    expect(total).toHaveTextContent(/ganado|perdido/)
     const fija = document.getElementById('inv-grid-fija') as HTMLElement
     expect(within(fija).getByText('CDT Uno')).toBeInTheDocument()
     expect(fija).toHaveTextContent('12,00% EA')

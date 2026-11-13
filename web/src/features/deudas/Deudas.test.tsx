@@ -36,9 +36,9 @@ describe('Deudas render', () => {
   it('muestra totales, créditos, tarjetas y terminados', () => {
     renderWithProviders(<Deudas active />, { estado: full() })
     const total = document.getElementById('deudas-total') as HTMLElement
-    expect(within(total).getByText('Saldo pendiente')).toBeInTheDocument()
-    expect(within(total).getByText('1 terminada')).toBeInTheDocument()
-    expect(within(total).getByText('costo del crédito')).toBeInTheDocument()
+    expect(within(total).getByText('Lo que debés')).toBeInTheDocument()
+    expect(total).toHaveTextContent('/mes en cuotas')
+    expect(within(total).getByRole('list', { name: 'De qué está hecho' })).toHaveTextContent('Crédito carro')
     const cred = document.getElementById('deudas-grid-credito') as HTMLElement
     expect(within(cred).getByText('Crédito carro')).toBeInTheDocument()
     expect(within(cred).getByText('~12m')).toBeInTheDocument()
@@ -453,20 +453,5 @@ describe('labels', () => {
       'Fecha del pago': 'm-fecha',
       'Notas (opcional)': 'm-notas',
     })
-  })
-})
-
-describe('fraseDeudas', () => {
-  it('frase con meses, sin cuotas y sin deudas', async () => {
-    const { fraseDeudas, mesesParaSaldar } = await import('./frase')
-    expect(mesesParaSaldar([{ saldo_actual: 6000000, cuota_mensual: 500000 }, { saldo_actual: 100, cuota_mensual: 0 }])).toBe(12)
-    expect(mesesParaSaldar([])).toBeNull()
-    expect(fraseDeudas(7000000, true, 12)).toMatch(/Debés .*7\.000\.000.*~12 meses\.$/)
-    expect(fraseDeudas(1000, true, null)).toMatch(/^Debés .* entre créditos y tarjetas\.$/)
-    expect(fraseDeudas(0, false, null)).toBe('No tenés deudas activas.')
-  })
-  it('se muestra en el resumen', () => {
-    renderWithProviders(<Deudas active />, { estado: full() })
-    expect(document.getElementById('deudas-total')).toHaveTextContent(/saldás los créditos en ~12 meses/)
   })
 })

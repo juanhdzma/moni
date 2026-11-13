@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { PartyPopper, Plus, CreditCard } from 'lucide-react'
-import { Barra, Panel } from '@/components/panel'
+import { Barra, Panel, Resumen } from '@/components/panel'
 import { Button } from '@/components/ui/button'
 import { FRANQUICIA_ICONS, tieneSaldo } from '../../lib/config'
 import { fmtIntereses, interesesPagados } from '../../lib/deudas'
@@ -9,10 +9,9 @@ import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
 import { TabContent, type TabProps } from '../../shell/TabContent'
 import type { Deuda } from '../../types'
-import { fraseDeudas, mesesParaSaldar } from './frase'
 import { openDeudaAdelantoFormById, openDeudaForm, openDeudaFormById, openDeudaPayFormById } from './forms'
 
-const itemCls = 'rounded-lg border p-3'
+const itemCls = 'rounded-xl border p-4'
 const miniLabel = 'text-xs text-muted-foreground'
 const miniValue = 'text-sm font-semibold'
 
@@ -25,7 +24,7 @@ function Item({ nombre, badge, sub, children, actions, className }: { nombre: st
       </div>
       <div className="mb-2 text-xs text-muted-foreground">{sub}</div>
       {children}
-      <div className="mt-3 flex flex-wrap gap-2">{actions}</div>
+      <div className="mt-4 flex flex-wrap gap-2">{actions}</div>
     </div>
   )
 }
@@ -177,16 +176,6 @@ function Terminada({ d }: { d: Deuda }) {
   )
 }
 
-function Stat({ label, value, sub, className }: { label: string; value: ReactNode; sub: ReactNode; className?: string }) {
-  return (
-    <div>
-      <div className={miniLabel}>{label}</div>
-      <div className={'text-lg font-semibold tracking-tight ' + (className ?? '')}>{value}</div>
-      <div className={miniLabel}>{sub}</div>
-    </div>
-  )
-}
-
 export function Deudas({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { estado, loaded } = useData()
@@ -204,33 +193,36 @@ export function Deudas({ active }: TabProps) {
   return (
     <TabContent id="deudas" active={active}>
       <div className="space-y-4">
-        <Panel
+        <Resumen
           id="deudas-total"
-          extra={<Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openDeudaForm(ctx)}><Plus aria-hidden="true" />Nueva deuda</Button>}
-          titulo="Total en deudas"
-          frase={loaded ? fraseDeudas(total, activas.length > 0, mesesParaSaldar(creditos)) : undefined}
-        >
-          {loaded ? (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-              <Stat label="Saldo pendiente" value={cop(total)} sub="pendiente" className="text-deudas" />
-              <Stat label="Cuota mensual" value={cop(totalCuotas)} sub="total/mes" />
-              <Stat label="Activas" value={activas.length} sub={`${terminadas.length} terminada${terminadas.length !== 1 ? 's' : ''}`} />
-              <Stat
-                label="Intereses pagados"
-                value={
-                  <>
+          titulo="Lo que debés"
+          loaded={loaded}
+          valor={cop(total)}
+          valorClassName="text-deudas"
+          color="bg-deudas"
+          segmentos={activas.map((d) => ({ key: String(d._id), label: d.nombre, valor: d.saldo_actual }))}
+          dato={
+            <span className="text-muted-foreground">
+              <strong className="font-semibold text-foreground">{cop(totalCuotas)}</strong>/mes en cuotas
+              {infoIntereses.length > 0 && (
+                <>
+                  {' · '}
+                  <strong className="font-semibold text-deudas">
                     {totalExacto ? '' : '~'}
                     {cop(totalIntereses)}
-                  </>
-                }
-                sub="costo del crédito"
-                className="text-deudas"
-              />
-            </div>
-          ) : (
-            <div className="skeleton h-7 w-28 animate-pulse rounded bg-muted" />
-          )}
-        </Panel>
+                  </strong>{' '}
+                  pagados en intereses
+                </>
+              )}
+            </span>
+          }
+          extra={
+            <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openDeudaForm(ctx)}>
+              <Plus aria-hidden="true" />
+              Nueva deuda
+            </Button>
+          }
+        />
         <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
           <Panel id="deudas-creditos" titulo="Créditos">
             <div id="deudas-grid-credito" className="space-y-3">

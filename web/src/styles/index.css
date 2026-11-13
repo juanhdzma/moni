@@ -4,23 +4,23 @@
 @import './ui.css';
 
 :root {
-  --background: #fafafa;
-  --foreground: #09090b;
-  --card: #ffffff;
-  --card-foreground: #09090b;
-  --popover: #ffffff;
-  --popover-foreground: #09090b;
-  --primary: #09090b;
-  --primary-foreground: #fafafa;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #09090b;
-  --muted: #f4f4f5;
-  --muted-foreground: #6b6b74;
-  --accent: #f4f4f5;
-  --accent-foreground: #09090b;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #a1a1aa;
+  --background: #f8f5f0;
+  --foreground: #1f1a15;
+  --card: #fffdfa;
+  --card-foreground: #1f1a15;
+  --popover: #fffdfa;
+  --popover-foreground: #1f1a15;
+  --primary: #1f1a15;
+  --primary-foreground: #f8f5f0;
+  --secondary: #f0ebe3;
+  --secondary-foreground: #1f1a15;
+  --muted: #f0ebe3;
+  --muted-foreground: #74695e;
+  --accent: #f0ebe3;
+  --accent-foreground: #1f1a15;
+  --border: #e8e0d4;
+  --input: #e8e0d4;
+  --ring: #ab9f91;
   --radius: 0.625rem;
 
   --cartera: #2563eb;
@@ -36,23 +36,23 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #131518;
-    --foreground: #f2f2f3;
-    --card: #1b1e21;
-    --card-foreground: #f2f2f3;
-    --popover: #1b1e21;
-    --popover-foreground: #f2f2f3;
-    --primary: #f2f2f3;
-    --primary-foreground: #131518;
-    --secondary: #24272b;
-    --secondary-foreground: #f2f2f3;
-    --muted: #24272b;
-    --muted-foreground: #9a9ea5;
-    --accent: #24272b;
-    --accent-foreground: #f2f2f3;
-    --border: #2a2d31;
-    --input: #2a2d31;
-    --ring: #5b6068;
+    --background: #171411;
+    --foreground: #f4efe8;
+    --card: #211d19;
+    --card-foreground: #f4efe8;
+    --popover: #211d19;
+    --popover-foreground: #f4efe8;
+    --primary: #f4efe8;
+    --primary-foreground: #171411;
+    --secondary: #2c2722;
+    --secondary-foreground: #f4efe8;
+    --muted: #2c2722;
+    --muted-foreground: #a89d90;
+    --accent: #2c2722;
+    --accent-foreground: #f4efe8;
+    --border: #332d27;
+    --input: #332d27;
+    --ring: #6b6158;
 
     --cartera: #6c9be8;
     --inversiones: #46b25e;

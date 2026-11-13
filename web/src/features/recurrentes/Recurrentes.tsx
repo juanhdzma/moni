@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Pause, Play, Plus } from 'lucide-react'
-import { Panel, Total } from '@/components/panel'
+import { Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
 import { cop, signStr } from '../../lib/format'
 import { FRECUENCIAS, nextPaymentStr, toMensual } from '../../lib/recurrentes'
@@ -87,13 +87,6 @@ function Lista({ id, titulo, frase, items, emptyMsg, loaded }: { id: string; tit
   )
 }
 
-export function fraseResumen(totalIng: number, totalGas: number): string | undefined {
-  if (!totalIng && !totalGas) return undefined
-  const neto = totalIng - totalGas
-  if (neto >= 0) return `Entran ${cop(totalIng)} al mes y salen ${cop(totalGas)} en fijos; te quedan ${cop(neto)}.`
-  return `Tus gastos fijos superan a tus ingresos recurrentes por ${cop(-neto)} al mes.`
-}
-
 export function Recurrentes({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { estado, loaded } = useData()
@@ -104,33 +97,31 @@ export function Recurrentes({ active }: TabProps) {
   return (
     <TabContent id="recurrentes" active={active}>
       <div className="space-y-4">
-        <Panel id="rec-total" titulo="Resumen mensual" extra={<Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openRecurrenteForm(ctx)}><Plus aria-hidden="true" />Nuevo</Button>} frase={loaded ? fraseResumen(totalIng, totalGas) : undefined}>
-          {loaded ? (
+        <Resumen
+          id="rec-total"
+          titulo="Neto mensual"
+          loaded={loaded}
+          valor={
             <>
-              <dl className="space-y-1 text-sm">
-                <div className="flex items-baseline justify-between">
-                  <dt className="text-muted-foreground">Ingresos/mes</dt>
-                  <dd className="font-medium text-cartera">{cop(totalIng)}</dd>
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <dt className="text-muted-foreground">Gastos/mes</dt>
-                  <dd className="font-medium">{cop(totalGas)}</dd>
-                </div>
-              </dl>
-              <Total
-                label="Neto mensual"
-                valor={
-                  <span className={neto < 0 ? 'text-deudas' : undefined}>
-                    {signStr(neto)}
-                    {cop(Math.abs(neto))}
-                  </span>
-                }
-              />
+              {signStr(neto)}
+              {cop(Math.abs(neto))}
             </>
-          ) : (
-            <div className="skeleton h-16 animate-pulse rounded-md bg-muted" />
-          )}
-        </Panel>
+          }
+          valorClassName={neto < 0 ? 'text-deudas' : undefined}
+          color="bg-muted-foreground"
+          segmentos={activos.filter((r) => r.tipo !== 'ingreso').map((r) => ({ key: String(r._id), label: r.nombre, valor: toMensual(r.monto, r.frecuencia) }))}
+          dato={
+            <span className="text-muted-foreground">
+              entran <strong className="font-semibold text-cartera">{cop(totalIng)}</strong> · salen <strong className="font-semibold text-foreground">{cop(totalGas)}</strong> en fijos
+            </span>
+          }
+          extra={
+            <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openRecurrenteForm(ctx)}>
+              <Plus aria-hidden="true" />
+              Nuevo
+            </Button>
+          }
+        />
         <div className="grid items-start gap-4 lg:grid-cols-2">
           <Lista id="rec-ingresos" titulo="Ingresos recurrentes" items={estado.recurrentes.filter((r) => r.tipo === 'ingreso')} emptyMsg="Sin ingresos recurrentes." loaded={loaded} />
           <Lista id="rec-gastos" titulo="Gastos fijos" items={estado.recurrentes.filter((r) => r.tipo !== 'ingreso')} emptyMsg="Sin gastos recurrentes." loaded={loaded} />

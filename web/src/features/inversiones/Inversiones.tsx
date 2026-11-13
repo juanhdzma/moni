@@ -1,7 +1,6 @@
-import type { ReactNode } from 'react'
-import { AlertTriangle, Plus, TrendingUp } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Panel } from '@/components/panel'
+import { Desactualizado, Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
 import { cop, copShort, fmtDate, isStale, pct, signStr } from '../../lib/format'
 import { eaToMv, nextInvPaymentStr } from '../../lib/inversiones'
@@ -17,15 +16,6 @@ import {
   openInvUpdateValueFormById,
   openInvYieldFormById,
 } from './forms'
-
-export function fraseResumen(totalInv: number, totalActual: number): string {
-  const gan = totalActual - totalInv
-  if (totalInv <= 0 || Math.abs(gan) < 1) return `Tus inversiones valen ${copShort(totalActual)}, lo mismo que pusiste.`
-  const p = pct(Math.abs((gan / totalInv) * 100))
-  return gan > 0
-    ? `Tus inversiones valen ${copShort(totalActual)}: ganaste ${copShort(gan)} (${p}%) sobre lo que pusiste.`
-    : `Tus inversiones valen ${copShort(totalActual)}: van ${copShort(-gan)} (${p}%) por debajo de lo que pusiste.`
-}
 
 const gainColor = (n: number) => (n >= 0 ? 'text-inversiones-text' : 'text-deudas')
 
@@ -47,13 +37,16 @@ function InvCard({ inv }: { inv: Inversion }) {
   const nextPago = inv.pago === 'mensual' && inv.dia_pago ? nextInvPaymentStr(inv.dia_pago) : null
 
   return (
-    <li className="inv-card py-3 first:pt-0 last:pb-0">
+    <li className="inv-card py-4 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
         <div className="inv-name min-w-0 truncate text-[15px] font-semibold">{inv.nombre}</div>
-        <span className={cn('shrink-0 text-sm font-semibold', gainColor(gan))}>
-          {signStr(ganP)}
-          {pct(Math.abs(ganP))}%
-        </span>
+        <div className="flex shrink-0 items-center gap-1">
+          {inv.tipo === 'variable' && isStale(inv.valor_actualizado_en) && <Desactualizado />}
+          <span className={cn('text-sm font-semibold', gainColor(gan))}>
+            {signStr(ganP)}
+            {pct(Math.abs(ganP))}%
+          </span>
+        </div>
       </div>
       {mv !== null && (
         <div className="text-xs text-muted-foreground">
@@ -75,13 +68,7 @@ function InvCard({ inv }: { inv: Inversion }) {
         </span>
       </div>
       {inv.fecha_inicio ? <div className="mt-0.5 text-xs text-muted-foreground">Desde {fmtDate(inv.fecha_inicio)}</div> : null}
-      {inv.tipo === 'variable' && isStale(inv.valor_actualizado_en) ? (
-        <div className="stale-warning mt-1.5 flex items-center gap-1.5 text-xs font-medium text-alerta-text">
-          <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
-          Valor sin actualizar hace más de 1 mes
-        </div>
-      ) : null}
-      <div className="card-actions mt-3 flex flex-wrap gap-2">
+      <div className="card-actions mt-4 flex flex-wrap gap-2">
         {inv.tipo === 'fija' ? (
           <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvYieldFormById(ctx, inv._id)}>
             Rendimiento
@@ -105,16 +92,6 @@ function InvCard({ inv }: { inv: Inversion }) {
   )
 }
 
-function Stat({ label, sub, children, className }: { label: string; sub: ReactNode; children: ReactNode; className?: string }) {
-  return (
-    <div>
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <div className={cn('text-xl font-semibold tracking-tight', className)}>{children}</div>
-      <div className="text-xs text-muted-foreground">{sub}</div>
-    </div>
-  )
-}
-
 export function Inversiones({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { estado, loaded } = useData()
@@ -129,33 +106,35 @@ export function Inversiones({ active }: TabProps) {
   return (
     <TabContent id="inversiones" active={active}>
       <div className="space-y-4">
-        <Panel id="inv-total" titulo="Portfolio" extra={<Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openInvForm(ctx)}><Plus aria-hidden="true" />Nueva inversión</Button>} frase={loaded && lista.length ? fraseResumen(totalInv, totalActual) : undefined}>
-          {loaded ? (
-            <div className="grid grid-cols-3 gap-3">
-              <Stat label="Valor actual" className="text-inversiones-text" sub={`${lista.length} ${lista.length === 1 ? 'posición' : 'posiciones'}`}>
-                {cop(totalActual)}
-              </Stat>
-              <Stat label="Invertido" sub="capital">
-                {cop(totalInv)}
-              </Stat>
-              <Stat
-                label="Ganancia"
-                className={gainColor(ganancia)}
-                sub={
-                  <span className={gainColor(ganancia)}>
-                    {signStr(ganPct)}
-                    {pct(Math.abs(ganPct))}%
-                  </span>
-                }
-              >
-                {signStr(ganancia)}
-                {cop(Math.abs(ganancia))}
-              </Stat>
-            </div>
-          ) : (
-            <div className="skeleton h-7 w-36 animate-pulse rounded bg-muted" />
-          )}
-        </Panel>
+        <Resumen
+          id="inv-total"
+          titulo="Tus inversiones"
+          loaded={loaded}
+          valor={cop(totalActual)}
+          valorClassName="text-inversiones-text"
+          color="bg-inversiones"
+          segmentos={lista.map((i) => ({ key: String(i._id), label: i.nombre, valor: i.valor_actual }))}
+          dato={
+            <>
+              {totalInv > 0 && (
+                <span className={gainColor(ganancia)}>
+                  {ganancia >= 0 ? <ArrowUp className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" /> : <ArrowDown className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" />}
+                  {copShort(Math.abs(ganancia))} ({pct(Math.abs(ganPct))}%) {ganancia >= 0 ? 'ganado' : 'perdido'}
+                </span>
+              )}
+              <span className="text-muted-foreground">
+                {totalInv > 0 && ' · '}
+                {lista.length} {lista.length === 1 ? 'posición' : 'posiciones'}
+              </span>
+            </>
+          }
+          extra={
+            <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openInvForm(ctx)}>
+              <Plus aria-hidden="true" />
+              Nueva inversión
+            </Button>
+          }
+        />
         <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
           <Panel id="inv-fijas" titulo="Fijas">
             <ul id="inv-grid-fija" className="card-list divide-y">

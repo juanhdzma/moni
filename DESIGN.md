@@ -2,13 +2,13 @@
 name: Moni
 description: Compact card dashboard for one household's money, where every card says in one sentence what its numbers mean.
 colors:
-  background: "#fafafa"
-  foreground: "#09090b"
-  card: "#ffffff"
-  muted: "#f4f4f5"
-  muted-foreground: "#6b6b74"
-  border: "#e4e4e7"
-  ring: "#a1a1aa"
+  background: "#f8f5f0"
+  foreground: "#1f1a15"
+  card: "#fffdfa"
+  muted: "#f0ebe3"
+  muted-foreground: "#74695e"
+  border: "#e8e0d4"
+  ring: "#ab9f91"
   cartera: "#2563eb"
   inversiones: "#16a34a"
   inversiones-text: "#15803d"
@@ -16,13 +16,13 @@ colors:
   activos-text: "#a16207"
   deudas: "#dc2626"
   alerta: "#d97706"
-  background-dark: "#131518"
-  foreground-dark: "#f2f2f3"
-  card-dark: "#1b1e21"
-  muted-dark: "#24272b"
-  muted-foreground-dark: "#9a9ea5"
-  border-dark: "#2a2d31"
-  ring-dark: "#5b6068"
+  background-dark: "#171411"
+  foreground-dark: "#f4efe8"
+  card-dark: "#211d19"
+  muted-dark: "#2c2722"
+  muted-foreground-dark: "#a89d90"
+  border-dark: "#332d27"
+  ring-dark: "#6b6158"
   cartera-dark: "#6c9be8"
   inversiones-dark: "#46b25e"
   inversiones-text-dark: "#5cc272"
@@ -140,7 +140,7 @@ components:
 
 **Creative North Star: "The Annotated Ledger"**
 
-Moni is a compact card dashboard. Each card states its finding in one plain Spanish sentence ("Subiste +$20,1M desde fin de jun.", "Arriendo se lleva el 39% de lo que gastaste en el último mes"), then shows the chart, list or sum that backs it up. The cards use the shadcn neutral style: white panels on an off-white ground with hairline borders, or near-black panels on a cool charcoal ground in dark mode. The theme follows the system preference and the app has no theme toggle.
+Moni is a compact card dashboard. Each card states its finding in one plain Spanish sentence ("Subiste +$20,1M desde fin de jun.", "Arriendo se lleva el 39% de lo que gastaste en el último mes"), then shows the chart, list or sum that backs it up. The cards sit on warm neutrals: cream-white panels on a paper ground with hairline borders, or dark brown-black panels on a warm charcoal ground in dark mode. The theme follows the system preference and the app has no theme toggle.
 
 The density is set by the owner. The dashboard replaced an Isotype layout that was rejected for being empty and wasting space, so every block takes only the room its content needs. Color carries meaning, not decoration. Four fixed domain colors (activos ochre, inversiones green, cartera blue, deudas red) are the only hues allowed, and they show up wherever those domains appear. Everything else is neutral. Sums are shown the way an adding machine would: entró, salió, a rule, then te quedó.
 
@@ -213,7 +213,7 @@ Inside a card, the title row has a 12px bottom margin, the sentence 16px, and li
 ### Named Rules
 **The Compact Rule.** Nothing gets space it doesn't need. Cards are sized by their content, with no fixed heights beyond the chart itself (200px area, 120px bars), no hero padding and no empty decorative bands. If a block looks sparse, merge it or shrink it. Don't pad it.
 
-**The Sentence First Rule.** Every card opens with one plain-language sentence that interprets its numbers, such as "Te quedó el 63,4% de lo que entró" or "Tenés 1 pago vencido y $1.145.000 por pagar en 45 días". The chart, list or sum that follows is the evidence. A card that only shows numbers is unfinished.
+**The Sentence First Rule.** Every dashboard card opens with one plain-language sentence that interprets its numbers, such as "Te quedó el 63,4% de lo que entró" or "Tenés 1 pago vencido y $1.145.000 por pagar en 45 días". The chart, list or sum that follows is the evidence. A card that only shows numbers is unfinished. The other tabs open differently: their header is a `Resumen` (below), not a sentence.
 
 ## Elevation & Depth
 
@@ -231,6 +231,16 @@ Surfaces are flat, and a hairline border plus the step from ground to panel does
 Corners are softly rounded on a 10px base (`--radius`): cards use 14px, segmented tracks and icon buttons 8px, segments and small controls 6px. Bars, the composition strip, nav pills and the FAB are fully round. Legend chips in the composition list are 8px squares with 2px corners, matching the four squares of the logo. Bar chart columns are rounded only at the top (3px).
 
 ## Components
+
+### Resumen (tab header)
+
+- **Where:** the top of Transacciones, Deudas, Inversiones, Activos and Recurrentes (`Resumen` in `web/src/components/panel.tsx`).
+- **Structure:** a small muted label ("Tus activos", "Lo que debés"), one big figure (36px, 600, domain color), and a short fact beside it (change %, cuotas, entra/sale). Below it, a 12px composition bar of what makes up the figure, one segment per item in tones of the domain color, with a legend. Items beyond four collapse into "Otros". The tab's add button sits top right.
+- **No sentence and no row of stat columns.** The figure and the bar say it.
+
+### Stale value marker
+
+- An alerta-colored triangle icon beside the card's name, never a line of its own. Hover (desktop) or tap (mobile) shows "Valor sin actualizar hace más de 1 mes"; the text stays in the DOM for screen readers.
 
 ### Panel (card)
 The single container for dashboard content.

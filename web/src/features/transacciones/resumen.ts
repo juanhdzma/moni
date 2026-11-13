@@ -1,13 +1,17 @@
-import { cop } from '../../lib/format'
+import type { Segmento } from '@/components/panel'
 import type { Transaccion } from '../../types'
 
-export function fraseTransacciones(list: Transaccion[], filtrado: boolean): string {
-  if (!list.length) return ''
-  const ingresos = list.filter((t) => t.tipo === 'ingreso').reduce((s, t) => s + t.monto, 0)
-  const gastos = list.filter((t) => t.tipo === 'gasto').reduce((s, t) => s + t.monto, 0)
-  const neto = ingresos - gastos
-  const n = list.length === 1 ? '1 movimiento' : `${list.length} movimientos`
-  const que = filtrado ? `${n} con estos filtros` : n
-  const signo = neto > 0 ? 'te dejaron ' + cop(neto) : neto < 0 ? 'te costaron ' + cop(-neto) : 'quedaron en cero'
-  return `${que}: ingresaron ${cop(ingresos)}, salieron ${cop(gastos)} y ${signo}.`
+export function resumenTx(list: Transaccion[]): { ingresos: number; gastos: number; neto: number; categorias: Segmento[] } {
+  let ingresos = 0
+  let gastos = 0
+  const porCat = new Map<string, number>()
+  for (const t of list) {
+    if (t.tipo === 'ingreso') ingresos += t.monto
+    if (t.tipo === 'gasto') {
+      gastos += t.monto
+      porCat.set(t.categoria, (porCat.get(t.categoria) ?? 0) + t.monto)
+    }
+  }
+  const categorias = [...porCat].map(([c, v]) => ({ key: c, label: c, valor: v }))
+  return { ingresos, gastos, neto: ingresos - gastos, categorias }
 }
