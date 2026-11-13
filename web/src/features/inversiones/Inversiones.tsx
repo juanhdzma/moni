@@ -1,4 +1,9 @@
-import { cop, fmtDate, isStale, pct, signStr } from '../../lib/format'
+import type { ReactNode } from 'react'
+import { AlertTriangle, Plus, TrendingUp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Panel } from '@/components/panel'
+import { cn } from '@/lib/utils'
+import { cop, copShort, fmtDate, isStale, pct, signStr } from '../../lib/format'
 import { eaToMv, nextInvPaymentStr } from '../../lib/inversiones'
 import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
@@ -13,13 +18,24 @@ import {
   openInvYieldFormById,
 } from './forms'
 
+export function fraseResumen(totalInv: number, totalActual: number): string {
+  const gan = totalActual - totalInv
+  if (totalInv <= 0 || Math.abs(gan) < 1) return `Tus inversiones valen ${copShort(totalActual)}, lo mismo que pusiste.`
+  const p = pct(Math.abs((gan / totalInv) * 100))
+  return gan > 0
+    ? `Tus inversiones valen ${copShort(totalActual)}: ganaste ${copShort(gan)} (${p}%) sobre lo que pusiste.`
+    : `Tus inversiones valen ${copShort(totalActual)}: van ${copShort(-gan)} (${p}%) por debajo de lo que pusiste.`
+}
+
+const gainColor = (n: number) => (n >= 0 ? 'text-inversiones-text' : 'text-deudas')
+
 function EmptyCard({ label }: { label: string }) {
   return (
-    <div className="empty" style={{ gridColumn: '1/-1' }}>
-      <div className="empty-icon">📈</div>
-      <div className="empty-title">Sin {label}</div>
-      <div className="empty-text">Agregá una con el botón + de arriba.</div>
-    </div>
+    <li className="empty flex flex-col items-center gap-1 py-6 text-center">
+      <TrendingUp className="size-5 text-muted-foreground" aria-hidden="true" />
+      <div className="empty-title text-sm font-medium">Sin {label}</div>
+      <div className="empty-text text-xs text-muted-foreground">Agregá una con el botón + de arriba.</div>
+    </li>
   )
 }
 
@@ -31,72 +47,70 @@ function InvCard({ inv }: { inv: Inversion }) {
   const nextPago = inv.pago === 'mensual' && inv.dia_pago ? nextInvPaymentStr(inv.dia_pago) : null
 
   return (
-    <div className="inv-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--sp-1)' }}>
-        <div className="inv-name">{inv.nombre}</div>
-        <span className={'gain-badge ' + (gan >= 0 ? 'gain-pos' : 'gain-neg')} style={{ marginLeft: 'var(--sp-3)', flexShrink: 0 }}>
+    <li className="inv-card py-3 first:pt-0 last:pb-0">
+      <div className="flex items-start justify-between gap-3">
+        <div className="inv-name min-w-0 truncate text-[15px] font-semibold">{inv.nombre}</div>
+        <span className={cn('shrink-0 text-sm font-semibold', gainColor(gan))}>
           {signStr(ganP)}
           {pct(Math.abs(ganP))}%
         </span>
       </div>
-      {mv !== null ? (
-        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 'var(--sp-5)' }}>
+      {mv !== null && (
+        <div className="text-xs text-muted-foreground">
           {pct(inv.tasa_ea, 2)}% EA · {pct(mv, 4)}% MV
           {nextPago ? (
             <>
               {' · '}
-              <strong style={{ color: 'var(--text-secondary)' }}>{nextPago}</strong>
+              <strong className="font-semibold text-foreground">{nextPago}</strong>
             </>
           ) : null}
         </div>
-      ) : (
-        <div style={{ marginBottom: 'var(--sp-5)' }}></div>
       )}
-      <div
-        style={{
-          fontSize: 'var(--text-3xl)',
-          fontWeight: 700,
-          color: 'var(--inv)',
-          letterSpacing: '-0.02em',
-          lineHeight: 1,
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
-        {cop(inv.valor_actual)}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>Invertido {cop(inv.monto_invertido)}</div>
-        <div style={{ fontSize: 'var(--text-base)', fontWeight: 600, color: gan >= 0 ? 'var(--income)' : 'var(--expense)' }}>
+      <div className="mt-1 text-2xl font-semibold tracking-tight text-inversiones-text">{cop(inv.valor_actual)}</div>
+      <div className="mt-0.5 flex items-center justify-between gap-3 text-sm">
+        <span className="text-muted-foreground">Invertido {cop(inv.monto_invertido)}</span>
+        <span className={cn('font-semibold', gainColor(gan))}>
           {signStr(gan)}
           {cop(Math.abs(gan))}
-        </div>
+        </span>
       </div>
-      {inv.fecha_inicio ? (
-        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: 4 }}>Desde {fmtDate(inv.fecha_inicio)}</div>
-      ) : null}
+      {inv.fecha_inicio ? <div className="mt-0.5 text-xs text-muted-foreground">Desde {fmtDate(inv.fecha_inicio)}</div> : null}
       {inv.tipo === 'variable' && isStale(inv.valor_actualizado_en) ? (
-        <div className="stale-warning">⚠ Valor sin actualizar hace más de 1 mes</div>
+        <div className="stale-warning mt-1.5 flex items-center gap-1.5 text-xs font-medium text-alerta-text">
+          <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
+          Valor sin actualizar hace más de 1 mes
+        </div>
       ) : null}
-      <div className="card-actions">
+      <div className="card-actions mt-3 flex flex-wrap gap-2">
         {inv.tipo === 'fija' ? (
-          <button className="btn btn-accent btn-sm" style={{ flex: 1 }} onClick={() => openInvYieldFormById(ctx, inv._id)}>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvYieldFormById(ctx, inv._id)}>
             Rendimiento
           </button>
         ) : (
-          <button className="btn btn-accent btn-sm" style={{ flex: 1 }} onClick={() => openInvUpdateValueFormById(ctx, inv._id)}>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvUpdateValueFormById(ctx, inv._id)}>
             Actualizar
           </button>
         )}
         <button className="btn btn-dim btn-sm" onClick={() => openInvAddMoreFormById(ctx, inv._id)}>
           + Más
         </button>
-        <button className="btn btn-dim btn-sm" style={{ color: 'var(--expense)' }} onClick={() => openInvRetirarFormById(ctx, inv._id)}>
+        <button className="btn btn-dim btn-sm text-deudas" onClick={() => openInvRetirarFormById(ctx, inv._id)}>
           Retirar
         </button>
         <button className="btn btn-dim btn-sm" onClick={() => openInvFormById(ctx, inv._id)}>
           Editar
         </button>
       </div>
+    </li>
+  )
+}
+
+function Stat({ label, sub, children, className }: { label: string; sub: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className={cn('text-xl font-semibold tracking-tight', className)}>{children}</div>
+      <div className="text-xs text-muted-foreground">{sub}</div>
     </div>
   )
 }
@@ -114,69 +128,45 @@ export function Inversiones({ active }: TabProps) {
 
   return (
     <TabContent id="inversiones" active={active}>
-      <div className="tab-header">
-        <button className="btn btn-accent add-btn" onClick={() => openInvForm(ctx)}>
-          + Nueva inversión
-        </button>
-      </div>
-      {loaded ? (
-        <div className="card" style={{ marginBottom: 16 }} id="inv-total">
-          <div className="stat-summary stat-summary-3">
-            <div className="stat-summary-item stat-hero">
-              <div className="stat-label">Valor actual</div>
-              <div className="stat-value" style={{ color: 'var(--inv)' }}>
+      <div className="space-y-4">
+        <Panel id="inv-total" titulo="Portfolio" extra={<Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openInvForm(ctx)}><Plus aria-hidden="true" />Nueva inversión</Button>} frase={loaded && lista.length ? fraseResumen(totalInv, totalActual) : undefined}>
+          {loaded ? (
+            <div className="grid grid-cols-3 gap-3">
+              <Stat label="Valor actual" className="text-inversiones-text" sub={`${lista.length} ${lista.length === 1 ? 'posición' : 'posiciones'}`}>
                 {cop(totalActual)}
-              </div>
-              <div className="stat-sub">
-                {lista.length} {lista.length === 1 ? 'posición' : 'posiciones'}
-              </div>
-            </div>
-            <div className="stat-pair">
-              <div className="stat-summary-item">
-                <div className="stat-label">Invertido</div>
-                <div className="stat-value">{cop(totalInv)}</div>
-                <div className="stat-sub">capital</div>
-              </div>
-              <div className="stat-summary-item">
-                <div className="stat-label">Ganancia</div>
-                <div className="stat-value" style={{ color: ganancia >= 0 ? 'var(--income)' : 'var(--expense)' }}>
-                  {signStr(ganancia)}
-                  {cop(Math.abs(ganancia))}
-                </div>
-                <div className="stat-sub">
-                  <span className={'gain-badge ' + (ganancia >= 0 ? 'gain-pos' : 'gain-neg')}>
+              </Stat>
+              <Stat label="Invertido" sub="capital">
+                {cop(totalInv)}
+              </Stat>
+              <Stat
+                label="Ganancia"
+                className={gainColor(ganancia)}
+                sub={
+                  <span className={gainColor(ganancia)}>
                     {signStr(ganPct)}
                     {pct(Math.abs(ganPct))}%
                   </span>
-                </div>
-              </div>
+                }
+              >
+                {signStr(ganancia)}
+                {cop(Math.abs(ganancia))}
+              </Stat>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className="card" style={{ marginBottom: 16 }} id="inv-total">
-          <div className="stat-label">Portfolio</div>
-          <div className="stat-value">
-            <span className="skeleton" style={{ width: 140, height: 28 }}></span>
-          </div>
-        </div>
-      )}
-      <div className="grid-2">
-        <div>
-          <div className="section-title" style={{ marginBottom: 12 }}>
-            Fijas
-          </div>
-          <div id="inv-grid-fija" className="card-list">
-            {loaded && (fijas.length ? fijas.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones fijas" />)}
-          </div>
-        </div>
-        <div>
-          <div className="section-title" style={{ marginBottom: 12 }}>
-            Variables
-          </div>
-          <div id="inv-grid-variable" className="card-list">
-            {loaded && (variables.length ? variables.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones variables" />)}
-          </div>
+          ) : (
+            <div className="skeleton h-7 w-36 animate-pulse rounded bg-muted" />
+          )}
+        </Panel>
+        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+          <Panel id="inv-fijas" titulo="Fijas">
+            <ul id="inv-grid-fija" className="card-list divide-y">
+              {loaded && (fijas.length ? fijas.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones fijas" />)}
+            </ul>
+          </Panel>
+          <Panel id="inv-variables" titulo="Variables">
+            <ul id="inv-grid-variable" className="card-list divide-y">
+              {loaded && (variables.length ? variables.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones variables" />)}
+            </ul>
+          </Panel>
         </div>
       </div>
     </TabContent>

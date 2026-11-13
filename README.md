@@ -66,7 +66,7 @@ FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/db.py`
 
 The frontend (`web/`) is React + TypeScript built with Vite. Every tab is one folder under `web/src/features/` that owns its own component and modal forms; all of them read from a single `DataProvider` populated wholesale from `GET /api/all`. Any change (a new transaction, a debt payment, an edited category) goes through the API and then refetches everything. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes. The money math lives in pure, unit-tested functions under `web/src/lib/`.
 
-Styling is Tailwind CSS + shadcn/ui with Recharts charts; Recharts and the Archivo and JetBrains Mono webfonts are bundled from npm and `web/public/assets/fonts/`, so the app works on a LAN with no internet access. Only `web/dist` is reachable over HTTP; the backend code, the SQLite file and the frontend sources are not.
+Styling is Tailwind CSS + shadcn/ui with Recharts charts; Recharts and the Archivo webfont are bundled from npm, so the app works on a LAN with no internet access. Only `web/dist` is reachable over HTTP; the backend code, the SQLite file and the frontend sources are not.
 
 See `CLAUDE.md` for the full architecture rundown (schema/migrations, composite money-moving actions, per-tab conventions).
 

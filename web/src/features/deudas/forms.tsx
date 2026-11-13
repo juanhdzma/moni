@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useState } from 'react'
 import { AdvancedToggle } from '../../controls/AdvancedToggle'
 import { DatePicker } from '../../controls/DatePicker'
 import { FormStatus } from '../../controls/FormStatus'
@@ -13,48 +13,7 @@ import type { Deuda, DeudaAdelanto, DeudaPago } from '../../types'
 
 const FRANQUICIAS = ['Visa', 'Mastercard', 'Amex', 'Otra'].map((f) => ({ value: f, label: f }))
 
-const errMsg = (e: unknown) => '❌ ' + (e instanceof Error ? e.message : String(e))
-
-const summaryBox: CSSProperties = {
-  background: 'var(--bg)',
-  borderRadius: 'var(--radius-sm)',
-  padding: '14px 16px',
-  marginBottom: 18,
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-}
-const summaryLabel: CSSProperties = {
-  fontSize: 'var(--text-xs)',
-  fontWeight: 700,
-  color: 'var(--text-secondary)',
-  textTransform: 'uppercase',
-  letterSpacing: '.05em',
-  marginBottom: 3,
-}
-const summaryBig: CSSProperties = { fontSize: 'var(--text-3xl)', fontWeight: 700, color: 'var(--debt-mid)' }
-const summarySubLabel: CSSProperties = { fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 3 }
-const hintStyle: CSSProperties = { fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: 5 }
-const breakdownBox: CSSProperties = {
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--border)',
-  overflow: 'hidden',
-  marginBottom: 14,
-}
-const breakdownLabel: CSSProperties = { fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }
-const breakdownValue: CSSProperties = { fontSize: 'var(--text-md)', fontWeight: 700 }
-const breakdownRow: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '10px 14px',
-}
-const notasLabel: CSSProperties = {
-  textTransform: 'none',
-  letterSpacing: 0,
-  fontSize: 'var(--text-sm)',
-  color: 'var(--text-secondary)',
-}
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 function DeudaForm({ d }: { d: Deuda | null }) {
   const { closeModal, setModalStatus } = useModal()
@@ -169,7 +128,7 @@ function DeudaForm({ d }: { d: Deuda | null }) {
         <MoneyInput id="m-saldo" value={saldo} onChange={setSaldo} />
         <div
           id="saldo-hint"
-          style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: 5, display: esTarjeta ? '' : 'none' }}
+          className={'mt-1.5 text-xs text-muted-foreground' + (esTarjeta ? '' : ' hidden')}
         >
           Dejá 0 si la tarjeta todavía no tiene gastos.
         </div>
@@ -216,7 +175,7 @@ function DeudaForm({ d }: { d: Deuda | null }) {
             Eliminar
           </button>
         )}
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>
@@ -278,35 +237,35 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
 
   return (
     <>
-      <div style={summaryBox}>
-        <div>
-          <div style={summaryLabel}>Saldo pendiente</div>
-          <div style={summaryBig}>{cop(d.saldo_actual)}</div>
+      <div className="modal-panel">
+        <div className="modal-panel-col">
+          <div className="modal-panel-label">Saldo pendiente</div>
+          <div className="modal-panel-value text-deudas">{cop(d.saldo_actual)}</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={summarySubLabel}>Cuota mensual</div>
-          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>{cop(d.cuota_mensual)}</div>
+        <div className="modal-panel-col right">
+          <div className="modal-panel-label">Cuota mensual</div>
+          <div className="text-base font-semibold">{cop(d.cuota_mensual)}</div>
         </div>
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="m-monto">Monto total pagado (COP)</label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
-        <div style={hintStyle}>{hint}</div>
+        <div className="mt-1.5 text-xs text-muted-foreground">{hint}</div>
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="m-saldo-nuevo">Saldo capital después del pago</label>
         <MoneyInput id="m-saldo-nuevo" value={saldoNuevo} onChange={setSaldoNuevo} placeholder="Lo que muestra tu banco después" />
       </div>
-      <div id="pay-breakdown" style={{ ...breakdownBox, display: showBreakdown ? 'block' : 'none' }}>
-        <div style={{ ...breakdownRow, borderBottom: '1px solid var(--border)' }}>
-          <span style={breakdownLabel}>→ A capital</span>
-          <span style={{ ...breakdownValue, color: 'var(--accent)' }} id="pay-capital">
+      <div id="pay-breakdown" className="breakdown" style={{ display: showBreakdown ? 'block' : 'none' }}>
+        <div className="breakdown-row">
+          <span className="breakdown-label">A capital</span>
+          <span className="breakdown-value text-cartera" id="pay-capital">
             {showBreakdown ? cop(capital) : '—'}
           </span>
         </div>
-        <div style={breakdownRow}>
-          <span style={breakdownLabel}>→ A intereses</span>
-          <span style={{ ...breakdownValue, color: 'var(--red)' }} id="pay-intereses">
+        <div className="breakdown-row">
+          <span className="breakdown-label">A intereses</span>
+          <span className="breakdown-value text-deudas" id="pay-intereses">
             {showBreakdown ? cop(intereses) : '—'}
           </span>
         </div>
@@ -316,7 +275,7 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
-        <label className="form-label" style={notasLabel} htmlFor="m-notas">
+        <label className="form-label text-muted-foreground" htmlFor="m-notas">
           Notas (opcional)
         </label>
         <input
@@ -348,7 +307,7 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         >
           Editar deuda
         </button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>
@@ -411,22 +370,22 @@ function AdelantoForm({ d }: { d: Deuda }) {
 
   return (
     <>
-      <div style={summaryBox}>
-        <div>
-          <div style={summaryLabel}>Debes</div>
-          <div style={summaryBig}>{cop(d.saldo_actual)}</div>
+      <div className="modal-panel">
+        <div className="modal-panel-col">
+          <div className="modal-panel-label">Debes</div>
+          <div className="modal-panel-value text-deudas">{cop(d.saldo_actual)}</div>
         </div>
         {tieneCupo && (
-          <div style={{ textAlign: 'right' }}>
-            <div style={summarySubLabel}>Disponible</div>
-            <div style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>{cop(Math.max(0, d.cupo - d.saldo_actual))}</div>
+          <div className="modal-panel-col right">
+            <div className="modal-panel-label">Disponible</div>
+            <div className="text-base font-semibold">{cop(Math.max(0, d.cupo - d.saldo_actual))}</div>
           </div>
         )}
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="m-monto">Monto del adelanto (COP)</label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
-        <div style={hintStyle}>La plata que vas a recibir en tu cuenta.</div>
+        <div className="mt-1.5 text-xs text-muted-foreground">La plata que vas a recibir en tu cuenta.</div>
       </div>
       {tieneCupo ? (
         <div className="form-group">
@@ -449,16 +408,16 @@ function AdelantoForm({ d }: { d: Deuda }) {
           />
         </div>
       )}
-      <div id="adelanto-breakdown" style={{ ...breakdownBox, display: showBreakdown ? 'block' : 'none' }}>
-        <div style={{ ...breakdownRow, borderBottom: '1px solid var(--border)' }}>
-          <span style={breakdownLabel}>→ Deuda total después</span>
-          <span style={{ ...breakdownValue, color: 'var(--debt-mid)' }} id="adelanto-deuda">
+      <div id="adelanto-breakdown" className="breakdown" style={{ display: showBreakdown ? 'block' : 'none' }}>
+        <div className="breakdown-row">
+          <span className="breakdown-label">Deuda total después</span>
+          <span className="breakdown-value text-deudas" id="adelanto-deuda">
             {showBreakdown && saldoNuevo !== null ? cop(saldoNuevo) : '—'}
           </span>
         </div>
-        <div style={{ ...breakdownRow, display: comision > 0 ? 'flex' : 'none' }} id="adelanto-comision-row">
-          <span style={breakdownLabel}>→ Comisión / cargos</span>
-          <span style={{ ...breakdownValue, color: 'var(--red)' }} id="adelanto-comision">
+        <div className="breakdown-row" style={{ display: comision > 0 ? 'flex' : 'none' }} id="adelanto-comision-row">
+          <span className="breakdown-label">Comisión / cargos</span>
+          <span className="breakdown-value text-deudas" id="adelanto-comision">
             {showBreakdown ? cop(comision) : '—'}
           </span>
         </div>
@@ -468,7 +427,7 @@ function AdelantoForm({ d }: { d: Deuda }) {
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
-        <label className="form-label" style={notasLabel} htmlFor="m-notas">
+        <label className="form-label text-muted-foreground" htmlFor="m-notas">
           Notas (opcional)
         </label>
         <input
@@ -486,7 +445,7 @@ function AdelantoForm({ d }: { d: Deuda }) {
         <button className="btn btn-accent" onClick={() => void save()}>
           Pedir adelanto
         </button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>

@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { DatePicker } from '../../controls/DatePicker'
 import { FormStatus } from '../../controls/FormStatus'
@@ -93,7 +94,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
       if (tx) await crudOp('tx', 'update', { ...data, _id: tx._id })
       else await crudOp('tx', 'add', data)
     } catch (err) {
-      setModalStatus('err', '❌ ' + (err instanceof Error ? err.message : String(err)))
+      setModalStatus('err', (err instanceof Error ? err.message : String(err)))
     }
   }
 
@@ -121,7 +122,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="m-cat">Categoría</label>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="flex items-center gap-2">
           <Select
             id="m-cat"
             style={{ flex: 1 }}
@@ -132,17 +133,17 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
           />
           <button
             type="button"
-            className="btn btn-dim btn-sm"
-            style={{ flexShrink: 0, fontSize: 'var(--text-xl)', padding: 'var(--sp-2) var(--sp-5)' }}
+            className="btn btn-dim btn-sm shrink-0"
             title="Agregar categoría"
+            aria-label="Agregar categoría"
             onClick={() => setNewCatOpen((o) => !o)}
           >
-            +
+            <Plus className="size-4" aria-hidden="true" />
           </button>
         </div>
         {newCatOpen && (
-          <div id="new-cat-wrap" style={{ marginTop: 8 }}>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <div id="new-cat-wrap" className="mt-2">
+            <div className="flex gap-2">
               <input
                 className="form-input"
                 type="text"
@@ -197,8 +198,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
       </div>
       <div className="form-group">
         <label
-          className="form-label"
-          style={{ textTransform: 'none', letterSpacing: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}
+          className="form-label normal-case tracking-normal"
           htmlFor="m-notas"
         >
           Notas (opcional)
@@ -222,7 +222,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
             Eliminar
           </button>
         )}
-        <button type="button" className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button type="button" className="btn btn-dim ml-auto" onClick={closeModal}>
           Cancelar
         </button>
       </div>

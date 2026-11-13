@@ -16,7 +16,7 @@ export function Dashboard({ active }: TabProps) {
   const r = useMemo(() => resumenDashboard(estado), [estado, version])
 
   return (
-    <TabContent id="dashboard" active={active} legacy={false}>
+    <TabContent id="dashboard" active={active}>
       <div className="space-y-3 lg:space-y-4">
         <Patrimonio r={r} estado={estado} loading={loading} />
         <div className="grid gap-3 lg:grid-cols-12 lg:items-start lg:gap-4">

@@ -36,8 +36,8 @@ describe('Transacciones tab', () => {
     expect(screen.queryByText('Auto')).toBeNull()
     expect(screen.getByText('Abril - 2026')).toBeTruthy()
     expect(screen.getByText('+' + '$ 900.000'.replace('$ ', '$'))).toBeTruthy()
-    expect(screen.getByText('Visa Oro')).toBeTruthy()
-    expect(screen.getByText('Efectivo / Débito')).toBeTruthy()
+    expect(screen.getAllByText('Visa Oro').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Efectivo / Débito').length).toBeGreaterThan(0)
     expect(document.querySelector('img[src="assets/franquicias/visa.svg"]')).toBeTruthy()
   })
 
@@ -63,7 +63,7 @@ describe('Transacciones tab', () => {
     const monto = screen.getByRole('columnheader', { name: 'Monto' })
     await user.click(monto)
     expect(monto.getAttribute('aria-sort')).toBe('descending')
-    expect(monto.className).toBe('th-sort active desc')
+    expect(monto.className).toContain('active desc')
     expect(fecha.getAttribute('aria-sort')).toBe('none')
     expect(document.querySelector('.tx-group-row')).toBeNull()
     monto.focus()
@@ -80,7 +80,7 @@ describe('Transacciones tab', () => {
     const user = userEvent.setup()
     ui()
     await user.click(screen.getByRole('button', { name: 'Filtros' }))
-    expect(document.getElementById('tx-filter-panel')?.className).toContain('open')
+    expect(screen.getByRole('button', { name: 'Filtros' }).getAttribute('aria-expanded')).toBe('true')
     await user.click(screen.getByRole('button', { name: 'Tipo' }))
     await user.click(screen.getByRole('option', { name: 'Gastos' }))
     expect(screen.queryByText('Salario', { selector: 'td' })).toBeNull()
@@ -88,6 +88,7 @@ describe('Transacciones tab', () => {
     const pills = document.getElementById('tx-filter-pills') as HTMLElement
     expect(pills.textContent).toContain('Gastos')
     expect(document.getElementById('filter-toggle-btn')?.className).toContain('has-filters')
+    expect(screen.getByText(/1 movimiento con estos filtros/)).toBeTruthy()
     await user.click(within(pills).getByRole('button', { name: 'Quitar filtro' }))
     expect(screen.getByText('Salario', { selector: 'td' })).toBeTruthy()
   })
@@ -132,7 +133,7 @@ describe('tx form: edición de datos atípicos', () => {
 })
 
 describe('filtros obsoletos', () => {
-  const fila = (t: string) => within(document.getElementById('tx-tbody') as HTMLElement).queryByText(t)
+  const fila = (t: string) => within(document.getElementById('tx-tbody') as HTMLElement).queryAllByText(t)[0] ?? null
 
   function Recargar() {
     const { reload } = useData()
@@ -173,7 +174,7 @@ describe('tx form', () => {
   const abrirNuevo = async (e = datos()) => {
     const user = userEvent.setup()
     ui(e)
-    await user.click(screen.getByRole('button', { name: '+ Nuevo movimiento' }))
+    await user.click(screen.getByRole('button', { name: 'Nuevo movimiento' }))
     return user
   }
 
@@ -198,7 +199,7 @@ describe('tx form', () => {
     })
     const body = f.mutations()[0]?.body as { fecha: string }
     expect(body.fecha).toBe('2026-06-15T10:30')
-    await waitFor(() => expect(screen.queryByText('Nuevo movimiento')).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Agregar' })).toBeNull())
   })
 
   it('ingreso sends tarjeta_id null', async () => {
@@ -267,7 +268,7 @@ describe('tx form', () => {
     ui()
     await user.click(screen.getByRole('button', { name: 'Editar Mercado' }))
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
-    await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('❌ monto inválido'))
+    await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('monto inválido'))
     expect(document.getElementById('m-status')?.className).toContain('err')
     expect(screen.getByText('Editar movimiento')).toBeTruthy()
   })
@@ -286,7 +287,7 @@ describe('labels', () => {
     mockFetch()
     const user = userEvent.setup()
     renderWithProviders(<Transacciones active />, { estado: datos() })
-    await user.click(screen.getByRole('button', { name: '+ Nuevo movimiento' }))
+    await user.click(screen.getByRole('button', { name: 'Nuevo movimiento' }))
     await user.click(screen.getByRole('button', { name: 'Gasto' }))
     expectLabels(modalBody(), {
       Categoría: 'm-cat',

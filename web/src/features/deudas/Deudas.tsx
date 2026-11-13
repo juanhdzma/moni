@@ -1,4 +1,7 @@
-import type { CSSProperties } from 'react'
+import type { ReactNode } from 'react'
+import { PartyPopper, Plus, CreditCard } from 'lucide-react'
+import { Barra, Panel } from '@/components/panel'
+import { Button } from '@/components/ui/button'
 import { FRANQUICIA_ICONS, tieneSaldo } from '../../lib/config'
 import { fmtIntereses, interesesPagados } from '../../lib/deudas'
 import { cop, fmtDate, pct } from '../../lib/format'
@@ -6,26 +9,26 @@ import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
 import { TabContent, type TabProps } from '../../shell/TabContent'
 import type { Deuda } from '../../types'
+import { fraseDeudas, mesesParaSaldar } from './frase'
 import { openDeudaAdelantoFormById, openDeudaForm, openDeudaFormById, openDeudaPayFormById } from './forms'
 
-const miniLabel: CSSProperties = {
-  fontSize: 'var(--text-2xs)',
-  fontWeight: 700,
-  color: 'var(--text-secondary)',
-  textTransform: 'uppercase',
-  letterSpacing: '.05em',
-  marginBottom: 2,
+const itemCls = 'rounded-lg border p-3'
+const miniLabel = 'text-xs text-muted-foreground'
+const miniValue = 'text-sm font-semibold'
+
+function Item({ nombre, badge, sub, children, actions, className }: { nombre: string; badge?: ReactNode; sub: ReactNode; children: ReactNode; actions: ReactNode; className?: string }) {
+  return (
+    <div className={itemCls + (className ? ' ' + className : '')}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="text-[15px] font-semibold">{nombre}</div>
+        {badge}
+      </div>
+      <div className="mb-2 text-xs text-muted-foreground">{sub}</div>
+      {children}
+      <div className="mt-3 flex flex-wrap gap-2">{actions}</div>
+    </div>
+  )
 }
-const bigRed: CSSProperties = {
-  fontSize: 'var(--text-3xl)',
-  fontWeight: 700,
-  color: 'var(--red)',
-  letterSpacing: '-0.02em',
-  lineHeight: 1,
-  fontFamily: 'var(--font-mono)',
-}
-const headRow: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }
-const subLine: CSSProperties = { fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: 12 }
 
 function PrestamoCard({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
@@ -33,65 +36,64 @@ function PrestamoCard({ d }: { d: Deuda }) {
   const pagado = d.monto_inicial - d.saldo_actual
   const mesesLeft = d.cuota_mensual > 0 ? Math.ceil(d.saldo_actual / d.cuota_mensual) : null
   const intereses = interesesPagados(d)
-  const barColor = progress >= 75 ? 'var(--income-mid)' : progress >= 40 ? 'var(--debt-mid)' : 'var(--expense-mid)'
+  const barColor = progress >= 75 ? 'bg-inversiones' : progress >= 40 ? 'bg-activos' : 'bg-deudas'
   return (
-    <div className="debt-card">
-      <div style={headRow}>
-        <div className="debt-name">{d.nombre}</div>
-        {mesesLeft ? (
-          <span className="gain-badge gain-debt" style={{ marginLeft: 8, flexShrink: 0 }}>
-            ~{mesesLeft}m
-          </span>
-        ) : null}
+    <Item
+      nombre={d.nombre}
+      badge={mesesLeft ? <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">~{mesesLeft}m</span> : undefined}
+      sub={
+        <>
+          {pct(d.tasa_ea)}% EA · {cop(d.cuota_mensual)}/mes
+        </>
+      }
+      actions={
+        <>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d._id)}>
+            Pagar cuota
+          </button>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaPayFormById(ctx, d._id, true)}>
+            Abonar
+          </button>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d._id)}>
+            Editar
+          </button>
+        </>
+      }
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="text-2xl font-semibold leading-none tracking-tight text-deudas">{cop(d.saldo_actual)}</div>
+        <div className="text-sm font-medium text-muted-foreground">{pct(progress)}% pagado</div>
       </div>
-      <div style={subLine}>
-        {pct(d.tasa_ea)}% EA · {cop(d.cuota_mensual)}/mes
+      <div className="mt-3">
+        <Barra valor={Math.min(100, progress)} max={100} className={barColor} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--sp-3)' }}>
-        <div style={bigRed}>{cop(d.saldo_actual)}</div>
-        <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-muted)' }}>{pct(progress)}% pagado</div>
-      </div>
-      <div className="progress-track" style={{ marginTop: 'var(--sp-4)' }}>
-        <div className="progress-fill" style={{ width: Math.min(100, progress).toFixed(1) + '%', background: barColor }}></div>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--sp-3)', gap: 'var(--sp-1)' }}>
+      <div className="mt-2 flex justify-between gap-1">
         <div>
-          <div style={miniLabel}>Capital</div>
-          <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>{cop(pagado)}</div>
+          <div className={miniLabel}>Capital</div>
+          <div className={miniValue}>{cop(pagado)}</div>
         </div>
         {intereses !== null && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={miniLabel}>Intereses</div>
+          <div className="text-center">
+            <div className={miniLabel}>Intereses</div>
             <div
-              style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--expense)' }}
+              className={miniValue + ' text-deudas'}
               title={intereses.exacto ? 'Suma de los pagos registrados en Moni' : 'Estimado por amortización — todavía no hay pagos registrados'}
             >
               {fmtIntereses(intereses)}
             </div>
           </div>
         )}
-        <div style={{ textAlign: 'right' }}>
-          <div style={miniLabel}>Total</div>
-          <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>{cop(d.monto_inicial)}</div>
+        <div className="text-right">
+          <div className={miniLabel}>Total</div>
+          <div className={miniValue}>{cop(d.monto_inicial)}</div>
         </div>
       </div>
       {d.proxima_cuota ? (
-        <div style={{ marginTop: 10, fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-          Próxima cuota: <strong style={{ color: 'var(--text)' }}>{fmtDate(d.proxima_cuota)}</strong>
+        <div className="mt-2 text-xs text-muted-foreground">
+          Próxima cuota: <strong className="text-foreground">{fmtDate(d.proxima_cuota)}</strong>
         </div>
       ) : null}
-      <div className="card-actions">
-        <button className="btn btn-accent btn-sm" style={{ flex: 1 }} onClick={() => openDeudaPayFormById(ctx, d._id)}>
-          Pagar cuota
-        </button>
-        <button className="btn btn-dim btn-sm" style={{ color: 'var(--debt)' }} onClick={() => openDeudaPayFormById(ctx, d._id, true)}>
-          Abonar
-        </button>
-        <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d._id)}>
-          Editar
-        </button>
-      </div>
-    </div>
+    </Item>
   )
 }
 
@@ -99,53 +101,56 @@ function TarjetaCard({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
   const disponible = d.cupo > 0 ? Math.max(0, d.cupo - d.saldo_actual) : null
   const usoPct = d.cupo > 0 ? Math.min(100, (d.saldo_actual / d.cupo) * 100) : 0
-  const barColor = usoPct >= 90 ? 'var(--expense-mid)' : usoPct >= 60 ? 'var(--debt-mid)' : 'var(--income-mid)'
+  const barColor = usoPct >= 90 ? 'bg-deudas' : usoPct >= 60 ? 'bg-alerta' : 'bg-inversiones'
   return (
-    <div className="debt-card">
-      <div style={headRow}>
-        <div className="debt-name">{d.nombre}</div>
-        <span className="icon-chip" style={{ marginLeft: 8, flexShrink: 0 }}>
+    <Item
+      nombre={d.nombre}
+      badge={
+        <span className="flex shrink-0 items-center rounded-md bg-muted p-1">
           <img src={FRANQUICIA_ICONS[d.franquicia] || FRANQUICIA_ICONS.Otra} width="20" height="20" alt={d.franquicia || 'Tarjeta'} />
         </span>
-      </div>
-      <div style={subLine}>{d.cupo > 0 ? `Cupo ${cop(d.cupo)}` : 'Sin cupo definido'}</div>
-      <div style={bigRed}>{cop(d.saldo_actual)}</div>
+      }
+      sub={d.cupo > 0 ? `Cupo ${cop(d.cupo)}` : 'Sin cupo definido'}
+      actions={
+        <>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d._id, true)}>
+            Abonar
+          </button>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaAdelantoFormById(ctx, d._id)}>
+            Adelanto
+          </button>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d._id)}>
+            Editar
+          </button>
+        </>
+      }
+    >
+      <div className="text-2xl font-semibold leading-none tracking-tight text-deudas">{cop(d.saldo_actual)}</div>
       {d.cupo > 0 && (
         <>
-          <div className="progress-track" style={{ marginTop: 'var(--sp-4)' }}>
-            <div className="progress-fill" style={{ width: usoPct.toFixed(1) + '%', background: barColor }}></div>
+          <div className="mt-3">
+            <Barra valor={usoPct} max={100} className={barColor} />
           </div>
-          <div style={{ marginTop: 10, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-            Disponible: <strong style={{ color: 'var(--text)' }}>{cop(disponible)}</strong>
+          <div className="mt-2 text-sm text-muted-foreground">
+            Disponible: <strong className="text-foreground">{cop(disponible)}</strong>
           </div>
         </>
       )}
       {d.total_intereses > 0 && (
-        <div style={{ marginTop: 6, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-          Intereses pagados: <strong style={{ color: 'var(--expense)' }}>{cop(d.total_intereses)}</strong>
+        <div className="mt-1 text-sm text-muted-foreground">
+          Intereses pagados: <strong className="text-deudas">{cop(d.total_intereses)}</strong>
         </div>
       )}
-      <div className="card-actions">
-        <button className="btn btn-accent btn-sm" style={{ flex: 1 }} onClick={() => openDeudaPayFormById(ctx, d._id, true)}>
-          Abonar
-        </button>
-        <button className="btn btn-dim btn-sm" onClick={() => openDeudaAdelantoFormById(ctx, d._id)}>
-          Adelanto
-        </button>
-        <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d._id)}>
-          Editar
-        </button>
-      </div>
-    </div>
+    </Item>
   )
 }
 
-function Empty({ icon, titulo, texto }: { icon: string; titulo: string; texto: string }) {
+function Empty({ icon, titulo, texto }: { icon: ReactNode; titulo: string; texto: string }) {
   return (
-    <div className="empty" style={{ gridColumn: '1/-1' }}>
-      <div className="empty-icon">{icon}</div>
-      <div className="empty-title">{titulo}</div>
-      <div className="empty-text">{texto}</div>
+    <div className="flex flex-col items-center gap-1 py-6 text-center">
+      <div className="text-muted-foreground">{icon}</div>
+      <div className="text-sm font-semibold">{titulo}</div>
+      <div className="text-sm text-muted-foreground">{texto}</div>
     </div>
   )
 }
@@ -154,22 +159,30 @@ function Terminada({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
   const intereses = interesesPagados(d)
   return (
-    <div className="debt-card" style={{ opacity: 0.7 }}>
-      <div style={headRow}>
-        <div className="debt-name">{d.nombre}</div>
-        <span className="gain-badge gain-pos">Saldado</span>
-      </div>
-      <div style={subLine}>{pct(d.tasa_ea)}% EA</div>
-      <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1 }}>{cop(d.monto_inicial)}</div>
-      <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>capital total pagado</div>
-      {intereses !== null && (
-        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--expense)', marginTop: 4 }}>{fmtIntereses(intereses)} en intereses</div>
-      )}
-      <div className="card-actions">
-        <button className="btn btn-dim btn-sm" style={{ flex: 1 }} onClick={() => openDeudaFormById(ctx, d._id)}>
+    <Item
+      className="opacity-80"
+      nombre={d.nombre}
+      badge={<span className="shrink-0 rounded-full bg-inversiones/15 px-2 py-0.5 text-xs font-medium text-inversiones-text">Saldado</span>}
+      sub={<>{pct(d.tasa_ea)}% EA</>}
+      actions={
+        <button className="btn btn-dim btn-sm flex-1" onClick={() => openDeudaFormById(ctx, d._id)}>
           Ver / Editar
         </button>
-      </div>
+      }
+    >
+      <div className="text-xl font-semibold leading-none tracking-tight">{cop(d.monto_inicial)}</div>
+      <div className="mt-1 text-sm text-muted-foreground">capital total pagado</div>
+      {intereses !== null && <div className="mt-1 text-sm text-deudas">{fmtIntereses(intereses)} en intereses</div>}
+    </Item>
+  )
+}
+
+function Stat({ label, value, sub, className }: { label: string; value: ReactNode; sub: ReactNode; className?: string }) {
+  return (
+    <div>
+      <div className={miniLabel}>{label}</div>
+      <div className={'text-lg font-semibold tracking-tight ' + (className ?? '')}>{value}</div>
+      <div className={miniLabel}>{sub}</div>
     </div>
   )
 }
@@ -190,98 +203,71 @@ export function Deudas({ active }: TabProps) {
 
   return (
     <TabContent id="deudas" active={active}>
-      <div className="tab-header">
-        <button className="btn btn-accent add-btn" onClick={() => openDeudaForm(ctx)}>
-          + Nueva deuda
-        </button>
-      </div>
-      {loaded ? (
-        <div className="card" style={{ marginBottom: 16 }} id="deudas-total">
-          <div className="stat-summary stat-summary-4">
-            <div className="stat-summary-item stat-hero">
-              <div className="stat-label">Saldo pendiente</div>
-              <div className="stat-value" style={{ color: 'var(--red)' }}>
-                {cop(total)}
-              </div>
-              <div className="stat-sub">pendiente</div>
+      <div className="space-y-4">
+        <Panel
+          id="deudas-total"
+          extra={<Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openDeudaForm(ctx)}><Plus aria-hidden="true" />Nueva deuda</Button>}
+          titulo="Total en deudas"
+          frase={loaded ? fraseDeudas(total, activas.length > 0, mesesParaSaldar(creditos)) : undefined}
+        >
+          {loaded ? (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+              <Stat label="Saldo pendiente" value={cop(total)} sub="pendiente" className="text-deudas" />
+              <Stat label="Cuota mensual" value={cop(totalCuotas)} sub="total/mes" />
+              <Stat label="Activas" value={activas.length} sub={`${terminadas.length} terminada${terminadas.length !== 1 ? 's' : ''}`} />
+              <Stat
+                label="Intereses pagados"
+                value={
+                  <>
+                    {totalExacto ? '' : '~'}
+                    {cop(totalIntereses)}
+                  </>
+                }
+                sub="costo del crédito"
+                className="text-deudas"
+              />
             </div>
-            <div className="stat-pair">
-              <div className="stat-summary-item">
-                <div className="stat-label">Cuota mensual</div>
-                <div className="stat-value">{cop(totalCuotas)}</div>
-                <div className="stat-sub">total/mes</div>
-              </div>
-              <div className="stat-summary-item">
-                <div className="stat-label">Activas</div>
-                <div className="stat-value">{activas.length}</div>
-                <div className="stat-sub">
-                  {terminadas.length} terminada{terminadas.length !== 1 ? 's' : ''}
-                </div>
-              </div>
+          ) : (
+            <div className="skeleton h-7 w-28 animate-pulse rounded bg-muted" />
+          )}
+        </Panel>
+        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+          <Panel id="deudas-creditos" titulo="Créditos">
+            <div id="deudas-grid-credito" className="space-y-3">
+              {loaded &&
+                (creditos.length ? (
+                  creditos.map((d) => <PrestamoCard key={d._id} d={d} />)
+                ) : (
+                  <Empty
+                    icon={<PartyPopper aria-hidden="true" className="size-6" />}
+                    titulo={terminadas.length ? 'Sin créditos activos' : 'Sin créditos'}
+                    texto={terminadas.length ? '¡Todos los créditos están saldados!' : 'Agregá uno con el botón + de arriba.'}
+                  />
+                ))}
             </div>
-            <div className="stat-summary-item">
-              <div className="stat-label">Intereses pagados</div>
-              <div className="stat-value" style={{ color: 'var(--expense)' }}>
-                {totalExacto ? '' : '~'}
-                {cop(totalIntereses)}
-              </div>
-              <div className="stat-sub">costo del crédito</div>
+          </Panel>
+          <Panel id="deudas-tarjetas" titulo="Tarjetas">
+            <div id="deudas-grid-tarjeta" className="space-y-3">
+              {loaded &&
+                (tarjetas.length ? (
+                  tarjetas.map((d) => <TarjetaCard key={d._id} d={d} />)
+                ) : (
+                  <Empty icon={<CreditCard aria-hidden="true" className="size-6" />} titulo="Sin tarjetas" texto="Agregá una para cargarle gastos y seguir su cupo." />
+                ))}
             </div>
-          </div>
+          </Panel>
         </div>
-      ) : (
-        <div className="card" style={{ marginBottom: 16 }} id="deudas-total">
-          <div className="stat-label">Total en deudas</div>
-          <div className="stat-value">
-            <span className="skeleton" style={{ width: 110, height: 28 }}></span>
-          </div>
+        <div id="deudas-terminados">
+          {loaded && terminadas.length > 0 && (
+            <Panel id="deudas-terminadas" titulo="Préstamos terminados">
+              <div className="grid gap-3 md:grid-cols-2">
+                {terminadas.map((d) => (
+                  <Terminada key={d._id} d={d} />
+                ))}
+              </div>
+            </Panel>
+          )}
         </div>
-      )}
-      <div className="grid-2">
-        <div>
-          <div className="section-title" style={{ marginBottom: 12 }}>
-            Créditos
-          </div>
-          <div id="deudas-grid-credito" className="card-list">
-            {loaded &&
-              (creditos.length ? (
-                creditos.map((d) => <PrestamoCard key={d._id} d={d} />)
-              ) : (
-                <Empty
-                  icon="🎉"
-                  titulo={terminadas.length ? 'Sin créditos activos' : 'Sin créditos'}
-                  texto={terminadas.length ? '¡Todos los créditos están saldados!' : 'Agregá uno con el botón + de arriba.'}
-                />
-              ))}
-          </div>
-        </div>
-        <div>
-          <div className="section-title" style={{ marginBottom: 12 }}>
-            Tarjetas
-          </div>
-          <div id="deudas-grid-tarjeta" className="card-list">
-            {loaded &&
-              (tarjetas.length ? (
-                tarjetas.map((d) => <TarjetaCard key={d._id} d={d} />)
-              ) : (
-                <Empty icon="💳" titulo="Sin tarjetas" texto="Agregá una para cargarle gastos y seguir su cupo." />
-              ))}
-          </div>
-        </div>
-      </div>
-      <div id="deudas-terminados">
-        {loaded && terminadas.length > 0 && (
-          <div style={{ marginTop: 24 }}>
-            <div className="section-title" style={{ marginBottom: 12 }}>
-              Préstamos terminados
-            </div>
-            <div className="grid-2">
-              {terminadas.map((d) => (
-                <Terminada key={d._id} d={d} />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </TabContent>
   )

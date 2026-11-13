@@ -166,7 +166,7 @@ Neutral zinc-family surfaces carry the structure, and four domain colors carry t
 - **Inversiones Green** (inversiones / inversiones-dark): fills only, meaning composition bar segments, chips and chart series. When it is used on text, switch to **Inversiones Text** (inversiones-text / inversiones-text-dark), which is darker in light mode so small figures pass AA. That covers gains, positive projections and savings rates.
 - **Activos Ochre** (activos / activos-dark): fills for assets. Text uses **Activos Text** (activos-text), a deeper ochre that stays legible on white.
 - **Deudas Red** (deudas / deudas-dark): debts, money that went out, overdue dates, negative balances and errors. `destructive` is an alias of it.
-- **Alerta Amber** (alerta / alerta-dark): only the 6px stale-price dot on a nav item. It never appears as text.
+- **Alerta Amber** (alerta / alerta-dark): stale prices only: the 6px dot on a nav item and the "Valor sin actualizar" warning (icon + text) on investment and asset cards.
 
 ### Neutral
 - **Ground** (background / background-dark): the page behind the cards, and the translucent sticky header (90% plus a blur).
@@ -268,8 +268,8 @@ On mobile only: a 56px Ink-filled circle with a plus icon, placed above the bott
 ### Error banner
 A full-width alert at the top of main: Deudas Red border at 40%, fill at 10%, 8px radius, a triangle icon in red, and 14px text.
 
-### Transitional
-Six tabs (Transacciones, Deudas, Inversiones, Activos, Recurrentes, Ajustes) still render through the legacy stylesheets (`tokens.css`, `components.css`, `layout.css`, `fonts.css`), which are loaded in a `legacy` cascade layer. Those are not part of this system. Each tab adopts the components above when it is migrated.
+### Shared form classes
+Modal forms on every tab use the classes in `web/src/styles/ui.css` (inputs, labels, buttons, segmented `tipo-toggle`, modal panels, breakdown previews) so forms look identical everywhere; tab bodies use `Panel` and Tailwind utilities.
 
 ## Do's and Don'ts
 

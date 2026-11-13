@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { clearActivePopup, openPopup, repositionPopup } from '../shell/popups'
 
@@ -71,7 +72,7 @@ export function Select({ value, onChange, options, compact = false, id, style, a
         onClick={() => setOpen((o) => !o)}
       >
         <span className="cdd-label">{(selected ?? options[0])?.label ?? ''}</span>
-        <span className="cdd-arrow">▾</span>
+        <ChevronDown aria-hidden="true" className="cdd-arrow size-3.5" />
       </button>
       <div ref={menuRef} className={'cdd-menu' + (open ? ' open' : '')} role="listbox">
         {options.map((o) => (

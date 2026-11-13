@@ -1,12 +1,7 @@
-@layer theme, base, legacy, components, utilities;
-
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import '@fontsource-variable/archivo';
-@import './fonts.css' layer(legacy);
-@import './tokens.css' layer(legacy);
-@import './components.css' layer(legacy);
-@import './layout.css' layer(legacy);
+@import './ui.css';
 
 :root {
   --background: #fafafa;
@@ -35,6 +30,7 @@
   --activos-text: #a16207;
   --deudas: #dc2626;
   --alerta: #d97706;
+  --alerta-text: #a85a03;
   --destructive: var(--deudas);
 }
 
@@ -65,6 +61,7 @@
     --activos-text: #e2b04f;
     --deudas: #ef5c53;
     --alerta: #f0a020;
+    --alerta-text: #f0a020;
   }
 }
 
@@ -95,6 +92,7 @@
   --color-activos-text: var(--activos-text);
   --color-deudas: var(--deudas);
   --color-alerta: var(--alerta);
+  --color-alerta-text: var(--alerta-text);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -120,12 +118,5 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-  }
-}
-
-@layer components {
-  .legacy-tab.active {
-    border-radius: var(--radius);
-    padding: 1.5rem;
   }
 }

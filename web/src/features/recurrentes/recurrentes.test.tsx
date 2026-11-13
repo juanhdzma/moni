@@ -46,6 +46,15 @@ describe('render', () => {
     expect(card.textContent).toContain('970.000')
   })
 
+  it('opens with a sentence that interprets the net', () => {
+    mockFetch()
+    view()
+    expect(document.getElementById('rec-total')?.textContent).toContain('Entran $1.000.000 al mes y salen $30.000 en fijos; te quedan $970.000.')
+    document.body.innerHTML = ''
+    view([recurrente({ _id: 9, id: 9, tipo: 'gasto', monto: 50000, frecuencia: 'mensual' })])
+    expect(document.getElementById('rec-total')?.textContent).toContain('superan a tus ingresos recurrentes por $50.000 al mes')
+  })
+
   it('next payment relative to today, none when paused', () => {
     mockFetch()
     view()
@@ -53,17 +62,17 @@ describe('render', () => {
     expect(within(ing).getByText('hoy')).toBeTruthy()
     const gas = document.getElementById('rec-gastos') as HTMLElement
     expect(within(gas).getByText('en 5d')).toBeTruthy()
-    expect(gas.querySelectorAll('.rec-meta-next')).toHaveLength(1)
-    expect(gas.querySelector('.rec-item.inactive')?.textContent).toContain('Gym')
-    expect(gas.querySelector('.rec-item.inactive')?.textContent).toContain('Trimestral')
-    expect(gas.querySelector('.rec-item.inactive .rec-amount')?.textContent).toContain('40.000')
+    expect(gas.querySelectorAll('[data-rec-next]')).toHaveLength(1)
+    expect(gas.querySelector('[data-rec][data-inactive]')?.textContent).toContain('Gym')
+    expect(gas.querySelector('[data-rec][data-inactive]')?.textContent).toContain('Trimestral')
+    expect(gas.querySelector('[data-rec][data-inactive] [data-rec-amount]')?.textContent).toContain('40.000')
     expect(within(gas).getByText('plan')).toBeTruthy()
   })
 
   it('sorts by monthly amount desc and shows empty states', () => {
     mockFetch()
     view()
-    const names = [...document.querySelectorAll('#rec-gastos .rec-name')].map((e) => e.textContent)
+    const names = [...document.querySelectorAll('#rec-gastos [data-rec-name]')].map((e) => e.textContent)
     expect(names).toEqual(['Gym', 'Netflix'])
     document.body.innerHTML = ''
     view([])
@@ -120,7 +129,7 @@ describe('create / edit / delete', () => {
   it('create posts the payload', async () => {
     const f = mockFetch({ 'POST /api/rec': {} })
     view()
-    await userEvent.click(screen.getByText('+ Nuevo'))
+    await userEvent.click(screen.getByText('Nuevo'))
     expect(screen.getByText('Nuevo recurrente')).toBeTruthy()
     expect(document.querySelector('.tipo-btn.sel')).toBe(document.getElementById('rt-gasto'))
     await userEvent.click(screen.getByText('Agregar'))
@@ -142,7 +151,7 @@ describe('create / edit / delete', () => {
   it('tipo toggle switches to ingreso', async () => {
     const f = mockFetch({ 'POST /api/rec': {} })
     view()
-    await userEvent.click(screen.getByText('+ Nuevo'))
+    await userEvent.click(screen.getByText('Nuevo'))
     await userEvent.click(screen.getByText('Ingreso'))
     expect(document.getElementById('rt-ingreso')?.className).toContain('sel')
     await userEvent.type(screen.getByPlaceholderText('Ej. Netflix'), 'Pago')
@@ -155,7 +164,7 @@ describe('create / edit / delete', () => {
   it('edit keeps the current activo and PUTs without _id', async () => {
     const f = mockFetch({ 'PUT /api/rec/3': {} })
     view()
-    const row = screen.getByText('Gym').closest('.rec-item') as HTMLElement
+    const row = screen.getByText('Gym').closest('[data-rec]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
     expect(screen.getByText('Editar recurrente')).toBeTruthy()
     expect((screen.getByPlaceholderText<HTMLInputElement>('Ej. Netflix')).value).toBe('Gym')
@@ -174,11 +183,11 @@ describe('create / edit / delete', () => {
   it('save error shows inline', async () => {
     mockFetch({ 'POST /api/rec': new Response(JSON.stringify({ detail: 'malo' }), { status: 422 }) })
     view()
-    await userEvent.click(screen.getByText('+ Nuevo'))
+    await userEvent.click(screen.getByText('Nuevo'))
     await userEvent.type(screen.getByPlaceholderText('Ej. Netflix'), 'X')
     await userEvent.type(document.getElementById('m-monto') as HTMLElement, '10')
     await userEvent.click(screen.getByText('Agregar'))
-    await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('❌ malo'))
+    await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('malo'))
     expect(document.getElementById('m-status')?.className).toContain('err')
   })
 
@@ -186,7 +195,7 @@ describe('create / edit / delete', () => {
     const f = mockFetch({ 'DELETE /api/rec/2': null })
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
     view()
-    const row = screen.getByText('Netflix').closest('.rec-item') as HTMLElement
+    const row = screen.getByText('Netflix').closest('[data-rec]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
     await userEvent.click(screen.getByText('Eliminar'))
     expect(confirmSpy).toHaveBeenCalledWith('¿Eliminar "Netflix"?')
@@ -200,7 +209,7 @@ describe('create / edit / delete', () => {
     mockFetch({ 'DELETE /api/rec/2': new Response(JSON.stringify({ detail: 'no' }), { status: 500 }) })
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     view()
-    const row = screen.getByText('Netflix').closest('.rec-item') as HTMLElement
+    const row = screen.getByText('Netflix').closest('[data-rec]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
     await userEvent.click(screen.getByText('Eliminar'))
     await waitFor(() => expect(screen.getByTestId('banner').textContent).toContain('no'))
@@ -239,7 +248,7 @@ describe('materialize', () => {
     expect(document.getElementById('m-status')?.textContent).toBe('Ingresá un monto válido')
     await userEvent.type(document.getElementById('m-monto') as HTMLElement, '5')
     await userEvent.click(screen.getByText('Registrar'))
-    await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('❌ x'))
+    await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('x'))
   })
 
   it('unknown id opens nothing', () => {
@@ -254,7 +263,7 @@ describe('labels', () => {
   it('el form de recurrente se encuentra por sus labels', async () => {
     mockFetch()
     renderWithProviders(<Recurrentes active />, { estado: estado({ recurrentes: items }) })
-    await userEvent.click(screen.getByText('+ Nuevo'))
+    await userEvent.click(screen.getByText('Nuevo'))
     expectLabels(modalBody(), {
       Nombre: 'm-nombre',
       'Monto (COP)': 'm-monto',

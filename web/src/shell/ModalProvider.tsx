@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import {
   Component,
   createContext,
@@ -160,7 +161,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         <div
           id="modal-overlay"
           ref={overlayRef}
-          className={'modal-overlay legacy' + (modal ? ' open' : '')}
+          className={'modal-overlay' + (modal ? ' open' : '')}
           onClick={onBackdrop}
           onKeyDown={modal ? trapFocus : undefined}
         >
@@ -169,8 +170,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
               <h2 className="modal-title" id="modal-title">
                 {modal?.title}
               </h2>
-              <button className="icon-btn" onClick={closeModal} aria-label="Cerrar" style={{ fontSize: 16, lineHeight: 1 }}>
-                ✕
+              <button className="icon-btn" onClick={closeModal} aria-label="Cerrar">
+                <X className="size-4" />
               </button>
             </div>
             <div id="modal-body">

@@ -1,3 +1,4 @@
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { fmtDate, fmtDateTime } from '../lib/format'
 import { clearActivePopup, openPopup, repositionPopup } from '../shell/popups'
@@ -202,18 +203,18 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
         onClick={toggle}
       >
         <span className="cdp-label">{label}</span>
-        <span className="cdp-icon">📅</span>
+        <CalendarDays aria-hidden="true" className="cdp-icon size-4" />
       </button>
       <div ref={panelRef} className={'cdp-panel' + (open ? ' open' : '')}>
         {open && (
           <>
             <div className="cdp-nav">
               <button type="button" className="cdp-nav-btn" aria-label="Mes anterior" onClick={() => nav(-1)}>
-                ‹
+                <ChevronLeft className="size-4" />
               </button>
               <div className="cdp-month">{monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</div>
               <button type="button" className="cdp-nav-btn" aria-label="Mes siguiente" onClick={() => nav(1)}>
-                ›
+                <ChevronRight className="size-4" />
               </button>
             </div>
             <div className="cdp-weekdays">

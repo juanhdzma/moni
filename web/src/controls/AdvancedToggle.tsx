@@ -1,3 +1,5 @@
+import { ChevronRight } from 'lucide-react'
+
 interface Props {
   checked: boolean
   onChange: (checked: boolean) => void
@@ -14,7 +16,7 @@ export function AdvancedToggle({
   return (
     <details className="advanced-toggle">
       <summary>
-        <span>▸</span> Opciones de registro
+        <span aria-hidden="true"><ChevronRight className="size-3.5" /></span> Opciones de registro
       </summary>
       <div className="advanced-body">
         <label>

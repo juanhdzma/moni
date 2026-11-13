@@ -2,7 +2,7 @@ import { transaccionesRecientes } from '@/lib/dinero'
 import { cop, fmtDateShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Transaccion } from '@/types'
-import { Panel } from './Seccion'
+import { Panel } from '@/components/panel'
 
 const N = 5
 

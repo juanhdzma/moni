@@ -27,7 +27,6 @@ const contenedores = [
   ['deudas', Deudas, ['deudas-grid-credito', 'deudas-grid-tarjeta', 'deudas-terminados']],
   ['inversiones', Inversiones, ['inv-grid-fija', 'inv-grid-variable']],
   ['activos', Activos, ['activos-grid']],
-  ['recurrentes', Recurrentes, ['rec-ingresos', 'rec-gastos']],
 ] as const
 
 describe('contenedores vacíos antes de la primera carga', () => {
@@ -40,9 +39,14 @@ describe('contenedores vacíos antes de la primera carga', () => {
     expect(algunoConContenido).toBe(true)
   })
 
-  it('recurrentes conserva los títulos de sección', () => {
-    renderWithProviders(<Recurrentes active />, { loaded: false })
+  it('recurrentes conserva los títulos de sección y no muestra vacíos hasta que carga', () => {
+    const { unmount } = renderWithProviders(<Recurrentes active />, { loaded: false })
     expect(screen.getByText('Ingresos recurrentes')).toBeInTheDocument()
     expect(screen.getByText('Gastos fijos')).toBeInTheDocument()
+    expect(screen.queryByText('Sin ingresos recurrentes.')).toBeNull()
+    expect(screen.queryByText('Sin gastos recurrentes.')).toBeNull()
+    unmount()
+    renderWithProviders(<Recurrentes active />, { loaded: true })
+    expect(screen.getByText('Sin ingresos recurrentes.')).toBeInTheDocument()
   })
 })

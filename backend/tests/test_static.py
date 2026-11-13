@@ -27,7 +27,7 @@ def test_sirve_el_frontend(client, index_html):
     assert '<div id="root">' in client.get("/").text
     built = re.findall(r'(?:src|href)="(/assets/[^"]+\.(?:js|css))"', index_html)
     assert len(built) >= 2, "index.html no referencia el JS y el CSS hasheados"
-    for path in (*built, "/index.html", "/assets/icons/moni.png", "/assets/fonts/jetbrains-mono-latin.woff2"):
+    for path in (*built, "/index.html", "/assets/icons/moni.png", "/assets/icons/moni.svg"):
         assert client.get(path).status_code == 200, path
 
 

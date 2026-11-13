@@ -5,7 +5,7 @@ import { esGastoCartera, monthLabels, monthlySeries, type ResumenDashboard } fro
 import { cop, copShort, pct } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Transaccion } from '@/types'
-import { Panel, Total } from './Seccion'
+import { Panel, Total } from '@/components/panel'
 
 const MESES = 6
 const config = {

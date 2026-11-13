@@ -4,7 +4,7 @@ import { agruparGastos, gastosTxInPeriod, type PeriodoGastos } from '@/lib/diner
 import { cop, copShort, fmtDateShort, pct } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useData } from '@/shell/DataProvider'
-import { Barra, Panel, Periodos, Total } from './Seccion'
+import { Barra, Panel, Periodos, Total } from '@/components/panel'
 
 const PERIODOS: readonly { value: PeriodoGastos; label: string }[] = [
   { value: '1W', label: '1S' },

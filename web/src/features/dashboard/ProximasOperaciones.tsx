@@ -9,7 +9,7 @@ import { useOpenerCtx } from '@/shell/openers'
 import { openDeudaPayFormById } from '../deudas'
 import { openInvYieldFormById } from '../inversiones'
 import { openRecurrenteMaterializeFormById } from '../recurrentes'
-import { Panel } from './Seccion'
+import { Panel } from '@/components/panel'
 
 const VISIBLES = 5
 const MAX = 20

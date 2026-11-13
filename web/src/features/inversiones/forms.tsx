@@ -1,4 +1,5 @@
-import { useState, type CSSProperties } from 'react'
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
 import { AdvancedToggle } from '../../controls/AdvancedToggle'
 import { DatePicker } from '../../controls/DatePicker'
 import { FormStatus } from '../../controls/FormStatus'
@@ -10,43 +11,17 @@ import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useMutations } from '../../shell/useMutations'
 import type { InvAporte, InvRendimiento, InvRetiro, Inversion, PagoInv, TipoInv } from '../../types'
 
-const errMsg = (e: unknown): string => '❌ ' + (e instanceof Error ? e.message : String(e))
+const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e))
 
 const REND_HINT = {
   capitaliza: 'Sube el valor de la inversión. No entra plata a tu cartera.',
   cuenta: 'Entra como ingreso a tu cartera. El valor de la inversión no cambia.',
 }
 
-const labelSmall: CSSProperties = {
-  textTransform: 'none',
-  letterSpacing: 0,
-  fontSize: 'var(--text-sm)',
-  color: 'var(--text-secondary)',
-}
-
-const hintStyle: CSSProperties = { fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: 5 }
-
-const panelLabel: CSSProperties = {
-  fontSize: 'var(--text-xs)',
-  fontWeight: 700,
-  color: 'var(--text-secondary)',
-  textTransform: 'uppercase',
-  letterSpacing: '.05em',
-  marginBottom: 3,
-}
-
-function rateBtn(active: boolean): CSSProperties {
-  return {
-    padding: '9px 13px',
-    border: 'none',
-    background: active ? 'var(--inv-mid)' : 'transparent',
-    color: active ? 'var(--white)' : 'var(--text-secondary)',
-    fontFamily: 'var(--font-sans)',
-    fontSize: 'var(--text-sm)',
-    fontWeight: 700,
-    cursor: 'pointer',
-  }
-}
+const labelSmall = 'font-normal text-muted-foreground'
+const hintClass = 'mt-1.5 text-xs text-muted-foreground'
+const rateBtn = (active: boolean) =>
+  cn('cursor-pointer px-3 py-2 text-sm font-semibold transition-colors', active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')
 
 function InvForm({ inv }: { inv: Inversion | null }) {
   const { closeModal, setModalStatus } = useModal()
@@ -134,17 +109,7 @@ function InvForm({ inv }: { inv: Inversion | null }) {
       <div className="form-group">
         <div className="form-label" id="lbl-grp-1">Tipo</div>
         {isEdit ? (
-          <div
-            style={{
-              padding: 'var(--sp-3) var(--sp-5)',
-              background: 'var(--bg-muted)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: 'var(--text-base)',
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-            }}
-          >
+          <div className="rounded-md border bg-muted px-3 py-2 text-[15px] font-medium text-muted-foreground">
             {tipo === 'fija' ? 'Fija' : 'Variable'}
           </div>
         ) : (
@@ -176,35 +141,26 @@ function InvForm({ inv }: { inv: Inversion | null }) {
         <label className="form-label" htmlFor="m-tasa">
           Tasa de rendimiento
         </label>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="flex items-center gap-2">
           <input
-            className="form-input"
+            className="form-input flex-1"
             type="number"
             step="0.0001"
             id="m-tasa"
             value={tasa}
             placeholder="0"
-            style={{ flex: 1 }}
             onChange={(e) => setTasa(e.target.value)}
           />
-          <div
-            style={{
-              display: 'flex',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)',
-              overflow: 'hidden',
-              flexShrink: 0,
-            }}
-          >
-            <button type="button" className="rate-seg-btn" data-rate="ea" aria-pressed={rateType === 'ea'} onClick={() => setRateType('ea')} style={rateBtn(rateType === 'ea')}>
+          <div className="flex shrink-0 overflow-hidden rounded-md border">
+            <button type="button" className={rateBtn(rateType === 'ea')} data-rate="ea" aria-pressed={rateType === 'ea'} onClick={() => setRateType('ea')}>
               EA
             </button>
-            <button type="button" className="rate-seg-btn" data-rate="mv" aria-pressed={rateType === 'mv'} onClick={() => setRateType('mv')} style={rateBtn(rateType === 'mv')}>
+            <button type="button" className={rateBtn(rateType === 'mv')} data-rate="mv" aria-pressed={rateType === 'mv'} onClick={() => setRateType('mv')}>
               MV
             </button>
           </div>
         </div>
-        <div id="tasa-equiv" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: 5 }}>
+        <div id="tasa-equiv" className={hintClass}>
           {equiv}
         </div>
       </div>
@@ -250,7 +206,7 @@ function InvForm({ inv }: { inv: Inversion | null }) {
             Eliminar
           </button>
         )}
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>
@@ -295,27 +251,18 @@ function YieldForm({ inv }: { inv: Inversion }) {
 
   return (
     <>
-      <div
-        style={{
-          background: 'var(--bg)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '14px 16px',
-          marginBottom: 18,
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
+      <div className="modal-panel">
         <div>
-          <div style={panelLabel}>Valor actual</div>
-          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, color: 'var(--inv-mid)' }}>{cop(inv.valor_actual)}</div>
+          <div className="modal-panel-label">Valor actual</div>
+          <div className="modal-panel-value text-inversiones-text">{cop(inv.valor_actual)}</div>
         </div>
         {inv.tasa_ea ? (
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 3 }}>
+          <div className="text-right">
+            <div className="mb-0.5 text-xs text-muted-foreground">
               {pct(inv.tasa_ea, 2)}% EA · {pct(mv, 4)}% MV
             </div>
-            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>Mensual esperado</div>
-            <div style={{ fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--income-mid)' }}>{cop(expected)}</div>
+            <div className="text-sm text-muted-foreground">Mensual esperado</div>
+            <div className="text-lg font-semibold text-inversiones-text">{cop(expected)}</div>
           </div>
         ) : null}
       </div>
@@ -324,7 +271,7 @@ function YieldForm({ inv }: { inv: Inversion }) {
           Monto recibido (COP)
         </label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
-        {expected ? <div style={hintStyle}>Pre-llenado con el rendimiento esperado del período.</div> : null}
+        {expected ? <div className={hintClass}>Pre-llenado con el rendimiento esperado del período.</div> : null}
       </div>
       <div className="form-group">
         <div className="form-label" id="lbl-grp-3">¿Dónde queda el rendimiento?</div>
@@ -336,7 +283,7 @@ function YieldForm({ inv }: { inv: Inversion }) {
             Capitaliza
           </button>
         </div>
-        <div id="rend-hint" style={hintStyle}>
+        <div id="rend-hint" className={hintClass}>
           {capitaliza ? REND_HINT.capitaliza : REND_HINT.cuenta}
         </div>
       </div>
@@ -347,7 +294,7 @@ function YieldForm({ inv }: { inv: Inversion }) {
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
-        <label className="form-label" htmlFor="m-notas" style={labelSmall}>
+        <label className={cn('form-label', labelSmall)} htmlFor="m-notas">
           Notas (opcional)
         </label>
         <input
@@ -381,7 +328,7 @@ function YieldForm({ inv }: { inv: Inversion }) {
         >
           Editar inversión
         </button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>
@@ -401,8 +348,8 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
   const delta = nuevo - inv.valor_actual
   const totalGain = nuevo - inv.monto_invertido
   const totalGainPct = inv.monto_invertido > 0 ? (totalGain / inv.monto_invertido) * 100 : 0
-  const deltaColor = delta >= 0 ? 'var(--income-mid)' : 'var(--expense-mid)'
-  const gainColor = totalGain >= 0 ? 'var(--income-mid)' : 'var(--expense-mid)'
+  const deltaColor = delta >= 0 ? 'text-inversiones-text' : 'text-deudas'
+  const gainColor = totalGain >= 0 ? 'text-inversiones-text' : 'text-deudas'
 
   const save = async () => {
     if (!nuevo || nuevo <= 0) {
@@ -419,24 +366,14 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
 
   return (
     <>
-      <div
-        style={{
-          background: 'var(--bg)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '14px 16px',
-          marginBottom: 18,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <div style={panelLabel}>Último valor</div>
-          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>{cop(inv.valor_actual)}</div>
+      <div className="modal-panel">
+        <div className="modal-panel-col">
+          <div className="modal-panel-label">Último valor</div>
+          <div className="modal-panel-value">{cop(inv.valor_actual)}</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 3 }}>Invertido</div>
-          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>{cop(inv.monto_invertido)}</div>
+        <div className="modal-panel-col right">
+          <div className="modal-panel-label">Invertido</div>
+          <div className="text-lg font-semibold">{cop(inv.monto_invertido)}</div>
         </div>
       </div>
       <div className="form-group">
@@ -445,29 +382,12 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
         </label>
         <MoneyInput id="m-nuevo-valor" value={valor} onChange={setValor} />
       </div>
-      <div
-        id="inv-value-preview"
-        style={{
-          display: nuevo ? 'block' : 'none',
-          borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border)',
-          overflow: 'hidden',
-          marginBottom: 14,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '10px 14px',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>Cambio desde último</span>
-          <span style={{ fontSize: 'var(--text-md)', fontWeight: 700 }} id="inv-delta">
+      <div id="inv-value-preview" className="mb-4 overflow-hidden rounded-lg border" style={{ display: nuevo ? 'block' : 'none' }}>
+        <div className="flex items-center justify-between border-b px-3.5 py-2.5">
+          <span className="text-sm text-muted-foreground">Cambio desde último</span>
+          <span className="text-[15px] font-semibold" id="inv-delta">
             {nuevo ? (
-              <span style={{ color: deltaColor }}>
+              <span className={deltaColor}>
                 {signStr(delta)}
                 {cop(Math.abs(delta))}
               </span>
@@ -476,14 +396,14 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
             )}
           </span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px' }}>
-          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>Ganancia total vs invertido</span>
-          <span style={{ fontSize: 'var(--text-md)', fontWeight: 700 }} id="inv-total-gain">
+        <div className="flex items-center justify-between px-3.5 py-2.5">
+          <span className="text-sm text-muted-foreground">Ganancia total vs invertido</span>
+          <span className="text-[15px] font-semibold" id="inv-total-gain">
             {nuevo ? (
-              <span style={{ color: gainColor }}>
+              <span className={gainColor}>
                 {signStr(totalGain)}
                 {cop(Math.abs(totalGain))}{' '}
-                <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500 }}>
+                <span className="text-xs font-medium">
                   ({signStr(totalGainPct)}
                   {pct(Math.abs(totalGainPct))}%)
                 </span>
@@ -513,7 +433,7 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
         >
           Editar inversión
         </button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>
@@ -527,7 +447,7 @@ function InvPanel({ inv }: { inv: Inversion }) {
     <div className="modal-panel">
       <div className="modal-panel-col">
         <div className="modal-panel-label">Valor actual</div>
-        <div className="modal-panel-value" style={{ color: 'var(--inv)' }}>
+        <div className="modal-panel-value text-inversiones-text">
           {cop(inv.valor_actual)}
         </div>
       </div>
@@ -596,7 +516,7 @@ function AddMoreForm({ inv }: { inv: Inversion }) {
           onChange={setNuevoValor}
           placeholder={numToInput(estimado ?? inv.valor_actual)}
         />
-        <div style={hintStyle} id="add-more-hint">
+        <div className={hintClass} id="add-more-hint">
           {estimado !== null
             ? `Estimado: ${cop(estimado)}. Ajustá si el mercado se movió.`
             : 'Estimado como valor actual + aporte. Ajustá si el mercado se movió.'}
@@ -609,7 +529,7 @@ function AddMoreForm({ inv }: { inv: Inversion }) {
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
-        <label className="form-label" htmlFor="m-notas" style={labelSmall}>
+        <label className={cn('form-label', labelSmall)} htmlFor="m-notas">
           Notas (opcional)
         </label>
         <input
@@ -632,7 +552,7 @@ function AddMoreForm({ inv }: { inv: Inversion }) {
         <button className="btn btn-accent" onClick={() => void save()}>
           Agregar aporte
         </button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>
@@ -716,7 +636,7 @@ function RetirarForm({ inv }: { inv: Inversion }) {
             Monto que recibís
           </label>
           <MoneyInput id="m-monto-total" value={montoTotal} onChange={setMontoTotal} />
-          <div style={hintStyle}>Pre-llenado con el valor actual — ajustá si difiere al momento del retiro.</div>
+          <div className={hintClass}>Pre-llenado con el valor actual — ajustá si difiere al momento del retiro.</div>
         </div>
       </div>
 
@@ -732,7 +652,7 @@ function RetirarForm({ inv }: { inv: Inversion }) {
             Saldo que queda en el fondo
           </label>
           <MoneyInput id="m-saldo-queda" value={saldoQueda} onChange={setSaldoQueda} />
-          <div style={hintStyle}>Valor total de la inversión después del retiro.</div>
+          <div className={hintClass}>Valor total de la inversión después del retiro.</div>
         </div>
       </div>
 
@@ -743,7 +663,7 @@ function RetirarForm({ inv }: { inv: Inversion }) {
         <DatePicker id="m-fecha-retiro" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
-        <label className="form-label" htmlFor="m-notas-retiro" style={labelSmall}>
+        <label className={cn('form-label', labelSmall)} htmlFor="m-notas-retiro">
           Notas (opcional)
         </label>
         <input
@@ -766,7 +686,7 @@ function RetirarForm({ inv }: { inv: Inversion }) {
         <button className="btn btn-accent" onClick={() => void save()}>
           Confirmar retiro
         </button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>

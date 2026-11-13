@@ -6,6 +6,7 @@ import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
 import { expectLabels, modalBody } from '../../test/labels'
 import { Inversiones } from './index'
+import { fraseResumen } from './Inversiones'
 
 const CDT = inversion({
   _id: 5,
@@ -49,6 +50,14 @@ async function typeMoney(user: ReturnType<typeof userEvent.setup>, id: string, t
   await user.type(el, text)
 }
 
+describe('fraseResumen', () => {
+  it('ganancia, pérdida e igual', () => {
+    expect(fraseResumen(1_000_000, 1_200_000)).toBe('Tus inversiones valen $1,2M: ganaste $200k (20,0%) sobre lo que pusiste.')
+    expect(fraseResumen(1_000_000, 900_000)).toBe('Tus inversiones valen $900k: van $100k (10,0%) por debajo de lo que pusiste.')
+    expect(fraseResumen(1_000_000, 1_000_000)).toBe('Tus inversiones valen $1,0M, lo mismo que pusiste.')
+  })
+})
+
 describe('render', () => {
   it('resumen y tarjetas', () => {
     setup()
@@ -62,7 +71,7 @@ describe('render', () => {
     expect(within(fija).getByRole('button', { name: 'Rendimiento' })).toBeInTheDocument()
     const variable = document.getElementById('inv-grid-variable') as HTMLElement
     expect(within(variable).getByRole('button', { name: 'Actualizar' })).toBeInTheDocument()
-    expect(variable).toHaveTextContent('⚠ Valor sin actualizar hace más de 1 mes')
+    expect(variable).toHaveTextContent('Valor sin actualizar hace más de 1 mes')
     expect(fija).not.toHaveTextContent('Valor sin actualizar')
   })
 
@@ -94,7 +103,7 @@ describe('crear / editar / eliminar', () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/inv': {} })
     setup([])
-    await user.click(screen.getByRole('button', { name: '+ Nueva inversión' }))
+    await user.click(screen.getByRole('button', { name: 'Nueva inversión' }))
     await user.type(document.getElementById('m-nombre') as HTMLElement, '  CDT Nuevo ')
     await typeMoney(user, 'm-invertido', '2000000')
     await user.type(document.getElementById('m-tasa') as HTMLElement, '12')
@@ -129,7 +138,7 @@ describe('crear / editar / eliminar', () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/inv': {} })
     setup([])
-    await user.click(screen.getByRole('button', { name: '+ Nueva inversión' }))
+    await user.click(screen.getByRole('button', { name: 'Nueva inversión' }))
     await user.click(modal().getByRole('button', { name: 'Variable' }))
     await user.type(document.getElementById('m-nombre') as HTMLElement, 'ETF')
     await typeMoney(user, 'm-invertido', '100000')
@@ -156,7 +165,7 @@ describe('crear / editar / eliminar', () => {
     const user = userEvent.setup()
     const f = mockFetch()
     setup([])
-    await user.click(screen.getByRole('button', { name: '+ Nueva inversión' }))
+    await user.click(screen.getByRole('button', { name: 'Nueva inversión' }))
     await user.click(modal().getByRole('button', { name: 'Agregar inversión' }))
     expect(document.getElementById('m-status')).toHaveTextContent('Nombre requerido')
     await user.type(document.getElementById('m-nombre') as HTMLElement, 'X')
@@ -228,12 +237,12 @@ describe('crear / editar / eliminar', () => {
     const user = userEvent.setup()
     mockFetch({ 'POST /api/inv': failure(422, [{ msg: 'malo' }, { msg: 'peor' }]) })
     setup([])
-    await user.click(screen.getByRole('button', { name: '+ Nueva inversión' }))
+    await user.click(screen.getByRole('button', { name: 'Nueva inversión' }))
     await user.type(document.getElementById('m-nombre') as HTMLElement, 'X')
     await typeMoney(user, 'm-invertido', '10')
     await user.click(modal().getByRole('button', { name: 'Agregar inversión' }))
     await waitFor(() => expect(document.getElementById('m-status')).toHaveClass('err'))
-    expect(document.getElementById('m-status')).toHaveTextContent('❌ malo, peor')
+    expect(document.getElementById('m-status')).toHaveTextContent('malo, peor')
   })
 })
 
@@ -294,7 +303,7 @@ describe('rendimiento', () => {
     expect(document.getElementById('m-status')).toHaveTextContent('Ingresá un monto válido')
     await typeMoney(user, 'm-monto', '500')
     await user.click(modal().getByRole('button', { name: 'Registrar' }))
-    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('❌ rechazado'))
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('rechazado'))
     expect(document.getElementById('m-status')).toHaveClass('err')
   })
 
@@ -454,7 +463,7 @@ describe('retiro', () => {
     mockFetch({ 'POST /api/inv/5/retiro': failure(400, 'no') })
     await abrir(user)
     await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
-    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('❌ no'))
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('no'))
   })
 })
 
@@ -463,7 +472,7 @@ describe('labels', () => {
     mockFetch()
     const user = userEvent.setup()
     renderWithProviders(<Inversiones active />, { estado: estado() })
-    await user.click(screen.getByRole('button', { name: '+ Nueva inversión' }))
+    await user.click(screen.getByRole('button', { name: 'Nueva inversión' }))
     expectLabels(modalBody(), {
       Nombre: 'm-nombre',
       'Monto invertido': 'm-invertido',

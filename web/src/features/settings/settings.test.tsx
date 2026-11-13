@@ -123,7 +123,7 @@ describe('backup', () => {
     renderWithProviders(<Settings active />)
     const file = new File(['{}'], 'b.json', { type: 'application/json' })
     fireEvent.change(document.querySelector('input[type=file]') as HTMLInputElement, { target: { files: [file] } })
-    await waitFor(() => expect(document.getElementById('settings-backup-status')?.textContent).toBe('❌ ids duplicados'))
+    await waitFor(() => expect(document.getElementById('settings-backup-status')?.textContent).toBe('ids duplicados'))
     expect(document.getElementById('settings-backup-status')?.className).toBe('form-status err')
   })
 })

@@ -1,4 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
+import { TriangleAlert, X } from 'lucide-react'
+import { Panel } from '@/components/panel'
 import { FormStatus } from '../../controls/FormStatus'
 import { Select } from '../../controls/Select'
 import { apiFetch } from '../../lib/api'
@@ -25,6 +27,10 @@ const CAT_TIPO_LABELS: [TipoTx, string][] = [
   ['transfer', 'Transferencias'],
 ]
 
+const DOT: Record<TipoTx, string> = { ingreso: 'bg-inversiones', gasto: 'bg-deudas', transfer: 'bg-muted-foreground' }
+
+const HINT = 'mt-2 text-xs text-muted-foreground'
+
 const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e))
 
 function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
@@ -40,25 +46,25 @@ function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
   }
 
   return (
-    <div className="settings-chip-group">
-      <div className="settings-chip-label">
-        <span className={`cat-dot cat-dot-${tipo}`}></span>
+    <div>
+      <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+        <span className={`size-2 rounded-full ${DOT[tipo]}`}></span>
         {label}
       </div>
-      <div className="settings-chips">
+      <div className="mb-3 flex flex-wrap gap-1.5">
         {cats.map((c) => (
-          <span className="settings-chip" key={c}>
+          <span className="inline-flex items-center gap-1 rounded-full border bg-muted px-2.5 py-0.5 text-xs" key={c}>
             {c}
             {isSystemCategory(tipo, c) ? null : (
-              <button type="button" className="settings-chip-x" onClick={() => removeCategoria(tipo, c)} aria-label={`Eliminar ${c}`}>
-                ✕
+              <button type="button" className="rounded-full p-0.5 text-muted-foreground hover:text-foreground" onClick={() => removeCategoria(tipo, c)} aria-label={`Eliminar ${c}`}>
+                <X className="size-3" aria-hidden="true" />
               </button>
             )}
           </span>
         ))}
-        {!cats.length && <span className="settings-chip-empty">Sin categorías todavía</span>}
+        {!cats.length && <span className="text-xs text-muted-foreground">Sin categorías todavía</span>}
       </div>
-      <div className="settings-add-row">
+      <div className="flex gap-2">
         <input
           className="form-input"
           type="text"
@@ -71,7 +77,7 @@ function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
             if (e.key === 'Enter') agregar()
           }}
         />
-        <button type="button" className="btn btn-dim btn-sm" onClick={agregar}>
+        <button type="button" className="btn btn-dim" onClick={agregar}>
           Agregar
         </button>
       </div>
@@ -82,17 +88,13 @@ function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
 function Skipped() {
   const { refresh } = useData()
   const set = loadSkippedOps()
-  if (!set.size) return <div className="settings-chip-empty">Ninguna operación oculta.</div>
+  if (!set.size) return <p className="text-sm text-muted-foreground">Ninguna operación oculta.</p>
   return (
     <>
-      <div className="settings-list">
+      <ul className="divide-y">
         {[...set].map((key) => (
-          <div className="recent-item" key={key}>
-            <div className="recent-left">
-              <div className="recent-desc" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                {key}
-              </div>
-            </div>
+          <li className="flex items-center justify-between gap-3 py-2" key={key}>
+            <span className="break-all font-mono text-xs text-muted-foreground">{key}</span>
             <button
               type="button"
               className="btn btn-dim btn-sm"
@@ -103,13 +105,12 @@ function Skipped() {
             >
               Restaurar
             </button>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
       <button
         type="button"
-        className="btn btn-dim btn-sm"
-        style={{ marginTop: 'var(--sp-5)' }}
+        className="btn btn-dim btn-sm mt-3"
         onClick={() => {
           restoreAllOps()
           refresh()
@@ -124,7 +125,7 @@ function Skipped() {
 function Currency() {
   const { refresh } = useData()
   return (
-    <div className="form-group" style={{ marginBottom: 0 }}>
+    <div>
       <label className="form-label" htmlFor="settings-currency-select">Símbolo mostrado junto a los montos</label>
       <Select
         compact
@@ -137,7 +138,7 @@ function Currency() {
           refresh()
         }}
       />
-      <div className="settings-hint">Solo cambia el símbolo mostrado. Los montos se guardan y calculan igual, en COP.</div>
+      <div className={HINT}>Solo cambia el símbolo mostrado. Los montos se guardan y calculan igual, en COP.</div>
     </div>
   )
 }
@@ -157,7 +158,7 @@ function Backup() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      setStatus({ cls: 'form-status err', msg: '❌ ' + errMsg(err) })
+      setStatus({ cls: 'form-status err', msg: errMsg(err) })
     }
   }
 
@@ -175,7 +176,7 @@ function Backup() {
         msg: 'Importado: ' + Object.entries(result).map(([k, v]) => `${String(v)} ${k}`).join(', '),
       })
     } catch (err) {
-      setStatus({ cls: 'form-status err', msg: '❌ ' + errMsg(err) })
+      setStatus({ cls: 'form-status err', msg: errMsg(err) })
     } finally {
       input.value = ''
     }
@@ -183,19 +184,19 @@ function Backup() {
 
   return (
     <>
-      <div style={{ display: 'flex', gap: 'var(--sp-4)', flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="btn btn-accent btn-sm" onClick={() => void exportar()}>
           Exportar JSON
         </button>
-        <label className="btn btn-dim btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
+        <label className="btn btn-dim btn-sm m-0 cursor-pointer">
           Importar JSON
-          <input type="file" accept="application/json" style={{ display: 'none' }} onChange={(e) => void importar(e)} />
+          <input type="file" accept="application/json" className="hidden" onChange={(e) => void importar(e)} />
         </label>
       </div>
-      <div className="settings-hint">
+      <div className={HINT}>
         Importar solo agrega filas del archivo; no reemplaza lo que ya tenés. Si los ids chocan con datos existentes, fallará.
       </div>
-      <div className={status.cls} id="settings-backup-status" style={{ marginTop: 'var(--sp-4)' }}>
+      <div className={status.cls} id="settings-backup-status" role={status.cls.includes('err') ? 'alert' : undefined}>
         {status.msg}
       </div>
     </>
@@ -218,13 +219,13 @@ function TruncateConfirm() {
       closeModal()
       await reload()
     } catch (err) {
-      setModalStatus('err', '❌ ' + errMsg(err))
+      setModalStatus('err', errMsg(err))
     }
   }
 
   return (
     <>
-      <div className="settings-hint" style={{ marginTop: 0, marginBottom: 'var(--sp-7)' }}>
+      <div className="mb-4 text-sm text-muted-foreground">
         Esto borra permanentemente todas las transacciones, deudas, inversiones, activos y recurrentes.
         Esta acción no se puede deshacer. Exportá un backup antes si no estás seguro.
       </div>
@@ -244,7 +245,7 @@ function TruncateConfirm() {
         <button className="btn btn-danger" onClick={() => void confirmar()}>
           Borrar todo
         </button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>
@@ -257,7 +258,7 @@ function Danger() {
   const { openModal } = useModal()
   return (
     <>
-      <div className="settings-hint" style={{ marginTop: 0, marginBottom: 'var(--sp-6)' }}>
+      <div className="mb-3 text-sm text-muted-foreground">
         Borra todas las transacciones, deudas, inversiones, activos y recurrentes. No se puede deshacer.
       </div>
       <button type="button" className="btn btn-danger btn-sm" onClick={() => openModal('Borrar todos los datos', <TruncateConfirm />)}>
@@ -271,36 +272,40 @@ export function Settings({ active }: TabProps) {
   useData()
   return (
     <TabContent id="settings" active={active}>
-      <div className="card settings-card">
-        <div className="section-title">🏷️ Categorías</div>
-        <div id="settings-categorias">
-          {CAT_TIPO_LABELS.map(([tipo, label]) => (
-            <CategoriaGroup key={tipo} tipo={tipo} label={label} />
-          ))}
-        </div>
-      </div>
-      <div className="card settings-card">
-        <div className="section-title">🕓 Próximas operaciones ocultas</div>
-        <div id="settings-skipped">
-          <Skipped />
-        </div>
-      </div>
-      <div className="card settings-card">
-        <div className="section-title">💱 Moneda</div>
-        <div id="settings-currency">
-          <Currency />
-        </div>
-      </div>
-      <div className="card settings-card">
-        <div className="section-title">💾 Backup</div>
-        <div id="settings-backup">
-          <Backup />
-        </div>
-      </div>
-      <div className="card settings-card settings-danger-card">
-        <div className="section-title">⚠️ Zona de peligro</div>
-        <div id="settings-danger">
-          <Danger />
+      <div className="space-y-3 lg:space-y-4">
+        <Panel id="settings-categorias-card" titulo="Categorías">
+          <div id="settings-categorias" className="grid gap-5 md:grid-cols-3">
+            {CAT_TIPO_LABELS.map(([tipo, label]) => (
+              <CategoriaGroup key={tipo} tipo={tipo} label={label} />
+            ))}
+          </div>
+        </Panel>
+        <div className="grid gap-3 md:grid-cols-2 lg:gap-4">
+          <Panel id="settings-skipped-card" titulo="Próximas operaciones ocultas">
+            <div id="settings-skipped">
+              <Skipped />
+            </div>
+          </Panel>
+          <Panel id="settings-currency-card" titulo="Moneda">
+            <div id="settings-currency">
+              <Currency />
+            </div>
+          </Panel>
+          <Panel id="settings-backup-card" titulo="Backup">
+            <div id="settings-backup">
+              <Backup />
+            </div>
+          </Panel>
+          <Panel
+            id="settings-danger-card"
+            titulo="Zona de peligro"
+            className="border-deudas/40"
+            extra={<TriangleAlert className="size-4 text-deudas" aria-hidden="true" />}
+          >
+            <div id="settings-danger">
+              <Danger />
+            </div>
+          </Panel>
         </div>
       </div>
     </TabContent>

@@ -14,7 +14,6 @@ export interface ProxOp {
   label: string
   sub: string
   monto: number
-  color: string
   type: ProxOpType
   sourceId: number
   dateISO: string
@@ -75,7 +74,7 @@ export function calcularProximasOperaciones(
       const date = mediodia(d.proxima_cuota)
       date.setHours(0, 0, 0, 0)
       if (date >= past && date <= limit)
-        events.push({ date, label: d.nombre, sub: 'Cuota deuda', monto: -d.cuota_mensual, color: 'var(--red)', type: 'deuda', sourceId: d._id })
+        events.push({ date, label: d.nombre, sub: 'Cuota deuda', monto: -d.cuota_mensual, type: 'deuda', sourceId: d._id })
     })
 
   e.inversiones
@@ -85,7 +84,7 @@ export function calcularProximasOperaciones(
       const next = nextInvPaymentDate(dia, hoy)
       if (next <= limit) {
         const rend = rendimientoMensualFija(inv.monto_invertido, inv.tasa_ea ?? 0)
-        events.push({ date: next, label: inv.nombre, sub: 'Rendimiento', monto: rend, color: 'var(--green)', type: 'inversion', sourceId: inv._id })
+        events.push({ date: next, label: inv.nombre, sub: 'Rendimiento', monto: rend, type: 'inversion', sourceId: inv._id })
       }
     })
 
@@ -101,7 +100,6 @@ export function calcularProximasOperaciones(
           label: r.nombre,
           sub: frecLabel,
           monto: isIng ? r.monto : -r.monto,
-          color: isIng ? 'var(--green)' : 'var(--red)',
           type: 'recurrente',
           sourceId: r._id,
         })

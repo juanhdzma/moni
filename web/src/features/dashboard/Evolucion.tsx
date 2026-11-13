@@ -14,7 +14,7 @@ import {
 import { cop, copShort, signStr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Estado } from '@/types'
-import { Panel, Periodos } from './Seccion'
+import { Panel, Periodos } from '@/components/panel'
 
 type Serie = 'patrimonio' | 'inversiones'
 

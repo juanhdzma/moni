@@ -101,7 +101,7 @@ describe('forms', () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/deuda': {} })
     renderWithProviders(<Deudas active />)
-    await user.click(screen.getByText('+ Nueva deuda'))
+    await user.click(screen.getByText('Nueva deuda'))
     await user.type(document.getElementById('m-nombre') as HTMLElement, '  Libre  ')
     await user.type(document.getElementById('m-monto-ini') as HTMLElement, '2000000')
     await user.type(document.getElementById('m-saldo') as HTMLElement, '1500000')
@@ -134,7 +134,7 @@ describe('forms', () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/deuda': {} })
     renderWithProviders(<Deudas active />)
-    await user.click(screen.getByText('+ Nueva deuda'))
+    await user.click(screen.getByText('Nueva deuda'))
     await user.type(document.getElementById('m-nombre') as HTMLElement, 'X')
     await user.type(document.getElementById('m-saldo') as HTMLElement, '100')
     await user.click(document.getElementById('m-es-nueva') as HTMLElement)
@@ -147,7 +147,7 @@ describe('forms', () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/deuda': {} })
     renderWithProviders(<Deudas active />)
-    await user.click(screen.getByText('+ Nueva deuda'))
+    await user.click(screen.getByText('Nueva deuda'))
     await user.click(screen.getByRole('button', { name: 'Tarjeta' }))
     expect(screen.getByText('Deuda actual (COP)')).toBeInTheDocument()
     await user.type(document.getElementById('m-nombre') as HTMLElement, 'Visa')
@@ -178,7 +178,7 @@ describe('forms', () => {
     const user = userEvent.setup()
     const f = mockFetch()
     renderWithProviders(<Deudas active />)
-    await user.click(screen.getByText('+ Nueva deuda'))
+    await user.click(screen.getByText('Nueva deuda'))
     await user.click(screen.getByText('Agregar deuda'))
     expect(document.getElementById('m-status')).toHaveTextContent('Nombre requerido')
     expect(document.getElementById('m-status')).toHaveClass('err')
@@ -192,11 +192,11 @@ describe('forms', () => {
     const user = userEvent.setup()
     mockFetch({ 'POST /api/deuda': failure(422, 'boom') })
     renderWithProviders(<Deudas active />)
-    await user.click(screen.getByText('+ Nueva deuda'))
+    await user.click(screen.getByText('Nueva deuda'))
     await user.type(document.getElementById('m-nombre') as HTMLElement, 'X')
     await user.type(document.getElementById('m-saldo') as HTMLElement, '5')
     await user.click(screen.getByText('Agregar deuda'))
-    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('❌ boom'))
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('boom'))
     expect(document.getElementById('m-status')).toHaveClass('err')
   })
 
@@ -427,7 +427,7 @@ describe('labels', () => {
     mockFetch()
     const user = userEvent.setup()
     renderWithProviders(<Deudas active />, { estado: full() })
-    await user.click(screen.getByText('+ Nueva deuda'))
+    await user.click(screen.getByText('Nueva deuda'))
     expectLabels(modalBody(), {
       Nombre: 'm-nombre',
       'Monto del crédito (COP)': 'm-monto-ini',
@@ -453,5 +453,20 @@ describe('labels', () => {
       'Fecha del pago': 'm-fecha',
       'Notas (opcional)': 'm-notas',
     })
+  })
+})
+
+describe('fraseDeudas', () => {
+  it('frase con meses, sin cuotas y sin deudas', async () => {
+    const { fraseDeudas, mesesParaSaldar } = await import('./frase')
+    expect(mesesParaSaldar([{ saldo_actual: 6000000, cuota_mensual: 500000 }, { saldo_actual: 100, cuota_mensual: 0 }])).toBe(12)
+    expect(mesesParaSaldar([])).toBeNull()
+    expect(fraseDeudas(7000000, true, 12)).toMatch(/Debés .*7\.000\.000.*~12 meses\.$/)
+    expect(fraseDeudas(1000, true, null)).toMatch(/^Debés .* entre créditos y tarjetas\.$/)
+    expect(fraseDeudas(0, false, null)).toBe('No tenés deudas activas.')
+  })
+  it('se muestra en el resumen', () => {
+    renderWithProviders(<Deudas active />, { estado: full() })
+    expect(document.getElementById('deudas-total')).toHaveTextContent(/saldás los créditos en ~12 meses/)
   })
 })

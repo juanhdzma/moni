@@ -10,15 +10,9 @@ import { useModal } from '../../shell/ModalProvider'
 import { useMutations } from '../../shell/useMutations'
 import type { Activo, ActivoVenta } from '../../types'
 
-const errMsg = (e: unknown) => '❌ ' + (e instanceof Error ? e.message : String(e))
-const tone = (n: number) => (n >= 0 ? 'var(--income-mid)' : 'var(--expense-mid)')
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
+const tone = (n: number) => (n >= 0 ? 'text-inversiones-text' : 'text-deudas')
 
-const summaryBox = { background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '14px 16px', marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as const
-const summaryLabel = { fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 3 } as const
-const previewBox = { borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 14 } as const
-const previewRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px' } as const
-const previewLabel = { fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' } as const
-const previewValue = { fontSize: 'var(--text-md)', fontWeight: 700 } as const
 
 export function openActivoForm(ctx: OpenerCtx, activo: Activo | null = null): void {
   ctx.openModal(activo ? 'Editar activo' : 'Nuevo activo', <ActivoForm activo={activo} />)
@@ -96,7 +90,7 @@ function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
       <div className="modal-footer">
         <button className="btn btn-accent" onClick={() => void save()}>{isEdit ? 'Guardar cambios' : 'Agregar activo'}</button>
         {isEdit && <button className="btn btn-danger" onClick={() => void remove()}>Eliminar</button>}
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>Cancelar</button>
+        <button className="btn btn-dim sm:ml-auto" onClick={closeModal}>Cancelar</button>
       </div>
       <FormStatus />
     </>
@@ -124,15 +118,15 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
 
   return (
     <>
-      <div style={summaryBox}>
-        <div>
-          <div style={summaryLabel}>Valor actual</div>
-          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>{cop(a.valor_actual)}</div>
+      <div className="modal-panel">
+        <div className="modal-panel-col">
+          <div className="modal-panel-label">Valor actual</div>
+          <div className="modal-panel-value">{cop(a.valor_actual)}</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 3 }}>Vs. precio inicial</div>
-          <div style={{ fontSize: 'var(--text-md)', fontWeight: 700, color: tone(cambio) }}>
-            {signStr(cambio)}{cop(Math.abs(cambio))} <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500 }}>({signStr(cambioPct)}{pct(Math.abs(cambioPct))}%)</span>
+        <div className="modal-panel-col right">
+          <div className="modal-panel-label">Vs. precio inicial</div>
+          <div className={'text-base font-semibold ' + tone(cambio)}>
+            {signStr(cambio)}{cop(Math.abs(cambio))} <span className="text-xs font-medium">({signStr(cambioPct)}{pct(Math.abs(cambioPct))}%)</span>
           </div>
         </div>
       </div>
@@ -140,17 +134,17 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
         <label className="form-label" htmlFor="m-nuevo-valor">Nuevo valor (COP)</label>
         <MoneyInput id="m-nuevo-valor" value={nuevoTxt} onChange={setNuevoTxt} />
       </div>
-      <div id="activo-update-preview" style={{ ...previewBox, display: nuevo ? 'block' : 'none' }}>
-        <div style={{ ...previewRow, borderBottom: '1px solid var(--border)' }}>
-          <span style={previewLabel}>Cambio desde último</span>
-          <span style={previewValue} id="activo-delta">
-            <span style={{ color: tone(delta) }}>{signStr(delta)}{cop(Math.abs(delta))}</span>
+      <div id="activo-update-preview" className={'breakdown' + (nuevo ? ' visible' : '')}>
+        <div className="breakdown-row">
+          <span className="breakdown-label">Cambio desde último</span>
+          <span className="breakdown-value" id="activo-delta">
+            <span className={tone(delta)}>{signStr(delta)}{cop(Math.abs(delta))}</span>
           </span>
         </div>
-        <div style={previewRow}>
-          <span style={previewLabel}>Variación vs precio inicial</span>
-          <span style={previewValue} id="activo-total">
-            <span style={{ color: tone(total) }}>{signStr(total)}{cop(Math.abs(total))} <span style={{ fontSize: 'var(--text-xs)', fontWeight: 500 }}>({signStr(totalPct)}{pct(Math.abs(totalPct))}%)</span></span>
+        <div className="breakdown-row">
+          <span className="breakdown-label">Variación vs precio inicial</span>
+          <span className="breakdown-value" id="activo-total">
+            <span className={tone(total)}>{signStr(total)}{cop(Math.abs(total))} <span className="text-xs font-medium">({signStr(totalPct)}{pct(Math.abs(totalPct))}%)</span></span>
           </span>
         </div>
       </div>
@@ -161,7 +155,7 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
       <div className="modal-footer">
         <button className="btn btn-accent" onClick={() => void save()}>Actualizar</button>
         <button className="btn btn-dim" onClick={() => { closeModal(); openActivoFormById(ctx, a._id) }}>Editar activo</button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>Cancelar</button>
+        <button className="btn btn-dim sm:ml-auto" onClick={closeModal}>Cancelar</button>
       </div>
       <FormStatus />
     </>
@@ -190,31 +184,31 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
 
   return (
     <>
-      <div style={summaryBox}>
-        <div>
-          <div style={summaryLabel}>Valor actual</div>
-          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>{cop(a.valor_actual)}</div>
+      <div className="modal-panel">
+        <div className="modal-panel-col">
+          <div className="modal-panel-label">Valor actual</div>
+          <div className="modal-panel-value">{cop(a.valor_actual)}</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 3 }}>Precio inicial</div>
-          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>{cop(a.valor_inicial)}</div>
+        <div className="modal-panel-col right">
+          <div className="modal-panel-label">Precio inicial</div>
+          <div className="text-base font-semibold">{cop(a.valor_inicial)}</div>
         </div>
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="m-precio">Precio de venta (COP)</label>
         <MoneyInput id="m-precio" value={precioTxt} onChange={setPrecioTxt} />
       </div>
-      <div id="activo-sell-preview" style={{ ...previewBox, display: precio ? 'block' : 'none' }}>
-        <div style={{ ...previewRow, borderBottom: '1px solid var(--border)' }}>
-          <span style={previewLabel}>Ganancia vs precio inicial</span>
-          <span style={previewValue} id="sell-gain-ini">
-            <span style={{ color: tone(vsIni) }}>{signStr(vsIni)}{cop(Math.abs(vsIni))}</span>
+      <div id="activo-sell-preview" className={'breakdown' + (precio ? ' visible' : '')}>
+        <div className="breakdown-row">
+          <span className="breakdown-label">Ganancia vs precio inicial</span>
+          <span className="breakdown-value" id="sell-gain-ini">
+            <span className={tone(vsIni)}>{signStr(vsIni)}{cop(Math.abs(vsIni))}</span>
           </span>
         </div>
-        <div style={previewRow}>
-          <span style={previewLabel}>Diferencia vs último valor</span>
-          <span style={previewValue} id="sell-gain-act">
-            <span style={{ color: tone(vsAct) }}>{signStr(vsAct)}{cop(Math.abs(vsAct))}</span>
+        <div className="breakdown-row">
+          <span className="breakdown-label">Diferencia vs último valor</span>
+          <span className="breakdown-value" id="sell-gain-act">
+            <span className={tone(vsAct)}>{signStr(vsAct)}{cop(Math.abs(vsAct))}</span>
           </span>
         </div>
       </div>
@@ -223,13 +217,13 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
         <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
       </div>
       <div className="form-group">
-        <label className="form-label" htmlFor="m-notas" style={{ textTransform: 'none', letterSpacing: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>Notas (opcional)</label>
+        <label className="form-label" htmlFor="m-notas">Notas (opcional)</label>
         <input className="form-input" type="text" id="m-notas" maxLength={30} placeholder="Ej. Vendido a tercero" value={notas} onChange={(e) => setNotas(e.target.value)} />
       </div>
       <AdvancedToggle label="Registrar en transacciones" hint="Desactivá si ya lo registraste en otra parte." checked={registrarTx} onChange={setRegistrarTx} />
       <div className="modal-footer">
         <button className="btn btn-accent" onClick={() => void save()}>Confirmar venta</button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>Cancelar</button>
+        <button className="btn btn-dim sm:ml-auto" onClick={closeModal}>Cancelar</button>
       </div>
       <FormStatus />
     </>

@@ -5,6 +5,7 @@ import { activo, estado } from '../../test/factories'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
 import { expectLabels, modalBody } from '../../test/labels'
+import { fraseActivos } from './frase'
 import { Activos } from './index'
 
 const H = { 'X-Moni-Request': '1' }
@@ -31,11 +32,13 @@ describe('Activos render', () => {
     setup([])
     expect(screen.getByText('Sin activos')).toBeInTheDocument()
     expect(screen.getByText('0 activos')).toBeInTheDocument()
+    expect(screen.getByText('Todavía no registraste activos.')).toBeInTheDocument()
   })
 
   it('renders card figures', () => {
     setup()
     expect(screen.getByText('1 activo')).toBeInTheDocument()
+    expect(screen.getByText(/Tus activos valen .*150\.000.*50\.000 más de lo que pagaste \(50,0%\)\./)).toBeInTheDocument()
     expect(screen.getByText('Casa')).toBeInTheDocument()
     expect(screen.getAllByText('+50,0%').length).toBeGreaterThan(0)
     expect(screen.getByText(/Adquirido/)).toBeInTheDocument()
@@ -44,12 +47,12 @@ describe('Activos render', () => {
 
   it('shows stale warning', () => {
     setup([{ ...a1, valor_actualizado_en: '2026-01-01T10:00' }])
-    expect(screen.getByText('⚠ Valor sin actualizar hace más de 1 mes')).toBeInTheDocument()
+    expect(screen.getByText('Valor sin actualizar hace más de 1 mes')).toBeInTheDocument()
   })
 
   it('buttons are keyboard reachable', async () => {
     const { user } = setup()
-    screen.getByRole('button', { name: '+ Nuevo activo' }).focus()
+    screen.getByRole('button', { name: 'Nuevo activo' }).focus()
     await user.keyboard('{Enter}')
     expect(await screen.findByText('Nuevo activo', { selector: '#modal-title' })).toBeInTheDocument()
     await user.keyboard('{Escape}')
@@ -62,7 +65,7 @@ describe('Activos render', () => {
 describe('Activos forms', () => {
   it('creates with crear_tx true', async () => {
     const { f, user } = setup()
-    await user.click(screen.getByRole('button', { name: '+ Nuevo activo' }))
+    await user.click(screen.getByRole('button', { name: 'Nuevo activo' }))
     await user.type(await screen.findByPlaceholderText('Ej. Apartamento Bogotá'), '  Moto ')
     await user.type(document.getElementById('m-val-ini') as HTMLInputElement, '5000000')
     await user.click(screen.getByRole('button', { name: 'Agregar activo' }))
@@ -75,7 +78,7 @@ describe('Activos forms', () => {
 
   it('creates with crear_tx false', async () => {
     const { f, user } = setup()
-    await user.click(screen.getByRole('button', { name: '+ Nuevo activo' }))
+    await user.click(screen.getByRole('button', { name: 'Nuevo activo' }))
     await user.type(await screen.findByPlaceholderText('Ej. Apartamento Bogotá'), 'Moto')
     await user.type(document.getElementById('m-val-ini') as HTMLInputElement, '1000')
     await user.type(document.getElementById('m-val-act') as HTMLInputElement, '2000')
@@ -87,7 +90,7 @@ describe('Activos forms', () => {
 
   it('validates required fields', async () => {
     const { f, user } = setup()
-    await user.click(screen.getByRole('button', { name: '+ Nuevo activo' }))
+    await user.click(screen.getByRole('button', { name: 'Nuevo activo' }))
     await user.click(await screen.findByRole('button', { name: 'Agregar activo' }))
     expect(document.getElementById('m-status')).toHaveTextContent('Nombre requerido')
     await user.type(screen.getByPlaceholderText('Ej. Apartamento Bogotá'), 'X')
@@ -127,7 +130,7 @@ describe('Activos forms', () => {
     f.set('PUT /api/activo/4', failure(422, 'malo'))
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.click(await screen.findByRole('button', { name: 'Guardar cambios' }))
-    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('❌ malo'))
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('malo'))
     expect(document.getElementById('m-status')).toHaveClass('err')
   })
 
@@ -155,9 +158,9 @@ describe('Activos forms', () => {
     await user.click(screen.getByRole('button', { name: 'Actualizar valor' }))
     const dialog = await screen.findByText('Actualizar valor · Casa')
     expect(dialog).toBeInTheDocument()
-    expect(document.getElementById('activo-update-preview')).toHaveStyle({ display: 'none' })
+    expect(document.getElementById('activo-update-preview')).not.toHaveClass('visible')
     await user.type(document.getElementById('m-nuevo-valor') as HTMLInputElement, '180000')
-    expect(document.getElementById('activo-update-preview')).toHaveStyle({ display: 'block' })
+    expect(document.getElementById('activo-update-preview')).toHaveClass('visible')
     expect(document.getElementById('activo-delta')).toHaveTextContent('+')
     await user.click(screen.getByRole('button', { name: 'Actualizar' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
@@ -188,7 +191,7 @@ describe('Activos forms', () => {
     await user.click(screen.getByRole('button', { name: 'Vender' }))
     await screen.findByText('Vender · Casa')
     expect(document.getElementById('m-precio')).toHaveValue('150.000')
-    expect(document.getElementById('activo-sell-preview')).toHaveStyle({ display: 'block' })
+    expect(document.getElementById('activo-sell-preview')).toHaveClass('visible')
     await user.type(document.getElementById('m-notas') as HTMLInputElement, ' Amigo ')
     await user.click(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
@@ -219,12 +222,21 @@ void within
 describe('labels', () => {
   it('el form de activo se encuentra por sus labels', async () => {
     const { user } = setup([])
-    await user.click(screen.getByRole('button', { name: '+ Nuevo activo' }))
+    await user.click(screen.getByRole('button', { name: 'Nuevo activo' }))
     expectLabels(modalBody(), {
       Nombre: 'm-nombre',
       'Precio de compra (COP)': 'm-val-ini',
       'Valor actual (COP)': 'm-val-act',
       'Fecha de adquisición': 'm-fecha-adq',
     })
+  })
+})
+
+describe('fraseActivos', () => {
+  it('cubre vacío, igual, ganancia y pérdida', () => {
+    expect(fraseActivos(0, 0, 0)).toBe('Todavía no registraste activos.')
+    expect(fraseActivos(1, 100, 100)).toContain('lo mismo que pagaste')
+    expect(fraseActivos(1, 150, 100)).toContain('más de lo que pagaste (50,0%)')
+    expect(fraseActivos(1, 50, 100)).toContain('menos de lo que pagaste (50,0%)')
   })
 })

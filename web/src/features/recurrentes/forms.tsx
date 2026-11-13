@@ -51,7 +51,7 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
       if (item) await crudOp('rec', 'update', { ...data, _id: item._id })
       else await crudOp('rec', 'add', data)
     } catch (err) {
-      setModalStatus('err', '❌ ' + errMsg(err))
+      setModalStatus('err', errMsg(err))
     }
   }
 
@@ -113,9 +113,8 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
       </div>
       <div className="form-group">
         <label
-          className="form-label"
+          className="form-label text-sm tracking-normal text-muted-foreground normal-case"
           htmlFor="m-notas"
-          style={{ textTransform: 'none', letterSpacing: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}
         >
           Notas (opcional)
         </label>
@@ -138,11 +137,11 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
             Eliminar
           </button>
         )}
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim ml-auto" onClick={closeModal}>
           Cancelar
         </button>
       </div>
-      <FormStatus style={{ marginTop: 'var(--sp-3)' }} />
+      <FormStatus />
     </>
   )
 }
@@ -173,7 +172,7 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
         tarjeta_id: null,
       })
     } catch (err) {
-      setModalStatus('err', '❌ ' + errMsg(err))
+      setModalStatus('err', errMsg(err))
     }
   }
 
@@ -197,7 +196,7 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
       <div className="form-group">
         <label className="form-label" htmlFor="m-monto">Monto (COP)</label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
-        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: 5 }}>
+        <div className="mt-1.5 text-xs text-muted-foreground">
           Pre-llenado con el monto recurrente — ajustá si difiere.
         </div>
       </div>
@@ -207,9 +206,8 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
       </div>
       <div className="form-group">
         <label
-          className="form-label"
+          className="form-label text-sm tracking-normal text-muted-foreground normal-case"
           htmlFor="m-notas"
-          style={{ textTransform: 'none', letterSpacing: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}
         >
           Notas (opcional)
         </label>
@@ -227,7 +225,7 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
         <button className="btn btn-accent" onClick={() => void save()}>
           Registrar
         </button>
-        <button className="btn btn-dim" style={{ marginLeft: 'auto' }} onClick={closeModal}>
+        <button className="btn btn-dim ml-auto" onClick={closeModal}>
           Cancelar
         </button>
       </div>
