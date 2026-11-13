@@ -72,17 +72,17 @@ export function Shell() {
   const fab = FAB_ACTIONS[tab]
 
   return (
-    <div className="min-h-dvh bg-paper text-ink">
-      <header className="sticky top-0 z-40 border-b border-ink bg-paper/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-[1280px] items-stretch gap-6 px-4 md:px-8">
+    <div className="min-h-dvh bg-background text-foreground">
+      <header className="sticky top-0 z-40 border-b bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-[1240px] items-center gap-6 px-4 md:px-6">
           <Sheet open={drawer} onOpenChange={setDrawer}>
             <SheetTrigger asChild>
-              <button type="button" aria-label="Menú" className="-ml-2 grid w-10 cursor-pointer place-items-center self-center rounded-sm hover:bg-wash lg:hidden">
+              <button type="button" aria-label="Menú" className="-ml-2 grid size-9 cursor-pointer place-items-center rounded-md hover:bg-muted lg:hidden">
                 <Menu className="size-5" />
               </button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[78%] max-w-72 gap-0 border-r border-ink bg-paper p-0" id="nav-drawer">
-              <div className="flex h-14 items-center border-b border-ink px-5 pt-[env(safe-area-inset-top)]">
+            <SheetContent side="left" className="w-[78%] max-w-72 gap-0 bg-background p-0" id="nav-drawer">
+              <div className="flex h-14 items-center border-b px-5 pt-[env(safe-area-inset-top)]">
                 <SheetTitle className="text-lg font-semibold">Moni</SheetTitle>
                 <SheetDescription className="sr-only">Secciones de la app</SheetDescription>
               </div>
@@ -95,8 +95,8 @@ export function Shell() {
                     aria-current={tab === t.id ? 'page' : undefined}
                     onClick={() => goTo(t.id)}
                     className={cn(
-                      'nav-drawer-item flex cursor-pointer items-center border-l-[3px] px-5 py-3 text-left text-[16px] transition-colors hover:bg-wash',
-                      tab === t.id ? 'active border-ink font-semibold text-ink' : 'border-transparent text-ink-2',
+                      'nav-drawer-item mx-2 flex cursor-pointer items-center rounded-md px-3 py-2.5 text-left text-[15px] transition-colors hover:bg-muted',
+                      tab === t.id ? 'active bg-muted font-semibold text-foreground' : 'text-muted-foreground',
                       warn[t.id] && 'has-warning',
                     )}
                   >
@@ -108,12 +108,12 @@ export function Shell() {
             </SheetContent>
           </Sheet>
 
-          <button type="button" onClick={() => goTo('dashboard')} className="flex cursor-pointer items-center gap-2 self-center text-[19px] font-semibold tracking-tight">
-            <img src="assets/icons/moni.svg" alt="" className="size-6" />
+          <button type="button" onClick={() => goTo('dashboard')} className="flex cursor-pointer items-center gap-2 text-[17px] font-semibold tracking-tight">
+            <img src="assets/icons/moni.svg" alt="" className="size-5" />
             Moni
           </button>
 
-          <nav id="header-nav" aria-label="Secciones" className="ml-auto hidden items-stretch gap-1 lg:flex">
+          <nav id="header-nav" aria-label="Secciones" className="ml-auto hidden items-center gap-1 lg:flex">
             {TABS.map((t) => (
               <button
                 key={t.id}
@@ -122,8 +122,8 @@ export function Shell() {
                 aria-current={tab === t.id ? 'page' : undefined}
                 onClick={() => goTo(t.id)}
                 className={cn(
-                  'nav-btn relative -mb-px flex cursor-pointer items-center border-b-[3px] px-3 text-[15px] transition-colors',
-                  tab === t.id ? 'active border-ink font-medium text-ink' : 'border-transparent text-ink-2 hover:text-ink',
+                  'nav-btn relative flex cursor-pointer items-center rounded-full px-3 py-1.5 text-sm transition-colors',
+                  tab === t.id ? 'active bg-primary font-medium text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   warn[t.id] && 'has-warning',
                 )}
               >
@@ -142,17 +142,17 @@ export function Shell() {
         onClick={() => fab?.(openerCtx)}
         aria-label="Agregar"
         style={{ display: fab ? '' : 'none' }}
-        className="fixed right-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-30 grid size-14 cursor-pointer place-items-center rounded-full bg-ink text-paper transition-transform hover:scale-105 active:scale-95 md:hidden"
+        className="fixed right-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-30 grid size-14 cursor-pointer place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95 md:hidden"
       >
         <Plus className="size-6" strokeWidth={2.25} />
       </button>
 
-      <main className="mx-auto max-w-[1280px] px-4 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:px-8 md:pt-12">
+      <main className="mx-auto max-w-[1240px] px-3 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:px-6 md:pt-6">
         <div
           id="err-banner"
           role="alert"
           style={{ display: banner ? 'flex' : 'none' }}
-          className="mb-8 items-start gap-3 border-y-2 border-deudas py-3 text-[15px] text-ink"
+          className="mb-4 items-start gap-3 rounded-lg border border-deudas/40 bg-deudas/10 px-4 py-3 text-sm"
         >
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-deudas" />
           <span>{banner}</span>

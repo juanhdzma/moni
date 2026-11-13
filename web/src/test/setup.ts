@@ -27,3 +27,12 @@ Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
     return this.parentElement
   },
 })
+
+// jsdom no trae ResizeObserver y el ResponsiveContainer de Recharts lo usa al montar.
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}

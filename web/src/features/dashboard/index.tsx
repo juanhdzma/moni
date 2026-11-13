@@ -17,27 +17,27 @@ export function Dashboard({ active }: TabProps) {
 
   return (
     <TabContent id="dashboard" active={active} legacy={false}>
-      <div className="grid gap-y-14 lg:grid-cols-12 lg:items-start lg:gap-x-16">
-        <div className="contents lg:col-span-7 lg:block lg:space-y-14">
-          <div className="order-1">
-            <Patrimonio r={r} estado={estado} loading={loading} />
+      <div className="space-y-3 lg:space-y-4">
+        <Patrimonio r={r} estado={estado} loading={loading} />
+        <div className="grid gap-3 lg:grid-cols-12 lg:items-start lg:gap-4">
+          <div className="contents lg:col-span-7 lg:block lg:space-y-4">
+            <div className="order-1">
+              <Evolucion estado={estado} patrimonio={r.patrimonio} totalInv={r.totalInv} loading={loading} />
+            </div>
+            <div className="order-2">
+              <Gastos />
+            </div>
+            <div className="order-5">
+              <Movimientos transacciones={estado.transacciones} loading={loading} />
+            </div>
           </div>
-          <div className="order-2">
-            <Gastos />
-          </div>
-          <div className="order-5">
-            <Evolucion estado={estado} patrimonio={r.patrimonio} totalInv={r.totalInv} loading={loading} />
-          </div>
-        </div>
-        <div className="contents lg:col-span-5 lg:block lg:space-y-14 lg:pt-2">
-          <div className="order-3">
-            <EsteMes r={r} loading={loading} />
-          </div>
-          <div className="order-4">
-            <ProximasOperaciones />
-          </div>
-          <div className="order-6">
-            <Movimientos transacciones={estado.transacciones} loading={loading} />
+          <div className="contents lg:col-span-5 lg:block lg:space-y-4">
+            <div className="order-3">
+              <EsteMes r={r} transacciones={estado.transacciones} loading={loading} />
+            </div>
+            <div className="order-4">
+              <ProximasOperaciones />
+            </div>
           </div>
         </div>
       </div>

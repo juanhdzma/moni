@@ -2,64 +2,74 @@
 
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import '@fontsource-variable/jost';
+@import '@fontsource-variable/archivo';
 @import './fonts.css' layer(legacy);
 @import './tokens.css' layer(legacy);
 @import './components.css' layer(legacy);
 @import './layout.css' layer(legacy);
 
 :root {
-  --paper: #fbfbf9;
-  --ink: #1c1c1a;
-  --ink-2: #5e5d58;
-  --rule: #dedcd5;
-  --wash: #f1f0eb;
-  --cartera: #2b4c8c;
-  --inversiones: #3f6e2f;
-  --activos: #d8a23a;
-  --activos-text: #8a5f12;
-  --deudas: #c3352b;
-  --alerta: #b06d00;
+  --background: #fafafa;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #09090b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #6b6b74;
+  --accent: #f4f4f5;
+  --accent-foreground: #09090b;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #a1a1aa;
+  --radius: 0.625rem;
 
-  --background: var(--paper);
-  --foreground: var(--ink);
-  --card: var(--paper);
-  --card-foreground: var(--ink);
-  --popover: var(--paper);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--paper);
-  --secondary: var(--wash);
-  --secondary-foreground: var(--ink);
-  --muted: var(--wash);
-  --muted-foreground: var(--ink-2);
-  --accent: var(--wash);
-  --accent-foreground: var(--ink);
+  --cartera: #2563eb;
+  --inversiones: #16a34a;
+  --inversiones-text: #15803d;
+  --activos: #d4961c;
+  --activos-text: #a16207;
+  --deudas: #dc2626;
+  --alerta: #d97706;
   --destructive: var(--deudas);
-  --border: var(--rule);
-  --input: var(--rule);
-  --ring: var(--ink);
-  --radius: 0.25rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #141412;
-    --ink: #ecebe5;
-    --ink-2: #a3a29b;
-    --rule: #2f2e2a;
-    --wash: #1e1d1b;
-    --cartera: #8aa6e6;
-    --inversiones: #93c174;
+    --background: #131518;
+    --foreground: #f2f2f3;
+    --card: #1b1e21;
+    --card-foreground: #f2f2f3;
+    --popover: #1b1e21;
+    --popover-foreground: #f2f2f3;
+    --primary: #f2f2f3;
+    --primary-foreground: #131518;
+    --secondary: #24272b;
+    --secondary-foreground: #f2f2f3;
+    --muted: #24272b;
+    --muted-foreground: #9a9ea5;
+    --accent: #24272b;
+    --accent-foreground: #f2f2f3;
+    --border: #2a2d31;
+    --input: #2a2d31;
+    --ring: #5b6068;
+
+    --cartera: #6c9be8;
+    --inversiones: #46b25e;
+    --inversiones-text: #5cc272;
     --activos: #e2b04f;
     --activos-text: #e2b04f;
-    --deudas: #f0705f;
-    --alerta: #f0a948;
+    --deudas: #ef5c53;
+    --alerta: #f0a020;
   }
 }
 
 @theme inline {
-  --font-sans: 'Jost Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -78,20 +88,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ink: var(--ink);
-  --color-ink-2: var(--ink-2);
-  --color-paper: var(--paper);
-  --color-rule: var(--rule);
-  --color-wash: var(--wash);
   --color-cartera: var(--cartera);
   --color-inversiones: var(--inversiones);
+  --color-inversiones-text: var(--inversiones-text);
   --color-activos: var(--activos);
   --color-activos-text: var(--activos-text);
   --color-deudas: var(--deudas);
   --color-alerta: var(--alerta);
-  --radius-sm: calc(var(--radius) - 1px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
@@ -101,20 +107,18 @@
   }
   html {
     color-scheme: light dark;
-    scrollbar-color: var(--rule) transparent;
+    scrollbar-color: var(--border) transparent;
     scrollbar-width: thin;
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-variant-numeric: tabular-nums;
-    font-feature-settings: 'kern' 1;
   }
   ::selection {
-    background: var(--activos);
-    color: #1c1c1a;
+    background: color-mix(in oklab, var(--cartera) 30%, transparent);
   }
   :focus-visible {
-    outline: 2px solid var(--ink);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }

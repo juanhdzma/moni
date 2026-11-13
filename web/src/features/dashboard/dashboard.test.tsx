@@ -31,7 +31,6 @@ const fixture = () =>
   })
 
 const stat = (id: string) => document.getElementById(id) as HTMLElement
-const figuras = (el: Element | null | undefined) => Number(el?.querySelector('[data-figuras]')?.getAttribute('data-figuras'))
 const gastoRows = () => Array.from(document.querySelectorAll('#gastos-categorias > li'))
 const pill = (groupId: string, label: string) => within(document.getElementById(groupId) as HTMLElement).getByText(label)
 
@@ -52,23 +51,14 @@ describe('Patrimonio', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
     expect(stat('stat-networth')).toHaveTextContent('$1,3M')
     expect(stat('stat-networth')).toHaveAttribute('title', '$1.320.000')
-    expect(stat('dash-patrimonio')).toHaveTextContent('proyectados en los próximos 12 meses')
+    expect(stat('dash-patrimonio')).toHaveTextContent('proyectados en 12 meses')
     expect(stat('stat-balance')).toHaveTextContent('$670k')
     expect(stat('stat-inversiones')).toHaveTextContent('$500k')
-    expect(stat('stat-inversiones')).toHaveTextContent('+$100k (+25,0%) sobre lo invertido')
+    expect(stat('stat-inversiones')).toHaveTextContent('+$100k (+25,0%)')
     expect(stat('stat-activos')).toHaveTextContent('$300k')
     expect(stat('stat-activos')).toHaveTextContent('1 activo')
     expect(stat('stat-deudas')).toHaveTextContent('−$150k')
     expect(stat('stat-deudas')).toHaveTextContent('$20.000/mes · 1 deuda')
-  })
-
-  it('cada parte es una fila de figuras con la misma unidad', () => {
-    renderWithProviders(<Dashboard active />, { estado: fixture() })
-    expect(figuras(stat('stat-balance'))).toBe(13.5)
-    expect(figuras(stat('stat-inversiones'))).toBe(10)
-    expect(figuras(stat('stat-activos'))).toBe(6)
-    expect(figuras(stat('stat-deudas'))).toBe(3)
-    expect(stat('dash-patrimonio')).toHaveTextContent('Una figura = $50k')
   })
 
   it('muestra placeholders antes de la primera carga', () => {
@@ -90,11 +80,12 @@ describe('Patrimonio', () => {
 })
 
 describe('Este mes en tu cartera', () => {
-  it('compara lo que entró con lo que salió de la cartera, sin las tarjetas', () => {
+  it('suma lo que entró menos lo que salió de la cartera, sin las tarjetas', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
     const mes = stat('dash-mes')
-    expect(mes).toHaveTextContent('Entró$1,0M')
-    expect(mes).toHaveTextContent('Salió$200k')
+    expect(mes).toHaveTextContent('Entró+$1.000.000')
+    expect(mes).toHaveTextContent('Salió−$200.000')
+    expect(mes).toHaveTextContent('Te quedó$800.000')
     expect(stat('stat-ahorro')).toHaveTextContent('Te quedó el 70,0% de lo que entró.')
   })
 
@@ -103,30 +94,32 @@ describe('Este mes en tu cartera', () => {
       estado: estado({ transacciones: [tx('ingreso', 'Salario', 100000, { _id: 1, fecha: '2026-08-01' }), tx('gasto', 'Comida', 150000, { _id: 2, fecha: '2026-08-02' })] }),
     })
     expect(stat('stat-ahorro')).toHaveTextContent('Salió 50,0% más de lo que entró.')
+    expect(stat('dash-mes')).toHaveTextContent('Te quedó−$50.000')
   })
 })
 
 describe('En qué se va tu plata', () => {
-  it('una fila por categoría del período, 1M por defecto, y cambia a Todo', () => {
+  it('una barra por categoría del período, 1M por defecto, con total y frase', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
     expect(pill('gastos-period-pills', '1M')).toHaveAttribute('data-state', 'on')
     expect(within(stat('gastos-period-pills')).getAllByRole('radio').map((b) => b.textContent)).toEqual(['1S', '1M', '3M', '6M', '1A', 'Todo'])
-    expect(gastoRows().map((r) => r.textContent)).toEqual([expect.stringContaining('Comida$200k80%'), expect.stringContaining('Mercado$50k20%')])
-    expect(figuras(gastoRows()[0])).toBe(20)
-    expect(figuras(gastoRows()[1])).toBe(5)
+    expect(gastoRows().map((r) => r.textContent)).toEqual(['Comida$200k', 'Mercado$50k'])
+    expect(stat('gastos-frase')).toHaveTextContent('Comida se lleva el 80% de lo que gastaste en el último mes.')
+    expect(stat('dash-gastos')).toHaveTextContent('Total gastado, con tarjetas$250.000')
     fireEvent.click(pill('gastos-period-pills', 'Todo'))
     expect(pill('gastos-period-pills', 'Todo')).toHaveAttribute('data-state', 'on')
     expect(gastoRows()[0]).toHaveTextContent('Comida$230k')
+    expect(stat('gastos-frase')).toHaveTextContent('en todo el historial')
   })
 
-  it('tocar una categoría muestra sus movimientos y atenúa el resto', () => {
+  it('tocar una categoría muestra sus movimientos y atenúa las otras barras', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
     const boton = within(gastoRows()[0] as HTMLElement).getByRole('button')
     expect(boton).toHaveAttribute('aria-expanded', 'false')
     fireEvent.click(boton)
     expect(boton).toHaveAttribute('aria-expanded', 'true')
     expect(within(gastoRows()[0] as HTMLElement).getByText('Almuerzo')).toBeInTheDocument()
-    expect(gastoRows()[1]?.querySelector('[data-figuras]')).toHaveClass('opacity-25')
+    expect(gastoRows()[1]?.querySelector('.opacity-30')).not.toBeNull()
     fireEvent.click(boton)
     expect(within(gastoRows()[0] as HTMLElement).queryByText('Almuerzo')).toBeNull()
   })
@@ -137,24 +130,19 @@ describe('En qué se va tu plata', () => {
   })
 })
 
-describe('Cómo cambió mes a mes', () => {
-  const meses = () => Array.from(document.querySelectorAll('#dash-evolucion ol > li'))
-
+describe('Cómo vas', () => {
   it('patrimonio a 6M por defecto, caminando hacia atrás desde el valor final', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
-    expect(meses()).toHaveLength(6)
-    expect(meses()[5]).toHaveTextContent('+$750.000')
-    expect(meses()[4]).toHaveTextContent('−$30.000')
-    expect(stat('evol-resumen')).toHaveTextContent(`tenías $600k; hoy $1,3M (+$720k).`)
+    expect(stat('evol-resumen')).toHaveTextContent('Subiste +$720k desde fin de mar.: de $600k a $1,3M.')
     expect(pill('evol-period-pills', '6M')).toHaveAttribute('data-state', 'on')
   })
 
   it('cambia período y serie', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
-    fireEvent.click(pill('evol-period-pills', '1M'))
-    expect(meses()).toHaveLength(2)
+    fireEvent.click(pill('evol-period-pills', '3M'))
+    expect(stat('evol-resumen')).toHaveTextContent('desde fin de jun.')
     fireEvent.click(pill('evol-serie', 'Inversiones'))
-    expect(stat('evol-resumen')).toHaveTextContent('tenías invertido $500k; hoy $500k')
+    expect(stat('evol-resumen')).toHaveTextContent('Te mantuviste en inversiones desde fin de jun.: de $500k a $500k.')
   })
 })
 
@@ -165,9 +153,8 @@ describe('Últimos movimientos', () => {
     expect(items).toHaveLength(5)
     expect(items[0]).toHaveTextContent('Pago deuda')
     expect(items[0]?.querySelector('.recent-amount')).toHaveTextContent('−$100.000')
-    expect(items[0]?.querySelector('.recent-amount')).toHaveClass('text-ink-2')
-    expect(items[1]?.querySelector('.recent-amount')).toHaveClass('text-ink')
-    expect(screen.getAllByText('Almuerzo').length).toBeGreaterThan(0)
+    expect(items[0]?.querySelector('.recent-amount')).toHaveClass('text-muted-foreground')
+    expect(items[1]?.querySelector('.recent-amount')).toHaveClass('text-foreground')
     expect(items[4]?.querySelector('.recent-amount')).toHaveTextContent('−$30.000')
   })
 
@@ -280,6 +267,14 @@ describe('antes de la primera carga', () => {
 })
 
 describe('Lo que viene', () => {
+  it('resume cuánto hay por pagar y cuántos pagos están vencidos', () => {
+    const { unmount } = renderWithProviders(<Dashboard active />, { estado: fixture() })
+    expect(stat('dash-proximas')).toHaveTextContent('$70.000 por pagar en los próximos 45 días.')
+    unmount()
+    renderWithProviders(<Dashboard active />, { estado: estado({ deudas: [deuda({ _id: 1, nombre: 'Banco', saldo_actual: 1000, cuota_mensual: 20000, proxima_cuota: '2026-08-10' })] }) })
+    expect(stat('dash-proximas')).toHaveTextContent('Tenés 1 pago vencido y $20.000 por pagar en 45 días.')
+  })
+
   it('muestra 5 y despliega el resto', () => {
     const recurrentes = Array.from({ length: 7 }, (_, i) => recurrente({ _id: i + 1, nombre: `R${i + 1}`, monto: 1000, fecha_inicio: `2026-01-${String(16 + i).padStart(2, '0')}` }))
     renderWithProviders(<Dashboard active />, { estado: estado({ recurrentes }) })

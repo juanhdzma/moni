@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import {
   fechasInversiones,
   fechasTransacciones,
@@ -12,7 +14,7 @@ import {
 import { cop, copShort, signStr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Estado } from '@/types'
-import { Periodos, Seccion } from './Seccion'
+import { Panel, Periodos } from './Seccion'
 
 type Serie = 'patrimonio' | 'inversiones'
 
@@ -21,107 +23,83 @@ const SERIES: readonly { value: Serie; label: string }[] = [
   { value: 'inversiones', label: 'Inversiones' },
 ]
 const PERIODOS: readonly { value: PeriodoEvolucion; label: string }[] = [
-  { value: '1M', label: '1M' },
   { value: '3M', label: '3M' },
   { value: '6M', label: '6M' },
   { value: '1Y', label: '1A' },
   { value: 'ALL', label: 'Todo' },
 ]
-const ALTO = 152
 
 export function Evolucion({ estado, patrimonio, totalInv, loading }: { estado: Estado; patrimonio: number; totalInv: number; loading: boolean }) {
   const [serie, setSerie] = useState<Serie>('patrimonio')
   const [period, setPeriod] = useState<PeriodoEvolucion>('6M')
 
-  const { labels, deltas, niveles } = useMemo(() => {
-    if (serie === 'patrimonio') {
-      const count = periodMonths(period, fechasTransacciones(estado.transacciones))
-      const d = monthlyPatrimonio(estado.transacciones, count)
-      return { labels: monthLabels(count), deltas: d, niveles: serieHaciaAtras(patrimonio, d) }
-    }
-    const count = periodMonths(period, [...fechasTransacciones(estado.transacciones), ...fechasInversiones(estado.inversiones)])
-    const d = monthlyInvDelta(estado.transacciones, count)
-    return { labels: monthLabels(count), deltas: d, niveles: serieHaciaAtras(totalInv, d) }
+  const datos = useMemo(() => {
+    const inv = serie === 'inversiones'
+    const fechas = inv ? [...fechasTransacciones(estado.transacciones), ...fechasInversiones(estado.inversiones)] : fechasTransacciones(estado.transacciones)
+    const count = periodMonths(period, fechas)
+    const deltas = inv ? monthlyInvDelta(estado.transacciones, count) : monthlyPatrimonio(estado.transacciones, count)
+    const niveles = serieHaciaAtras(inv ? totalInv : patrimonio, deltas)
+    const labels = monthLabels(count)
+    return niveles.map((valor, i) => ({ mes: labels[i] ?? '', valor }))
   }, [estado, serie, period, patrimonio, totalInv])
 
-  const desde = niveles[0] ?? 0
-  const hasta = niveles[niveles.length - 1] ?? 0
+  const desde = datos[0]?.valor ?? 0
+  const hasta = datos[datos.length - 1]?.valor ?? 0
   const cambio = hasta - desde
-  const posMax = Math.max(0, ...deltas)
-  const negMax = Math.max(0, ...deltas.map((d) => -d))
-  const escala = posMax + negMax || 1
-  const altoPos = (posMax / escala) * ALTO
-  const tintaPos = serie === 'patrimonio' ? 'bg-ink-2' : 'bg-inversiones'
-  const conValores = labels.length <= 12
+  const color = serie === 'patrimonio' ? 'var(--cartera)' : 'var(--inversiones)'
+  const config = { valor: { label: serie === 'patrimonio' ? 'Patrimonio' : 'Inversiones', color } } satisfies ChartConfig
+  const verbo = cambio > 0 ? 'Subiste' : cambio < 0 ? 'Bajaste' : 'Te mantuviste'
+  const sujeto = serie === 'patrimonio' ? '' : ' en inversiones'
 
   return (
-    <Seccion
+    <Panel
       id="dash-evolucion"
-      titulo="Cómo cambió mes a mes"
+      titulo="Cómo vas"
       extra={
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        <div className="flex flex-wrap gap-2">
           <Periodos id="evol-serie" label="Serie" options={SERIES} value={serie} onChange={setSerie} />
-          <span className="hidden h-4 w-px bg-rule sm:block" aria-hidden="true" />
           <Periodos id="evol-period-pills" label="Período" options={PERIODOS} value={period} onChange={setPeriod} />
         </div>
       }
+      frase={
+        loading ? (
+          ' '
+        ) : (
+          <span id="evol-resumen">
+            {verbo}
+            {cambio !== 0 && (
+              <>
+                {' '}
+                <span className={cn('font-semibold', cambio < 0 ? 'text-deudas' : 'text-inversiones-text')}>
+                  {signStr(cambio)}
+                  {copShort(Math.abs(cambio))}
+                </span>
+              </>
+            )}
+            {sujeto} desde fin de {datos[0]?.mes}: de {copShort(desde)} a <span className="font-semibold">{copShort(hasta)}</span>.
+          </span>
+        )
+      }
     >
-      <p className="mb-6 text-[15px] text-ink-2" id="evol-resumen">
-        {loading ? ' ' : (
-          <>
-            A fin de {labels[0]} {serie === 'patrimonio' ? 'tenías' : 'tenías invertido'} <span className="text-ink">{copShort(desde)}</span>; hoy{' '}
-            <span className="font-semibold text-ink">{copShort(hasta)}</span>{' '}
-            <span className={cn('font-semibold', cambio < 0 ? 'text-deudas' : 'text-ink')}>
-              ({signStr(cambio)}
-              {copShort(Math.abs(cambio))})
-            </span>
-            .
-          </>
-        )}
-      </p>
       {loading ? (
-        <div className="animate-pulse rounded-sm bg-wash" style={{ height: ALTO + 40 }} />
+        <div className="h-[200px] animate-pulse rounded-lg bg-muted" />
       ) : (
-        <figure>
-          <ol className="flex items-stretch gap-[3px]" aria-label="Variación por mes">
-            {deltas.map((d, i) => {
-              const h = (Math.abs(d) / escala) * ALTO
-              return (
-                <li key={i} className="flex min-w-0 flex-1 flex-col items-center">
-                  <span className="sr-only">
-                    {labels[i]}: {signStr(d)}
-                    {cop(Math.abs(d))}
-                  </span>
-                  <div aria-hidden="true" className="relative w-full" style={{ height: ALTO }} title={`${labels[i]}: ${signStr(d)}${cop(Math.abs(d))}`}>
-                    <div className="absolute inset-x-0 border-t border-ink" style={{ top: altoPos }} />
-                    {d !== 0 && (
-                      <div
-                        className={cn('absolute inset-x-[30%]', d > 0 ? tintaPos : 'bg-deudas')}
-                        style={d > 0 ? { top: altoPos - h, height: h } : { top: altoPos, height: h }}
-                      />
-                    )}
-                    {conValores && d !== 0 && (
-                      <span
-                        className="absolute inset-x-0 text-center text-[11px] leading-none whitespace-nowrap text-ink-2 max-sm:hidden"
-                        style={d > 0 ? { top: altoPos - h - 15 } : { top: altoPos + h + 4 }}
-                      >
-                        {signStr(d)}
-                        {copShort(Math.abs(d)).replace('$', '')}
-                      </span>
-                    )}
-                  </div>
-                  <span aria-hidden="true" className={cn('mt-2 text-[12px] text-ink-2', !conValores && i % 3 !== 0 && 'invisible')}>
-                    {labels[i]}
-                  </span>
-                </li>
-              )
-            })}
-          </ol>
-          <figcaption className="mt-3 text-[13px] text-ink-2">
-            Cada barra es lo que {serie === 'patrimonio' ? 'subió o bajó tu patrimonio' : 'entró o salió de tus inversiones'} ese mes. Las revaluaciones de activos e inversiones variables solo aparecen en el valor final.
-          </figcaption>
-        </figure>
+        <ChartContainer config={config} className="aspect-auto h-[200px] w-full" aria-label={`Evolución mensual de ${config.valor.label.toLowerCase()}`}>
+          <AreaChart data={datos} margin={{ left: 4, right: 8, top: 8, bottom: 0 }}>
+            <defs>
+              <linearGradient id="evol-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-valor)" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="var(--color-valor)" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="mes" tickLine={false} axisLine={false} tickMargin={8} minTickGap={16} />
+            <YAxis tickLine={false} axisLine={false} width={56} tickFormatter={(v: number) => copShort(v)} domain={['auto', 'auto']} />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideIndicator formatter={(v) => <span className="font-semibold">{cop(Number(v))}</span>} />} />
+            <Area dataKey="valor" type="monotone" stroke="var(--color-valor)" strokeWidth={2} fill="url(#evol-fill)" dot={false} activeDot={{ r: 4 }} animationDuration={500} />
+          </AreaChart>
+        </ChartContainer>
       )}
-    </Seccion>
+    </Panel>
   )
 }

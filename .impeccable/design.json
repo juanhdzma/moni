@@ -1,427 +1,647 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-13T00:00:00-05:00",
+  "generatedAt": "2026-11-13T23:09:17+00:00",
   "title": "Design System: Moni",
   "extensions": {
     "colorMeta": {
-      "paper": {
+      "background": {
         "role": "neutral",
-        "displayName": "Paper",
+        "displayName": "Ground",
+        "canonical": "#fafafa",
+        "oklch": "oklch(98.5% 0.000 89.9)",
         "tonalRamp": [
-          "oklch(15% 0.003 106.4)",
-          "oklch(26% 0.003 106.4)",
-          "oklch(38% 0.003 106.4)",
-          "oklch(50% 0.003 106.4)",
-          "oklch(62% 0.003 106.4)",
-          "oklch(74% 0.003 106.4)",
-          "oklch(85% 0.003 106.4)",
-          "oklch(95% 0.003 106.4)"
-        ],
-        "darkVariant": "paper-dark",
-        "canonical": "oklch(98.8% 0.003 106.4)"
+          "oklch(15% 0.000 89.9)",
+          "oklch(25% 0.000 89.9)",
+          "oklch(35% 0.000 89.9)",
+          "oklch(45% 0.000 89.9)",
+          "oklch(55% 0.000 89.9)",
+          "oklch(65% 0.000 89.9)",
+          "oklch(80% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
       },
-      "ink": {
+      "foreground": {
         "role": "primary",
         "displayName": "Ink",
+        "canonical": "#09090b",
+        "oklch": "oklch(14.1% 0.004 285.8)",
         "tonalRamp": [
-          "oklch(15% 0.004 106.7)",
-          "oklch(26% 0.004 106.7)",
-          "oklch(38% 0.004 106.7)",
-          "oklch(50% 0.004 106.7)",
-          "oklch(62% 0.004 106.7)",
-          "oklch(74% 0.004 106.7)",
-          "oklch(85% 0.004 106.7)",
-          "oklch(95% 0.004 106.7)"
-        ],
-        "darkVariant": "ink-dark",
-        "canonical": "oklch(22.6% 0.004 106.7)"
+          "oklch(15% 0.003 285.8)",
+          "oklch(25% 0.003 285.8)",
+          "oklch(35% 0.004 285.8)",
+          "oklch(45% 0.004 285.8)",
+          "oklch(55% 0.004 285.8)",
+          "oklch(65% 0.004 285.8)",
+          "oklch(80% 0.004 285.8)",
+          "oklch(95% 0.003 285.8)"
+        ]
       },
-      "ink-2": {
+      "card": {
         "role": "neutral",
-        "displayName": "Ink 2",
+        "displayName": "Panel",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
         "tonalRamp": [
-          "oklch(15% 0.008 97.5)",
-          "oklch(26% 0.008 97.5)",
-          "oklch(38% 0.008 97.5)",
-          "oklch(50% 0.008 97.5)",
-          "oklch(62% 0.008 97.5)",
-          "oklch(74% 0.008 97.5)",
-          "oklch(85% 0.008 97.5)",
-          "oklch(95% 0.008 97.5)"
-        ],
-        "darkVariant": "ink-2-dark",
-        "canonical": "oklch(47.8% 0.008 97.5)"
+          "oklch(15% 0.000 89.9)",
+          "oklch(25% 0.000 89.9)",
+          "oklch(35% 0.000 89.9)",
+          "oklch(45% 0.000 89.9)",
+          "oklch(55% 0.000 89.9)",
+          "oklch(65% 0.000 89.9)",
+          "oklch(80% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
       },
-      "rule": {
-        "role": "neutral",
-        "displayName": "Rule",
-        "tonalRamp": [
-          "oklch(15% 0.010 93.6)",
-          "oklch(26% 0.010 93.6)",
-          "oklch(38% 0.010 93.6)",
-          "oklch(50% 0.010 93.6)",
-          "oklch(62% 0.010 93.6)",
-          "oklch(74% 0.010 93.6)",
-          "oklch(85% 0.010 93.6)",
-          "oklch(95% 0.010 93.6)"
-        ],
-        "darkVariant": "rule-dark",
-        "canonical": "oklch(89.4% 0.010 93.6)"
-      },
-      "wash": {
+      "muted": {
         "role": "neutral",
         "displayName": "Wash",
+        "canonical": "#f4f4f5",
+        "oklch": "oklch(96.7% 0.001 286.4)",
         "tonalRamp": [
-          "oklch(15% 0.007 97.4)",
-          "oklch(26% 0.007 97.4)",
-          "oklch(38% 0.007 97.4)",
-          "oklch(50% 0.007 97.4)",
-          "oklch(62% 0.007 97.4)",
-          "oklch(74% 0.007 97.4)",
-          "oklch(85% 0.007 97.4)",
-          "oklch(95% 0.007 97.4)"
-        ],
-        "darkVariant": "wash-dark",
-        "canonical": "oklch(95.5% 0.007 97.4)"
+          "oklch(15% 0.001 286.4)",
+          "oklch(25% 0.001 286.4)",
+          "oklch(35% 0.001 286.4)",
+          "oklch(45% 0.001 286.4)",
+          "oklch(55% 0.001 286.4)",
+          "oklch(65% 0.001 286.4)",
+          "oklch(80% 0.001 286.4)",
+          "oklch(95% 0.001 286.4)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Quiet Ink",
+        "canonical": "#6b6b74",
+        "oklch": "oklch(53.1% 0.014 285.9)",
+        "tonalRamp": [
+          "oklch(15% 0.008 285.9)",
+          "oklch(25% 0.008 285.9)",
+          "oklch(35% 0.014 285.9)",
+          "oklch(45% 0.014 285.9)",
+          "oklch(55% 0.014 285.9)",
+          "oklch(65% 0.014 285.9)",
+          "oklch(80% 0.014 285.9)",
+          "oklch(95% 0.008 285.9)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e4e4e7",
+        "oklch": "oklch(92.0% 0.004 286.3)",
+        "tonalRamp": [
+          "oklch(15% 0.002 286.3)",
+          "oklch(25% 0.002 286.3)",
+          "oklch(35% 0.004 286.3)",
+          "oklch(45% 0.004 286.3)",
+          "oklch(55% 0.004 286.3)",
+          "oklch(65% 0.004 286.3)",
+          "oklch(80% 0.004 286.3)",
+          "oklch(95% 0.002 286.3)"
+        ]
+      },
+      "ring": {
+        "role": "neutral",
+        "displayName": "Ring",
+        "canonical": "#a1a1aa",
+        "oklch": "oklch(71.2% 0.013 286.1)",
+        "tonalRamp": [
+          "oklch(15% 0.008 286.1)",
+          "oklch(25% 0.008 286.1)",
+          "oklch(35% 0.013 286.1)",
+          "oklch(45% 0.013 286.1)",
+          "oklch(55% 0.013 286.1)",
+          "oklch(65% 0.013 286.1)",
+          "oklch(80% 0.013 286.1)",
+          "oklch(95% 0.008 286.1)"
+        ]
       },
       "cartera": {
         "role": "secondary",
         "displayName": "Cartera Blue",
+        "canonical": "#2563eb",
+        "oklch": "oklch(54.6% 0.215 262.9)",
         "tonalRamp": [
-          "oklch(15% 0.113 262.2)",
-          "oklch(26% 0.113 262.2)",
-          "oklch(38% 0.113 262.2)",
-          "oklch(50% 0.113 262.2)",
-          "oklch(62% 0.113 262.2)",
-          "oklch(74% 0.113 262.2)",
-          "oklch(85% 0.113 262.2)",
-          "oklch(95% 0.113 262.2)"
-        ],
-        "darkVariant": "cartera-dark",
-        "canonical": "oklch(42.7% 0.113 262.2)"
+          "oklch(15% 0.120 262.9)",
+          "oklch(25% 0.120 262.9)",
+          "oklch(35% 0.200 262.9)",
+          "oklch(45% 0.200 262.9)",
+          "oklch(55% 0.200 262.9)",
+          "oklch(65% 0.200 262.9)",
+          "oklch(80% 0.200 262.9)",
+          "oklch(95% 0.120 262.9)"
+        ]
       },
       "inversiones": {
         "role": "secondary",
         "displayName": "Inversiones Green",
+        "canonical": "#16a34a",
+        "oklch": "oklch(62.7% 0.170 149.2)",
         "tonalRamp": [
-          "oklch(15% 0.107 138.4)",
-          "oklch(26% 0.107 138.4)",
-          "oklch(38% 0.107 138.4)",
-          "oklch(50% 0.107 138.4)",
-          "oklch(62% 0.107 138.4)",
-          "oklch(74% 0.107 138.4)",
-          "oklch(85% 0.107 138.4)",
-          "oklch(95% 0.107 138.4)"
-        ],
-        "darkVariant": "inversiones-dark",
-        "canonical": "oklch(48.9% 0.107 138.4)"
+          "oklch(15% 0.102 149.2)",
+          "oklch(25% 0.102 149.2)",
+          "oklch(35% 0.170 149.2)",
+          "oklch(45% 0.170 149.2)",
+          "oklch(55% 0.170 149.2)",
+          "oklch(65% 0.170 149.2)",
+          "oklch(80% 0.170 149.2)",
+          "oklch(95% 0.102 149.2)"
+        ]
+      },
+      "inversiones-text": {
+        "role": "secondary",
+        "displayName": "Inversiones Text",
+        "canonical": "#15803d",
+        "oklch": "oklch(52.7% 0.137 150.1)",
+        "tonalRamp": [
+          "oklch(15% 0.082 150.1)",
+          "oklch(25% 0.082 150.1)",
+          "oklch(35% 0.137 150.1)",
+          "oklch(45% 0.137 150.1)",
+          "oklch(55% 0.137 150.1)",
+          "oklch(65% 0.137 150.1)",
+          "oklch(80% 0.137 150.1)",
+          "oklch(95% 0.082 150.1)"
+        ]
       },
       "activos": {
         "role": "secondary",
         "displayName": "Activos Ochre",
+        "canonical": "#d4961c",
+        "oklch": "oklch(71.6% 0.143 77.6)",
         "tonalRamp": [
-          "oklch(15% 0.133 80.1)",
-          "oklch(26% 0.133 80.1)",
-          "oklch(38% 0.133 80.1)",
-          "oklch(50% 0.133 80.1)",
-          "oklch(62% 0.133 80.1)",
-          "oklch(74% 0.133 80.1)",
-          "oklch(85% 0.133 80.1)",
-          "oklch(95% 0.133 80.1)"
-        ],
-        "darkVariant": "activos-dark",
-        "canonical": "oklch(74.5% 0.133 80.1)"
+          "oklch(15% 0.086 77.6)",
+          "oklch(25% 0.086 77.6)",
+          "oklch(35% 0.143 77.6)",
+          "oklch(45% 0.143 77.6)",
+          "oklch(55% 0.143 77.6)",
+          "oklch(65% 0.143 77.6)",
+          "oklch(80% 0.143 77.6)",
+          "oklch(95% 0.086 77.6)"
+        ]
       },
       "activos-text": {
         "role": "secondary",
         "displayName": "Activos Text",
+        "canonical": "#a16207",
+        "oklch": "oklch(55.4% 0.121 66.4)",
         "tonalRamp": [
-          "oklch(15% 0.102 75.8)",
-          "oklch(26% 0.102 75.8)",
-          "oklch(38% 0.102 75.8)",
-          "oklch(50% 0.102 75.8)",
-          "oklch(62% 0.102 75.8)",
-          "oklch(74% 0.102 75.8)",
-          "oklch(85% 0.102 75.8)",
-          "oklch(95% 0.102 75.8)"
-        ],
-        "darkVariant": "activos-dark",
-        "canonical": "oklch(51.9% 0.102 75.8)"
+          "oklch(15% 0.072 66.4)",
+          "oklch(25% 0.072 66.4)",
+          "oklch(35% 0.121 66.4)",
+          "oklch(45% 0.121 66.4)",
+          "oklch(55% 0.121 66.4)",
+          "oklch(65% 0.121 66.4)",
+          "oklch(80% 0.121 66.4)",
+          "oklch(95% 0.072 66.4)"
+        ]
       },
       "deudas": {
         "role": "secondary",
         "displayName": "Deudas Red",
+        "canonical": "#dc2626",
+        "oklch": "oklch(57.7% 0.215 27.3)",
         "tonalRamp": [
-          "oklch(15% 0.180 28.6)",
-          "oklch(26% 0.180 28.6)",
-          "oklch(38% 0.180 28.6)",
-          "oklch(50% 0.180 28.6)",
-          "oklch(62% 0.180 28.6)",
-          "oklch(74% 0.180 28.6)",
-          "oklch(85% 0.180 28.6)",
-          "oklch(95% 0.180 28.6)"
-        ],
-        "darkVariant": "deudas-dark",
-        "canonical": "oklch(54.5% 0.180 28.6)"
+          "oklch(15% 0.120 27.3)",
+          "oklch(25% 0.120 27.3)",
+          "oklch(35% 0.200 27.3)",
+          "oklch(45% 0.200 27.3)",
+          "oklch(55% 0.200 27.3)",
+          "oklch(65% 0.200 27.3)",
+          "oklch(80% 0.200 27.3)",
+          "oklch(95% 0.120 27.3)"
+        ]
       },
       "alerta": {
         "role": "tertiary",
         "displayName": "Alerta Amber",
+        "canonical": "#d97706",
+        "oklch": "oklch(66.6% 0.157 58.3)",
         "tonalRamp": [
-          "oklch(15% 0.130 68.2)",
-          "oklch(26% 0.130 68.2)",
-          "oklch(38% 0.130 68.2)",
-          "oklch(50% 0.130 68.2)",
-          "oklch(62% 0.130 68.2)",
-          "oklch(74% 0.130 68.2)",
-          "oklch(85% 0.130 68.2)",
-          "oklch(95% 0.130 68.2)"
-        ],
-        "darkVariant": "alerta-dark",
-        "canonical": "oklch(59.4% 0.130 68.2)"
+          "oklch(15% 0.094 58.3)",
+          "oklch(25% 0.094 58.3)",
+          "oklch(35% 0.157 58.3)",
+          "oklch(45% 0.157 58.3)",
+          "oklch(55% 0.157 58.3)",
+          "oklch(65% 0.157 58.3)",
+          "oklch(80% 0.157 58.3)",
+          "oklch(95% 0.094 58.3)"
+        ]
       },
-      "paper-dark": {
+      "background-dark": {
         "role": "neutral",
-        "displayName": "Paper (dark)",
-        "darkOf": "paper"
+        "displayName": "Ground (dark)",
+        "canonical": "#131518",
+        "oklch": "oklch(19.5% 0.007 258.4)",
+        "tonalRamp": [
+          "oklch(15% 0.004 258.4)",
+          "oklch(25% 0.004 258.4)",
+          "oklch(35% 0.007 258.4)",
+          "oklch(45% 0.007 258.4)",
+          "oklch(55% 0.007 258.4)",
+          "oklch(65% 0.007 258.4)",
+          "oklch(80% 0.007 258.4)",
+          "oklch(95% 0.004 258.4)"
+        ]
       },
-      "ink-dark": {
+      "foreground-dark": {
         "role": "primary",
         "displayName": "Ink (dark)",
-        "darkOf": "ink"
+        "canonical": "#f2f2f3",
+        "oklch": "oklch(96.1% 0.001 286.4)",
+        "tonalRamp": [
+          "oklch(15% 0.001 286.4)",
+          "oklch(25% 0.001 286.4)",
+          "oklch(35% 0.001 286.4)",
+          "oklch(45% 0.001 286.4)",
+          "oklch(55% 0.001 286.4)",
+          "oklch(65% 0.001 286.4)",
+          "oklch(80% 0.001 286.4)",
+          "oklch(95% 0.001 286.4)"
+        ]
       },
-      "ink-2-dark": {
+      "card-dark": {
         "role": "neutral",
-        "displayName": "Ink 2 (dark)",
-        "darkOf": "ink-2"
+        "displayName": "Panel (dark)",
+        "canonical": "#1b1e21",
+        "oklch": "oklch(23.3% 0.007 248.1)",
+        "tonalRamp": [
+          "oklch(15% 0.004 248.1)",
+          "oklch(25% 0.004 248.1)",
+          "oklch(35% 0.007 248.1)",
+          "oklch(45% 0.007 248.1)",
+          "oklch(55% 0.007 248.1)",
+          "oklch(65% 0.007 248.1)",
+          "oklch(80% 0.007 248.1)",
+          "oklch(95% 0.004 248.1)"
+        ]
       },
-      "rule-dark": {
-        "role": "neutral",
-        "displayName": "Rule (dark)",
-        "darkOf": "rule"
-      },
-      "wash-dark": {
+      "muted-dark": {
         "role": "neutral",
         "displayName": "Wash (dark)",
-        "darkOf": "wash"
+        "canonical": "#24272b",
+        "oklch": "oklch(27.1% 0.009 255.6)",
+        "tonalRamp": [
+          "oklch(15% 0.005 255.6)",
+          "oklch(25% 0.005 255.6)",
+          "oklch(35% 0.009 255.6)",
+          "oklch(45% 0.009 255.6)",
+          "oklch(55% 0.009 255.6)",
+          "oklch(65% 0.009 255.6)",
+          "oklch(80% 0.009 255.6)",
+          "oklch(95% 0.005 255.6)"
+        ]
+      },
+      "muted-foreground-dark": {
+        "role": "neutral",
+        "displayName": "Quiet Ink (dark)",
+        "canonical": "#9a9ea5",
+        "oklch": "oklch(69.8% 0.011 261.8)",
+        "tonalRamp": [
+          "oklch(15% 0.007 261.8)",
+          "oklch(25% 0.007 261.8)",
+          "oklch(35% 0.011 261.8)",
+          "oklch(45% 0.011 261.8)",
+          "oklch(55% 0.011 261.8)",
+          "oklch(65% 0.011 261.8)",
+          "oklch(80% 0.011 261.8)",
+          "oklch(95% 0.007 261.8)"
+        ]
+      },
+      "border-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#2a2d31",
+        "oklch": "oklch(29.6% 0.008 255.6)",
+        "tonalRamp": [
+          "oklch(15% 0.005 255.6)",
+          "oklch(25% 0.005 255.6)",
+          "oklch(35% 0.008 255.6)",
+          "oklch(45% 0.008 255.6)",
+          "oklch(55% 0.008 255.6)",
+          "oklch(65% 0.008 255.6)",
+          "oklch(80% 0.008 255.6)",
+          "oklch(95% 0.005 255.6)"
+        ]
+      },
+      "ring-dark": {
+        "role": "neutral",
+        "displayName": "Ring (dark)",
+        "canonical": "#5b6068",
+        "oklch": "oklch(48.7% 0.014 259.8)",
+        "tonalRamp": [
+          "oklch(15% 0.009 259.8)",
+          "oklch(25% 0.009 259.8)",
+          "oklch(35% 0.014 259.8)",
+          "oklch(45% 0.014 259.8)",
+          "oklch(55% 0.014 259.8)",
+          "oklch(65% 0.014 259.8)",
+          "oklch(80% 0.014 259.8)",
+          "oklch(95% 0.009 259.8)"
+        ]
       },
       "cartera-dark": {
         "role": "secondary",
         "displayName": "Cartera Blue (dark)",
-        "darkOf": "cartera"
+        "canonical": "#6c9be8",
+        "oklch": "oklch(68.9% 0.125 259.9)",
+        "tonalRamp": [
+          "oklch(15% 0.075 259.9)",
+          "oklch(25% 0.075 259.9)",
+          "oklch(35% 0.125 259.9)",
+          "oklch(45% 0.125 259.9)",
+          "oklch(55% 0.125 259.9)",
+          "oklch(65% 0.125 259.9)",
+          "oklch(80% 0.125 259.9)",
+          "oklch(95% 0.075 259.9)"
+        ]
       },
       "inversiones-dark": {
         "role": "secondary",
         "displayName": "Inversiones Green (dark)",
-        "darkOf": "inversiones"
+        "canonical": "#46b25e",
+        "oklch": "oklch(68.1% 0.156 148.1)",
+        "tonalRamp": [
+          "oklch(15% 0.094 148.1)",
+          "oklch(25% 0.094 148.1)",
+          "oklch(35% 0.156 148.1)",
+          "oklch(45% 0.156 148.1)",
+          "oklch(55% 0.156 148.1)",
+          "oklch(65% 0.156 148.1)",
+          "oklch(80% 0.156 148.1)",
+          "oklch(95% 0.094 148.1)"
+        ]
+      },
+      "inversiones-text-dark": {
+        "role": "secondary",
+        "displayName": "Inversiones Text (dark)",
+        "canonical": "#5cc272",
+        "oklch": "oklch(73.3% 0.149 148.7)",
+        "tonalRamp": [
+          "oklch(15% 0.090 148.7)",
+          "oklch(25% 0.090 148.7)",
+          "oklch(35% 0.149 148.7)",
+          "oklch(45% 0.149 148.7)",
+          "oklch(55% 0.149 148.7)",
+          "oklch(65% 0.149 148.7)",
+          "oklch(80% 0.149 148.7)",
+          "oklch(95% 0.090 148.7)"
+        ]
       },
       "activos-dark": {
         "role": "secondary",
         "displayName": "Activos Ochre (dark)",
-        "darkOf": "activos"
+        "canonical": "#e2b04f",
+        "oklch": "oklch(78.5% 0.127 81.5)",
+        "tonalRamp": [
+          "oklch(15% 0.076 81.5)",
+          "oklch(25% 0.076 81.5)",
+          "oklch(35% 0.127 81.5)",
+          "oklch(45% 0.127 81.5)",
+          "oklch(55% 0.127 81.5)",
+          "oklch(65% 0.127 81.5)",
+          "oklch(80% 0.127 81.5)",
+          "oklch(95% 0.076 81.5)"
+        ]
       },
       "deudas-dark": {
         "role": "secondary",
         "displayName": "Deudas Red (dark)",
-        "darkOf": "deudas"
+        "canonical": "#ef5c53",
+        "oklch": "oklch(66.5% 0.183 26.7)",
+        "tonalRamp": [
+          "oklch(15% 0.110 26.7)",
+          "oklch(25% 0.110 26.7)",
+          "oklch(35% 0.183 26.7)",
+          "oklch(45% 0.183 26.7)",
+          "oklch(55% 0.183 26.7)",
+          "oklch(65% 0.183 26.7)",
+          "oklch(80% 0.183 26.7)",
+          "oklch(95% 0.110 26.7)"
+        ]
       },
       "alerta-dark": {
         "role": "tertiary",
         "displayName": "Alerta Amber (dark)",
-        "darkOf": "alerta"
+        "canonical": "#f0a020",
+        "oklch": "oklch(76.7% 0.157 71.7)",
+        "tonalRamp": [
+          "oklch(15% 0.094 71.7)",
+          "oklch(25% 0.094 71.7)",
+          "oklch(35% 0.157 71.7)",
+          "oklch(45% 0.157 71.7)",
+          "oklch(55% 0.157 71.7)",
+          "oklch(65% 0.157 71.7)",
+          "oklch(80% 0.157 71.7)",
+          "oklch(95% 0.094 71.7)"
+        ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Only the patrimonio figure; one per screen."
+        "purpose": "The patrimonio figure only; 30px mobile, 36px from 640px."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Section titles under the ink rule."
+        "purpose": "Composition values under the patrimonio bar."
       },
-      "numeral": {
-        "displayName": "Date Numeral",
-        "purpose": "Day number in the upcoming-payments date column."
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles in Quiet Ink."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Row names, sentences, list primary lines."
+        "purpose": "Interpretive sentence and sum lines."
       },
-      "amount": {
-        "displayName": "Amount",
-        "purpose": "Money figures in rows, colored by domain ink."
+      "body-sm": {
+        "displayName": "Body small",
+        "purpose": "List rows, nav items, empty states."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Legends, unit keys, sublines, toggles."
-      },
-      "micro": {
-        "displayName": "Micro",
-        "purpose": "Uppercase month under a date numeral only."
+        "purpose": "Secondary lines, dates, chart ticks, segmented items."
       }
     },
-    "shadows": [],
-    "motion": [
+    "shadows": [
       {
-        "name": "color-transition",
-        "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)",
-        "purpose": "Tailwind default transition-colors on hover for tabs, toggles, rows and icon buttons."
+        "name": "selected-segment",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Active item of a segmented control."
       },
       {
-        "name": "focus-dim",
-        "value": "opacity 300ms",
-        "purpose": "Non-selected spending rows fade to 25% opacity when a category is opened."
+        "name": "floating",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "FAB and Sheet drawer."
+      }
+    ],
+    "motion": [
+      {
+        "name": "chart-enter",
+        "value": "500ms",
+        "purpose": "Recharts series animation on mount and data change."
+      },
+      {
+        "name": "state-colors",
+        "value": "150ms ease (Tailwind transition-colors)",
+        "purpose": "Hover and selection color changes."
+      },
+      {
+        "name": "fab-press",
+        "value": "scale(1.05) hover, scale(0.95) active",
+        "purpose": "FAB feedback."
+      },
+      {
+        "name": "sheet",
+        "value": "300ms close, 500ms open, ease-in-out",
+        "purpose": "Mobile navigation drawer."
       }
     ],
     "breakpoints": [
       {
         "name": "sm",
-        "value": "640px",
-        "purpose": "Figure rows gain the 11rem side label column."
+        "value": "640px"
       },
       {
         "name": "md",
-        "value": "768px",
-        "purpose": "32px page padding; floating add button hidden."
+        "value": "768px"
       },
       {
         "name": "lg",
-        "value": "1024px",
-        "purpose": "7/5 dashboard grid and header tabs; drawer button hidden."
+        "value": "1024px"
+      },
+      {
+        "name": "container",
+        "value": "1240px"
       }
-    ],
-    "darkMode": {
-      "strategy": "prefers-color-scheme: dark",
-      "note": "Same roles, values in the -dark color tokens; activos-text equals activos in dark."
-    }
+    ]
   },
   "components": [
     {
-      "name": "Figure Row",
-      "kind": "custom",
-      "description": "Isotype row: identical flat square blocks on a 20-column grid, one figure per unit, half-figure remnant, colored by domain ink.",
-      "html": "<div class=\"ds-fig\"><div class=\"ds-fig-label\"><div class=\"ds-fig-name\">Activos</div><div class=\"ds-fig-amt\">$287,0M</div><div class=\"ds-fig-det\">2 activos</div></div><div class=\"ds-fig-row\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg><span class=\"ds-fig-half\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5 1.5 11.5h3v10h5.5v-6.5h4v6.5h5.5v-10h3L12 2.5Z\"/></svg></span></div></div><p class=\"ds-fig-key\"><span class=\"ds-fig-sq\"></span>Una figura = $20M. Lo rojo resta.</p>",
-      "css": "font-family:'Jost Variable',ui-sans-serif,system-ui,sans-serif;.ds-fig{display:grid;grid-template-columns:11rem 1fr;gap:6px 24px;align-items:center;font-family:'Jost Variable',ui-sans-serif,system-ui,sans-serif;} .ds-fig-name{font-size:15px;color:var(--ink,#1c1c1a)} .ds-fig-amt{font-size:15px;font-weight:600;color:var(--activos-text,#8a5f12);font-variant-numeric:tabular-nums} .ds-fig-det{font-size:13px;color:var(--ink-2,#5e5d58)} .ds-fig-row{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));column-gap:3px;color:var(--activos,#d8a23a)} .ds-fig-row svg{width:100%;aspect-ratio:1} .ds-fig-half svg{clip-path:inset(0 50% 0 0)} .ds-fig-key{display:flex;align-items:center;gap:8px;margin-top:20px;font-size:13px;color:var(--ink-2,#5e5d58);font-family:'Jost Variable',ui-sans-serif,system-ui,sans-serif;} .ds-fig-sq{width:11px;height:11px;background:var(--ink,#1c1c1a)}"
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The single dashboard container: title, interpretive sentence, then evidence.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-title\">Este mes en tu cartera</h2><p class=\"ds-panel-frase\">Te quedó el <b class=\"ds-pos\">63,4%</b> de lo que entró.</p><div class=\"ds-row\"><span>Entró</span><span class=\"ds-in\">+$6.500.000</span></div><div class=\"ds-row\"><span>Salió</span><span class=\"ds-out\">−$1.527.000</span></div><div class=\"ds-total\"><span>Te quedó</span><span>$4.973.000</span></div></section>",
+      "css": ".ds-panel{font-family:'Archivo Variable',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;background:var(--card,#fff);color:var(--foreground,#09090b);border:1px solid var(--border,#e4e4e7);border-radius:14px;padding:20px;max-width:360px}.ds-panel-title{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--muted-foreground,#6b6b74)}.ds-panel-frase{margin:0 0 16px;font-size:15px;line-height:1.375}.ds-pos{font-weight:600;color:var(--inversiones-text,#15803d)}.ds-row{display:flex;justify-content:space-between;font-size:15px;margin-top:4px}.ds-in{font-weight:500;color:var(--cartera,#2563eb)}.ds-out{font-weight:500;color:var(--deudas,#dc2626)}.ds-total{display:flex;justify-content:space-between;margin-top:12px;padding-top:8px;border-top:2px solid color-mix(in oklab,var(--foreground,#09090b) 80%,transparent);font-size:15px;font-weight:600}"
     },
     {
-      "name": "Confirm Icon Button",
+      "name": "Segmented control",
+      "kind": "chip",
+      "refersTo": "segmented",
+      "description": "Single-choice period or series picker on a Wash track.",
+      "html": "<div class=\"ds-seg\" role=\"group\" aria-label=\"Período\"><button class=\"ds-seg-item\">3M</button><button class=\"ds-seg-item ds-on\" aria-pressed=\"true\">6M</button><button class=\"ds-seg-item\">1A</button><button class=\"ds-seg-item\">Todo</button></div>",
+      "css": ".ds-seg{font-family:'Archivo Variable',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;display:inline-flex;gap:2px;padding:2px;border-radius:8px;background:var(--muted,#f4f4f5)}.ds-seg-item{height:28px;padding:0 8px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:12px;font-weight:500;color:var(--muted-foreground,#6b6b74);cursor:pointer;transition:color .15s}.ds-seg-item:hover{color:var(--foreground,#09090b)}.ds-seg-item:focus-visible{outline:2px solid var(--ring,#a1a1aa);outline-offset:2px}.ds-seg-item.ds-on{background:var(--card,#fff);color:var(--foreground,#09090b);box-shadow:0 1px 2px 0 rgb(0 0 0/.05)}"
+    },
+    {
+      "name": "Nav pills",
+      "kind": "nav",
+      "refersTo": "nav-pill",
+      "description": "Desktop header navigation; active pill filled with Ink.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-pill ds-active\" aria-current=\"page\">Dashboard</button><button class=\"ds-pill\">Transacciones</button><button class=\"ds-pill\">Inversiones<span class=\"ds-dot\"></span></button></nav>",
+      "css": ".ds-nav{font-family:'Archivo Variable',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;display:flex;gap:4px}.ds-pill{display:flex;align-items:center;padding:6px 12px;border:0;border-radius:9999px;background:transparent;font:inherit;font-size:14px;color:var(--muted-foreground,#6b6b74);cursor:pointer;transition:background .15s,color .15s}.ds-pill:hover{background:var(--muted,#f4f4f5);color:var(--foreground,#09090b)}.ds-pill:focus-visible{outline:2px solid var(--ring,#a1a1aa);outline-offset:2px}.ds-pill.ds-active{background:var(--primary,#09090b);color:var(--primary-foreground,#fafafa);font-weight:500}.ds-dot{width:6px;height:6px;margin-left:6px;transform:translateY(-8px);border-radius:9999px;background:var(--alerta,#d97706)}"
+    },
+    {
+      "name": "Confirm and skip buttons",
       "kind": "button",
       "refersTo": "button-confirm",
-      "description": "Ink-filled square that registers an upcoming operation.",
-      "html": "<button class=\"ds-btn-confirm\" aria-label=\"Registrar\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg></button>",
-      "css": ".ds-btn-confirm{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:3px;background:var(--ink,#1c1c1a);color:var(--paper,#fbfbf9);cursor:pointer;transition:opacity .15s} .ds-btn-confirm:hover{opacity:.85} .ds-btn-confirm:focus-visible{outline:2px solid var(--ink,#1c1c1a);outline-offset:2px}"
+      "description": "32px icon pair on upcoming rows: quiet skip, Ink-filled register.",
+      "html": "<div class=\"ds-pair\"><button class=\"ds-quiet\" aria-label=\"No tomar esta vez\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg></button><button class=\"ds-confirm\" aria-label=\"Registrar\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></button></div>",
+      "css": ".ds-pair{display:flex;gap:4px}.ds-quiet,.ds-confirm{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:8px;cursor:pointer}.ds-quiet{background:transparent;color:var(--muted-foreground,#6b6b74);transition:background .15s,color .15s}.ds-quiet:hover{background:var(--muted,#f4f4f5);color:var(--deudas,#dc2626)}.ds-confirm{background:var(--primary,#09090b);color:var(--primary-foreground,#fafafa);transition:opacity .15s}.ds-confirm:hover{opacity:.85}.ds-quiet:focus-visible,.ds-confirm:focus-visible{outline:2px solid var(--ring,#a1a1aa);outline-offset:2px}"
     },
     {
-      "name": "Skip Icon Button",
-      "kind": "button",
-      "refersTo": "button-skip",
-      "description": "Bare square that skips an upcoming operation; hover washes and turns red.",
-      "html": "<button class=\"ds-btn-skip\" aria-label=\"No tomar esta vez\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg></button>",
-      "css": ".ds-btn-skip{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:3px;background:transparent;color:var(--ink-2,#5e5d58);cursor:pointer;transition:background-color .15s,color .15s} .ds-btn-skip:hover{background:var(--wash,#f1f0eb);color:var(--deudas,#c3352b)} .ds-btn-skip:focus-visible{outline:2px solid var(--ink,#1c1c1a);outline-offset:2px}"
-    },
-    {
-      "name": "Primary Button",
-      "kind": "button",
-      "refersTo": "button-primary",
-      "description": "Ink fill, paper text; the only filled text action.",
-      "html": "<button class=\"ds-btn-primary\">Guardar</button>",
-      "css": ".ds-btn-primary{height:36px;padding:8px 16px;border:0;border-radius:3px;background:var(--ink,#1c1c1a);color:var(--paper,#fbfbf9);font-size:14px;font-weight:500;font-family:'Jost Variable',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color .15s} .ds-btn-primary:hover{background:color-mix(in srgb,var(--ink,#1c1c1a) 90%,transparent)} .ds-btn-primary:focus-visible{outline:2px solid var(--ink,#1c1c1a);outline-offset:2px}"
-    },
-    {
-      "name": "Period Toggle",
-      "kind": "chip",
-      "refersTo": "toggle-period",
-      "description": "Bare-text single-select; the active option gets a 2px ink underbar.",
-      "html": "<div class=\"ds-tg\" role=\"group\" aria-label=\"Período\"><button class=\"ds-tg-i\">1S</button><button class=\"ds-tg-i\" aria-pressed=\"true\">1M</button><button class=\"ds-tg-i\">3M</button><button class=\"ds-tg-i\">1A</button><button class=\"ds-tg-i\">Todo</button></div>",
-      "css": ".ds-tg{display:flex} .ds-tg-i{position:relative;height:32px;min-width:32px;padding:0 6px;border:0;background:transparent;color:var(--ink-2,#5e5d58);font-size:13px;font-weight:500;font-family:'Jost Variable',ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:color .15s} .ds-tg-i:hover{color:var(--ink,#1c1c1a)} .ds-tg-i::after{content:'';position:absolute;left:6px;right:6px;bottom:0;height:2px;background:transparent} .ds-tg-i[aria-pressed=true]{color:var(--ink,#1c1c1a)} .ds-tg-i[aria-pressed=true]::after{background:var(--ink,#1c1c1a)} .ds-tg-i:focus-visible{outline:2px solid var(--ink,#1c1c1a);outline-offset:2px}"
-    },
-    {
-      "name": "Header Navigation",
-      "kind": "nav",
-      "refersTo": "nav-tab",
-      "description": "Text tabs on an ink header rule; active tab sits on a 3px ink bar. Alerta dot marks stale prices.",
-      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav-brand\">Moni</span><a class=\"ds-nav-t\" aria-current=\"page\" href=\"#\">Dashboard</a><a class=\"ds-nav-t\" href=\"#\">Deudas</a><a class=\"ds-nav-t\" href=\"#\">Inversiones<span class=\"ds-nav-dot\"></span></a><a class=\"ds-nav-t\" href=\"#\">Ajustes</a></nav>",
-      "css": ".ds-nav{display:flex;align-items:stretch;gap:4px;height:56px;padding:0 32px;border-bottom:1px solid var(--ink,#1c1c1a);background:var(--paper,#fbfbf9);font-family:'Jost Variable',ui-sans-serif,system-ui,sans-serif;} .ds-nav-brand{align-self:center;margin-right:auto;font-size:19px;font-weight:600;letter-spacing:-0.025em;color:var(--ink,#1c1c1a)} .ds-nav-t{display:flex;align-items:center;margin-bottom:-1px;padding:0 12px;border-bottom:3px solid transparent;font-size:15px;color:var(--ink-2,#5e5d58);text-decoration:none;transition:color .15s} .ds-nav-t:hover{color:var(--ink,#1c1c1a)} .ds-nav-t[aria-current=page]{border-bottom-color:var(--ink,#1c1c1a);color:var(--ink,#1c1c1a);font-weight:500} .ds-nav-t:focus-visible{outline:2px solid var(--ink,#1c1c1a);outline-offset:2px} .ds-nav-dot{display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:9999px;background:var(--alerta,#b06d00);transform:translateY(-8px)}"
-    },
-    {
-      "name": "Section Header",
-      "kind": "card",
-      "description": "The replacement for cards: ink rule, 18px semibold title, toggles to the right.",
-      "html": "<section class=\"ds-sec\"><div class=\"ds-sec-h\"><h2>Lo que viene</h2><span class=\"ds-sec-x\">1M</span></div><p class=\"ds-sec-p\"><b>$2.978.000</b> en gastos, incluidas las tarjetas.</p></section>",
-      "css": ".ds-sec{border-top:1px solid var(--ink,#1c1c1a);padding-top:16px;font-family:'Jost Variable',ui-sans-serif,system-ui,sans-serif;} .ds-sec-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;margin-bottom:20px} .ds-sec-h h2{margin:0;font-size:18px;font-weight:600;letter-spacing:-0.025em;color:var(--ink,#1c1c1a)} .ds-sec-x{font-size:13px;color:var(--ink-2,#5e5d58)} .ds-sec-p{margin:0;font-size:15px;color:var(--ink-2,#5e5d58)} .ds-sec-p b{font-weight:600;color:var(--ink,#1c1c1a)}"
-    },
-    {
-      "name": "Upcoming Operation Row",
+      "name": "Category bars with sum",
       "kind": "custom",
-      "description": "Date column (large day, small uppercase month), label and subline, domain-ink amount, skip and confirm.",
-      "html": "<div class=\"ds-op\"><div class=\"ds-op-d\"><div class=\"ds-op-n\">10</div><div class=\"ds-op-m\">nov</div></div><div class=\"ds-op-b\"><div class=\"ds-op-l\">Préstamo familiar</div><div class=\"ds-op-s\">Cuota deuda · <span>vencido 3d</span></div></div><div class=\"ds-op-a\">−$250.000</div><button class=\"ds-op-x\" aria-label=\"No tomar\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg></button><button class=\"ds-op-c\" aria-label=\"Registrar\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg></button></div>",
-      "css": ".ds-op{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--rule,#dedcd5);font-family:'Jost Variable',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums} .ds-op-d{width:44px;text-align:center;line-height:1} .ds-op-n{font-size:26px;font-weight:500;letter-spacing:-0.025em;color:var(--deudas,#c3352b)} .ds-op-m{margin-top:4px;font-size:11px;font-weight:500;letter-spacing:.025em;text-transform:uppercase;color:var(--ink-2,#5e5d58)} .ds-op-b{flex:1;min-width:0} .ds-op-l{font-size:15px;color:var(--ink,#1c1c1a)} .ds-op-s{font-size:13px;color:var(--ink-2,#5e5d58)} .ds-op-s span{font-weight:500;color:var(--deudas,#c3352b)} .ds-op-a{font-size:15px;font-weight:600;color:var(--deudas,#c3352b)} .ds-op-x,.ds-op-c{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:3px;cursor:pointer} .ds-op-x{background:transparent;color:var(--ink-2,#5e5d58)} .ds-op-x:hover{background:var(--wash,#f1f0eb);color:var(--deudas,#c3352b)} .ds-op-c{background:var(--ink,#1c1c1a);color:var(--paper,#fbfbf9)} .ds-op-c:hover{opacity:.85} .ds-op-x:focus-visible,.ds-op-c:focus-visible{outline:2px solid var(--ink,#1c1c1a);outline-offset:2px}"
+      "refersTo": "bar-track",
+      "description": "Spending by category in Ink bars, closed by the adding-machine total.",
+      "html": "<div class=\"ds-cats\"><p class=\"ds-frase\"><b>Arriendo</b> se lleva el <b>39%</b> de lo que gastaste en el último mes.</p><div class=\"ds-cat\"><span>Arriendo</span><span class=\"ds-track\"><span style=\"width:100%\"></span></span><b>$1,2M</b></div><div class=\"ds-cat\"><span>Mercado</span><span class=\"ds-track\"><span style=\"width:61%\"></span></span><b>$729k</b></div><div class=\"ds-cat\"><span>Ocio</span><span class=\"ds-track\"><span style=\"width:41%\"></span></span><b>$488k</b></div><div class=\"ds-sum\"><span>Total gastado, con tarjetas</span><span>$2.978.000</span></div></div>",
+      "css": ".ds-cats{font-family:'Archivo Variable',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;max-width:420px;color:var(--foreground,#09090b)}.ds-frase{margin:0 0 16px;font-size:15px;line-height:1.375}.ds-frase b{font-weight:600}.ds-cat{display:grid;grid-template-columns:7.5rem 1fr 4rem;align-items:center;gap:12px;padding:6px 8px;margin:0 -8px;border-radius:8px;font-size:14px;cursor:pointer;transition:background .15s}.ds-cat:hover{background:var(--muted,#f4f4f5)}.ds-cat b{text-align:right;font-weight:600}.ds-track{display:block;height:8px;border-radius:9999px;background:var(--muted,#f4f4f5);overflow:hidden}.ds-track span{display:block;height:100%;border-radius:9999px;background:color-mix(in oklab,var(--foreground,#09090b) 75%,transparent)}.ds-sum{display:flex;justify-content:space-between;margin-top:12px;padding-top:8px;border-top:2px solid color-mix(in oklab,var(--foreground,#09090b) 80%,transparent);font-size:15px;font-weight:600}"
+    },
+    {
+      "name": "Composition strip",
+      "kind": "custom",
+      "refersTo": "composition-bar",
+      "description": "Patrimonio figure, four-domain stacked bar and labeled legend.",
+      "html": "<div class=\"ds-comp\"><div class=\"ds-head\"><span class=\"ds-t\">Patrimonio</span><span class=\"ds-big\">$319,1M</span></div><div class=\"ds-strip\"><span style=\"flex-grow:287;background:var(--activos,#d4961c)\"></span><span style=\"flex-grow:20;background:var(--inversiones,#16a34a)\"></span><span style=\"flex-grow:27;background:var(--cartera,#2563eb)\"></span><span style=\"flex-grow:15;background:var(--deudas,#dc2626)\"></span></div><ul class=\"ds-leg\"><li><i style=\"background:var(--activos,#d4961c)\"></i>Activos<b style=\"color:var(--activos-text,#a16207)\">$287,0M</b></li><li><i style=\"background:var(--deudas,#dc2626)\"></i>Deudas<b style=\"color:var(--deudas,#dc2626)\">−$15,3M</b></li></ul></div>",
+      "css": ".ds-comp{font-family:'Archivo Variable',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--foreground,#09090b);max-width:520px}.ds-head{display:flex;align-items:baseline;gap:16px}.ds-t{font-size:14px;font-weight:600;color:var(--muted-foreground,#6b6b74)}.ds-big{font-size:36px;font-weight:600;letter-spacing:-.025em}.ds-strip{display:flex;gap:2px;height:12px;margin-top:16px;border-radius:9999px;overflow:hidden;background:var(--muted,#f4f4f5)}.ds-strip span{flex-basis:0}.ds-leg{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin:12px 0 0;padding:0;list-style:none;font-size:13px;color:var(--muted-foreground,#6b6b74)}.ds-leg i{display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:2px}.ds-leg b{display:block;margin-top:2px;font-size:18px;font-weight:600}"
+    },
+    {
+      "name": "FAB",
+      "kind": "button",
+      "refersTo": "fab",
+      "description": "Mobile-only create action, Ink circle with the floating shadow.",
+      "html": "<button class=\"ds-fab\" aria-label=\"Agregar\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></button>",
+      "css": ".ds-fab{display:grid;place-items:center;width:56px;height:56px;border:0;border-radius:9999px;background:var(--primary,#09090b);color:var(--primary-foreground,#fafafa);box-shadow:0 10px 15px -3px rgb(0 0 0/.1),0 4px 6px -4px rgb(0 0 0/.1);cursor:pointer;transition:transform .15s}.ds-fab:hover{transform:scale(1.05)}.ds-fab:active{transform:scale(.95)}.ds-fab:focus-visible{outline:2px solid var(--ring,#a1a1aa);outline-offset:2px}"
     }
   ],
   "narrative": {
-    "northStar": "The Pictorial Ledger",
-    "overview": "Moni counts money the way Otto Neurath and Gerd Arntz counted populations: every quantity is a row of identical unit figures, one figure equals one fixed amount, and more money means more figures, never a bigger figure. \"How am I doing\" and \"where does it go\" are read by row length before a single number is parsed. The page is paper and ink, with four flat domain inks that mean the same thing on every screen.\n\nDensity is calm. Sections are separated by an ink hairline and generous vertical air (56px), not by cards. Hierarchy comes from scale alone: one huge patrimonio numeral, then section titles, then body. There are no gradients, no glow, no tinted surfaces and no decorative imagery; the unit blocks are the only marks, and each one is also a unit of measure.\n\nThe world ships a dark rendition (ink-black ground, the same four inks lifted for contrast) that follows the system preference. It is the same world, not a second theme.",
+    "northStar": "The Annotated Ledger",
+    "overview": "Moni is a compact card dashboard. Each card states its finding in one plain Spanish sentence (\"Subiste +$20,1M desde fin de jun.\", \"Arriendo se lleva el 39% de lo que gastaste en el último mes\"), then shows the chart, list or sum that backs it up. The cards use the shadcn neutral style: white panels on an off-white ground with hairline borders, or near-black panels on a cool charcoal ground in dark mode. The theme follows the system preference and the app has no theme toggle.\n\nThe density is set by the owner. The dashboard replaced an Isotype layout that was rejected for being empty and wasting space, so every block takes only the room its content needs. Color carries meaning, not decoration. Four fixed domain colors (activos ochre, inversiones green, cartera blue, deudas red) are the only hues allowed, and they show up wherever those domains appear. Everything else is neutral. Sums are shown the way an adding machine would: entró, salió, a rule, then te quedó.\n\nArchivo sets every word and every number, with tabular figures across the whole document so amounts line up in columns. The app has no display face, no monospace and no decorative type.",
     "keyCharacteristics": [
-      "Isotype rows of identical flat blocks as the primary data display.",
-      "Four fixed domain inks: blue cartera, green inversiones, ochre activos, red deudas.",
-      "One typeface (Jost, Futura lineage) for every word and number, tabular figures throughout.",
-      "Ink hairlines above sections; a thick ink underline marks the active tab or period.",
-      "Flat everywhere: no card surfaces, no shadows, no gradients."
+      "One plain-language sentence at the top of every card, before any chart or list.",
+      "Compact cards: 16px padding (20px from 640px), 12 to 16px gaps between cards.",
+      "Four domain colors with fixed meanings; the rest is neutral.",
+      "Archivo only, with tabular figures everywhere.",
+      "Flat surfaces with hairline borders; shadows only on floating or selected elements.",
+      "Light and dark themes follow `prefers-color-scheme`."
     ],
     "rules": [
       {
-        "name": "The Fixed Ink Rule",
-        "body": "Blue is always cartera, green always inversiones, ochre always activos, red always deudas or subtraction. A domain ink is never used decoratively or for a different meaning, and no fifth data color is introduced.",
+        "name": "The Four Meanings Rule",
+        "body": "Activos is ochre, inversiones is green, cartera is blue, deudas is red, on every surface and in every chart. No fifth hue is ever introduced, and none of these colors is borrowed for decoration or for an unrelated meaning.",
         "section": "colors"
       },
       {
-        "name": "The Red Subtracts Rule",
-        "body": "Anything that lowers net worth or cash is red, and the legend says so (\"Lo rojo resta\"). Spending is ink, not red; red is reserved for debt and loss.",
+        "name": "The Text Variant Rule",
+        "body": "Green and ochre each have a fill value and a text value. Any figure or word set in those colors uses the `-text` token. Blue and red are AA on both grounds as they are.",
         "section": "colors"
       },
       {
-        "name": "The Ochre Split Rule",
-        "body": "Ochre fills figures; Activos Text carries ochre words and amounts. Never set small text in the fill ochre on paper.",
+        "name": "The Neutral Spending Rule",
+        "body": "Spending-by-category bars are drawn in Ink at 75%, not in a domain color. A category is not a domain, and red is kept for debt and outflow.",
         "section": "colors"
       },
       {
-        "name": "The Scale-Only Hierarchy Rule",
-        "body": "Rank is expressed by size and weight, never by a colored or boxed heading. There is exactly one display-size number per screen.",
+        "name": "The One Face Rule",
+        "body": "Archivo sets every word and number. Don't add a monospace for amounts or a display face for headings.",
         "section": "typography"
       },
       {
-        "name": "The Sentence Rule",
-        "body": "Numbers are explained by a full sentence beneath them (\"Te quedó el 63,4% de lo que entró.\"), not by a label above them.",
+        "name": "The Weight Over Size Rule",
+        "body": "Emphasis inside a sentence or list comes from weight (600) and domain color, not from larger type. Only the patrimonio figure is big.",
         "section": "typography"
       },
       {
-        "name": "The No-Card Rule",
-        "body": "There are no card containers. Grouping is done with a full-width ink rule above a section and whitespace around it.",
-        "section": "elevation"
+        "name": "The Compact Rule",
+        "body": "Nothing gets space it doesn't need. Cards are sized by their content, with no fixed heights beyond the chart itself (200px area, 120px bars), no hero padding and no empty decorative bands. If a block looks sparse, merge it or shrink it. Don't pad it.",
+        "section": "layout"
       },
       {
-        "name": "The Focus-Dims Rule",
-        "body": "Emphasis comes from dimming the rest, not lifting the subject: an open spending category keeps full ink while every other row drops to 25% opacity over 300ms.",
+        "name": "The Sentence First Rule",
+        "body": "Every card opens with one plain-language sentence that interprets its numbers, such as \"Te quedó el 63,4% de lo que entró\" or \"Tenés 1 pago vencido y $1.145.000 por pagar en 45 días\". The chart, list or sum that follows is the evidence. A card that only shows numbers is unfinished.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Panel Rule",
+        "body": "Cards never get a shadow. Depth comes from the border and the change in surface color.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do show any comparable set of quantities as figure rows on one shared unit, with a key line stating the unit.",
-      "Do keep each domain on its fixed ink (activos ochre, inversiones green, cartera blue, deudas red) on every tab.",
-      "Do separate sections with a 1px ink rule and 56px of space, and dividers inside lists with the rule color.",
-      "Do mark selection with an ink bar (3px for navigation, 2px for toggles) and hover with a wash fill.",
-      "Do explain a figure with a full sentence in 15px body or 13px label, emphasizing the number in ink.",
-      "Do set every amount in Jost with tabular figures, signed with a true minus sign.",
-      "Do carry every new color decision as a light and dark pair."
+      "Do open every card with one plain-language sentence that interprets its numbers, with the key figure semibold and colored by its sign.",
+      "Do keep layouts compact: 16 to 20px card padding, 12 to 16px gaps, height set by content.",
+      "Do show sums as an adding machine would: the items, a 2px Ink rule, then the total.",
+      "Do use the `-text` variants for green and ochre whenever they color text.",
+      "Do use a real minus sign (U+2212) and an explicit plus sign on signed amounts.",
+      "Do keep the four domain colors bound to activos, inversiones, cartera and deudas everywhere."
     ],
     "donts": [
-      "Don't scale a figure up to show more money; add figures.",
-      "Don't wrap content in cards, tinted panels or bordered boxes.",
-      "Don't use gradients, glow or decorative drop shadows.",
-      "Don't introduce a second typeface or a monospace for amounts.",
-      "Don't use a domain ink for anything outside its domain, or set small text in the fill ochre on paper.",
-      "Don't fall back to the KPI-tile row, donut chart or smoothed line chart."
+      "Don't add a fifth accent hue or use a domain color for decoration.",
+      "Don't put shadows on cards; shadows are for floating and selected elements only.",
+      "Don't introduce a second typeface, a monospace for amounts, or proportional figures.",
+      "Don't add decorative empty space, hero bands or fixed-height cards that leave room unused.",
+      "Don't show a card that is only numbers, with no sentence saying what they mean.",
+      "Don't load fonts, icons or chart code from a CDN; everything is bundled or self-hosted."
     ]
   }
 }

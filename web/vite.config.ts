@@ -7,6 +7,10 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  build: {
+    // Recharts sits on the landing tab, so splitting it would not shrink first load; served on a LAN.
+    chunkSizeWarningLimit: 900,
+  },
   server: {
     port: 5173,
     proxy: { '/api': 'http://localhost:8080' },

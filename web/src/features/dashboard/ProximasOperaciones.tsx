@@ -9,15 +9,15 @@ import { useOpenerCtx } from '@/shell/openers'
 import { openDeudaPayFormById } from '../deudas'
 import { openInvYieldFormById } from '../inversiones'
 import { openRecurrenteMaterializeFormById } from '../recurrentes'
-import { Seccion } from './Seccion'
+import { Panel } from './Seccion'
 
 const VISIBLES = 5
 const MAX = 20
 
 function tinta(e: ProxOp): string {
   if (e.type === 'deuda') return 'text-deudas'
-  if (e.type === 'inversion') return 'text-inversiones'
-  return e.monto >= 0 ? 'text-cartera' : 'text-ink'
+  if (e.type === 'inversion') return 'text-inversiones-text'
+  return e.monto >= 0 ? 'text-cartera' : 'text-foreground'
 }
 
 export function ProximasOperaciones() {
@@ -47,38 +47,50 @@ export function ProximasOperaciones() {
 
   const capped = events.slice(0, MAX)
   const shown = todas ? capped : capped.slice(0, VISIBLES)
+  const vencidas = events.filter((e) => diasHasta(e.date) < 0).length
+  const salen = events.filter((e) => e.monto < 0).reduce((s, e) => s - e.monto, 0)
+  const frase = !loaded || !events.length ? undefined : vencidas ? (
+    <>
+      Tenés <span className="font-semibold text-deudas">{vencidas} {vencidas === 1 ? 'pago vencido' : 'pagos vencidos'}</span> y{' '}
+      <span className="font-semibold">{cop(salen)}</span> por pagar en 45 días.
+    </>
+  ) : (
+    <>
+      <span className="font-semibold">{cop(salen)}</span> por pagar en los próximos 45 días.
+    </>
+  )
 
   return (
-    <Seccion id="dash-proximas" titulo="Lo que viene">
+    <Panel id="dash-proximas" titulo="Lo que viene" frase={frase}>
       {!loaded ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-12 animate-pulse rounded-sm bg-wash" />
+            <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />
           ))}
         </div>
       ) : !events.length ? (
-        <p className="py-4 text-[15px] text-ink-2">Sin operaciones en los próximos 45 días.</p>
+        <p className="py-3 text-sm text-muted-foreground">Sin operaciones en los próximos 45 días.</p>
       ) : (
         <>
-          <ul id="dash-upcoming" className="divide-y divide-rule">
+          <ul id="dash-upcoming" className="divide-y">
             {shown.map((e) => {
               const days = diasHasta(e.date)
               const vencida = days < 0
               return (
-                <li key={e.key} data-op={e.key} className="prox-op-row flex items-center gap-4 py-3">
-                  <div className="w-11 shrink-0 text-center leading-none" aria-hidden="true">
-                    <div className={cn('text-[26px] font-medium tracking-tight', vencida ? 'text-deudas' : 'text-ink')}>{e.date.getDate()}</div>
-                    <div className="mt-1 text-[11px] font-medium tracking-wide text-ink-2 uppercase">
+                <li key={e.key} data-op={e.key} className="prox-op-row flex items-center gap-3 py-2">
+                  <div className="w-10 shrink-0 text-center leading-none" aria-hidden="true">
+                    <div className={cn('text-xl font-semibold', vencida ? 'text-deudas' : 'text-foreground')}>{e.date.getDate()}</div>
+                    <div className="mt-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                       {e.date.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '')}
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="prox-op-label truncate text-[15px] text-ink">{e.label}</div>
-                    <div className="text-[13px] text-ink-2">
+                    <div className="prox-op-label truncate text-sm">{e.label}</div>
+                    <div className="text-xs text-muted-foreground">
                       {e.sub} · <span className={cn(vencida && 'font-medium text-deudas')}>{textoDias(days)}</span>
                     </div>
                   </div>
-                  <div className={cn('shrink-0 text-right text-[15px] font-semibold', tinta(e))}>
+                  <div className={cn('shrink-0 text-right text-sm font-semibold', tinta(e))}>
                     {e.monto > 0 ? '+' : e.monto < 0 ? '−' : ''}
                     {cop(Math.abs(e.monto))}
                   </div>
@@ -88,7 +100,7 @@ export function ProximasOperaciones() {
                       onClick={() => skip(e.key)}
                       title="No tomar esta vez"
                       aria-label={`No tomar esta vez: ${e.label}`}
-                      className="grid size-9 cursor-pointer place-items-center rounded-sm text-ink-2 transition-colors hover:bg-wash hover:text-deudas"
+                      className="grid size-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-deudas"
                     >
                       <X className="size-4" strokeWidth={2.25} />
                     </button>
@@ -97,7 +109,7 @@ export function ProximasOperaciones() {
                       onClick={() => materialize(e.key)}
                       title="Registrar"
                       aria-label={`Registrar: ${e.label}`}
-                      className="grid size-9 cursor-pointer place-items-center rounded-sm bg-ink text-paper transition-opacity hover:opacity-85"
+                      className="grid size-8 cursor-pointer place-items-center rounded-md bg-primary text-primary-foreground transition-opacity hover:opacity-85"
                     >
                       <Check className="size-4" strokeWidth={2.5} />
                     </button>
@@ -111,13 +123,13 @@ export function ProximasOperaciones() {
               type="button"
               onClick={() => setTodas((v) => !v)}
               aria-expanded={todas}
-              className="mt-2 cursor-pointer text-[14px] font-medium text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
+              className="mt-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               {todas ? 'Ver menos' : `Ver las ${capped.length}`}
             </button>
           )}
         </>
       )}
-    </Seccion>
+    </Panel>
   )
 }

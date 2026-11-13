@@ -2,28 +2,30 @@ import type { ReactNode } from 'react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 
-export function Seccion({
+export function Panel({
+  id,
   titulo,
+  frase,
   extra,
   className,
   children,
-  id,
 }: {
+  id: string
   titulo: string
+  frase?: ReactNode
   extra?: ReactNode
   className?: string
   children: ReactNode
-  id?: string
 }) {
-  const headingId = id ? `${id}-titulo` : undefined
   return (
-    <section id={id} aria-labelledby={headingId} className={cn('border-t border-ink pt-4', className)}>
-      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h2 id={headingId} className="text-lg font-semibold tracking-tight text-ink">
+    <section id={id} aria-labelledby={`${id}-titulo`} className={cn('rounded-xl border bg-card p-4 text-card-foreground sm:p-5', className)}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <h2 id={`${id}-titulo`} className="text-sm font-semibold text-muted-foreground">
           {titulo}
         </h2>
         {extra}
       </div>
+      {frase && <p className="mb-4 text-[15px] leading-snug text-foreground">{frase}</p>}
       {children}
     </section>
   )
@@ -52,10 +54,9 @@ export function Periodos<T extends string>({
       onValueChange={(v) => {
         if (v) onChange(v as T)
       }}
-      className="-mx-2.5"
     >
       {options.map((o) => (
-        <ToggleGroupItem key={o.value} value={o.value} data-period={o.value} className="text-[13px]">
+        <ToggleGroupItem key={o.value} value={o.value} data-period={o.value}>
           {o.label}
         </ToggleGroupItem>
       ))}
@@ -63,6 +64,20 @@ export function Periodos<T extends string>({
   )
 }
 
-export function Leyenda({ children }: { children: ReactNode }) {
-  return <p className="mt-4 text-[13px] text-ink-2">{children}</p>
+export function Barra({ valor, max, className }: { valor: number; max: number; className?: string }) {
+  const pct = max > 0 ? Math.max((Math.abs(valor) / max) * 100, valor ? 2 : 0) : 0
+  return (
+    <span aria-hidden="true" className="block h-2 w-full overflow-hidden rounded-full bg-muted">
+      <span className={cn('block h-full rounded-full', className)} style={{ width: `${pct}%` }} />
+    </span>
+  )
+}
+
+export function Total({ label, valor, className }: { label: ReactNode; valor: ReactNode; className?: string }) {
+  return (
+    <div className={cn('mt-3 flex items-baseline justify-between border-t-2 border-foreground/80 pt-2 text-[15px] font-semibold', className)}>
+      <span>{label}</span>
+      <span>{valor}</span>
+    </div>
+  )
 }

@@ -1,276 +1,290 @@
 ---
 name: Moni
-description: Personal finance tracker where every quantity is counted in identical unit figures on flat paper and ink.
+description: Compact card dashboard for one household's money, where every card says in one sentence what its numbers mean.
 colors:
-  paper: "#fbfbf9"
-  ink: "#1c1c1a"
-  ink-2: "#5e5d58"
-  rule: "#dedcd5"
-  wash: "#f1f0eb"
-  cartera: "#2b4c8c"
-  inversiones: "#3f6e2f"
-  activos: "#d8a23a"
-  activos-text: "#8a5f12"
-  deudas: "#c3352b"
-  alerta: "#b06d00"
-  paper-dark: "#141412"
-  ink-dark: "#ecebe5"
-  ink-2-dark: "#a3a29b"
-  rule-dark: "#2f2e2a"
-  wash-dark: "#1e1d1b"
-  cartera-dark: "#8aa6e6"
-  inversiones-dark: "#93c174"
+  background: "#fafafa"
+  foreground: "#09090b"
+  card: "#ffffff"
+  muted: "#f4f4f5"
+  muted-foreground: "#6b6b74"
+  border: "#e4e4e7"
+  ring: "#a1a1aa"
+  cartera: "#2563eb"
+  inversiones: "#16a34a"
+  inversiones-text: "#15803d"
+  activos: "#d4961c"
+  activos-text: "#a16207"
+  deudas: "#dc2626"
+  alerta: "#d97706"
+  background-dark: "#131518"
+  foreground-dark: "#f2f2f3"
+  card-dark: "#1b1e21"
+  muted-dark: "#24272b"
+  muted-foreground-dark: "#9a9ea5"
+  border-dark: "#2a2d31"
+  ring-dark: "#5b6068"
+  cartera-dark: "#6c9be8"
+  inversiones-dark: "#46b25e"
+  inversiones-text-dark: "#5cc272"
   activos-dark: "#e2b04f"
-  deudas-dark: "#f0705f"
-  alerta-dark: "#f0a948"
+  deudas-dark: "#ef5c53"
+  alerta-dark: "#f0a020"
 typography:
   display:
-    fontFamily: "'Jost Variable', ui-sans-serif, system-ui, sans-serif"
-    fontSize: "clamp(3rem, 7vw, 5.25rem)"
-    fontWeight: 500
-    lineHeight: 1
-    letterSpacing: "-0.035em"
-    fontFeature: "'tnum' 1, 'kern' 1"
+    fontFamily: "'Archivo Variable', ui-sans-serif, system-ui, sans-serif"
+    fontSize: "2.25rem"
+    fontWeight: 600
+    lineHeight: 1.1
+    letterSpacing: "-0.025em"
+    fontFeature: "'tnum'"
   headline:
-    fontFamily: "'Jost Variable', ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "'Archivo Variable', ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 600
     lineHeight: 1.55
-    letterSpacing: "-0.025em"
-  numeral:
-    fontFamily: "'Jost Variable', ui-sans-serif, system-ui, sans-serif"
-    fontSize: "26px"
-    fontWeight: 500
-    lineHeight: 1
-    letterSpacing: "-0.025em"
-  body:
-    fontFamily: "'Jost Variable', ui-sans-serif, system-ui, sans-serif"
-    fontSize: "15px"
-    fontWeight: 400
-    lineHeight: 1.5
-    fontFeature: "'tnum' 1, 'kern' 1"
-  amount:
-    fontFamily: "'Jost Variable', ui-sans-serif, system-ui, sans-serif"
-    fontSize: "15px"
+    fontFeature: "'tnum'"
+  title:
+    fontFamily: "'Archivo Variable', ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.875rem"
     fontWeight: 600
-    lineHeight: 1.5
-    fontFeature: "'tnum' 1"
-  label:
-    fontFamily: "'Jost Variable', ui-sans-serif, system-ui, sans-serif"
-    fontSize: "13px"
+    lineHeight: 1.43
+  body:
+    fontFamily: "'Archivo Variable', ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.9375rem"
     fontWeight: 400
-    lineHeight: 1.4
-  micro:
-    fontFamily: "'Jost Variable', ui-sans-serif, system-ui, sans-serif"
-    fontSize: "11px"
-    fontWeight: 500
-    lineHeight: 1
-    letterSpacing: "0.025em"
+    lineHeight: 1.375
+    fontFeature: "'tnum'"
+  body-sm:
+    fontFamily: "'Archivo Variable', ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.43
+    fontFeature: "'tnum'"
+  label:
+    fontFamily: "'Archivo Variable', ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 400
+    lineHeight: 1.33
+    fontFeature: "'tnum'"
 rounded:
-  sm: "3px"
-  md: "4px"
+  sm: "6px"
+  md: "8px"
+  lg: "10px"
+  xl: "14px"
   full: "9999px"
 spacing:
-  figure-gap: "3px"
-  row: "16px"
-  heading: "20px"
-  page-x-mobile: "16px"
-  page-x-desktop: "32px"
-  section: "56px"
-  column-gap: "64px"
+  hairline: "2px"
+  xs: "4px"
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "20px"
 components:
-  button-confirm:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
-    rounded: "{rounded.sm}"
-    size: "36px"
-  button-skip:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink-2}"
-    rounded: "{rounded.sm}"
-    size: "36px"
-  button-skip-hover:
-    backgroundColor: "{colors.wash}"
-    textColor: "{colors.deudas}"
-  button-primary:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
-    rounded: "{rounded.sm}"
-    height: "36px"
-    padding: "8px 16px"
-  toggle-period:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink-2}"
+  panel:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.xl}"
+    padding: "16px"
+  panel-wide:
+    backgroundColor: "{colors.card}"
+    rounded: "{rounded.xl}"
+    padding: "20px"
+  segmented:
+    backgroundColor: "{colors.muted}"
+    rounded: "{rounded.md}"
+    padding: "2px"
+  segmented-item:
+    textColor: "{colors.muted-foreground}"
     typography: "{typography.label}"
-    height: "32px"
-    padding: "0 6px"
-  toggle-period-on:
-    textColor: "{colors.ink}"
-  nav-tab:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink-2}"
-    height: "56px"
-    padding: "0 12px"
-  nav-tab-active:
-    textColor: "{colors.ink}"
-  category-row-open:
-    backgroundColor: "{colors.wash}"
     rounded: "{rounded.sm}"
-    padding: "10px 8px"
+    height: "28px"
+    padding: "0 8px"
+  segmented-item-on:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.foreground}"
+  nav-pill:
+    textColor: "{colors.muted-foreground}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.full}"
+    padding: "6px 12px"
+  nav-pill-active:
+    backgroundColor: "{colors.foreground}"
+    textColor: "{colors.background}"
+  button-confirm:
+    backgroundColor: "{colors.foreground}"
+    textColor: "{colors.background}"
+    rounded: "{rounded.md}"
+    size: "32px"
+  button-quiet:
+    textColor: "{colors.muted-foreground}"
+    rounded: "{rounded.md}"
+    size: "32px"
+  fab:
+    backgroundColor: "{colors.foreground}"
+    textColor: "{colors.background}"
+    rounded: "{rounded.full}"
+    size: "56px"
+  bar-track:
+    backgroundColor: "{colors.muted}"
+    rounded: "{rounded.full}"
+    height: "8px"
+  composition-bar:
+    backgroundColor: "{colors.muted}"
+    rounded: "{rounded.full}"
+    height: "12px"
 ---
 
 # Design System: Moni
 
 ## Overview
 
-**Creative North Star: "The Pictorial Ledger"**
+**Creative North Star: "The Annotated Ledger"**
 
-Moni counts money the way Otto Neurath and Gerd Arntz counted populations: every quantity is a row of identical unit figures, one figure equals one fixed amount, and more money means more figures, never a bigger figure. "How am I doing" and "where does it go" are read by row length before a single number is parsed. The page is paper and ink, with four flat domain inks that mean the same thing on every screen.
+Moni is a compact card dashboard. Each card states its finding in one plain Spanish sentence ("Subiste +$20,1M desde fin de jun.", "Arriendo se lleva el 39% de lo que gastaste en el último mes"), then shows the chart, list or sum that backs it up. The cards use the shadcn neutral style: white panels on an off-white ground with hairline borders, or near-black panels on a cool charcoal ground in dark mode. The theme follows the system preference and the app has no theme toggle.
 
-Density is calm. Sections are separated by an ink hairline and generous vertical air (56px), not by cards. Hierarchy comes from scale alone: one huge patrimonio numeral, then section titles, then body. There are no gradients, no glow, no tinted surfaces and no decorative imagery; the unit blocks are the only marks, and each one is also a unit of measure.
+The density is set by the owner. The dashboard replaced an Isotype layout that was rejected for being empty and wasting space, so every block takes only the room its content needs. Color carries meaning, not decoration. Four fixed domain colors (activos ochre, inversiones green, cartera blue, deudas red) are the only hues allowed, and they show up wherever those domains appear. Everything else is neutral. Sums are shown the way an adding machine would: entró, salió, a rule, then te quedó.
 
-The world ships a dark rendition (ink-black ground, the same four inks lifted for contrast) that follows the system preference. It is the same world, not a second theme.
+Archivo sets every word and every number, with tabular figures across the whole document so amounts line up in columns. The app has no display face, no monospace and no decorative type.
 
 **Key Characteristics:**
-- Isotype rows of identical flat blocks as the primary data display.
-- Four fixed domain inks: blue cartera, green inversiones, ochre activos, red deudas.
-- One typeface (Jost, Futura lineage) for every word and number, tabular figures throughout.
-- Ink hairlines above sections; a thick ink underline marks the active tab or period.
-- Flat everywhere: no card surfaces, no shadows, no gradients.
+- One plain-language sentence at the top of every card, before any chart or list.
+- Compact cards: 16px padding (20px from 640px), 12 to 16px gaps between cards.
+- Four domain colors with fixed meanings; the rest is neutral.
+- Archivo only, with tabular figures everywhere.
+- Flat surfaces with hairline borders; shadows only on floating or selected elements.
+- Light and dark themes follow `prefers-color-scheme`.
 
 ## Colors
 
-Warm paper and near-black ink carry everything; color appears only as one of four domain inks, and its meaning never changes.
+Neutral zinc-family surfaces carry the structure, and four domain colors carry the meaning.
 
 ### Primary
-- **Ink** (ink): All primary text, section rules, the header rule, the active-tab bar, the filled confirm button, figure rows for neutral quantities (spending categories, "Salió"). Primary actions are ink, not a brand color.
+- **Ink** (foreground; dark mode foreground-dark): text, the active nav pill, the confirm button, the FAB, and the 2px rule above a sum. In this system the shadcn `primary` is Ink, not a brand hue.
 
-### Secondary (domain inks)
-- **Cartera Blue** (cartera): Available cash. Cartera figure row, income amounts, "Entró".
-- **Inversiones Green** (inversiones): Investments. Figure row, yields, the inversiones series in the monthly chart.
-- **Activos Ochre** (activos): Assets. Fills the figure row and the text-selection highlight. Too light for small text on paper; text uses Activos Text.
-- **Activos Text** (activos-text): The legible ochre for asset amounts on paper. In dark mode it equals Activos.
-- **Deudas Red** (deudas): Debts and anything that subtracts: debt rows, negative patrimonio, negative months, overdue dates, the error banner rule, the skip hover.
-
-### Tertiary
-- **Alerta Amber** (alerta): Only the small stale-price dot beside a nav item. Not a domain ink; never used for data.
+### Domain colors
+- **Cartera Blue** (cartera / cartera-dark): available cash, money that came in, the patrimonio line on the evolution chart, the "entró" bars, and the selection highlight (mixed at 30%).
+- **Inversiones Green** (inversiones / inversiones-dark): fills only, meaning composition bar segments, chips and chart series. When it is used on text, switch to **Inversiones Text** (inversiones-text / inversiones-text-dark), which is darker in light mode so small figures pass AA. That covers gains, positive projections and savings rates.
+- **Activos Ochre** (activos / activos-dark): fills for assets. Text uses **Activos Text** (activos-text), a deeper ochre that stays legible on white.
+- **Deudas Red** (deudas / deudas-dark): debts, money that went out, overdue dates, negative balances and errors. `destructive` is an alias of it.
+- **Alerta Amber** (alerta / alerta-dark): only the 6px stale-price dot on a nav item. It never appears as text.
 
 ### Neutral
-- **Paper** (paper): Page ground and every surface, including the drawer and popovers.
-- **Ink 2** (ink-2): Secondary text, legends, unit keys, inactive tabs and toggles, the neutral bar in the patrimonio chart.
-- **Rule** (rule): Light dividers between list rows, inputs, the scrollbar thumb.
-- **Wash** (wash): The only fill besides ink: hover and open state on rows and icon buttons, loading skeletons.
-
-The `-dark` tokens are the dark rendition of the same roles, applied under `prefers-color-scheme: dark`.
+- **Ground** (background / background-dark): the page behind the cards, and the translucent sticky header (90% plus a blur).
+- **Panel** (card / card-dark): card surfaces, popovers, and the selected segment of a segmented control.
+- **Wash** (muted / muted-dark): the track of a segmented control, the empty part of a bar, hover fills and loading skeletons.
+- **Quiet Ink** (muted-foreground / muted-foreground-dark): card titles, secondary lines, axis labels and unselected nav items.
+- **Hairline** (border / border-dark): card borders, list dividers and chart grid lines.
+- **Ring** (ring / ring-dark): the 2px focus outline.
 
 ### Named Rules
-**The Fixed Ink Rule.** Blue is always cartera, green always inversiones, ochre always activos, red always deudas or subtraction. A domain ink is never used decoratively or for a different meaning, and no fifth data color is introduced.
+**The Four Meanings Rule.** Activos is ochre, inversiones is green, cartera is blue, deudas is red, on every surface and in every chart. No fifth hue is ever introduced, and none of these colors is borrowed for decoration or for an unrelated meaning.
 
-**The Red Subtracts Rule.** Anything that lowers net worth or cash is red, and the legend says so ("Lo rojo resta"). Spending is ink, not red; red is reserved for debt and loss.
+**The Text Variant Rule.** Green and ochre each have a fill value and a text value. Any figure or word set in those colors uses the `-text` token. Blue and red are AA on both grounds as they are.
 
-**The Ochre Split Rule.** Ochre fills figures; Activos Text carries ochre words and amounts. Never set small text in the fill ochre on paper.
+**The Neutral Spending Rule.** Spending-by-category bars are drawn in Ink at 75%, not in a domain color. A category is not a domain, and red is kept for debt and outflow.
 
 ## Typography
 
-**Display Font:** Jost Variable (with ui-sans-serif, system-ui)
-**Body Font:** Jost Variable
-**Label/Mono Font:** none; amounts use Jost with tabular figures.
+**Body Font:** Archivo Variable (self-hosted via @fontsource, falling back to ui-sans-serif, system-ui)
 
-**Character:** A geometric sans in the Futura lineage, the type of the Isotype charts themselves. One family at three weights (400, 500, 600) for everything, with tabular numerals set on the body so amounts align in every list.
+**Character:** A single slightly grotesque sans that handles both prose and figures. Tabular numerals (`font-variant-numeric: tabular-nums` on body) keep amounts aligned in lists and sums.
 
 ### Hierarchy
-- **Display** (500, clamp(3rem, 7vw, 5.25rem), line-height 1, -0.035em): Only the patrimonio figure, the largest thing on the page, followed inline by a 20px ink-2 qualifier ("de patrimonio").
-- **Headline** (600, 18px, tight tracking): Section titles under the ink rule. Sentence case, phrased as plain Spanish ("En qué se va tu plata", "Lo que viene").
-- **Numeral** (500, 26px, line-height 1): The day number in the upcoming-payments date column; red when overdue.
-- **Body** (400, 15px): Row names, explanatory sentences, list primary lines. Emphasis inside a sentence is a 500 or 600 span in ink.
-- **Amount** (600, 15px): Every money figure in a row, colored by its domain ink.
-- **Label** (400, 13px): Legends, unit keys, sublines, percentages, toggle labels.
-- **Micro** (500, 11px, uppercase, wide tracking): Only the abbreviated month under a date numeral. Chart value labels use 11px regular ink-2, month axis labels 12px.
+- **Display** (600, 30px on mobile and 36px from 640px, tight tracking): only the patrimonio figure, one per screen.
+- **Headline** (600, 18px): the four composition values under the patrimonio bar.
+- **Title** (600, 14px, Quiet Ink): card titles. They name the card; the sentence below says what it means.
+- **Body** (400, 15px, line-height 1.375): the interpretive sentence and sum lines. Key figures inside the sentence go semibold, and take their domain color when the sign matters.
+- **Body small** (400, 14px): list rows, nav items, empty states.
+- **Label** (400, 12 to 13px, Quiet Ink): secondary lines, dates, captions, chart ticks, segmented items (500).
 
 ### Named Rules
-**The Scale-Only Hierarchy Rule.** Rank is expressed by size and weight, never by a colored or boxed heading. There is exactly one display-size number per screen.
+**The One Face Rule.** Archivo sets every word and number. Don't add a monospace for amounts or a display face for headings.
 
-**The Sentence Rule.** Numbers are explained by a full sentence beneath them ("Te quedó el 63,4% de lo que entró."), not by a label above them.
+**The Weight Over Size Rule.** Emphasis inside a sentence or list comes from weight (600) and domain color, not from larger type. Only the patrimonio figure is big.
 
 ## Layout
 
-A centered column, max 1280px, with 16px side padding on phones and 32px from 768px. Below the sticky 56px header, content starts 32px down (48px from 768px) and leaves 96px plus the safe-area inset at the bottom for the floating action button.
+The content column is capped at 1240px and centered, with 12px side padding on mobile and 24px from 768px. The sticky header is 56px tall and includes the safe-area inset.
 
-From 1024px the dashboard is a 12-column grid split 7/5 with a 64px gutter: patrimonio, spending and evolution on the left; this month, upcoming and recent movements on the right. Below 1024px the same blocks stack in one column in reading order (patrimonio, spending, this month, upcoming, evolution, movements), reordered with CSS order rather than duplicated markup.
+The dashboard starts with a full-width patrimonio strip. Below it, from 1024px, comes a 12-column grid split 7/5: the left column holds evolution, spending and recent movements; the right holds this month and upcoming. On narrower screens it becomes one column, with order set explicitly through CSS `order` (evolution, spending, this month, upcoming, movements). Gaps are 12px on mobile and 16px on desktop.
 
-Sections stack 56px apart. Within a section: ink rule, 16px, headline row (title left, toggles right, wrapping), 20px, content. Data rows are 16px apart.
+Inside a card, the title row has a 12px bottom margin, the sentence 16px, and list rows are 6 to 8px tall with hairline dividers between them. The bottom padding on main reserves room for the FAB.
 
-Figure rows use a fixed 20-column grid with 3px gaps, so one figure is always the same width within a block and rows reflow by whole cells. From 640px, a figure row sits beside an 11rem label column (name, amount, detail) with a 24px gutter; on phones the label sits above the row and the detail below.
+### Named Rules
+**The Compact Rule.** Nothing gets space it doesn't need. Cards are sized by their content, with no fixed heights beyond the chart itself (200px area, 120px bars), no hero padding and no empty decorative bands. If a block looks sparse, merge it or shrink it. Don't pad it.
+
+**The Sentence First Rule.** Every card opens with one plain-language sentence that interprets its numbers, such as "Te quedó el 63,4% de lo que entró" or "Tenés 1 pago vencido y $1.145.000 por pagar en 45 días". The chart, list or sum that follows is the evidence. A card that only shows numbers is unfinished.
 
 ## Elevation & Depth
 
-Flat. Depth is never conveyed by shadow or by a raised surface: sections are separated by ink hairlines, rows by rule hairlines, and the open or hovered state is a wash fill. The sticky header sits on paper at 95% opacity with a light backdrop blur so content passing under it stays legible; its edge is an ink rule, not a shadow. The drawer is a paper panel bounded by an ink rule.
+Surfaces are flat, and a hairline border plus the step from ground to panel does the separating. Shadows appear only on elements that float above the page or show selection.
+
+### Shadow Vocabulary
+- **Selected segment** (`box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05)`): the active item of a segmented control.
+- **Floating** (`box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)`): the FAB and the Sheet drawer.
 
 ### Named Rules
-**The No-Card Rule.** There are no card containers. Grouping is done with a full-width ink rule above a section and whitespace around it.
-
-**The Focus-Dims Rule.** Emphasis comes from dimming the rest, not lifting the subject: an open spending category keeps full ink while every other row drops to 25% opacity over 300ms.
+**The Flat Panel Rule.** Cards never get a shadow. Depth comes from the border and the change in surface color.
 
 ## Shapes
 
-Nearly square. Interactive fills (hover wash, icon buttons, skeletons, open rows) take a barely softened 3px corner; nothing reads as a pill or bubble. Lines carry the structure: 1px ink rules above sections and under the header, 1px rule-color dividers between rows, a 3px ink bar for the active nav tab (bottom on desktop, left edge in the drawer), and a 2px ink bar under the active period toggle. Unit blocks take a 2px corner. A remnant figure is cut vertically at half its drawn width, never at an arbitrary fraction.
+Corners are softly rounded on a 10px base (`--radius`): cards use 14px, segmented tracks and icon buttons 8px, segments and small controls 6px. Bars, the composition strip, nav pills and the FAB are fully round. Legend chips in the composition list are 8px squares with 2px corners, matching the four squares of the logo. Bar chart columns are rounded only at the top (3px).
 
 ## Components
 
-### Buttons
-Quiet and square; ink is the only filled action color.
-- **Shape:** gently squared (3px).
-- **Confirm icon button:** 36px square, ink fill, paper check glyph (lucide, stroke 2.5); hover drops to 85% opacity.
-- **Skip icon button:** 36px square, transparent, ink-2 cross glyph; hover fills wash and turns the glyph deudas red.
-- **Primary (shadcn default):** ink fill, paper text, 36px tall, 16px horizontal padding, 14px medium.
-- **Text link button:** 14px medium ink with a rule-colored underline 4px below that darkens to ink on hover ("Ver las 6").
-- **Focus:** 2px solid ink outline offset 2px, globally.
+### Panel (card)
+The single container for dashboard content.
+- **Corner Style:** 14px.
+- **Background:** Panel, hairline border, no shadow.
+- **Internal Padding:** 16px, 20px from 640px.
+- **Structure:** a title row (Title style, with optional controls aligned right and wrapping beneath on narrow widths), then the interpretive sentence (Body), then the content.
 
-### Chips / Toggles
-- **Style:** period and series toggles are bare text (13px), ink-2 at rest, ink on hover. No fill, no border.
-- **State:** the selected option turns ink and gains a 2px ink bar along its bottom edge, inset 6px from each side. Single-select; a group can be split by a 1px rule divider.
+### Segmented control (Periodos)
+A period or series picker, restyled from shadcn toggle-group.
+- **Style:** Wash track at 8px radius with 2px padding. Items are 28px high, 12px medium, Quiet Ink.
+- **State:** the selected item takes Panel background, Ink text and the selected-segment shadow. Hovering shifts text to Ink. A single choice is always selected; clicking the active item does not deselect it.
 
-### Lists
-- **Upcoming payments:** a date column (26px numeral over an 11px uppercase month), a label with a 13px subline, the amount in its domain ink, then skip and confirm buttons. Rows divided by rule hairlines.
-- **Movements:** a fixed 4.5rem date column in 13px ink-2, description over category, amount right-aligned; income is cartera blue with a plus sign, spending ink with a true minus sign.
+### Bars
+- **Category bar:** an 8px full-round track in Wash, with a fill in Ink at 75% and a minimum visible width of 2%. When a row is expanded, the other rows drop to 30% opacity.
+- **Composition bar:** a 12px full-round strip with 2px gaps between segments in the four domain fills, each segment proportional to its absolute value. A legend sits underneath: square chip, label, Headline value, Label detail.
+
+### Sum line (Total)
+The adding-machine total under a list or under entró/salió: a 2px rule in Ink at 80%, an 8px top padding, then a 15px semibold label and value on the baseline. When a value is negative it turns Deudas Red and gets a real minus sign (U+2212).
+
+### Charts
+shadcn charts on Recharts. Grid lines are horizontal only, in Hairline. Axes have no tick lines and no axis lines, and labels use Quiet Ink at 12px. The area chart has a 2px stroke over a vertical gradient fill (25% to 2% opacity) in the series domain color. Bar charts use domain colors with 3px top corners. Series animate in over 500ms. Tooltips use shadcn's ChartTooltipContent with the semibold amount on the right.
+
+### Upcoming row (Lo que viene)
+A calendar stamp (20px semibold day over a short uppercase month), the label with a secondary line, the signed amount in its domain color, then two 32px icon buttons: a quiet X to skip and an Ink-filled check to register. Overdue rows turn the day and the "vencido" text red.
 
 ### Navigation
-- **Desktop (from 1024px):** right-aligned text tabs at 15px in the 56px header, ink-2 inactive, ink hover; active is 500 weight ink over a 3px ink bar that sits on the header's ink rule.
-- **Mobile:** a menu button opens a left sheet (78% width, max 288px) of 16px items; the active item is 600 ink with a 3px left ink bar, hover is wash.
-- **Stale-price marker:** a 6px alerta dot raised beside the tab label, with screen-reader text.
-- **Floating add button:** phones only, a 56px ink circle with a paper plus, on tabs that have a create action.
+- **Desktop (from 1024px):** pills in the header. Inactive pills are Quiet Ink with a Wash hover; the active pill is Ink-filled with Ground text. A stale price adds a 6px Alerta dot next to the label.
+- **Mobile:** a menu button opens a left Sheet (78% wide, max 288px) listing the tabs. The active tab is Wash-filled and semibold.
+- **Wordmark:** the 20px logo (four flat rounded squares) followed by "Moni" in 17px semibold.
 
-### Figure Row (signature)
-The core of the world. A row of identical plain square blocks (2px corner, no drawing) in a 20-column grid with 3px gaps, colored by its domain ink (or ink for neutral spending). The unit is chosen per block by rounding the largest value divided by 20 up to a 1, 2 or 5 step, so the longest row has at most 20 figures. Remnants snap to whole or half figures; a value under a quarter of a unit beside whole figures is dropped, and a value under one unit with no whole figures shows as a half. Every block that uses figure rows carries a key line ("Una figura = $20M.") with a small ink square. The row is decorative to assistive tech; the amount beside it carries the meaning.
+### FAB
+On mobile only: a 56px Ink-filled circle with a plus icon, placed above the bottom safe-area inset with the floating shadow. It scales to 1.05 on hover and 0.95 when pressed, and is hidden on tabs that have no create action.
 
-### Blocks, not pictograms
-The owner chose plain blocks over pictograms: the unit is a flat square in the row's ink, and color alone tells the domain. Spending categories are told apart by their label, not by a figure. Do not reintroduce pictograms without asking.
+### Error banner
+A full-width alert at the top of main: Deudas Red border at 40%, fill at 10%, 8px radius, a triangle icon in red, and 14px text.
 
-### Logo
-Four 2x2 squares in the four domain inks (cartera top left, inversiones top right, activos bottom left, deudas bottom right), flat, no gradient. `moni.png` (180x180, paper ground, no alpha) is the iOS home-screen icon; `moni.ico` is the 32px favicon.
-
-### Error Banner
-A full-width band bounded top and bottom by 2px deudas rules, a 16px warning glyph in deudas, and the message in 15px ink. No fill.
+### Transitional
+Six tabs (Transacciones, Deudas, Inversiones, Activos, Recurrentes, Ajustes) still render through the legacy stylesheets (`tokens.css`, `components.css`, `layout.css`, `fonts.css`), which are loaded in a `legacy` cascade layer. Those are not part of this system. Each tab adopts the components above when it is migrated.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** show any comparable set of quantities as figure rows on one shared unit, with a key line stating the unit.
-- **Do** keep each domain on its fixed ink (activos ochre, inversiones green, cartera blue, deudas red) on every tab.
-- **Do** separate sections with a 1px ink rule and 56px of space, and dividers inside lists with the rule color.
-- **Do** mark selection with an ink bar (3px for navigation, 2px for toggles) and hover with a wash fill.
-- **Do** explain a figure with a full sentence in 15px body or 13px label, emphasizing the number in ink.
-- **Do** set every amount in Jost with tabular figures, signed with a true minus sign.
-- **Do** carry every new color decision as a light and dark pair.
+- **Do** open every card with one plain-language sentence that interprets its numbers, with the key figure semibold and colored by its sign.
+- **Do** keep layouts compact: 16 to 20px card padding, 12 to 16px gaps, height set by content.
+- **Do** show sums as an adding machine would: the items, a 2px Ink rule, then the total.
+- **Do** use the `-text` variants for green and ochre whenever they color text.
+- **Do** use a real minus sign (U+2212) and an explicit plus sign on signed amounts.
+- **Do** keep the four domain colors bound to activos, inversiones, cartera and deudas everywhere.
 
 ### Don't:
-- **Don't** scale a figure up to show more money; add figures.
-- **Don't** wrap content in cards, tinted panels or bordered boxes.
-- **Don't** use gradients, glow or decorative drop shadows.
-- **Don't** introduce a second typeface or a monospace for amounts.
-- **Don't** use a domain ink for anything outside its domain, or set small text in the fill ochre on paper.
-- **Don't** fall back to the KPI-tile row, donut chart or smoothed line chart.
-
-## Transitional and open
-
-- The six tabs not yet migrated (Transacciones, Deudas, Inversiones, Activos, Recurrentes, Ajustes) still render with the legacy stylesheets (`web/src/styles/tokens.css`, `components.css`, `layout.css`, `fonts.css`) inside a `legacy` cascade layer. They are not part of this system and are retired tab by tab as each is redrawn.
+- **Don't** add a fifth accent hue or use a domain color for decoration.
+- **Don't** put shadows on cards; shadows are for floating and selected elements only.
+- **Don't** introduce a second typeface, a monospace for amounts, or proportional figures.
+- **Don't** add decorative empty space, hero bands or fixed-height cards that leave room unused.
+- **Don't** show a card that is only numbers, with no sentence saying what they mean.
+- **Don't** load fonts, icons or chart code from a CDN; everything is bundled or self-hosted.

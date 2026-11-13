@@ -1,47 +1,66 @@
-import { FilaFiguras } from '@/components/isotipo/FilaFiguras'
-import type { ResumenDashboard } from '@/lib/dinero'
-import { copShort, pct } from '@/lib/format'
-import { escalaUnidad, fmtUnidad } from '@/lib/isotipo'
-import { Seccion } from './Seccion'
+import { useMemo } from 'react'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
+import { esGastoCartera, monthLabels, monthlySeries, type ResumenDashboard } from '@/lib/dinero'
+import { cop, copShort, pct } from '@/lib/format'
+import { cn } from '@/lib/utils'
+import type { Transaccion } from '@/types'
+import { Panel, Total } from './Seccion'
 
-export function EsteMes({ r, loading }: { r: ResumenDashboard; loading: boolean }) {
-  const unidad = escalaUnidad([r.ingresos, r.gastos])
-  const filas = [
-    { id: 'entro', nombre: 'Entró', valor: r.ingresos, tinta: 'text-cartera' },
-    { id: 'salio', nombre: 'Salió', valor: r.gastos, tinta: 'text-ink' },
-  ]
-  const ahorro = r.ahorroPct
+const MESES = 6
+const config = {
+  entro: { label: 'Entró', color: 'var(--cartera)' },
+  salio: { label: 'Salió', color: 'var(--deudas)' },
+} satisfies ChartConfig
+
+const sumar = (list: Transaccion[], f: (t: Transaccion) => boolean) => list.filter(f).reduce((s, t) => s + t.monto, 0)
+
+export function EsteMes({ r, transacciones, loading }: { r: ResumenDashboard; transacciones: Transaccion[]; loading: boolean }) {
+  const datos = useMemo(() => {
+    const entro = monthlySeries(transacciones, MESES, (l) => sumar(l, (t) => t.tipo === 'ingreso'))
+    const salio = monthlySeries(transacciones, MESES, (l) => sumar(l, esGastoCartera))
+    return monthLabels(MESES).map((mes, i) => ({ mes, entro: entro[i] ?? 0, salio: salio[i] ?? 0 }))
+  }, [transacciones])
+
+  const quedo = r.ingresos - r.gastos
+  const frase =
+    r.ingresos <= 0 ? (
+      'Todavía no entró plata este mes.'
+    ) : r.ahorroPct >= 0 ? (
+      <>
+        Te quedó el <span className="font-semibold text-inversiones-text">{pct(r.ahorroPct)}%</span> de lo que entró.
+      </>
+    ) : (
+      <>
+        Salió <span className="font-semibold text-deudas">{pct(-r.ahorroPct)}%</span> más de lo que entró.
+      </>
+    )
+
   return (
-    <Seccion id="dash-mes" titulo="Este mes en tu cartera">
-      <div className="space-y-4">
-        {filas.map((f) => (
-          <div key={f.id} className="space-y-1.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-[15px] text-ink">{f.nombre}</span>
-              <span className={`text-[15px] font-semibold ${f.tinta}`}>{loading ? '—' : copShort(f.valor)}</span>
-            </div>
-            {loading ? (
-              <div className="h-5 w-1/2 animate-pulse rounded-sm bg-wash" />
-            ) : (
-              <FilaFiguras valor={f.valor} unidad={unidad} className={f.tinta} />
-            )}
-          </div>
-        ))}
-      </div>
-      <p className="mt-4 text-[15px] text-ink-2" id="stat-ahorro">
-        {loading ? ' ' : r.ingresos <= 0 ? (
-          'Todavía no entró plata este mes.'
-        ) : ahorro >= 0 ? (
-          <>
-            Te quedó el <span className="font-semibold text-ink">{pct(ahorro)}%</span> de lo que entró.
-          </>
-        ) : (
-          <>
-            Salió <span className="font-semibold text-deudas">{pct(-ahorro)}%</span> más de lo que entró.
-          </>
-        )}
-      </p>
-      {!loading && <p className="mt-1 text-[13px] text-ink-2">Una figura = {fmtUnidad(unidad)}. Lo pagado con tarjeta no sale de la cartera.</p>}
-    </Seccion>
+    <Panel id="dash-mes" titulo="Este mes en tu cartera" frase={loading ? ' ' : <span id="stat-ahorro">{frase}</span>}>
+      <dl className="space-y-1 text-[15px]">
+        <div className="flex items-baseline justify-between">
+          <dt>Entró</dt>
+          <dd className="font-medium text-cartera">{loading ? '—' : `+${cop(r.ingresos)}`}</dd>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <dt>Salió</dt>
+          <dd className="font-medium text-deudas">{loading ? '—' : `−${cop(r.gastos)}`}</dd>
+        </div>
+      </dl>
+      <Total label="Te quedó" valor={loading ? '—' : <span className={cn(quedo < 0 && 'text-deudas')}>{`${quedo < 0 ? '−' : ''}${cop(Math.abs(quedo))}`}</span>} />
+      <p className="mt-1 text-xs text-muted-foreground">Lo pagado con tarjeta no sale de la cartera.</p>
+      {!loading && (
+        <ChartContainer config={config} className="mt-4 aspect-auto h-[120px] w-full" aria-label="Entró y salió por mes, últimos 6 meses">
+          <BarChart data={datos} margin={{ left: 0, right: 0, top: 4, bottom: 0 }} barGap={2}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="mes" tickLine={false} axisLine={false} tickMargin={6} />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent formatter={(v, name) => <span className="flex w-full justify-between gap-3"><span className="text-muted-foreground">{name === 'entro' ? 'Entró' : 'Salió'}</span><span className="font-semibold">{copShort(Number(v))}</span></span>} />} />
+            <Bar dataKey="entro" fill="var(--color-entro)" radius={[3, 3, 0, 0]} animationDuration={500} />
+            <Bar dataKey="salio" fill="var(--color-salio)" radius={[3, 3, 0, 0]} animationDuration={500} />
+          </BarChart>
+        </ChartContainer>
+      )}
+    </Panel>
   )
 }

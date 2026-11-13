@@ -25,7 +25,7 @@ Personal finance tracker for a single household: spending, credit cards, loans, 
 
 Six data tabs plus Ajustes (custom categories, hidden upcoming operations, currency symbol, backup import/export), all reading from and writing to the same dataset — a debt payment, an investment contribution, or an asset sale can each optionally drop a linked entry into the transaction ledger, so the numbers stay consistent everywhere.
 
-**Dashboard** — built as pictorial statistics: net worth as one number and what it is made of (activos, inversiones, cartera, deudas) as rows of unit figures, spending by category for a chosen period as one row of pictograms per category (tap one to see its movements), this month's cash in vs. out, month-by-month change of net worth or investments, recent transactions, and a "próximas operaciones" list that projects upcoming debt installments, investment yields, and recurring charges so you can confirm or skip them before they happen.
+**Dashboard** — compact cards that each open with one plain sentence: net worth with a composition bar (activos, inversiones, cartera, deudas), how it moved over time (area chart), where the money goes by category for a chosen period (tap one to see its movements), this month's cash as a sum (in − out = left) with six months of bars, recent transactions, and a "próximas operaciones" list that projects upcoming debt installments, investment yields, and recurring charges so you can confirm or skip them before they happen.
 
 **Transacciones** — the income/expense ledger, filterable by month, type, and category, grouped by date (ayer / este mes / …), tracking payment method (cash/debit vs. a specific card).
 
@@ -66,7 +66,7 @@ FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/db.py`
 
 The frontend (`web/`) is React + TypeScript built with Vite. Every tab is one folder under `web/src/features/` that owns its own component and modal forms; all of them read from a single `DataProvider` populated wholesale from `GET /api/all`. Any change (a new transaction, a debt payment, an edited category) goes through the API and then refetches everything. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes. The money math lives in pure, unit-tested functions under `web/src/lib/`.
 
-Styling is Tailwind CSS + shadcn/ui; the Jost and JetBrains Mono webfonts are bundled from npm and `web/public/assets/fonts/`, and there is no chart library, so the app works on a LAN with no internet access. Only `web/dist` is reachable over HTTP; the backend code, the SQLite file and the frontend sources are not.
+Styling is Tailwind CSS + shadcn/ui with Recharts charts; Recharts and the Archivo and JetBrains Mono webfonts are bundled from npm and `web/public/assets/fonts/`, so the app works on a LAN with no internet access. Only `web/dist` is reachable over HTTP; the backend code, the SQLite file and the frontend sources are not.
 
 See `CLAUDE.md` for the full architecture rundown (schema/migrations, composite money-moving actions, per-tab conventions).
 
