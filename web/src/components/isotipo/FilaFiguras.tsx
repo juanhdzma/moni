@@ -1,34 +1,24 @@
-import { MAX_FIGURAS, partirFiguras, type PictoNombre } from '@/lib/isotipo'
+import type { CSSProperties } from 'react'
+import { MAX_FIGURAS, partirFiguras } from '@/lib/isotipo'
 import { cn } from '@/lib/utils'
-import { EXTENSION, Pictograma } from './Pictograma'
 
-export function FilaFiguras({
-  valor,
-  unidad,
-  picto,
-  className,
-}: {
-  valor: number
-  unidad: number
-  picto: PictoNombre
-  className?: string
-}) {
+export function Bloque({ className, style }: { className?: string; style?: CSSProperties }) {
+  return <span aria-hidden="true" className={cn('block aspect-square rounded-[2px] bg-current', className)} style={style} />
+}
+
+export function FilaFiguras({ valor, unidad, className }: { valor: number; unidad: number; className?: string }) {
   const { enteras, resto } = partirFiguras(valor, unidad)
-  const [x0, x1] = EXTENSION[picto]
-  const corte = ((24 - (x0 + resto * (x1 - x0))) / 24) * 100
   return (
     <div
       aria-hidden="true"
       data-figuras={enteras + resto}
-      className={cn('grid min-h-5 items-center gap-x-[3px]', className)}
+      className={cn('grid min-h-4 items-center gap-x-[3px]', className)}
       style={{ gridTemplateColumns: `repeat(${MAX_FIGURAS}, minmax(0, 1fr))` }}
     >
       {Array.from({ length: Math.min(enteras, MAX_FIGURAS) }, (_, i) => (
-        <Pictograma key={i} nombre={picto} className="aspect-square w-full" />
+        <Bloque key={i} />
       ))}
-      {resto > 0 && enteras < MAX_FIGURAS && (
-        <Pictograma nombre={picto} className="aspect-square w-full" style={{ clipPath: `inset(0 ${corte.toFixed(1)}% 0 0)` }} />
-      )}
+      {resto > 0 && enteras < MAX_FIGURAS && <Bloque style={{ clipPath: `inset(0 ${(1 - resto) * 100}% 0 0)` }} />}
     </div>
   )
 }

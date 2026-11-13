@@ -127,12 +127,12 @@ components:
 
 Moni counts money the way Otto Neurath and Gerd Arntz counted populations: every quantity is a row of identical unit figures, one figure equals one fixed amount, and more money means more figures, never a bigger figure. "How am I doing" and "where does it go" are read by row length before a single number is parsed. The page is paper and ink, with four flat domain inks that mean the same thing on every screen.
 
-Density is calm. Sections are separated by an ink hairline and generous vertical air (56px), not by cards. Hierarchy comes from scale alone: one huge patrimonio numeral, then section titles, then body. There are no gradients, no glow, no tinted surfaces and no decorative imagery; the pictograms are the only pictures, and each one is also a unit of measure.
+Density is calm. Sections are separated by an ink hairline and generous vertical air (56px), not by cards. Hierarchy comes from scale alone: one huge patrimonio numeral, then section titles, then body. There are no gradients, no glow, no tinted surfaces and no decorative imagery; the unit blocks are the only marks, and each one is also a unit of measure.
 
 The world ships a dark rendition (ink-black ground, the same four inks lifted for contrast) that follows the system preference. It is the same world, not a second theme.
 
 **Key Characteristics:**
-- Isotype rows of identical flat silhouettes as the primary data display.
+- Isotype rows of identical flat blocks as the primary data display.
 - Four fixed domain inks: blue cartera, green inversiones, ochre activos, red deudas.
 - One typeface (Jost, Futura lineage) for every word and number, tabular figures throughout.
 - Ink hairlines above sections; a thick ink underline marks the active tab or period.
@@ -213,7 +213,7 @@ Flat. Depth is never conveyed by shadow or by a raised surface: sections are sep
 
 ## Shapes
 
-Nearly square. Interactive fills (hover wash, icon buttons, skeletons, open rows) take a barely softened 3px corner; nothing reads as a pill or bubble. Lines carry the structure: 1px ink rules above sections and under the header, 1px rule-color dividers between rows, a 3px ink bar for the active nav tab (bottom on desktop, left edge in the drawer), and a 2px ink bar under the active period toggle. The pictograms are filled 24-unit silhouettes with no strokes. A remnant figure is cut vertically at half its drawn width, never at an arbitrary fraction.
+Nearly square. Interactive fills (hover wash, icon buttons, skeletons, open rows) take a barely softened 3px corner; nothing reads as a pill or bubble. Lines carry the structure: 1px ink rules above sections and under the header, 1px rule-color dividers between rows, a 3px ink bar for the active nav tab (bottom on desktop, left edge in the drawer), and a 2px ink bar under the active period toggle. Unit blocks take a 2px corner. A remnant figure is cut vertically at half its drawn width, never at an arbitrary fraction.
 
 ## Components
 
@@ -241,10 +241,13 @@ Quiet and square; ink is the only filled action color.
 - **Floating add button:** phones only, a 56px ink circle with a paper plus, on tabs that have a create action.
 
 ### Figure Row (signature)
-The core of the world. A row of identical pictograms in a 20-column grid with 3px gaps, colored by its domain ink (or ink for neutral spending). The unit is chosen per block by rounding the largest value divided by 20 up to a 1, 2 or 5 step, so the longest row has at most 20 figures. Remnants snap to whole or half figures; a value under a quarter of a unit beside whole figures is dropped, and a value under one unit with no whole figures shows as a half. Every block that uses figure rows carries a key line ("Una figura = $20M.") with a small ink square. The row is decorative to assistive tech; the amount beside it carries the meaning.
+The core of the world. A row of identical plain square blocks (2px corner, no drawing) in a 20-column grid with 3px gaps, colored by its domain ink (or ink for neutral spending). The unit is chosen per block by rounding the largest value divided by 20 up to a 1, 2 or 5 step, so the longest row has at most 20 figures. Remnants snap to whole or half figures; a value under a quarter of a unit beside whole figures is dropped, and a value under one unit with no whole figures shows as a half. Every block that uses figure rows carries a key line ("Una figura = $20M.") with a small ink square. The row is decorative to assistive tech; the amount beside it carries the meaning.
 
-### Pictograms
-Flat filled silhouettes on a 24-unit grid, one per domain or spending category: house (activos, vivienda), plant (inversiones, ahorro), banknote (cartera, monthly flow), kettlebell (deudas), and cutlery, car, bolt, cross, ticket, book, shirt and coin for spending categories. Categories map to a pictogram by keyword; unknown categories fall back to the coin. A 16px pictogram also prefixes each spending category name.
+### Blocks, not pictograms
+The owner chose plain blocks over pictograms: the unit is a flat square in the row's ink, and color alone tells the domain. Spending categories are told apart by their label, not by a figure. Do not reintroduce pictograms without asking.
+
+### Logo
+Four 2x2 squares in the four domain inks (cartera top left, inversiones top right, activos bottom left, deudas bottom right), flat, no gradient. `moni.png` (180x180, paper ground, no alpha) is the iOS home-screen icon; `moni.ico` is the 32px favicon.
 
 ### Error Banner
 A full-width band bounded top and bottom by 2px deudas rules, a 16px warning glyph in deudas, and the message in 15px ink. No fill.
@@ -253,7 +256,7 @@ A full-width band bounded top and bottom by 2px deudas rules, a 16px warning gly
 
 ### Do:
 - **Do** show any comparable set of quantities as figure rows on one shared unit, with a key line stating the unit.
-- **Do** keep each domain on its fixed ink and pictogram (activos ochre house, inversiones green plant, cartera blue banknote, deudas red kettlebell) on every tab.
+- **Do** keep each domain on its fixed ink (activos ochre, inversiones green, cartera blue, deudas red) on every tab.
 - **Do** separate sections with a 1px ink rule and 56px of space, and dividers inside lists with the rule color.
 - **Do** mark selection with an ink bar (3px for navigation, 2px for toggles) and hover with a wash fill.
 - **Do** explain a figure with a full sentence in 15px body or 13px label, emphasizing the number in ink.
@@ -271,4 +274,3 @@ A full-width band bounded top and bottom by 2px deudas rules, a 16px warning gly
 ## Transitional and open
 
 - The six tabs not yet migrated (Transacciones, Deudas, Inversiones, Activos, Recurrentes, Ajustes) still render with the legacy stylesheets (`web/src/styles/tokens.css`, `components.css`, `layout.css`, `fonts.css`) inside a `legacy` cascade layer. They are not part of this system and are retired tab by tab as each is redrawn.
-- The Moni icon (`web/public/assets/icons/moni.svg`) is a green gradient wallet that contradicts the flat-ink world. It is a brand asset; redrawing it is an open decision for the owner.

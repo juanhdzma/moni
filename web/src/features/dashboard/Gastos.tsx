@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
-import { FilaFiguras } from '@/components/isotipo/FilaFiguras'
-import { Pictograma } from '@/components/isotipo/Pictograma'
+import { Bloque, FilaFiguras } from '@/components/isotipo/FilaFiguras'
 import { agruparGastos, gastosTxInPeriod, type PeriodoGastos } from '@/lib/dinero'
 import { cop, copShort, fmtDateShort, pct } from '@/lib/format'
-import { escalaUnidad, fmtUnidad, pictoCategoria } from '@/lib/isotipo'
+import { escalaUnidad, fmtUnidad } from '@/lib/isotipo'
 import { cn } from '@/lib/utils'
 import { useData } from '@/shell/DataProvider'
 import { Periodos, Seccion } from './Seccion'
@@ -64,7 +63,6 @@ export function Gastos() {
           </p>
           <ul className="-mx-2" id="gastos-categorias">
             {entries.map(([cat, v], idx) => {
-              const picto = pictoCategoria(cat)
               const open = sel === cat
               const txs = (porCategoria[cat] ?? []).slice().sort((a, b) => b.fecha.localeCompare(a.fecha))
               return (
@@ -80,16 +78,13 @@ export function Gastos() {
                     )}
                   >
                     <span className="flex items-baseline justify-between gap-3 sm:block">
-                      <span className="flex items-center gap-2 text-[15px] text-ink">
-                        <Pictograma nombre={picto} className="size-4 shrink-0" />
-                        <span className="truncate">{cat}</span>
-                      </span>
+                      <span className="block truncate text-[15px] text-ink">{cat}</span>
                       <span className="text-[15px] font-semibold text-ink sm:mt-0.5 sm:block">
                         {copShort(v)}
                         <span className="ml-2 text-[13px] font-normal text-ink-2">{pct(total ? (v / total) * 100 : 0, 0)}%</span>
                       </span>
                     </span>
-                    <FilaFiguras valor={v} unidad={unidad} picto={picto} className={cn('text-ink transition-opacity duration-300', sel && !open && 'opacity-25')} />
+                    <FilaFiguras valor={v} unidad={unidad} className={cn('text-ink transition-opacity duration-300', sel && !open && 'opacity-25')} />
                   </button>
                   {open && (
                     <div id={`gasto-detalle-${idx}`} className="px-2 pt-1 pb-4 sm:pl-[calc(11rem+2rem)]">
@@ -110,7 +105,7 @@ export function Gastos() {
             })}
           </ul>
           <p className="mt-4 flex items-center gap-2 text-[13px] text-ink-2">
-            <Pictograma nombre="cuadro" className="size-3.5 text-ink" />
+            <Bloque className="size-3 text-ink" />
             Una figura = {fmtUnidad(unidad)}. Tocá una categoría para ver sus movimientos.
           </p>
         </>

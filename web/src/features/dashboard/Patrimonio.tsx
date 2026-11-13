@@ -1,8 +1,7 @@
-import { FilaFiguras } from '@/components/isotipo/FilaFiguras'
-import { Pictograma } from '@/components/isotipo/Pictograma'
+import { Bloque, FilaFiguras } from '@/components/isotipo/FilaFiguras'
 import type { ResumenDashboard } from '@/lib/dinero'
 import { cop, copShort, pct, signStr } from '@/lib/format'
-import { escalaUnidad, fmtUnidad, type PictoNombre } from '@/lib/isotipo'
+import { escalaUnidad, fmtUnidad } from '@/lib/isotipo'
 import type { Estado } from '@/types'
 
 const plural = (n: number, s: string, p: string) => `${n} ${n !== 1 ? p : s}`
@@ -12,7 +11,6 @@ interface Parte {
   nombre: string
   valor: number
   negativo: boolean
-  picto: PictoNombre
   tinta: string
   texto: string
   detalle: string
@@ -25,14 +23,14 @@ export function Patrimonio({ r, estado, loading }: { r: ResumenDashboard; estado
       : plural(estado.inversiones.length, 'posición', 'posiciones')
 
   const partes: Parte[] = [
-    { id: 'activos', nombre: 'Activos', valor: r.totalActivos, negativo: false, picto: 'casa', tinta: 'text-activos', texto: 'text-activos-text', detalle: plural(estado.activos.length, 'activo', 'activos') },
-    { id: 'inversiones', nombre: 'Inversiones', valor: r.totalInv, negativo: false, picto: 'planta', tinta: 'text-inversiones', texto: 'text-inversiones', detalle: invDetalle },
+    { id: 'activos', nombre: 'Activos', valor: r.totalActivos, negativo: false, tinta: 'text-activos', texto: 'text-activos-text', detalle: plural(estado.activos.length, 'activo', 'activos') },
+    { id: 'inversiones', nombre: 'Inversiones', valor: r.totalInv, negativo: false, tinta: 'text-inversiones', texto: 'text-inversiones', detalle: invDetalle },
     {
       id: 'cartera',
       nombre: 'Cartera',
       valor: r.efectivo,
       negativo: r.efectivo < 0,
-      picto: 'billete',
+     
       tinta: r.efectivo < 0 ? 'text-deudas' : 'text-cartera',
       texto: r.efectivo < 0 ? 'text-deudas' : 'text-cartera',
       detalle: 'Efectivo y cuentas',
@@ -42,7 +40,7 @@ export function Patrimonio({ r, estado, loading }: { r: ResumenDashboard; estado
       nombre: 'Deudas',
       valor: r.totalDeuda,
       negativo: true,
-      picto: 'pesa',
+     
       tinta: 'text-deudas',
       texto: 'text-deudas',
       detalle: `${cop(r.cuotaTotal)}/mes · ${plural(r.deudasActivas.length, 'deuda', 'deudas')}`,
@@ -91,7 +89,7 @@ export function Patrimonio({ r, estado, loading }: { r: ResumenDashboard; estado
             {loading ? (
               <div className="h-5 w-1/2 animate-pulse rounded-sm bg-wash" />
             ) : (
-              <FilaFiguras valor={p.valor} unidad={unidad} picto={p.picto} className={p.tinta} />
+              <FilaFiguras valor={p.valor} unidad={unidad} className={p.tinta} />
             )}
             <div className="text-[13px] text-ink-2 sm:hidden">{loading ? '' : p.detalle}</div>
           </li>
@@ -99,7 +97,7 @@ export function Patrimonio({ r, estado, loading }: { r: ResumenDashboard; estado
       </ul>
       {!loading && (
         <p className="mt-5 flex items-center gap-2 text-[13px] text-ink-2">
-          <Pictograma nombre="cuadro" className="size-3.5 text-ink" />
+          <Bloque className="size-3 text-ink" />
           Una figura = {fmtUnidad(unidad)}. Lo rojo resta.
         </p>
       )}

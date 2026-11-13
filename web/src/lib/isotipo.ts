@@ -1,18 +1,3 @@
-export type PictoNombre =
-  | 'moneda'
-  | 'billete'
-  | 'casa'
-  | 'planta'
-  | 'pesa'
-  | 'cubiertos'
-  | 'carro'
-  | 'rayo'
-  | 'cruz'
-  | 'boleta'
-  | 'libro'
-  | 'camisa'
-  | 'cuadro'
-
 export const MAX_FIGURAS = 20
 
 export function escalaUnidad(valores: number[], maxFiguras = MAX_FIGURAS): number {
@@ -47,25 +32,4 @@ export function fmtUnidad(unidad: number, simbolo = '$'): string {
   if (unidad >= 1e6) return fmt(unidad / 1e6, 'M')
   if (unidad >= 1e3) return fmt(unidad / 1e3, 'k')
   return fmt(unidad, '')
-}
-
-const REGLAS: [PictoNombre, string[]][] = [
-  ['cubiertos', ['aliment', 'comida', 'mercado', 'super', 'restaur', 'almuerzo', 'domicilio', 'cafe']],
-  ['carro', ['transporte', 'gasolina', 'carro', 'moto', 'uber', 'taxi', 'peaje', 'parqueadero', 'bus']],
-  ['casa', ['vivienda', 'arriendo', 'hogar', 'casa', 'administracion', 'hipoteca', 'compra activos']],
-  ['rayo', ['servicio', 'luz', 'agua', 'gas', 'internet', 'celular', 'telefono', 'energia']],
-  ['cruz', ['salud', 'medic', 'farmacia', 'eps', 'odonto', 'seguro']],
-  ['boleta', ['entreten', 'cine', 'ocio', 'salida', 'viaje', 'suscrip', 'streaming', 'concierto']],
-  ['libro', ['educa', 'curso', 'libro', 'universidad', 'colegio']],
-  ['camisa', ['ropa', 'vestuario', 'zapato']],
-  ['planta', ['inversion', 'ahorro']],
-]
-
-export function pictoCategoria(categoria: string): PictoNombre {
-  const c = categoria
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-  for (const [picto, claves] of REGLAS) if (claves.some((k) => c.includes(k))) return picto
-  return 'moneda'
 }

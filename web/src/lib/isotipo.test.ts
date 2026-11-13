@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { escalaUnidad, fmtUnidad, partirFiguras, pictoCategoria } from './isotipo'
+import { escalaUnidad, fmtUnidad, partirFiguras } from './isotipo'
 
 test('la unidad es un número redondo que deja la fila más larga en 20 figuras o menos', () => {
   expect(escalaUnidad([320_000, 150_000, 60_000])).toBe(20_000)
@@ -29,14 +29,4 @@ test('la unidad se escribe corta', () => {
   expect(fmtUnidad(50_000_000)).toBe('$50M')
   expect(fmtUnidad(2_000_000_000)).toBe('$2B')
   expect(fmtUnidad(500)).toBe('$500')
-})
-
-test('cada categoría de gasto tiene su pictograma, con moneda por defecto', () => {
-  expect(pictoCategoria('Alimentación')).toBe('cubiertos')
-  expect(pictoCategoria('Transporte')).toBe('carro')
-  expect(pictoCategoria('Arriendo')).toBe('casa')
-  expect(pictoCategoria('Compra activos')).toBe('casa')
-  expect(pictoCategoria('Inversión')).toBe('planta')
-  expect(pictoCategoria('Entretenimiento')).toBe('boleta')
-  expect(pictoCategoria('Mascotas')).toBe('moneda')
 })

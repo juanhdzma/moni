@@ -7,8 +7,8 @@ import { Seccion } from './Seccion'
 export function EsteMes({ r, loading }: { r: ResumenDashboard; loading: boolean }) {
   const unidad = escalaUnidad([r.ingresos, r.gastos])
   const filas = [
-    { id: 'entro', nombre: 'Entró', valor: r.ingresos, tinta: 'text-cartera', picto: 'billete' as const },
-    { id: 'salio', nombre: 'Salió', valor: r.gastos, tinta: 'text-ink', picto: 'billete' as const },
+    { id: 'entro', nombre: 'Entró', valor: r.ingresos, tinta: 'text-cartera' },
+    { id: 'salio', nombre: 'Salió', valor: r.gastos, tinta: 'text-ink' },
   ]
   const ahorro = r.ahorroPct
   return (
@@ -23,7 +23,7 @@ export function EsteMes({ r, loading }: { r: ResumenDashboard; loading: boolean 
             {loading ? (
               <div className="h-5 w-1/2 animate-pulse rounded-sm bg-wash" />
             ) : (
-              <FilaFiguras valor={f.valor} unidad={unidad} picto={f.picto} className={f.tinta} />
+              <FilaFiguras valor={f.valor} unidad={unidad} className={f.tinta} />
             )}
           </div>
         ))}

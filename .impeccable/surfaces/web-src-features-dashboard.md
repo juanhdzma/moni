@@ -13,7 +13,7 @@ Audience and job: the owner, alone, on phone and desktop equally. Job: see how t
 
 Dark variant: the world also ships a dark rendition (ink-black ground #141412, same four inks lifted for contrast) that follows the system preference, because the owner checks the phone at night and the previous app was dark; it is the same world, not a second one.
 
-Open decision: the Moni icon (`web/public/assets/icons/moni.svg`, a green gradient wallet) contradicts the flat-ink world; it is a brand asset, so redrawing it waits for the owner.
+Owner decisions after the first build: unit figures are plain square blocks, not pictograms; the logo is four flat squares in the domain inks.
 
 Constraints: all current figures stay reachable (some move off the first viewport); próximas operaciones keep their pending-key behavior; pinch-zoom and keyboard reach stay; no CDN; Tailwind CSS + shadcn/ui (Radix) as the styling base; tabs not yet redesigned keep working on the legacy CSS.
 
