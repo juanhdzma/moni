@@ -16,6 +16,7 @@ afterEach(() => {
 })
 
 const nav = () => document.getElementById('header-nav') as HTMLElement
+const sheet = () => document.querySelector<HTMLElement>('[data-slot="sheet-content"]')
 
 describe('Shell', () => {
   it('nav de escritorio y drawer con sus etiquetas', () => {
@@ -23,7 +24,14 @@ describe('Shell', () => {
     expect(within(nav()).getAllByRole('button').map((b) => b.textContent)).toEqual([
       'Dashboard', 'Transacciones', 'Deudas', 'Inversiones', 'Activos', 'Recurrentes', 'Ajustes',
     ])
-    expect(within(document.getElementById('nav-drawer') as HTMLElement).getByText('Movimientos')).toBeInTheDocument()
+    expect(document.getElementById('nav-drawer')).toBeNull()
+  })
+
+  it('el drawer muestra las etiquetas cortas al abrirse', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<Shell />)
+    await user.click(screen.getByLabelText('Menú'))
+    expect(within(sheet() as HTMLElement).getByText('Transacciones')).toBeInTheDocument()
   })
 
   it('cambiar de tab mueve active en nav, drawer y contenido', async () => {
@@ -34,6 +42,8 @@ describe('Shell', () => {
     expect(document.getElementById('tab-deudas')).toHaveClass('active')
     expect(document.getElementById('tab-dashboard')).not.toHaveClass('active')
     expect(within(nav()).getByText('Deudas')).toHaveClass('active')
+    expect(within(nav()).getByText('Deudas')).toHaveAttribute('aria-current', 'page')
+    await user.click(screen.getByLabelText('Menú'))
     expect(document.querySelector('.nav-drawer-item.active')).toHaveTextContent('Deudas')
   })
 
@@ -63,18 +73,16 @@ describe('Shell', () => {
   it('drawer: abre con la hamburguesa, cierra con tab, backdrop y Escape', async () => {
     const user = userEvent.setup()
     renderWithProviders(<Shell />)
-    const overlay = document.getElementById('nav-drawer-overlay') as HTMLElement
     await user.click(screen.getByLabelText('Menú'))
-    expect(overlay).toHaveClass('open')
-    await user.click(within(overlay).getByText('Activos'))
-    expect(overlay).not.toHaveClass('open')
+    await user.click(within(sheet() as HTMLElement).getByText('Activos'))
+    await waitFor(() => expect(sheet()).toBeNull())
     expect(document.getElementById('tab-activos')).toHaveClass('active')
     await user.click(screen.getByLabelText('Menú'))
-    await user.click(overlay)
-    expect(overlay).not.toHaveClass('open')
+    await user.click(document.querySelector('[data-slot="sheet-overlay"]') as HTMLElement)
+    await waitFor(() => expect(sheet()).toBeNull())
     await user.click(screen.getByLabelText('Menú'))
     await user.keyboard('{Escape}')
-    expect(overlay).not.toHaveClass('open')
+    await waitFor(() => expect(sheet()).toBeNull())
   })
 
   it('has-warning en activos e inversiones variables sin actualizar', () => {
@@ -99,7 +107,7 @@ describe('Shell', () => {
         </CategoriasProvider>
       </DataProvider>,
     )
-    await waitFor(() => expect(document.getElementById('err-banner')).toHaveTextContent('⚠ caído'))
-    expect(document.getElementById('err-banner')).toHaveStyle({ display: 'block' })
+    await waitFor(() => expect(document.getElementById('err-banner')).toHaveTextContent('caído'))
+    expect(document.getElementById('err-banner')).toHaveStyle({ display: 'flex' })
   })
 })

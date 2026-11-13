@@ -253,7 +253,7 @@ describe('modal', () => {
     )
     await user.click(screen.getByText('rota'))
     expect(document.getElementById('modal-overlay')).not.toHaveClass('open')
-    expect(document.getElementById('err-banner')).toHaveTextContent('⚠ No se pudo abrir el formulario. Mirá la consola.')
+    expect(document.getElementById('err-banner')).toHaveTextContent('No se pudo abrir el formulario. Mirá la consola.')
     expect(spy).toHaveBeenCalledWith('formulario del modal falló:', expect.any(Error))
     await user.click(screen.getByText('sana'))
     expect(document.getElementById('modal-overlay')).toHaveClass('open')

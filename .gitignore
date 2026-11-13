@@ -25,3 +25,9 @@ backend/data/
 # Frontend React (web/)
 web/node_modules/
 web/dist/
+
+# Impeccable: screenshots y logs de cada sesión de diseño
+.impeccable/review/
+.impeccable/questions/
+.impeccable/mocks/
+.impeccable/build/

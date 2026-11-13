@@ -1,7 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 input, select, textarea, button { font-family: inherit; font-size: inherit; }
 
-:root {
+/* Scoped to .legacy: the tabs and modal not yet redesigned keep their old look inside the new shell. */
+.legacy {
   /* ── Surfaces (dark, híbrido GitHub/Notion) ── */
   --bg:           #131518;
   --bg-card:      #1b1e21;
@@ -119,18 +120,12 @@ input, select, textarea, button { font-family: inherit; font-size: inherit; }
    que el user-scalable=no que ya se sacó del viewport, y vuelve a fallar
    WCAG 1.4.4 — que en móvil, con los montos en mono chiquito, se nota. */
 html, body, * { touch-action: pan-x pan-y pinch-zoom; }
-body {
+.legacy {
   font-family: var(--font-mono);
   font-optical-sizing: auto;
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'kern' 1, 'liga' 1;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  touch-action: pan-x pan-y pinch-zoom;
+  font-variant-numeric: normal;
 }
-body::-webkit-scrollbar { display: none; }
-*::-webkit-scrollbar { display: none; }
-* { scrollbar-width: none; }

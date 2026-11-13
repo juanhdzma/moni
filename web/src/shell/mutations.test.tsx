@@ -93,7 +93,7 @@ describe('mutaciones', () => {
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('delb'))
     await waitFor(() => expect(f.callsTo('GET', '/api/all')).toHaveLength(1))
-    await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('⚠ boom'))
+    await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('boom'))
   })
 
   it('crudOpOrBanner: un refetch exitoso no borra el error de la mutación', async () => {
@@ -103,6 +103,6 @@ describe('mutaciones', () => {
     await user.click(screen.getByText('delb'))
     await waitFor(() => expect(f.callsTo('GET', '/api/all')).toHaveLength(1))
     expect(f.mutations()).toHaveLength(1)
-    await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('⚠ boom'))
+    await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('boom'))
   })
 })

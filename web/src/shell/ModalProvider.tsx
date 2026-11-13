@@ -160,7 +160,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         <div
           id="modal-overlay"
           ref={overlayRef}
-          className={'modal-overlay' + (modal ? ' open' : '')}
+          className={'modal-overlay legacy' + (modal ? ' open' : '')}
           onClick={onBackdrop}
           onKeyDown={modal ? trapFocus : undefined}
         >

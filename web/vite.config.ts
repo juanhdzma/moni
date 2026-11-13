@@ -1,13 +1,12 @@
 /// <reference types="vitest/config" />
+import { fileURLToPath } from 'node:url'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [react()],
-  build: {
-    // chart.js + treemap are needed by the landing tab, so splitting them would not reduce first load; 159 kB gzip on a LAN
-    chunkSizeWarningLimit: 600,
-  },
+  plugins: [react(), tailwindcss()],
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: {
     port: 5173,
     proxy: { '/api': 'http://localhost:8080' },

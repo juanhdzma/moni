@@ -40,7 +40,7 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
   const failed = useRef(new Set<string>())
   const lastRequest = useRef(0)
 
-  const showBanner = useCallback((msg: string) => setBanner('⚠ ' + msg), [])
+  const showBanner = useCallback((msg: string) => setBanner(msg), [])
   const hideBanner = useCallback(() => setBanner(null), [])
 
   const applyData = useCallback((data: Estado) => {

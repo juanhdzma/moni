@@ -1,0 +1,127 @@
+@layer theme, base, legacy, components, utilities;
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fontsource-variable/jost';
+@import './fonts.css' layer(legacy);
+@import './tokens.css' layer(legacy);
+@import './components.css' layer(legacy);
+@import './layout.css' layer(legacy);
+
+:root {
+  --paper: #fbfbf9;
+  --ink: #1c1c1a;
+  --ink-2: #5e5d58;
+  --rule: #dedcd5;
+  --wash: #f1f0eb;
+  --cartera: #2b4c8c;
+  --inversiones: #3f6e2f;
+  --activos: #d8a23a;
+  --activos-text: #8a5f12;
+  --deudas: #c3352b;
+  --alerta: #b06d00;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--wash);
+  --secondary-foreground: var(--ink);
+  --muted: var(--wash);
+  --muted-foreground: var(--ink-2);
+  --accent: var(--wash);
+  --accent-foreground: var(--ink);
+  --destructive: var(--deudas);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--ink);
+  --radius: 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141412;
+    --ink: #ecebe5;
+    --ink-2: #a3a29b;
+    --rule: #2f2e2a;
+    --wash: #1e1d1b;
+    --cartera: #8aa6e6;
+    --inversiones: #93c174;
+    --activos: #e2b04f;
+    --activos-text: #e2b04f;
+    --deudas: #f0705f;
+    --alerta: #f0a948;
+  }
+}
+
+@theme inline {
+  --font-sans: 'Jost Variable', ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-paper: var(--paper);
+  --color-rule: var(--rule);
+  --color-wash: var(--wash);
+  --color-cartera: var(--cartera);
+  --color-inversiones: var(--inversiones);
+  --color-activos: var(--activos);
+  --color-activos-text: var(--activos-text);
+  --color-deudas: var(--deudas);
+  --color-alerta: var(--alerta);
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: light dark;
+    scrollbar-color: var(--rule) transparent;
+    scrollbar-width: thin;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'kern' 1;
+  }
+  ::selection {
+    background: var(--activos);
+    color: #1c1c1a;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .legacy-tab.active {
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+}

@@ -3,34 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '../../test/render'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { CategoriasProvider } from '../../shell/CategoriasProvider'
-import { DataProvider, useData } from '../../shell/DataProvider'
+import { DataProvider } from '../../shell/DataProvider'
 import { ModalProvider } from '../../shell/ModalProvider'
 import { activo, deuda, estado, inversion, recurrente, tx } from '../../test/factories'
 import { Dashboard } from './index'
-
-interface ChartCall {
-  type: string
-  data: { labels?: string[]; datasets: { data?: number[]; tree?: unknown[]; borderColor?: string }[] }
-  options: Record<string, unknown>
-  destroyed: boolean
-}
-
-const charts = vi.hoisted(() => [] as ChartCall[])
-
-vi.mock('./chartUtils', () => ({
-  cv: (n: string) => `#${n.replace(/-/g, '')}`,
-  monoFont: () => 'Mono',
-  Chart: class {
-    call: ChartCall
-    constructor(_c: unknown, config: Omit<ChartCall, 'destroyed'>) {
-      this.call = { ...config, destroyed: false }
-      charts.push(this.call)
-    }
-    destroy() {
-      this.call.destroyed = true
-    }
-  },
-}))
 
 const spies = vi.hoisted(() => ({ pay: vi.fn(), yield: vi.fn(), mat: vi.fn() }))
 vi.mock('../deudas', () => ({ openDeudaPayFormById: spies.pay }))
@@ -55,16 +31,15 @@ const fixture = () =>
   })
 
 const stat = (id: string) => document.getElementById(id) as HTMLElement
-const chartOf = (type: string) => charts.filter((c) => c.type === type && !c.destroyed)
-const lastLine = (i: number) => chartOf('line')[i] as ChartCall
+const figuras = (el: Element | null | undefined) => Number(el?.querySelector('[data-figuras]')?.getAttribute('data-figuras'))
+const gastoRows = () => Array.from(document.querySelectorAll('#gastos-categorias > li'))
+const pill = (groupId: string, label: string) => within(document.getElementById(groupId) as HTMLElement).getByText(label)
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date(2026, 7, 15, 12, 0, 0))
   localStorage.clear()
-  charts.length = 0
   Object.values(spies).forEach((s) => s.mockClear())
-  HTMLCanvasElement.prototype.getContext = (() => ({ createLinearGradient: () => ({ addColorStop: () => undefined }) })) as never
 })
 
 afterEach(() => {
@@ -72,109 +47,131 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('Dashboard KPIs', () => {
-  it('shows values from the old math', () => {
+describe('Patrimonio', () => {
+  it('muestra la cifra y de qué está hecha con la misma matemática de antes', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
-    expect(stat('stat-networth').querySelector('.stat-value')).toHaveTextContent('$1,3M')
-    expect(stat('stat-balance').querySelector('.stat-value')).toHaveTextContent('$670k')
-    expect(stat('stat-balance').querySelector('.stat-sub')).toHaveTextContent('↑$1,0M · ↓$200k · +70,0% ahorro')
-    expect(stat('stat-inversiones').querySelector('.stat-value')).toHaveTextContent('$500k')
-    expect(stat('stat-inversiones').querySelector('.stat-sub')).toHaveTextContent('+$100k (+25,0%)')
-    expect(stat('stat-activos').querySelector('.stat-value')).toHaveTextContent('$300k')
-    expect(stat('stat-activos').querySelector('.stat-sub')).toHaveTextContent('1 activo')
-    expect(stat('stat-deudas').querySelector('.stat-value')).toHaveTextContent('$150k')
-    expect(stat('stat-deudas').querySelector('.stat-sub')).toHaveTextContent('$20.000/mes · 1 deuda')
-    expect(stat('stat-networth').querySelector('.stat-value span')).toHaveStyle({ color: 'var(--income)' })
-    expect(stat('stat-networth').querySelector('.stat-sub')).toHaveTextContent('proyectados próx. 12 meses')
+    expect(stat('stat-networth')).toHaveTextContent('$1,3M')
+    expect(stat('stat-networth')).toHaveAttribute('title', '$1.320.000')
+    expect(stat('dash-patrimonio')).toHaveTextContent('proyectados en los próximos 12 meses')
+    expect(stat('stat-balance')).toHaveTextContent('$670k')
+    expect(stat('stat-inversiones')).toHaveTextContent('$500k')
+    expect(stat('stat-inversiones')).toHaveTextContent('+$100k (+25,0%) sobre lo invertido')
+    expect(stat('stat-activos')).toHaveTextContent('$300k')
+    expect(stat('stat-activos')).toHaveTextContent('1 activo')
+    expect(stat('stat-deudas')).toHaveTextContent('−$150k')
+    expect(stat('stat-deudas')).toHaveTextContent('$20.000/mes · 1 deuda')
   })
 
-  it('shows skeletons before the first load', () => {
+  it('cada parte es una fila de figuras con la misma unidad', () => {
+    renderWithProviders(<Dashboard active />, { estado: fixture() })
+    expect(figuras(stat('stat-balance'))).toBe(13.5)
+    expect(figuras(stat('stat-inversiones'))).toBe(10)
+    expect(figuras(stat('stat-activos'))).toBe(6)
+    expect(figuras(stat('stat-deudas'))).toBe(3)
+    expect(stat('dash-patrimonio')).toHaveTextContent('Una figura = $50k')
+  })
+
+  it('muestra placeholders antes de la primera carga', () => {
     renderWithProviders(<Dashboard active />, { loaded: false })
-    expect(stat('stat-networth').querySelector('.skeleton')).toBeInTheDocument()
+    expect(document.getElementById('stat-networth')).toBeNull()
+    expect(screen.getByLabelText('Cargando')).toBeInTheDocument()
   })
 
-  it('shows values, not skeletons, when loaded with empty data', () => {
+  it('cargado sin datos muestra cifras, no placeholders', () => {
     renderWithProviders(<Dashboard active />)
-    expect(stat('stat-networth').querySelector('.skeleton')).toBeNull()
+    expect(stat('stat-networth')).toHaveTextContent('$0')
+    expect(screen.queryByLabelText('Cargando')).toBeNull()
   })
 
-  it('counts positions when nothing was invested', () => {
+  it('cuenta posiciones cuando no hay nada invertido', () => {
     renderWithProviders(<Dashboard active />, { estado: estado({ inversiones: [inversion({ _id: 1 }), inversion({ _id: 2 })] }) })
-    expect(stat('stat-inversiones').querySelector('.stat-sub')).toHaveTextContent('2 posiciones')
+    expect(stat('stat-inversiones')).toHaveTextContent('2 posiciones')
   })
 })
 
-describe('Dashboard charts', () => {
-  it('draws net worth and inversiones with default 6M and walks back from the final point', () => {
+describe('Este mes en tu cartera', () => {
+  it('compara lo que entró con lo que salió de la cartera, sin las tarjetas', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
-    const nw = lastLine(0)
-    expect(nw.data.labels).toHaveLength(6)
-    expect(nw.data.datasets[0]?.data?.at(-1)).toBe(1320000)
-    expect(nw.data.datasets[0]?.data?.[4]).toBe(1320000 - (1000000 - 200000 - 50000))
-    expect(nw.data.datasets[0]?.borderColor).toBe('#green')
-    expect((nw.options.animation as { duration: number }).duration).toBe(600)
-    const inv = lastLine(1)
-    expect(inv.data.datasets[0]?.data?.at(-1)).toBe(500000)
-    expect((inv.options.animation as { duration: number }).duration).toBe(400)
-    expect(within(screen.getByText('Evolución net worth').parentElement as HTMLElement).getByText('6M')).toHaveClass('sel')
+    const mes = stat('dash-mes')
+    expect(mes).toHaveTextContent('Entró$1,0M')
+    expect(mes).toHaveTextContent('Salió$200k')
+    expect(stat('stat-ahorro')).toHaveTextContent('Te quedó el 70,0% de lo que entró.')
   })
 
-  it('switches the net worth period and rebuilds the chart destroying the old one', () => {
+  it('avisa cuando salió más de lo que entró', () => {
+    renderWithProviders(<Dashboard active />, {
+      estado: estado({ transacciones: [tx('ingreso', 'Salario', 100000, { _id: 1, fecha: '2026-08-01' }), tx('gasto', 'Comida', 150000, { _id: 2, fecha: '2026-08-02' })] }),
+    })
+    expect(stat('stat-ahorro')).toHaveTextContent('Salió 50,0% más de lo que entró.')
+  })
+})
+
+describe('En qué se va tu plata', () => {
+  it('una fila por categoría del período, 1M por defecto, y cambia a Todo', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
-    const before = charts.filter((c) => c.type === 'line').length
-    fireEvent.click(within(document.getElementById('nw-period-pills') as HTMLElement).getByText('1M'))
-    expect(within(document.getElementById('nw-period-pills') as HTMLElement).getByText('1M')).toHaveClass('sel')
-    expect(within(document.getElementById('nw-period-pills') as HTMLElement).getByText('6M')).not.toHaveClass('sel')
-    expect(within(document.getElementById('inv-period-pills') as HTMLElement).getByText('6M')).toHaveClass('sel')
-    expect(charts.filter((c) => c.type === 'line').length).toBeGreaterThan(before)
-    expect(charts.filter((c) => c.type === 'line' && c.data.labels?.length === 6 && c.destroyed).length).toBeGreaterThan(0)
-    expect(chartOf('line').find((c) => c.data.labels?.length === 2)).toBeTruthy()
+    expect(pill('gastos-period-pills', '1M')).toHaveAttribute('data-state', 'on')
+    expect(within(stat('gastos-period-pills')).getAllByRole('radio').map((b) => b.textContent)).toEqual(['1S', '1M', '3M', '6M', '1A', 'Todo'])
+    expect(gastoRows().map((r) => r.textContent)).toEqual([expect.stringContaining('Comida$200k80%'), expect.stringContaining('Mercado$50k20%')])
+    expect(figuras(gastoRows()[0])).toBe(20)
+    expect(figuras(gastoRows()[1])).toBe(5)
+    fireEvent.click(pill('gastos-period-pills', 'Todo'))
+    expect(pill('gastos-period-pills', 'Todo')).toHaveAttribute('data-state', 'on')
+    expect(gastoRows()[0]).toHaveTextContent('Comida$230k')
   })
 
-  it('gastos treemap: default 1M, tree grouped by category, pills switch to ALL', () => {
+  it('tocar una categoría muestra sus movimientos y atenúa el resto', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
-    const pills = document.getElementById('gastos-period-pills') as HTMLElement
-    expect(within(pills).getByText('1M')).toHaveClass('sel')
-    expect(within(pills).getAllByRole('button').map((b) => b.textContent)).toEqual(['1W', '1M', '3M', '6M', '1Y', 'ALL'])
-    expect(chartOf('treemap')[0]?.data.datasets[0]?.tree).toEqual([
-      { cat: 'Comida', v: 200000 },
-      { cat: 'Mercado', v: 50000 },
-    ])
-    fireEvent.click(within(pills).getByText('ALL'))
-    expect(within(pills).getByText('ALL')).toHaveClass('sel')
-    expect(chartOf('treemap')).toHaveLength(1)
-    expect(chartOf('treemap')[0]?.data.datasets[0]?.tree).toEqual([
-      { cat: 'Comida', v: 230000 },
-      { cat: 'Mercado', v: 50000 },
-    ])
+    const boton = within(gastoRows()[0] as HTMLElement).getByRole('button')
+    expect(boton).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(boton)
+    expect(boton).toHaveAttribute('aria-expanded', 'true')
+    expect(within(gastoRows()[0] as HTMLElement).getByText('Almuerzo')).toBeInTheDocument()
+    expect(gastoRows()[1]?.querySelector('[data-figuras]')).toHaveClass('opacity-25')
+    fireEvent.click(boton)
+    expect(within(gastoRows()[0] as HTMLElement).queryByText('Almuerzo')).toBeNull()
   })
 
-  it('gastos shows the empty message and no chart without expenses', () => {
+  it('sin gastos muestra el mensaje vacío', () => {
     renderWithProviders(<Dashboard active />, { estado: estado() })
     expect(screen.getByText('Sin gastos para este período')).toBeInTheDocument()
-    expect(chartOf('treemap')).toHaveLength(0)
+  })
+})
+
+describe('Cómo cambió mes a mes', () => {
+  const meses = () => Array.from(document.querySelectorAll('#dash-evolucion ol > li'))
+
+  it('patrimonio a 6M por defecto, caminando hacia atrás desde el valor final', () => {
+    renderWithProviders(<Dashboard active />, { estado: fixture() })
+    expect(meses()).toHaveLength(6)
+    expect(meses()[5]).toHaveTextContent('+$750.000')
+    expect(meses()[4]).toHaveTextContent('−$30.000')
+    expect(stat('evol-resumen')).toHaveTextContent(`tenías $600k; hoy $1,3M (+$720k).`)
+    expect(pill('evol-period-pills', '6M')).toHaveAttribute('data-state', 'on')
   })
 
-  it('destroys charts on unmount', () => {
-    const { unmount } = renderWithProviders(<Dashboard active />, { estado: fixture() })
-    unmount()
-    expect(charts.every((c) => c.destroyed)).toBe(true)
+  it('cambia período y serie', () => {
+    renderWithProviders(<Dashboard active />, { estado: fixture() })
+    fireEvent.click(pill('evol-period-pills', '1M'))
+    expect(meses()).toHaveLength(2)
+    fireEvent.click(pill('evol-serie', 'Inversiones'))
+    expect(stat('evol-resumen')).toHaveTextContent('tenías invertido $500k; hoy $500k')
   })
 })
 
 describe('Últimos movimientos', () => {
-  it('lists the most recent first with sign and color', () => {
+  it('lista los más recientes primero con signo y tinta por tipo', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
     const items = document.querySelectorAll('#recent-list .recent-item')
     expect(items).toHaveLength(5)
     expect(items[0]).toHaveTextContent('Pago deuda')
     expect(items[0]?.querySelector('.recent-amount')).toHaveTextContent('−$100.000')
-    expect(items[0]?.querySelector('.recent-amount')).toHaveStyle({ color: 'var(--transfer)' })
-    expect(screen.getByText('Almuerzo')).toBeInTheDocument()
+    expect(items[0]?.querySelector('.recent-amount')).toHaveClass('text-ink-2')
+    expect(items[1]?.querySelector('.recent-amount')).toHaveClass('text-ink')
+    expect(screen.getAllByText('Almuerzo').length).toBeGreaterThan(0)
     expect(items[4]?.querySelector('.recent-amount')).toHaveTextContent('−$30.000')
   })
 
-  it('shows the empty state', () => {
+  it('muestra el estado vacío', () => {
     renderWithProviders(<Dashboard active />, { estado: estado() })
     expect(screen.getByText('Sin transacciones')).toBeInTheDocument()
   })
@@ -186,13 +183,12 @@ describe('Próximas operaciones', () => {
   it('lists deuda, recurrente and inversion ordered by date', () => {
     renderWithProviders(<Dashboard active />, { estado: fixture() })
     const rows = list().querySelectorAll('.prox-op-row')
-    expect(Array.from(rows).map((r) => r.querySelector('.prox-op-main div')?.textContent)).toEqual(['Gym', 'Banco', 'CDT'])
+    expect(Array.from(rows).map((r) => r.querySelector('.prox-op-label')?.textContent)).toEqual(['Gym', 'Banco', 'CDT'])
     expect(rows[1]).toHaveTextContent('Cuota deuda')
     expect(rows[1]).toHaveTextContent('−$20.000')
     expect(rows[1]).toHaveTextContent('en 5d')
+    expect(rows[1]).toHaveTextContent('20ago')
     expect(rows[2]).toHaveTextContent('+')
-    expect(rows[0]?.getAttribute('style')).toContain('1px solid')
-    expect(rows[2]?.getAttribute('style')).not.toContain('1px solid')
   })
 
   it('hides ops stored in moni_skipped_ops and prunes stale keys', () => {
@@ -235,8 +231,8 @@ describe('Próximas operaciones', () => {
     const buttons = within(list()).getAllByRole('button')
     expect(buttons).toHaveLength(6)
     buttons.forEach((b) => expect(b.tagName).toBe('BUTTON'))
-    const pills = within(document.getElementById('gastos-period-pills') as HTMLElement).getAllByRole('button')
-    pills.forEach((b) => expect(b).toHaveAttribute('type', 'button'))
+    expect(buttons[0]).toHaveAccessibleName('No tomar esta vez: Gym')
+    expect(buttons[1]).toHaveAccessibleName('Registrar: Gym')
   })
 })
 
@@ -254,14 +250,14 @@ describe('antes de la primera carga', () => {
       </DataProvider>,
     )
 
-  it('no dibuja listas, mensajes vacíos ni charts, y no toca moni_skipped_ops', () => {
+  it('no dibuja listas ni mensajes vacíos, y no toca moni_skipped_ops', () => {
     localStorage.setItem('moni_skipped_ops', JSON.stringify(STORED))
     renderWithProviders(<Dashboard active />, { loaded: false, estado: estado() })
-    expect(document.getElementById('dash-upcoming')).toBeEmptyDOMElement()
-    expect(document.getElementById('recent-list')).toBeEmptyDOMElement()
+    expect(document.getElementById('dash-upcoming')).toBeNull()
+    expect(document.getElementById('recent-list')).toBeNull()
     expect(screen.queryByText('Sin gastos para este período')).toBeNull()
     expect(screen.queryByText('Sin transacciones')).toBeNull()
-    expect(charts).toHaveLength(0)
+    expect(screen.queryByText('Sin operaciones en los próximos 45 días.')).toBeNull()
     expect(stored()).toEqual(STORED)
   })
 
@@ -283,24 +279,20 @@ describe('antes de la primera carga', () => {
   })
 })
 
-describe('charts estables', () => {
-  function Ruido() {
-    const { showBanner } = useData()
-    return <button onClick={() => showBanner('x')}>ruido</button>
-  }
+describe('Lo que viene', () => {
+  it('muestra 5 y despliega el resto', () => {
+    const recurrentes = Array.from({ length: 7 }, (_, i) => recurrente({ _id: i + 1, nombre: `R${i + 1}`, monto: 1000, fecha_inicio: `2026-01-${String(16 + i).padStart(2, '0')}` }))
+    renderWithProviders(<Dashboard active />, { estado: estado({ recurrentes }) })
+    const list = () => document.getElementById('dash-upcoming') as HTMLElement
+    expect(list().querySelectorAll('.prox-op-row')).toHaveLength(5)
+    fireEvent.click(screen.getByText('Ver las 7'))
+    expect(list().querySelectorAll('.prox-op-row')).toHaveLength(7)
+  })
 
-  it('un re-render con los mismos datos no destruye ni recrea los line charts', () => {
-    renderWithProviders(
-      <>
-        <Dashboard active />
-        <Ruido />
-      </>,
-      { estado: fixture() },
-    )
-    const before = charts.filter((c) => c.type === 'line').length
-    fireEvent.click(screen.getByText('ruido'))
-    expect(screen.getByText('ruido')).toBeInTheDocument()
-    expect(charts.filter((c) => c.type === 'line')).toHaveLength(before)
-    expect(charts.filter((c) => c.type === 'line' && c.destroyed)).toHaveLength(0)
+  it('una cuota en cero no lleva signo', () => {
+    renderWithProviders(<Dashboard active />, { estado: estado({ deudas: [deuda({ _id: 1, nombre: 'Visa', saldo_actual: 1000, cuota_mensual: 0, proxima_cuota: '2026-08-20' })] }) })
+    const row = document.querySelector('.prox-op-row') as HTMLElement
+    expect(row).toHaveTextContent('Visa')
+    expect(row.textContent).not.toMatch(/[+−]\$0/)
   })
 })

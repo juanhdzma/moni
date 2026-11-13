@@ -38,48 +38,6 @@
   border-radius: 0 0 var(--radius) var(--radius);
 }
 
-/* ── Chart card ── */
-.chart-card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: var(--sp-10); box-shadow: var(--shadow-xs);
-  display: flex; flex-direction: column;
-}
-.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-8); }
-.chart-title  { font-size: var(--text-base); font-weight: 600; color: var(--text); }
-/* El treemap cuenta todos los gastos; el KPI "Cartera" solo los que mueven
-   efectivo. Son dos definiciones distintas a propósito: hay que decirlo. */
-.chart-title-note { font-size: var(--text-2xs); font-weight: 500; color: var(--text-muted); }
-.chart-wrap    { position: relative; flex: 1; min-height: 200px; }
-.chart-wrap-sm { position: relative; height: 190px; }
-
-/* ── Chart tooltip (HTML grid rows, replaces canvas-drawn tooltip) ── */
-.chart-tooltip {
-  position: absolute; top: 0; left: 0; z-index: 20; pointer-events: none;
-  opacity: 0; transition: opacity 0.1s ease;
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xs);
-  box-shadow: var(--shadow-sm); padding: var(--sp-3) var(--sp-4);
-  font-family: var(--font-mono); white-space: nowrap;
-}
-.chart-tooltip .tt-title { font-size: var(--text-sm); font-weight: 700; color: var(--text); margin-bottom: var(--sp-2); }
-.chart-tooltip .tt-row {
-  display: grid; grid-template-columns: 62px 170px 84px; column-gap: var(--sp-3);
-  padding: 3px 0; align-items: center;
-}
-.chart-tooltip .tt-row + .tt-row { border-top: 1px solid var(--border); }
-.chart-tooltip .tt-date { font-size: var(--text-2xs); color: var(--text-muted); overflow: hidden; white-space: nowrap; }
-.chart-tooltip .tt-desc { font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chart-tooltip .tt-amt  { font-size: var(--text-2xs); font-weight: 600; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; overflow: hidden; white-space: nowrap; }
-.chart-tooltip .tt-more { font-size: var(--text-2xs); color: var(--text-muted); text-align: center; padding-top: var(--sp-2); }
-
-/* ── Period pills ── */
-.period-pills { display: flex; gap: 2px; background: var(--bg-muted); border-radius: var(--radius-xs); padding: 2px; }
-.period-btn {
-  padding: 3px 9px; border: none; border-radius: 6px; background: transparent;
-  font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 700;
-  color: var(--text-muted); cursor: pointer; transition: all 0.12s; white-space: nowrap;
-}
-.period-btn.sel { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-
 /* ── Entity cards ── */
 .debt-card {
   background: var(--bg-card); border: 1px solid var(--border);
@@ -536,11 +494,6 @@ details.advanced-toggle > summary::-webkit-details-marker { display: none; }
   .modal-footer { flex-direction: column; align-items: stretch; }
   .modal-footer .btn { width: 100%; }
 
-  .prox-op-actions { gap: var(--sp-1); }
-  .prox-op-actions .btn-sm {
-    padding: 0; width: 26px; height: 26px;
-    display: flex; align-items: center; justify-content: center;
-  }
 
   /* ── Bottom sheet modal ── */
   .modal-overlay { align-items: flex-end; padding: 0; }
