@@ -1,2 +1,2 @@
 export { Transacciones } from './Transacciones'
-export { openTxForm, openTxFormById } from './forms'
+export { openTxForm } from './forms'
