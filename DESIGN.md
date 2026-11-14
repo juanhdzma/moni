@@ -2,13 +2,13 @@
 name: Moni
 description: Compact card dashboard for one household's money, where every card says in one sentence what its numbers mean.
 colors:
-  background: "#f8f5f0"
-  foreground: "#1f1a15"
-  card: "#fffdfa"
-  muted: "#f0ebe3"
-  muted-foreground: "#74695e"
-  border: "#e8e0d4"
-  ring: "#ab9f91"
+  background: "#f6f8fa"
+  foreground: "#0f172a"
+  card: "#ffffff"
+  muted: "#f1f5f9"
+  muted-foreground: "#5b6b80"
+  border: "#e2e8f0"
+  ring: "#94a3b8"
   cartera: "#2563eb"
   inversiones: "#16a34a"
   inversiones-text: "#15803d"
@@ -16,13 +16,13 @@ colors:
   activos-text: "#a16207"
   deudas: "#dc2626"
   alerta: "#d97706"
-  background-dark: "#171411"
-  foreground-dark: "#f4efe8"
-  card-dark: "#211d19"
-  muted-dark: "#2c2722"
-  muted-foreground-dark: "#a89d90"
-  border-dark: "#332d27"
-  ring-dark: "#6b6158"
+  background-dark: "#0f141c"
+  foreground-dark: "#eef2f7"
+  card-dark: "#161d27"
+  muted-dark: "#1e2734"
+  muted-foreground-dark: "#94a3b8"
+  border-dark: "#243042"
+  ring-dark: "#475569"
   cartera-dark: "#6c9be8"
   inversiones-dark: "#46b25e"
   inversiones-text-dark: "#5cc272"
@@ -140,7 +140,7 @@ components:
 
 **Creative North Star: "The Annotated Ledger"**
 
-Moni is a compact card dashboard. Each card states its finding in one plain Spanish sentence ("Subiste +$20,1M desde fin de jun.", "Arriendo se lleva el 39% de lo que gastaste en el último mes"), then shows the chart, list or sum that backs it up. The cards sit on warm neutrals: cream-white panels on a paper ground with hairline borders, or dark brown-black panels on a warm charcoal ground in dark mode. The theme follows the system preference and the app has no theme toggle.
+Moni is a compact card dashboard. Each card states its finding in one plain Spanish sentence ("Subiste +$20,1M desde fin de jun.", "Arriendo se lleva el 39% de lo que gastaste en el último mes"), then shows the chart, list or sum that backs it up. The cards sit on slate neutrals: white panels on a faintly blue-gray ground with hairline borders, or blue-black panels on a night-slate ground in dark mode. The theme follows the system preference and the app has no theme toggle.
 
 The density is set by the owner. The dashboard replaced an Isotype layout that was rejected for being empty and wasting space, so every block takes only the room its content needs. Color carries meaning, not decoration. Four fixed domain colors (activos ochre, inversiones green, cartera blue, deudas red) are the only hues allowed, and they show up wherever those domains appear. Everything else is neutral. Sums are shown the way an adding machine would: entró, salió, a rule, then te quedó.
 
