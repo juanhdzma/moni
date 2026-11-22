@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { CircleAlert, CircleCheck } from 'lucide-react'
-import { useModalStatus } from '../shell/ModalProvider'
+import { useModalStatus } from '@/shell/providers/ModalProvider'
 
 export function FormStatus({ style = { marginTop: 12 } }: { style?: CSSProperties }) {
   const { cls, msg } = useModalStatus()

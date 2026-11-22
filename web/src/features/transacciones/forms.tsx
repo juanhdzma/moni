@@ -1,16 +1,17 @@
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { DatePicker } from '../../controls/DatePicker'
-import { FormStatus } from '../../controls/FormStatus'
+import { FormFooter } from '../../controls/FormFooter'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { Select } from '../../controls/Select'
-import { nowStr, normDate, numToInput, parseMoney } from '../../lib/format'
-import { useCategorias } from '../../shell/CategoriasProvider'
-import { useData } from '../../shell/DataProvider'
-import { useModal } from '../../shell/ModalProvider'
-import type { OpenerCtx } from '../../shell/openers'
-import { useMutations } from '../../shell/useMutations'
+import { errMsg, nowStr, normDate, numToInput, parseMoney } from '../../lib/format'
+import { useCategorias } from '@/shell/providers/CategoriasProvider'
+import { useData } from '@/shell/providers/DataProvider'
+import { useModal } from '@/shell/providers/ModalProvider'
+import type { OpenerCtx } from '@/shell/hooks/openers'
+import { useMutations } from '@/shell/hooks/useMutations'
 import type { Transaccion } from '../../types'
+import { useGuardar } from '@/shell/hooks/useGuardar'
+import { FechaField, NotasField } from '../../controls/FormFields'
 
 const SIN_CATEGORIAS = 'Sin categorías — agregá una con +'
 
@@ -24,7 +25,8 @@ function initialFecha(tx: Transaccion | null): string {
 function TxForm({ tx }: { tx: Transaccion | null }) {
   const { estado, showBanner } = useData()
   const { categorias, addCategoria } = useCategorias()
-  const { setModalStatus, closeModal } = useModal()
+  const { setModalStatus } = useModal()
+  const guardar = useGuardar()
   const { crudOp } = useMutations()
   const isEdit = tx !== null
   const tarjetas = estado.deudas.filter((d) => d.es_tarjeta)
@@ -91,13 +93,10 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
       tarjeta_id,
     }
 
-    setModalStatus('', 'Guardando...')
-    try {
+    await guardar(async () => {
       if (tx) await crudOp('tx', 'update', { ...data, _id: tx._id })
       else await crudOp('tx', 'add', data)
-    } catch (err) {
-      setModalStatus('err', (err instanceof Error ? err.message : String(err)))
-    }
+    })
   }
 
   const remove = async () => {
@@ -105,7 +104,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
     try {
       await crudOp('tx', 'delete', { _id: tx._id })
     } catch (err) {
-      showBanner(err instanceof Error ? err.message : String(err))
+      showBanner(errMsg(err))
     }
   }
 
@@ -194,41 +193,9 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
           />
         </div>
       )}
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-fecha">Fecha</label>
-        <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
-      </div>
-      <div className="form-group">
-        <label
-          className="form-label normal-case tracking-normal"
-          htmlFor="m-notas"
-        >
-          Notas (opcional)
-        </label>
-        <input
-          className="form-input"
-          type="text"
-          id="m-notas"
-          maxLength={30}
-          value={notas}
-          placeholder="Notas adicionales"
-          onChange={(e) => setNotas(e.target.value)}
-        />
-      </div>
-      <div className="modal-footer">
-        <button type="button" className="btn btn-accent" onClick={() => void save()}>
-          {isEdit ? 'Guardar cambios' : 'Agregar'}
-        </button>
-        {isEdit && (
-          <button type="button" className="btn btn-danger" onClick={() => void remove()}>
-            Eliminar
-          </button>
-        )}
-        <button type="button" className="btn btn-dim ml-auto" onClick={closeModal}>
-          Cancelar
-        </button>
-      </div>
-      <FormStatus />
+      <FechaField id="m-fecha" label="Fecha" value={fecha} onChange={setFecha} />
+      <NotasField id="m-notas" placeholder="Notas adicionales" value={notas} onChange={setNotas} labelClassName="normal-case tracking-normal" />
+      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar'} onSave={() => void save()} onDelete={isEdit ? () => void remove() : undefined} cancelClassName="ml-auto" buttonType="button" />
     </>
   )
 }

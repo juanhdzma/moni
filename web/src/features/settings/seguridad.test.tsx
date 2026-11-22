@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as webauthn from '@simplewebauthn/browser'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
-import { useAuth } from '../../shell/AuthProvider'
+import { useAuth } from '@/shell/providers/AuthProvider'
 import { Seguridad } from './Seguridad'
 
 function Fase() {

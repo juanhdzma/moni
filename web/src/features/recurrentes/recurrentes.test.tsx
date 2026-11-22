@@ -6,8 +6,8 @@ import { estado, recurrente } from '../../test/factories'
 import { mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
 import { expectLabels, modalBody } from '../../test/labels'
-import { useOpenerCtx } from '../../shell/openers'
-import { useData } from '../../shell/DataProvider'
+import { useOpenerCtx } from '@/shell/hooks/openers'
+import { useData } from '@/shell/providers/DataProvider'
 import { Recurrentes, openRecurrenteMaterializeFormById } from '.'
 
 const H = { 'X-Moni-Request': '1' }

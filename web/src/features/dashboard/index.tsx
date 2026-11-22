@@ -1,13 +1,13 @@
 import { cargarResumenDashboard } from '@/lib/api'
-import { useData } from '@/shell/DataProvider'
-import { TabContent, type TabProps } from '@/shell/TabContent'
-import { useVista } from '@/shell/useVista'
-import { EsteMes } from './EsteMes'
-import { Evolucion } from './Evolucion'
-import { Gastos } from './Gastos'
-import { Movimientos } from './Movimientos'
-import { Patrimonio } from './Patrimonio'
-import { ProximasOperaciones } from './ProximasOperaciones'
+import { useData } from '@/shell/providers/DataProvider'
+import { TabContent, type TabProps } from '@/shell/layout/TabContent'
+import { useVista } from '@/shell/hooks/useVista'
+import { EsteMes } from './components/EsteMes'
+import { Evolucion } from './components/Evolucion'
+import { Gastos } from './components/Gastos'
+import { Movimientos } from './components/Movimientos'
+import { Patrimonio } from './components/Patrimonio'
+import { ProximasOperaciones } from './components/ProximasOperaciones'
 
 export function Dashboard({ active }: TabProps) {
   const { loaded } = useData()

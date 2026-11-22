@@ -1,7 +1,7 @@
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { fmtDate, fmtDateTime } from '../lib/format'
-import { clearActivePopup, openPopup, repositionPopup } from '../shell/popups'
+import { clearActivePopup, openPopup, repositionPopup } from './popups'
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 

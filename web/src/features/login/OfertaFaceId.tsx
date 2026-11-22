@@ -8,8 +8,8 @@ import {
   ofertaYaMostrada,
   passkeysDisponibles,
   registrarPasskey,
-} from '../../lib/passkeys'
-import { useAuth } from '../../shell/AuthProvider'
+} from '../../lib/seguridad/passkeys'
+import { useAuth } from '@/shell/providers/AuthProvider'
 
 export function OfertaFaceId() {
   const { loginReciente } = useAuth()

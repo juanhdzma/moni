@@ -1,0 +1,73 @@
+import { waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
+import { failure } from '../../../test/mockFetch'
+import { H, clickInGrid, mockInv, modal, setup, typeMoney, installFakeClock, type User } from './helpers'
+
+installFakeClock()
+
+describe('retiro', () => {
+  const abrir = async (user: User) => {
+    await setup()
+    await clickInGrid(user, 'fija', 'Retirar')
+  }
+
+  it('total', async () => {
+    const user = userEvent.setup()
+    const f = mockInv({ 'POST /api/inv/5/retiro': {} })
+    await abrir(user)
+    expect(document.getElementById('m-monto-total')).toHaveValue('1.010.000')
+    expect(document.getElementById('retiro-parcial-fields')).toHaveStyle({ display: 'none' })
+    await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]).toMatchObject({
+      method: 'POST',
+      url: '/api/inv/5/retiro',
+      headers: H,
+      body: { tipo: 'total', monto: 1010000, fecha: '2026-11-12T10:30', notas: '', registrar_tx: true },
+    })
+    expect(f.mutations()[0]?.body).not.toHaveProperty('saldo_queda')
+  })
+
+  it('parcial con saldo_queda', async () => {
+    const user = userEvent.setup()
+    const f = mockInv({ 'POST /api/inv/5/retiro': {} })
+    await abrir(user)
+    await user.click(modal().getByRole('button', { name: 'Parcial' }))
+    expect(document.getElementById('retiro-total-fields')).toHaveStyle({ display: 'none' })
+    await typeMoney(user, 'm-monto-parcial', '200000')
+    await typeMoney(user, 'm-saldo-queda', '810000')
+    await user.type(document.getElementById('m-notas-retiro') as HTMLElement, 'parte')
+    await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]?.body).toEqual({
+      tipo: 'parcial',
+      monto: 200000,
+      saldo_queda: 810000,
+      fecha: '2026-11-12T10:30',
+      notas: 'parte',
+      registrar_tx: true,
+    })
+  })
+
+  it('parcial valida monto y saldo vacío', async () => {
+    const user = userEvent.setup()
+    const f = mockInv()
+    await abrir(user)
+    await user.click(modal().getByRole('button', { name: 'Parcial' }))
+    await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
+    expect(document.getElementById('m-status')).toHaveTextContent('Ingresá el monto que retirás')
+    await typeMoney(user, 'm-monto-parcial', '1000')
+    await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
+    expect(document.getElementById('m-status')).toHaveTextContent('Ingresá el saldo que queda en el fondo')
+    expect(f.mutations()).toHaveLength(0)
+  })
+
+  it('error del backend', async () => {
+    const user = userEvent.setup()
+    mockInv({ 'POST /api/inv/5/retiro': failure(400, 'no') })
+    await abrir(user)
+    await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('no'))
+  })
+})

@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { clearActivePopup, openPopup, repositionPopup } from '../shell/popups'
+import { clearActivePopup, openPopup, repositionPopup } from './popups'
 
 export interface SelectOption {
   value: string

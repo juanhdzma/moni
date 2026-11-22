@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ScanFace } from 'lucide-react'
 import { ApiError } from '../../lib/api'
-import { esCancelacion, passkeysDisponibles } from '../../lib/passkeys'
-import { useAuth } from '../../shell/AuthProvider'
+import { esCancelacion, passkeysDisponibles } from '../../lib/seguridad/passkeys'
+import { useAuth } from '@/shell/providers/AuthProvider'
 
 const MSG_GENERICO = 'Credenciales inválidas'
 
@@ -163,3 +163,4 @@ function Formulario() {
     </main>
   )
 }
+export { OfertaFaceId } from './OfertaFaceId'

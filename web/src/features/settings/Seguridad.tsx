@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { borrarPasskey, cargarPasskeys, cargarSesiones, revocarSesion, type Passkey, type Sesion } from '../../lib/auth'
-import { nombreDeDispositivo, passkeysDisponibles, registrarPasskey } from '../../lib/passkeys'
-import { useAuth } from '../../shell/AuthProvider'
-
-const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e))
+import { borrarPasskey, cargarPasskeys, cargarSesiones, revocarSesion, type Passkey, type Sesion } from '../../lib/seguridad/auth'
+import { errMsg } from '../../lib/format'
+import { nombreDeDispositivo, passkeysDisponibles, registrarPasskey } from '../../lib/seguridad/passkeys'
+import { useAuth } from '@/shell/providers/AuthProvider'
 
 const fechaCorta = (iso: string | null): string => (iso ? iso.slice(0, 16).replace('T', ' ') : 'nunca')
 

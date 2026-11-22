@@ -2,7 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as webauthn from '@simplewebauthn/browser'
-import App from '../../App'
+import App from '../../app/App'
 import { failure, json, mockFetch } from '../../test/mockFetch'
 
 vi.mock('@simplewebauthn/browser', () => ({

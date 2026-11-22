@@ -1,17 +1,17 @@
 import { useState, type ReactNode } from 'react'
 import { AdvancedToggle } from '../../controls/AdvancedToggle'
-import { DatePicker } from '../../controls/DatePicker'
-import { FormStatus } from '../../controls/FormStatus'
+import { FormFooter } from '../../controls/FormFooter'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { cop, nowStr, numToInput, parseMoney, pct, signStr, todayStr } from '../../lib/format'
 import { previewValorActivo, previewVenta } from '../../lib/api'
-import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
-import { useModal } from '../../shell/ModalProvider'
-import { useMutations } from '../../shell/useMutations'
-import { useVista } from '../../shell/useVista'
+import { useOpenerCtx, type OpenerCtx } from '@/shell/hooks/openers'
+import { useModal } from '@/shell/providers/ModalProvider'
+import { useMutations } from '@/shell/hooks/useMutations'
+import { useVista } from '@/shell/hooks/useVista'
 import type { Activo, ActivoVenta } from '../../types'
+import { useGuardar } from '@/shell/hooks/useGuardar'
+import { FechaField, NotasField, RegistrarToggle } from '../../controls/FormFields'
 
-const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
 const tone = (n: number) => (n >= 0 ? 'text-inversiones-text' : 'text-deudas')
 
 
@@ -37,7 +37,8 @@ export function openActivoSellFormById(ctx: OpenerCtx, id: number): void {
 
 function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
   const isEdit = activo !== null
-  const { closeModal, setModalStatus } = useModal()
+  const { setModalStatus } = useModal()
+  const guardar = useGuardar()
   const { crudOp, crudOpOrBanner } = useMutations()
   const [nombre, setNombre] = useState(activo?.nombre ?? '')
   const [valIni, setValIni] = useState(activo ? numToInput(activo.valor_inicial) : '')
@@ -54,11 +55,10 @@ function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
     const valorActual = act || ini
     const valorActualizadoEn = !activo ? fechaAdq : activo.valor_actual === valorActual ? activo.valor_actualizado_en : todayStr()
     const data = { nombre: nom, valor_inicial: ini, valor_actual: valorActual, fecha_adquisicion: fechaAdq, valor_actualizado_en: valorActualizadoEn }
-    setModalStatus('', 'Guardando...')
-    try {
+    await guardar(async () => {
       if (activo) await crudOp('activo', 'update', { ...data, _id: activo._id })
       else await crudOp('activo', 'add', { ...data, crear_tx: esNueva })
-    } catch (err) { setModalStatus('err', errMsg(err)) }
+    })
   }
 
   const remove = async () => {
@@ -83,17 +83,9 @@ function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
           <MoneyInput id="m-val-act" value={valAct} onChange={setValAct} placeholder="Igual al inicial si no cambia" />
         </div>
       </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-fecha-adq">Fecha de adquisición</label>
-        <DatePicker id="m-fecha-adq" value={fechaAdq} onChange={setFechaAdq} />
-      </div>
+      <FechaField id="m-fecha-adq" label="Fecha de adquisición" value={fechaAdq} onChange={setFechaAdq} type="date" />
       {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
-      <div className="modal-footer">
-        <button className="btn btn-accent" onClick={() => void save()}>{isEdit ? 'Guardar cambios' : 'Agregar activo'}</button>
-        {isEdit && <button className="btn btn-danger" onClick={() => void remove()}>Eliminar</button>}
-        <button className="btn btn-dim sm:ml-auto" onClick={closeModal}>Cancelar</button>
-      </div>
-      <FormStatus />
+      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar activo'} onSave={() => void save()} onDelete={isEdit ? () => void remove() : undefined} cancelClassName="sm:ml-auto" />
     </>
   )
 }
@@ -101,6 +93,7 @@ function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
 function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
   const ctx = useOpenerCtx()
   const { closeModal, setModalStatus } = useModal()
+  const guardar = useGuardar()
   const { crudOp } = useMutations()
   const [nuevoTxt, setNuevoTxt] = useState('')
   const [fecha, setFecha] = useState(nowStr())
@@ -111,10 +104,9 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
 
   const save = async () => {
     if (!nuevo || nuevo <= 0) { setModalStatus('err', 'Valor inválido'); return }
-    setModalStatus('', 'Guardando...')
-    try {
+    await guardar(async () => {
       await crudOp('activo', 'update', { ...a, valor_actual: nuevo, valor_actualizado_en: fecha, _id: a._id })
-    } catch (err) { setModalStatus('err', errMsg(err)) }
+    })
   }
 
   return (
@@ -149,22 +141,15 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
           </span>
         </div>
       </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-fecha">Fecha de valoración</label>
-        <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
-      </div>
-      <div className="modal-footer">
-        <button className="btn btn-accent" onClick={() => void save()}>Actualizar</button>
-        <button className="btn btn-dim" onClick={() => { closeModal(); openActivoFormById(ctx, a._id) }}>Editar activo</button>
-        <button className="btn btn-dim sm:ml-auto" onClick={closeModal}>Cancelar</button>
-      </div>
-      <FormStatus />
+      <FechaField id="m-fecha" label="Fecha de valoración" value={fecha} onChange={setFecha} />
+      <FormFooter saveLabel="Actualizar" onSave={() => void save()} onEdit={() => { closeModal(); openActivoFormById(ctx, a._id) }} editLabel="Editar activo" cancelClassName="sm:ml-auto" />
     </>
   )
 }
 
 function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
-  const { closeModal, setModalStatus } = useModal()
+  const { setModalStatus } = useModal()
+  const guardar = useGuardar()
   const { apiAction } = useMutations()
   const [precioTxt, setPrecioTxt] = useState(numToInput(a.valor_actual))
   const [fecha, setFecha] = useState(nowStr())
@@ -177,11 +162,10 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
 
   const save = async () => {
     if (!precio || precio <= 0) { setModalStatus('err', 'Precio de venta inválido'); return }
-    setModalStatus('', 'Guardando...')
-    try {
+    await guardar(async () => {
       const body: ActivoVenta = { precio, fecha, notas: notas.trim(), registrar_tx: registrarTx }
       await apiAction(`/api/activo/${a._id}/venta`, body)
-    } catch (err) { setModalStatus('err', errMsg(err)) }
+    })
   }
 
   return (
@@ -214,20 +198,10 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
           </span>
         </div>
       </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-fecha">Fecha de venta</label>
-        <DatePicker id="m-fecha" type="datetime-local" value={fecha} onChange={setFecha} />
-      </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-notas">Notas (opcional)</label>
-        <input className="form-input" type="text" id="m-notas" maxLength={30} placeholder="Ej. Vendido a tercero" value={notas} onChange={(e) => setNotas(e.target.value)} />
-      </div>
-      <AdvancedToggle label="Registrar en transacciones" hint="Desactivá si ya lo registraste en otra parte." checked={registrarTx} onChange={setRegistrarTx} />
-      <div className="modal-footer">
-        <button className="btn btn-accent" onClick={() => void save()}>Confirmar venta</button>
-        <button className="btn btn-dim sm:ml-auto" onClick={closeModal}>Cancelar</button>
-      </div>
-      <FormStatus />
+      <FechaField id="m-fecha" label="Fecha de venta" value={fecha} onChange={setFecha} />
+      <NotasField id="m-notas" placeholder="Ej. Vendido a tercero" value={notas} onChange={setNotas} labelClassName="" />
+      <RegistrarToggle checked={registrarTx} onChange={setRegistrarTx} />
+      <FormFooter saveLabel="Confirmar venta" onSave={() => void save()} cancelClassName="sm:ml-auto" />
     </>
   )
 }

@@ -1,4 +1,3 @@
-/* Shared form, modal and control classes. Forms across tabs use these class names (and tests hook on some of them), so they are styled once here instead of repeating utility strings in every form. */
 @layer components {
   .modal-overlay {
     @apply fixed inset-0 z-50 hidden items-end justify-center bg-black/50 backdrop-blur-[2px] sm:items-center sm:p-6;

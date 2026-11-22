@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { DatePicker } from '../../controls/DatePicker'
-import { FormStatus } from '../../controls/FormStatus'
+import { FormFooter } from '../../controls/FormFooter'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { Select } from '../../controls/Select'
-import { numToInput, parseMoney } from '../../lib/format'
-import { useCategorias } from '../../shell/CategoriasProvider'
-import { useData } from '../../shell/DataProvider'
-import { useModal } from '../../shell/ModalProvider'
-import type { OpenerCtx } from '../../shell/openers'
-import { useMutations } from '../../shell/useMutations'
+import { errMsg, numToInput, parseMoney } from '../../lib/format'
+import { useCategorias } from '@/shell/providers/CategoriasProvider'
+import { useData } from '@/shell/providers/DataProvider'
+import { useModal } from '@/shell/providers/ModalProvider'
+import type { OpenerCtx } from '@/shell/hooks/openers'
+import { useMutations } from '@/shell/hooks/useMutations'
 import type { Frecuencia, Recurrente, TipoRec } from '../../types'
+import { useGuardar } from '@/shell/hooks/useGuardar'
+import { FechaField, NotasField } from '../../controls/FormFields'
 
 const frecOptions: { value: Frecuencia; label: string }[] = [
   { value: 'semanal', label: 'Semanal' },
@@ -21,13 +22,13 @@ const frecOptions: { value: Frecuencia; label: string }[] = [
   { value: 'anual', label: 'Anual' },
 ]
 
-const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const isEdit = item !== null
   const tipoInicial = item?.tipo || 'suscripcion'
   const { estado } = useData()
-  const { closeModal, setModalStatus } = useModal()
+  const { setModalStatus } = useModal()
+  const guardar = useGuardar()
   const { crudOp, crudOpOrBanner } = useMutations()
   const [nombre, setNombre] = useState(item?.nombre || '')
   const [tipo, setTipo] = useState<TipoRec>(tipoInicial !== 'ingreso' ? 'gasto' : 'ingreso')
@@ -51,13 +52,10 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
       fecha_inicio: fecha,
       notas: notas.trim(),
     }
-    setModalStatus('', 'Guardando...')
-    try {
+    await guardar(async () => {
       if (item) await crudOp('rec', 'update', { ...data, _id: item._id })
       else await crudOp('rec', 'add', data)
-    } catch (err) {
-      setModalStatus('err', errMsg(err))
-    }
+    })
   }
 
   const remove = async () => {
@@ -112,48 +110,16 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
           <Select id="m-frecuencia" value={frecuencia} onChange={setFrecuencia} options={frecOptions} />
         </div>
       </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-fecha">Fecha inicio (opcional)</label>
-        <DatePicker id="m-fecha" value={fecha} onChange={setFecha} />
-      </div>
-      <div className="form-group">
-        <label
-          className="form-label text-sm tracking-normal text-muted-foreground normal-case"
-          htmlFor="m-notas"
-        >
-          Notas (opcional)
-        </label>
-        <input
-          className="form-input"
-          type="text"
-          id="m-notas"
-          maxLength={30}
-          value={notas}
-          placeholder=""
-          onChange={(e) => setNotas(e.target.value)}
-        />
-      </div>
-      <div className="modal-footer">
-        <button className="btn btn-accent" onClick={() => void save()}>
-          {isEdit ? 'Guardar cambios' : 'Agregar'}
-        </button>
-        {isEdit && (
-          <button className="btn btn-danger" onClick={() => void remove()}>
-            Eliminar
-          </button>
-        )}
-        <button className="btn btn-dim ml-auto" onClick={closeModal}>
-          Cancelar
-        </button>
-      </div>
-      <FormStatus />
+      <FechaField id="m-fecha" label="Fecha inicio (opcional)" value={fecha} onChange={setFecha} type="date" />
+      <NotasField id="m-notas" placeholder="" value={notas} onChange={setNotas} labelClassName="text-sm tracking-normal text-muted-foreground normal-case" />
+      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar'} onSave={() => void save()} onDelete={isEdit ? () => void remove() : undefined} cancelClassName="ml-auto" />
     </>
   )
 }
 
 function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
   const { categorias } = useCategorias()
-  const { closeModal, setModalStatus } = useModal()
+  const { setModalStatus } = useModal()
   const { crudOp } = useMutations()
   const cats = categorias[r.tipo === 'ingreso' ? 'ingreso' : 'gasto'] || []
   const [categoria, setCategoria] = useState(cats.includes(r.nombre) ? r.nombre : (cats[cats.length - 1] ?? ''))
@@ -205,36 +171,9 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
           Pre-llenado con el monto recurrente — ajustá si difiere.
         </div>
       </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-fecha">Fecha</label>
-        <DatePicker id="m-fecha" value={fecha} onChange={setFecha} />
-      </div>
-      <div className="form-group">
-        <label
-          className="form-label text-sm tracking-normal text-muted-foreground normal-case"
-          htmlFor="m-notas"
-        >
-          Notas (opcional)
-        </label>
-        <input
-          className="form-input"
-          type="text"
-          id="m-notas"
-          maxLength={30}
-          value={notas}
-          placeholder=""
-          onChange={(e) => setNotas(e.target.value)}
-        />
-      </div>
-      <div className="modal-footer">
-        <button className="btn btn-accent" onClick={() => void save()}>
-          Registrar
-        </button>
-        <button className="btn btn-dim ml-auto" onClick={closeModal}>
-          Cancelar
-        </button>
-      </div>
-      <FormStatus />
+      <FechaField id="m-fecha" label="Fecha" value={fecha} onChange={setFecha} type="date" />
+      <NotasField id="m-notas" placeholder="" value={notas} onChange={setNotas} labelClassName="text-sm tracking-normal text-muted-foreground normal-case" />
+      <FormFooter saveLabel="Registrar" onSave={() => void save()} cancelClassName="ml-auto" />
     </>
   )
 }

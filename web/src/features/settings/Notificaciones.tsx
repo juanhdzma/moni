@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
-import { activarPush, desactivarPush, probarPush, pushSoportado, suscripcionActual } from '../../lib/push'
-
-const HINT = 'mt-2 text-xs text-muted-foreground'
-
-const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e))
+import { activarPush, desactivarPush, probarPush, pushSoportado, suscripcionActual } from '../../lib/seguridad/push'
+import { errMsg } from '../../lib/format'
+import { HINT } from './estilos'
 
 export function Notificaciones() {
   const soportado = pushSoportado()

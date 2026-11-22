@@ -1,0 +1,167 @@
+import { useState } from 'react'
+import { AdvancedToggle } from '../../../controls/AdvancedToggle'
+import { DatePicker } from '../../../controls/DatePicker'
+import { FormFooter } from '../../../controls/FormFooter'
+import { MoneyInput } from '../../../controls/MoneyInput'
+import { Select } from '../../../controls/Select'
+import { numToInput, parseMoney } from '../../../lib/format'
+import { useModal } from '@/shell/providers/ModalProvider'
+import { useMutations } from '@/shell/hooks/useMutations'
+import type { Deuda } from '../../../types'
+import { useGuardar } from '@/shell/hooks/useGuardar'
+
+const FRANQUICIAS = ['Visa', 'Mastercard', 'Amex', 'Otra'].map((f) => ({ value: f, label: f }))
+
+export function DeudaForm({ d }: { d: Deuda | null }) {
+  const { setModalStatus } = useModal()
+  const guardar = useGuardar()
+  const { crudOp, crudOpOrBanner } = useMutations()
+  const isEdit = d !== null
+  const [esTarjeta, setEsTarjeta] = useState(Boolean(d?.es_tarjeta))
+  const [nombre, setNombre] = useState(d?.nombre || '')
+  const [montoIni, setMontoIni] = useState(d ? numToInput(d.monto_inicial) : '')
+  const [cupo, setCupo] = useState(d ? numToInput(d.cupo) : '')
+  const [franquicia, setFranquicia] = useState(d && FRANQUICIAS.some((f) => f.value === d.franquicia) ? d.franquicia : 'Visa')
+  const [saldo, setSaldo] = useState(d ? numToInput(d.saldo_actual) : '')
+  const [tasa, setTasa] = useState(d?.tasa_ea ? String(d.tasa_ea) : '')
+  const [cuota, setCuota] = useState(d ? numToInput(d.cuota_mensual) : '')
+  const [fechaIni, setFechaIni] = useState(d?.fecha_inicio?.split('T')[0] || '')
+  const [proxima, setProxima] = useState(d?.proxima_cuota?.split('T')[0] || '')
+  const [esNueva, setEsNueva] = useState(true)
+
+  const save = async () => {
+    const nombreV = nombre.trim()
+    const saldoV = parseMoney(saldo)
+    if (!nombreV) {
+      setModalStatus('err', 'Nombre requerido')
+      return
+    }
+    if (!esTarjeta && !saldoV) {
+      setModalStatus('err', 'Saldo requerido')
+      return
+    }
+    const data = esTarjeta
+      ? {
+          nombre: nombreV,
+          monto_inicial: 0,
+          saldo_actual: saldoV,
+          tasa_ea: 0,
+          cuota_mensual: 0,
+          fecha_inicio: '',
+          proxima_cuota: '',
+          es_tarjeta: true,
+          cupo: parseMoney(cupo),
+          franquicia,
+        }
+      : {
+          nombre: nombreV,
+          monto_inicial: parseMoney(montoIni),
+          saldo_actual: saldoV,
+          tasa_ea: parseFloat(tasa) || 0,
+          cuota_mensual: parseMoney(cuota),
+          fecha_inicio: fechaIni,
+          proxima_cuota: proxima,
+          es_tarjeta: false,
+          cupo: 0,
+          franquicia: '',
+        }
+    await guardar(async () => {
+      if (d) await crudOp('deuda', 'update', { ...data, _id: d._id })
+      else await crudOp('deuda', 'add', { ...data, crear_tx: esTarjeta ? false : esNueva })
+    })
+  }
+
+  const remove = async () => {
+    if (!d) return
+    if (!confirm(`¿Eliminar "${d.nombre}"?`)) return
+    await crudOpOrBanner('deuda', 'delete', { _id: d._id })
+  }
+
+  return (
+    <>
+      <div className="form-group">
+        <div className="form-label" id="lbl-grp-1">Tipo</div>
+        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-1">
+          <button type="button" className={'tipo-btn transfer prestamo ' + (!esTarjeta ? 'sel' : '')} onClick={() => setEsTarjeta(false)}>
+            Préstamo
+          </button>
+          <button type="button" className={'tipo-btn transfer tarjeta  ' + (esTarjeta ? 'sel' : '')} onClick={() => setEsTarjeta(true)}>
+            Tarjeta
+          </button>
+        </div>
+      </div>
+      <div className="form-group">
+        <label className="form-label" htmlFor="m-nombre">Nombre</label>
+        <input
+          className="form-input"
+          type="text"
+          id="m-nombre"
+          maxLength={40}
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          placeholder={esTarjeta ? 'Ej. Tarjeta Visa' : 'Ej. Crédito de consumo'}
+        />
+      </div>
+      <div className="form-group" id="wrap-monto-ini" style={esTarjeta ? { display: 'none' } : undefined}>
+        <label className="form-label" htmlFor="m-monto-ini">{isEdit ? 'Monto inicial' : 'Monto del crédito'} (COP)</label>
+        <MoneyInput id="m-monto-ini" value={montoIni} onChange={setMontoIni} />
+      </div>
+      <div id="wrap-cupo" style={esTarjeta ? undefined : { display: 'none' }}>
+        <div className="form-group">
+          <label className="form-label" htmlFor="m-cupo">Cupo (COP)</label>
+          <MoneyInput id="m-cupo" value={cupo} onChange={setCupo} />
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="m-franquicia">Franquicia</label>
+          <Select id="m-franquicia" value={franquicia} onChange={setFranquicia} options={FRANQUICIAS} />
+        </div>
+      </div>
+      <div className="form-group">
+        <label className="form-label" id="saldo-label" htmlFor="m-saldo">
+          {esTarjeta ? 'Deuda actual' : 'Saldo actual'} (COP)
+        </label>
+        <MoneyInput id="m-saldo" value={saldo} onChange={setSaldo} />
+        <div
+          id="saldo-hint"
+          className={'mt-1.5 text-xs text-muted-foreground' + (esTarjeta ? '' : ' hidden')}
+        >
+          Dejá 0 si la tarjeta todavía no tiene gastos.
+        </div>
+      </div>
+      <div id="wrap-prestamo-fields" style={esTarjeta ? { display: 'none' } : undefined}>
+        <div className="form-row-2">
+          <div className="form-group">
+            <label className="form-label" htmlFor="m-tasa">Tasa EA (%)</label>
+            <input
+              className="form-input"
+              type="number"
+              step="0.01"
+              id="m-tasa"
+              value={tasa}
+              onChange={(e) => setTasa(e.target.value)}
+              placeholder="24"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="m-cuota">Cuota mensual</label>
+            <MoneyInput id="m-cuota" value={cuota} onChange={setCuota} />
+          </div>
+        </div>
+        <div className="form-row-2">
+          <div className="form-group">
+            <label className="form-label" htmlFor="m-fecha-ini">Fecha inicio</label>
+            <DatePicker id="m-fecha-ini" value={fechaIni} onChange={setFechaIni} />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="m-proxima">Próxima cuota</label>
+            <DatePicker id="m-proxima" value={proxima} onChange={setProxima} />
+          </div>
+        </div>
+      </div>
+      <div id="wrap-advanced" style={esTarjeta ? { display: 'none' } : undefined}>
+        {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
+      </div>
+      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar deuda'} onSave={() => void save()} onDelete={isEdit ? () => void remove() : undefined} />
+    </>
+  )
+}

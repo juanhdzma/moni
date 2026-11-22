@@ -62,7 +62,7 @@ Below 1024px the header nav collapses into a menu button and a slide-out drawer.
 
 ## How it fits together
 
-FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/db.py`) and, at the same time, serves the built frontend (`web/dist`) as static files: one process, one port in production.
+FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/core/db.py`) and, at the same time, serves the built frontend (`web/dist`) as static files: one process, one port in production.
 
 All business logic lives in the backend: the money definitions (cash flow vs. net worth), date handling in the `America/Bogota` time zone, derived fields and the upcoming-operations projection are pure functions in `backend/calculos/`, exposed through read endpoints that return data ready to render (`/api/all`, `/api/dashboard/*`, `/api/tx`, `/api/*/resumen`, `/api/proximas-operaciones`). Custom categories, hidden operations and the currency symbol are stored in SQLite too, not in the browser.
 
@@ -104,13 +104,13 @@ Serves on port 8080 (mapped to container port 80). The image is built in two sta
 
 | Variable | Purpose |
 | --- | --- |
-| `MONI_PASSWORD_HASH` | Owner password hash. Generate with `python -m backend.auth hash` and quote it (it contains `$`). |
+| `MONI_PASSWORD_HASH` | Owner password hash. Generate with `python -m backend.seguridad hash` and quote it (it contains `$`). |
 | `MONI_RP_ID`, `MONI_ORIGIN` | WebAuthn relying party (default `moni.nufi.com.co`, `https://moni.nufi.com.co`). |
 | `MONI_TRUSTED_PROXIES` | CIDRs allowed to set `X-Forwarded-For`/`X-Forwarded-Proto`. Default is loopback only; set the exact reverse proxy address. |
 | `MONI_BLOCK_HOURS` | Block duration after 3 failures in 1 hour (default 24). |
 | `MONI_PUSH_TOKEN` | Optional bearer token (32+ chars) for `POST /api/push/enviar` without a session. |
 
-Manage blocked IPs with `python -m backend.auth blocked` and `python -m backend.auth unblock <ip>`. Port 8080 is published on all interfaces by default; if a reverse proxy is the only entry point, publish `127.0.0.1:8080:80` instead.
+Manage blocked IPs with `python -m backend.seguridad blocked` and `python -m backend.seguridad unblock <ip>`. Port 8080 is published on all interfaces by default; if a reverse proxy is the only entry point, publish `127.0.0.1:8080:80` instead.
 
 ## Notifications
 
@@ -170,7 +170,7 @@ CI runs all of the above before building the image. Each backend test gets a thr
 
 ### Calling the API by hand
 
-Mutating requests need an `X-Moni-Request` header. Without it the backend answers `403`; this is what stops a cross-origin `<form>` from hitting a destructive endpoint (see `require_csrf_header` in `backend/main.py`). Reads need nothing.
+Mutating requests need an `X-Moni-Request` header. Without it the backend answers `403`; this is what stops a cross-origin `<form>` from hitting a destructive endpoint (see `require_csrf_header` in `backend/core/csrf.py`). Reads need nothing.
 
 ```bash
 curl localhost:8080/api/all
