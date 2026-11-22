@@ -1,0 +1,12 @@
+{
+  "name": "Moni",
+  "short_name": "Moni",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f141c",
+  "theme_color": "#0f141c",
+  "icons": [
+    { "src": "/assets/icons/moni.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/assets/icons/moni.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
