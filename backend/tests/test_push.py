@@ -143,7 +143,7 @@ def test_enviar_sigue_ante_error_de_red_y_limpia_410(client, monkeypatch):
             raise push.WebPushException("gone", response=Resp())
 
     monkeypatch.setattr(push, "webpush", falso)
-    assert push.enviar({"title": "t", "body": "b"}) == 1
+    assert push.enviar_a_todos("t", "b") == {"enviadas": 1, "eliminadas": 1}
     conn = db.get_conn()
     restantes = sorted(r["endpoint"] for r in conn.execute("SELECT endpoint FROM push_subs"))
     conn.close()

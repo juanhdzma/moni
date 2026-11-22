@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
-from . import db, push
+from . import auth, auth_routes, db, passkeys_routes, push, push_routes
 from .calculos import dinero, listados, operaciones
 from .calculos.fechas import TZ, hoy_bogota, parse_fecha
 
@@ -40,15 +40,12 @@ async def lifespan(app: FastAPI):
     tarea.cancel()
 
 
-app = FastAPI(title="Moni API", lifespan=lifespan)
+app = FastAPI(title="Moni API", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 # ── Anti-CSRF ─────────────────────────────────────────────────────────────────
-# Moni no tiene login: cualquiera en la LAN que pueda alcanzar el puerto puede
-# usar la API. Lo que sí hay que cerrar es el vector remoto: sin esto, cualquier
-# página web que abras podía hacer un <form method=POST> contra /api/truncate y
-# borrarte todo (un form cross-origin no necesita leer la respuesta). Un form no
-# puede mandar headers custom, y un fetch que sí puede dispara un preflight que
-# nadie contesta porque no hay CORS middleware. Con exigir el header alcanza.
+# Con sesión por cookie SameSite=Strict ya no basta confiar en el navegador:
+# un form cross-origin no puede mandar headers custom, así que exigir este
+# header en las mutaciones cierra el vector aunque la cookie viajara.
 CSRF_HEADER = "x-moni-request"
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
@@ -62,6 +59,13 @@ async def require_csrf_header(request, call_next):
     ):
         return JSONResponse({"detail": f"Falta el header {CSRF_HEADER}"}, status_code=403)
     return await call_next(request)
+
+
+app.middleware("http")(auth.middleware_auth)
+app.middleware("http")(auth.middleware_headers)
+app.include_router(auth_routes.router)
+app.include_router(passkeys_routes.router)
+app.include_router(push_routes.router)
 
 
 # ── Validación compartida ─────────────────────────────────────────────────────
@@ -1161,64 +1165,6 @@ def migrar_local(body: MigracionLocal):
         return {"categorias": categorias, "ops_ocultas": ops, "moneda_simbolo": simbolo}
     finally:
         conn.close()
-
-
-# ── Web Push ──────────────────────────────────────────────────────────────────
-class PushKeys(BaseModel):
-    p256dh: str = Field(min_length=1, max_length=200)
-    auth: str = Field(min_length=1, max_length=100)
-
-
-class PushSub(BaseModel):
-    endpoint: str = Field(max_length=1000)
-    keys: PushKeys
-
-    @field_validator("endpoint")
-    @classmethod
-    def _endpoint(cls, v: str) -> str:
-        if not push.endpoint_permitido(v):
-            raise ValueError("endpoint de push no permitido")
-        return v
-
-
-class PushUnsub(BaseModel):
-    endpoint: str = Field(max_length=1000)
-
-
-@app.get("/api/push/key")
-def push_key():
-    return {"key": push.public_key()}
-
-
-@app.post("/api/push/subscribe")
-def push_subscribe(body: PushSub):
-    conn = db.get_conn()
-    try:
-        conn.execute(
-            "INSERT INTO push_subs (endpoint, p256dh, auth) VALUES (?, ?, ?) "
-            "ON CONFLICT(endpoint) DO UPDATE SET p256dh = excluded.p256dh, auth = excluded.auth",
-            (body.endpoint, body.keys.p256dh, body.keys.auth),
-        )
-        conn.commit()
-        return {"ok": True}
-    finally:
-        conn.close()
-
-
-@app.post("/api/push/unsubscribe")
-def push_unsubscribe(body: PushUnsub):
-    conn = db.get_conn()
-    try:
-        conn.execute("DELETE FROM push_subs WHERE endpoint = ?", (body.endpoint,))
-        conn.commit()
-        return {"ok": True}
-    finally:
-        conn.close()
-
-
-@app.post("/api/push/test")
-def push_test():
-    return {"enviadas": push.enviar({"title": "Moni", "body": "Las notificaciones funcionan."})}
 
 
 # ── Static frontend (must come last so /api/* routes above take priority) ───

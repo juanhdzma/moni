@@ -83,12 +83,26 @@ def armar_mensaje(ops: list[tuple[datetime.date, str, float]], hoy: datetime.dat
     return {"title": titulo, "body": "\n".join(lineas)}
 
 
-def enviar(mensaje: dict) -> int:
+def armar_payload(title: str, body: str, url: Optional[str] = None, tag: Optional[str] = None) -> dict:
+    payload = {"title": title, "body": body}
+    if url:
+        payload["url"] = url
+    if tag:
+        payload["tag"] = tag
+    return payload
+
+
+def tamano_payload(payload: dict) -> int:
+    return len(json.dumps(payload).encode())
+
+
+def enviar_a_todos(title: str, body: str, url: Optional[str] = None, tag: Optional[str] = None) -> dict:
     key = _vapid()
-    payload = json.dumps(mensaje)
+    payload = json.dumps(armar_payload(title, body, url, tag))
     conn = db.get_conn()
     try:
         enviadas = 0
+        eliminadas = 0
         for s in conn.execute("SELECT * FROM push_subs").fetchall():
             info = {"endpoint": s["endpoint"], "keys": {"p256dh": s["p256dh"], "auth": s["auth"]}}
             try:
@@ -97,14 +111,19 @@ def enviar(mensaje: dict) -> int:
             except WebPushException as e:
                 if e.response is not None and e.response.status_code in (404, 410):
                     conn.execute("DELETE FROM push_subs WHERE id = ?", (s["id"],))
+                    eliminadas += 1
                 else:
                     logger.warning("push falló para sub %s: %s", s["id"], e)
             except Exception as e:
                 logger.warning("push falló para sub %s: %s", s["id"], e)
-        return enviadas
+        return {"enviadas": enviadas, "eliminadas": eliminadas}
     finally:
         conn.commit()
         conn.close()
+
+
+def enviar(mensaje: dict) -> int:
+    return enviar_a_todos(mensaje["title"], mensaje["body"], mensaje.get("url"), mensaje.get("tag"))["enviadas"]
 
 
 def avisar(hoy: Optional[datetime.date] = None) -> int:

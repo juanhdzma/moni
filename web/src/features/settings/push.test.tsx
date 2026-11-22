@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
-import { Settings } from '.'
+import { Notificaciones } from './Notificaciones'
 
 const subscription = { endpoint: 'https://fcm.googleapis.com/x', toJSON: () => ({ endpoint: 'https://fcm.googleapis.com/x', keys: { p256dh: 'p', auth: 'a' } }), unsubscribe: vi.fn(() => Promise.resolve(true)) }
 
@@ -28,14 +28,30 @@ afterEach(() => {
 describe('notificaciones', () => {
   it('sin soporte muestra el aviso para iPhone', () => {
     mockFetch()
-    renderWithProviders(<Settings active />)
+    renderWithProviders(<Notificaciones />)
     expect(screen.getByText(/no soporta notificaciones/)).toBeTruthy()
+  })
+
+  it('explica como funciona el aviso', () => {
+    stubPush()
+    mockFetch()
+    renderWithProviders(<Notificaciones />)
+    expect(screen.getByText(/Cómo funciona/)).toBeTruthy()
+  })
+
+  it('probar manda el test', async () => {
+    stubPush(subscription)
+    const api = mockFetch({ 'POST /api/push/test': { enviadas: 1 } })
+    renderWithProviders(<Notificaciones />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Enviar prueba' }))
+    await waitFor(() => expect(api.callsTo('POST', '/api/push/test')).toHaveLength(1))
+    expect(await screen.findByText('Notificación enviada')).toBeTruthy()
   })
 
   it('activar pide la clave y manda la suscripcion', async () => {
     const pushManager = stubPush()
     const api = mockFetch({ 'GET /api/push/key': { key: 'AQID' }, 'POST /api/push/subscribe': { ok: true } })
-    renderWithProviders(<Settings active />)
+    renderWithProviders(<Notificaciones />)
     await userEvent.click(await screen.findByRole('button', { name: 'Activar en este dispositivo' }))
     await waitFor(() => expect(api.callsTo('POST', '/api/push/subscribe')).toHaveLength(1))
     expect(pushManager.subscribe).toHaveBeenCalledWith({ userVisibleOnly: true, applicationServerKey: new Uint8Array([1, 2, 3]) })
@@ -48,7 +64,7 @@ describe('notificaciones', () => {
   it('desactivar borra la suscripcion en el backend y en el navegador', async () => {
     stubPush(subscription)
     const api = mockFetch({ 'POST /api/push/unsubscribe': { ok: true } })
-    renderWithProviders(<Settings active />)
+    renderWithProviders(<Notificaciones />)
     await userEvent.click(await screen.findByRole('button', { name: 'Desactivar' }))
     await waitFor(() => expect(api.callsTo('POST', '/api/push/unsubscribe')[0]?.body).toEqual({ endpoint: subscription.endpoint }))
     expect(subscription.unsubscribe).toHaveBeenCalled()

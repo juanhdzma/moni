@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { estado } from '../test/factories'
 import { failure, mockFetch } from '../test/mockFetch'
-import { renderWithProviders } from '../test/render'
+import { ESTADO_AUTENTICADO, renderWithProviders } from '../test/render'
+import { AuthProvider } from './AuthProvider'
 import { CategoriasProvider } from './CategoriasProvider'
 import { DataProvider } from './DataProvider'
 import { ModalProvider } from './ModalProvider'
@@ -94,13 +95,15 @@ describe('Shell', () => {
   it('carga inicial: banner con el error del backend', async () => {
     mockFetch({ 'GET /api/all': failure(500, 'caído') })
     render(
-      <DataProvider>
-        <CategoriasProvider>
-          <ModalProvider>
-            <Shell />
-          </ModalProvider>
-        </CategoriasProvider>
-      </DataProvider>,
+      <AuthProvider initialEstado={ESTADO_AUTENTICADO}>
+        <DataProvider>
+          <CategoriasProvider>
+            <ModalProvider>
+              <Shell />
+            </ModalProvider>
+          </CategoriasProvider>
+        </DataProvider>
+      </AuthProvider>,
     )
     await waitFor(() => expect(document.getElementById('err-banner')).toHaveTextContent('caído'))
     expect(document.getElementById('err-banner')).toHaveStyle({ display: 'flex' })

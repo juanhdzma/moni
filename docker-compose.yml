@@ -4,6 +4,14 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
+    environment:
+      MONI_PASSWORD_HASH: ${MONI_PASSWORD_HASH:-}
+      MONI_RP_ID: ${MONI_RP_ID:-moni.nufi.com.co}
+      MONI_ORIGIN: ${MONI_ORIGIN:-https://moni.nufi.com.co}
+      MONI_TRUSTED_PROXIES: ${MONI_TRUSTED_PROXIES:-127.0.0.0/8,::1/128}
+      MONI_BLOCK_HOURS: ${MONI_BLOCK_HOURS:-24}
+      MONI_PUSH_TOKEN: ${MONI_PUSH_TOKEN:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-https://moni.nufi.com.co}
     volumes:
       - moni-data:/app/backend/data
 

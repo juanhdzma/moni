@@ -6,10 +6,8 @@ Personal finance tracker for a single household: spending, credit cards, loans, 
 
 ![Dashboard](docs/img/dashboard.png)
 
-> ## LOCAL USE ONLY - NO AUTH
-> This app has **no authentication or login system**. Anyone who can reach it can read and modify all data. It is meant to run on your local machine or a private/home network you trust.
->
-> **Do not expose this to the public internet** (no open port-forward, no public reverse proxy) without putting your own auth layer in front of it (e.g. a reverse proxy with basic auth, a VPN/Tailscale, etc.).
+> ## Single-owner login
+> Every `/api/*` route requires a session; with no `MONI_PASSWORD_HASH` set nothing can sign in and the API answers 401 (fail closed). There is no user registration. Face ID is an optional WebAuthn passkey registered from Ajustes after signing in with the password. Three failures from one IP within an hour block that IP for `MONI_BLOCK_HOURS` (default 24).
 
 ## Contents
 
@@ -17,6 +15,7 @@ Personal finance tracker for a single household: spending, credit cards, loans, 
 - [How it fits together](#how-it-fits-together)
 - [Running locally](#running-locally)
 - [Running via Docker](#running-via-docker)
+- [Security configuration](#security-configuration)
 - [Notifications](#notifications)
 - [Deploying](#deploying)
 - [Testing](#testing)
@@ -100,6 +99,18 @@ docker compose up --build
 ```
 
 Serves on port 8080 (mapped to container port 80). The image is built in two stages: Node builds `web/`, and the final Python image carries only `backend/` and `web/dist`. SQLite file persists in the `moni-data` named volume at `/app/backend/data`.
+
+## Security configuration
+
+| Variable | Purpose |
+| --- | --- |
+| `MONI_PASSWORD_HASH` | Owner password hash. Generate with `python -m backend.auth hash` and quote it (it contains `$`). |
+| `MONI_RP_ID`, `MONI_ORIGIN` | WebAuthn relying party (default `moni.nufi.com.co`, `https://moni.nufi.com.co`). |
+| `MONI_TRUSTED_PROXIES` | CIDRs allowed to set `X-Forwarded-For`/`X-Forwarded-Proto`. Default is loopback only; set the exact reverse proxy address. |
+| `MONI_BLOCK_HOURS` | Block duration after 3 failures in 1 hour (default 24). |
+| `MONI_PUSH_TOKEN` | Optional bearer token (32+ chars) for `POST /api/push/enviar` without a session. |
+
+Manage blocked IPs with `python -m backend.auth blocked` and `python -m backend.auth unblock <ip>`. Port 8080 is published on all interfaces by default; if a reverse proxy is the only entry point, publish `127.0.0.1:8080:80` instead.
 
 ## Notifications
 

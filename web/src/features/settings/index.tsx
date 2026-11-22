@@ -1,11 +1,12 @@
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import { TriangleAlert, X } from 'lucide-react'
 import { Panel } from '@/components/panel'
 import { FormStatus } from '../../controls/FormStatus'
 import { Select } from '../../controls/Select'
 import { apiFetch, cargarOpsOcultas, guardarAjustes, restaurarOp } from '../../lib/api'
 import { todayStr } from '../../lib/format'
-import { activarPush, desactivarPush, probarPush, pushSoportado, suscripcionActual } from '../../lib/push'
+import { Notificaciones } from './Notificaciones'
+import { Seguridad } from './Seguridad'
 import { useCategorias } from '../../shell/CategoriasProvider'
 import { useData } from '../../shell/DataProvider'
 import { useModal } from '../../shell/ModalProvider'
@@ -141,62 +142,6 @@ function Currency() {
       />
       <div className={HINT}>Solo cambia el símbolo mostrado. Los montos se guardan y calculan igual, en COP.</div>
     </div>
-  )
-}
-
-function Notificaciones() {
-  const soportado = pushSoportado()
-  const [activas, setActivas] = useState(false)
-  const [status, setStatus] = useState({ cls: 'form-status', msg: '' })
-
-  useEffect(() => {
-    if (!soportado) return
-    void suscripcionActual().then((s) => setActivas(s !== null))
-  }, [soportado])
-
-  const correr = async (fn: () => Promise<unknown>, ok: string, activasDespues?: boolean) => {
-    try {
-      await fn()
-      if (activasDespues !== undefined) setActivas(activasDespues)
-      setStatus({ cls: 'form-status ok', msg: ok })
-    } catch (err) {
-      setStatus({ cls: 'form-status err', msg: errMsg(err) })
-    }
-  }
-
-  if (!soportado) {
-    return (
-      <div className={HINT}>
-        Este navegador no soporta notificaciones. En iPhone agregá Moni a la pantalla de inicio (Compartir, Agregar a inicio) y abrila desde ahí.
-      </div>
-    )
-  }
-
-  return (
-    <>
-      <div className="mb-3 text-sm text-muted-foreground">
-        Aviso diario a las 8:00 de las cuotas, rendimientos y recurrentes que vencen hoy o mañana.
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {activas ? (
-          <>
-            <button type="button" className="btn btn-dim btn-sm" onClick={() => void correr(desactivarPush, 'Notificaciones desactivadas', false)}>
-              Desactivar
-            </button>
-            <button type="button" className="btn btn-dim btn-sm" onClick={() => void correr(probarPush, 'Notificación enviada')}>
-              Enviar prueba
-            </button>
-          </>
-        ) : (
-          <button type="button" className="btn btn-accent btn-sm" onClick={() => void correr(activarPush, 'Notificaciones activadas', true)}>
-            Activar en este dispositivo
-          </button>
-        )}
-      </div>
-      <div className={status.cls} id="settings-notificaciones-status" role={status.cls.includes('err') ? 'alert' : undefined}>
-        {status.msg}
-      </div>
-    </>
   )
 }
 
@@ -351,6 +296,11 @@ export function Settings({ active }: TabProps) {
           <Panel id="settings-notificaciones-card" titulo="Notificaciones">
             <div id="settings-notificaciones">
               <Notificaciones />
+            </div>
+          </Panel>
+          <Panel id="settings-seguridad-card" titulo="Seguridad">
+            <div id="settings-seguridad">
+              <Seguridad />
             </div>
           </Panel>
           <Panel id="settings-backup-card" titulo="Backup">

@@ -88,6 +88,50 @@ CREATE TABLE IF NOT EXISTS ajustes (
   clave TEXT PRIMARY KEY,
   valor TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS sesiones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  token_hash TEXT NOT NULL UNIQUE,
+  creada TEXT NOT NULL,
+  expira TEXT NOT NULL,
+  ultimo_uso TEXT NOT NULL,
+  ip TEXT NOT NULL DEFAULT '',
+  user_agent TEXT NOT NULL DEFAULT '',
+  metodo TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS intentos_fallidos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL,
+  ts TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_intentos_ip_ts ON intentos_fallidos (ip, ts);
+
+CREATE TABLE IF NOT EXISTS ips_bloqueadas (
+  ip TEXT PRIMARY KEY,
+  desde TEXT NOT NULL,
+  hasta TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS passkeys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  credential_id TEXT NOT NULL UNIQUE,
+  public_key TEXT NOT NULL,
+  sign_count INTEGER NOT NULL DEFAULT 0,
+  transportes TEXT NOT NULL DEFAULT '',
+  nombre TEXT NOT NULL DEFAULT '',
+  creada TEXT NOT NULL,
+  ultimo_uso TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS challenges (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tipo TEXT NOT NULL,
+  challenge TEXT NOT NULL,
+  ip TEXT NOT NULL DEFAULT '',
+  expira TEXT NOT NULL
+);
 """
 
 

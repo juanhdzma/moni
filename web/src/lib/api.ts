@@ -56,6 +56,39 @@ function mensajeDeError(j: unknown, status: number): string {
   return typeof detail === 'string' && detail ? detail : msg
 }
 
+export class ApiError extends Error {
+  readonly status: number
+  readonly reintentarEnS: number | null
+
+  constructor(message: string, status: number, reintentarEnS: number | null = null) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.reintentarEnS = reintentarEnS
+  }
+}
+
+export interface AuthEvents {
+  noAutenticado: () => void
+  bloqueada: (reintentarEnS: number) => void
+}
+
+let authEvents: AuthEvents | null = null
+
+export function setAuthEvents(events: AuthEvents | null): void {
+  authEvents = events
+}
+
+const RUTAS_DE_LOGIN = ['/api/auth/login', '/api/auth/passkey/login/', '/api/auth/estado']
+
+const esRutaDeLogin = (path: string): boolean => RUTAS_DE_LOGIN.some((r) => path.startsWith(r))
+
+function segundosDeBloqueo(j: unknown): number | null {
+  if (typeof j !== 'object' || j === null || !('reintentar_en_s' in j)) return null
+  const n = Number(j.reintentar_en_s)
+  return Number.isFinite(n) && n > 0 ? Math.ceil(n) : null
+}
+
 export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions = {}): Promise<T> {
   const method = opts.method ?? 'GET'
   const headers: Record<string, string> = {}
@@ -69,12 +102,17 @@ export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions 
   })
   if (!res.ok) {
     let msg: string
+    let bloqueo: number | null = null
     try {
-      msg = mensajeDeError(await res.json(), res.status)
+      const j: unknown = await res.json()
+      msg = mensajeDeError(j, res.status)
+      bloqueo = res.status === 403 ? segundosDeBloqueo(j) : null
     } catch {
       msg = `Error ${res.status}`
     }
-    throw new Error(msg)
+    if (bloqueo !== null) authEvents?.bloqueada(bloqueo)
+    else if (res.status === 401 && !esRutaDeLogin(path)) authEvents?.noAutenticado()
+    throw new ApiError(msg, res.status, bloqueo)
   }
   if (res.status === 204) return null as T
   return (await res.json()) as T

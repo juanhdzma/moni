@@ -121,6 +121,9 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/categorias': categoriasBase(),
   'GET /api/ajustes': EMPTY_ALL.ajustes,
   'GET /api/ops-ocultas': OPS_OCULTAS,
+  'GET /api/auth/estado': { configurado: true, autenticado: true, passkeys: 0, bloqueada: false },
+  'GET /api/auth/sesiones': [],
+  'GET /api/auth/passkeys': [],
 }
 
 export const json = (body: unknown, status = 200): Response =>
