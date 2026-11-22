@@ -62,6 +62,32 @@ CREATE TABLE IF NOT EXISTS recurrentes (
   fecha_inicio TEXT NOT NULL DEFAULT '',
   notas TEXT NOT NULL DEFAULT ''
 );
+
+CREATE TABLE IF NOT EXISTS push_subs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  endpoint TEXT NOT NULL UNIQUE,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS categorias (
+  tipo TEXT NOT NULL CHECK (tipo IN ('ingreso','gasto','transfer')),
+  nombre TEXT NOT NULL,
+  PRIMARY KEY (tipo, nombre)
+);
+
+CREATE TABLE IF NOT EXISTS ops_ocultas (
+  clave TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL,
+  fuente_id INTEGER NOT NULL,
+  fecha TEXT NOT NULL,
+  creada_en TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ajustes (
+  clave TEXT PRIMARY KEY,
+  valor TEXT NOT NULL
+);
 """
 
 

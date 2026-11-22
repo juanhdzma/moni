@@ -1,3 +1,4 @@
+import asyncio
 import calendar
 import datetime
 import logging
@@ -7,12 +8,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Literal, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
-from . import db
+from . import db, push
+from .calculos import dinero, listados, operaciones
+from .calculos.fechas import TZ, hoy_bogota, parse_fecha
 
 logger = logging.getLogger("moni")
 
@@ -25,7 +28,16 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "web" / "dist"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
+    push.public_key()
+    conn = db.get_conn()
+    try:
+        _podar_ocultas(conn, hoy_bogota())
+        conn.commit()
+    finally:
+        conn.close()
+    tarea = asyncio.create_task(push.loop_diario())
     yield
+    tarea.cancel()
 
 
 app = FastAPI(title="Moni API", lifespan=lifespan)
@@ -62,6 +74,22 @@ Monto = Annotated[float, Field(gt=0)]
 MontoCero = Annotated[float, Field(ge=0)]
 
 
+_CLAVE_OP_RE = re.compile(r"^(deuda|inversion|recurrente):(\d+):(\d{4}-\d{2}-\d{2})$")
+
+
+def parse_clave(clave: str) -> tuple[str, int, str]:
+    m = _CLAVE_OP_RE.match(clave or "")
+    if not m or parse_fecha(m.group(3)) is None:
+        raise ValueError("clave de operación inválida")
+    return m.group(1), int(m.group(2)), m.group(3)
+
+
+def _check_clave(v: Optional[str]) -> Optional[str]:
+    if v is not None:
+        parse_clave(v)
+    return v
+
+
 def _check_fecha(v: str, *, requerida: bool) -> str:
     v = (v or "").strip()
     if not v:
@@ -81,6 +109,10 @@ def fecha_opcional(*fields: str):
     return field_validator(*fields)(lambda v: _check_fecha(v, requerida=False))
 
 
+def clave_opcional(*fields: str):
+    return field_validator(*fields)(_check_clave)
+
+
 # ── Models ────────────────────────────────────────────────────────────────────
 class TxIn(BaseModel):
     fecha: str
@@ -90,8 +122,10 @@ class TxIn(BaseModel):
     monto: Monto
     notas: str = ""
     tarjeta_id: Optional[int] = None
+    op_clave: Optional[str] = None
 
     _v_fecha = fecha_requerida("fecha")
+    _v_clave = clave_opcional("op_clave")
 
 
 class DeudaIn(BaseModel):
@@ -131,8 +165,10 @@ class DeudaPago(BaseModel):
     registrar_tx: bool = True
     # Solo la cuota mensual corre el vencimiento; un abono extraordinario no.
     avanzar_cuota: bool = False
+    op_clave: Optional[str] = None
 
     _v_fecha = fecha_requerida("fecha")
+    _v_clave = clave_opcional("op_clave")
 
 
 class InvIn(BaseModel):
@@ -141,6 +177,7 @@ class InvIn(BaseModel):
     monto_invertido: MontoCero
     valor_actual: MontoCero
     tasa_ea: Optional[MontoCero] = None
+    tasa_tipo: Literal["ea", "mv"] = "ea"
     fecha_inicio: str = ""
     pago: Optional[Literal["mensual", "vencimiento"]] = None
     dia_pago: Optional[Annotated[int, Field(ge=1, le=31)]] = None
@@ -158,8 +195,10 @@ class InvRendimiento(BaseModel):
     # Dónde queda el rendimiento: adentro de la inversión (capitaliza) o en tu
     # cuenta. Son excluyentes y hay que saber cuál es — ver registrar_rendimiento.
     capitaliza: bool = False
+    op_clave: Optional[str] = None
 
     _v_fecha = fecha_requerida("fecha")
+    _v_clave = clave_opcional("op_clave")
 
 
 class InvAporte(BaseModel):
@@ -258,25 +297,7 @@ def pesos(v: float) -> float:
     return float(round(v))
 
 
-# Categorías que el backend asigna solo en las acciones compuestas. El frontend
-# las espeja en web/src/lib/config.ts (SYSTEM_CATEGORIES); test_categorias.py
-# verifica que las dos listas coincidan.
-CATEGORIAS_SISTEMA = {
-    "ingreso": {
-        "credito_recibido": "Crédito recibido",
-        "avance_tarjeta": "Avance de tarjeta",
-        "intereses": "Intereses",
-        "dividendos": "Dividendos",
-        "venta_activos": "Venta activos",
-    },
-    "gasto": {
-        "inversion": "Inversión",
-        "compra_activos": "Compra activos",
-    },
-    "transfer": {
-        "pago_deuda": "Pago deuda",
-    },
-}
+CATEGORIAS_SISTEMA = listados.CATEGORIAS_SISTEMA
 CAT_INGRESO = CATEGORIAS_SISTEMA["ingreso"]
 CAT_GASTO = CATEGORIAS_SISTEMA["gasto"]
 CAT_TRANSFER = CATEGORIAS_SISTEMA["transfer"]
@@ -316,23 +337,72 @@ def delete_row(conn, table, row_id):
         raise HTTPException(404, f"{table} {row_id} no encontrado")
 
 
+def ocultar_op(conn, clave):
+    tipo, fuente_id, fecha = parse_clave(clave)
+    cur = conn.execute(
+        "INSERT OR IGNORE INTO ops_ocultas (clave, tipo, fuente_id, fecha, creada_en) VALUES (?, ?, ?, ?, ?)",
+        (clave, tipo, fuente_id, fecha, datetime.datetime.now(TZ).isoformat(timespec="seconds")),
+    )
+    return cur.rowcount
+
+
+def _filas(conn, table):
+    return [dict(r) for r in conn.execute(f"SELECT * FROM {table} ORDER BY id")]
+
+
+def _categorias(conn):
+    return listados.categorias_con_custom(conn.execute("SELECT tipo, nombre FROM categorias ORDER BY rowid"))
+
+
+def _ajustes(conn):
+    filas = {r["clave"]: r["valor"] for r in conn.execute("SELECT clave, valor FROM ajustes")}
+    return {"moneda_simbolo": filas.get("moneda_simbolo", "$")}
+
+
+def _estado(conn, hoy):
+    deudas = _filas(conn, "deudas")
+    por_id = {d["id"]: d for d in deudas}
+    return {
+        "transacciones": [listados.derivar_tx(t, por_id) for t in _filas(conn, "transacciones")],
+        "deudas": [operaciones.derivar_deuda(d) for d in deudas],
+        "inversiones": [operaciones.derivar_inversion(i, hoy) for i in _filas(conn, "inversiones")],
+        "activos": [operaciones.derivar_activo(a, hoy) for a in _filas(conn, "activos")],
+        "recurrentes": [operaciones.derivar_recurrente(r, hoy) for r in _filas(conn, "recurrentes")],
+    }
+
+
+def _conteos(estado):
+    return {"activos": len(estado["activos"]), "inversiones": len(estado["inversiones"])}
+
+
 # ── GET /api/all ──────────────────────────────────────────────────────────────
 @app.get("/api/all")
 def get_all():
     conn = db.get_conn()
     try:
+        hoy = hoy_bogota()
+        estado = _estado(conn, hoy)
         return {
-            "transacciones": [dict(r) for r in conn.execute("SELECT * FROM transacciones ORDER BY id")],
-            "deudas": [dict(r) for r in conn.execute("SELECT * FROM deudas ORDER BY id")],
-            "inversiones": [dict(r) for r in conn.execute("SELECT * FROM inversiones ORDER BY id")],
-            "activos": [dict(r) for r in conn.execute("SELECT * FROM activos ORDER BY id")],
-            "recurrentes": [dict(r) for r in conn.execute("SELECT * FROM recurrentes ORDER BY id")],
+            **estado,
+            "hoy": hoy.isoformat(),
+            "mes_actual": hoy.isoformat()[:7],
+            "ajustes": _ajustes(conn),
+            "categorias": _categorias(conn),
+            "alertas": listados.alertas(estado["activos"], estado["inversiones"], hoy),
+            "conteos": _conteos(estado),
         }
     finally:
         conn.close()
 
 
 # ── Generic CRUD factory ─────────────────────────────────────────────────────
+def _normalizar_tasa(data):
+    tipo = data.pop("tasa_tipo", "ea")
+    if tipo == "mv" and data.get("tasa_ea"):
+        data["tasa_ea"] = operaciones.mv_a_ea(data["tasa_ea"])
+    return data
+
+
 def register_crud(path, model, linked_tx=None):
     table, cols = TABLES[path]
 
@@ -340,7 +410,7 @@ def register_crud(path, model, linked_tx=None):
     def create(body: model):
         conn = db.get_conn()
         try:
-            data = body.model_dump()
+            data = _normalizar_tasa(body.model_dump())
             crear_tx = data.pop("crear_tx", False)
             new_id = insert_row(conn, table, cols, data)
             if crear_tx and linked_tx and not data.get("es_tarjeta"):
@@ -361,7 +431,7 @@ def register_crud(path, model, linked_tx=None):
     def update(row_id: int, body: model):
         conn = db.get_conn()
         try:
-            data = body.model_dump()
+            data = _normalizar_tasa(body.model_dump())
             data.pop("crear_tx", None)
             update_row(conn, table, cols, row_id, data)
             conn.commit()
@@ -429,6 +499,8 @@ def create_tx(body: TxIn):
         new_id = insert_row(conn, "transacciones", TX_COLS, data)
         if data["tipo"] == "gasto":
             _ajustar_saldo_tarjeta(conn, data["tarjeta_id"], data["monto"])
+        if data["op_clave"]:
+            ocultar_op(conn, data["op_clave"])
         conn.commit()
         return get_row(conn, "transacciones", new_id)
     finally:
@@ -506,6 +578,8 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
                 "fecha": body.fecha, "tipo": "transfer", "categoria": CAT_TRANSFER["pago_deuda"],
                 "descripcion": body.descripcion, "monto": body.total_pagado, "notas": body.notas,
             })
+        if body.op_clave:
+            ocultar_op(conn, body.op_clave)
         conn.commit()
         return get_row(conn, "deudas", deuda_id)
     finally:
@@ -560,6 +634,8 @@ def registrar_rendimiento(inv_id: int, body: InvRendimiento):
                 "fecha": body.fecha, "tipo": "ingreso", "categoria": CAT_INGRESO["intereses"],
                 "descripcion": f"Rendimiento · {inv['nombre']}", "monto": body.monto, "notas": body.notas,
             })
+        if body.op_clave:
+            ocultar_op(conn, body.op_clave)
         conn.commit()
         return get_row(conn, "inversiones", inv_id)
     finally:
@@ -688,10 +764,461 @@ def truncate_all():
         for table, _cols, _model in IMPORT_TABLES:
             conn.execute(f"DELETE FROM {table}")
             conn.execute("DELETE FROM sqlite_sequence WHERE name = ?", (table,))
+        conn.execute("DELETE FROM categorias")
+        conn.execute("DELETE FROM ops_ocultas")
         conn.commit()
         return {"ok": True}
     finally:
         conn.close()
+
+
+# ── Lectura calculada ─────────────────────────────────────────────────────────
+@app.get("/api/dashboard/resumen")
+def dashboard_resumen():
+    conn = db.get_conn()
+    try:
+        hoy = hoy_bogota()
+        estado = _estado(conn, hoy)
+        resumen = dinero.resumen_dashboard(estado, hoy)
+        return {**resumen, "partes": dinero.partes_patrimonio(resumen, _conteos(estado))}
+    finally:
+        conn.close()
+
+
+@app.get("/api/dashboard/evolucion")
+def dashboard_evolucion(
+    serie: Literal["patrimonio", "inversiones"] = "patrimonio",
+    periodo: Literal["1M", "3M", "6M", "1Y", "ALL"] = "6M",
+):
+    conn = db.get_conn()
+    try:
+        hoy = hoy_bogota()
+        return dinero.evolucion(_estado(conn, hoy), serie, periodo, hoy)
+    finally:
+        conn.close()
+
+
+@app.get("/api/dashboard/este-mes")
+def dashboard_este_mes():
+    conn = db.get_conn()
+    try:
+        hoy = hoy_bogota()
+        return dinero.este_mes(_estado(conn, hoy), hoy)
+    finally:
+        conn.close()
+
+
+@app.get("/api/dashboard/gastos")
+def dashboard_gastos(periodo: Literal["1W", "1M", "3M", "6M", "1Y", "ALL"] = "1M"):
+    conn = db.get_conn()
+    try:
+        hoy = hoy_bogota()
+        return dinero.gastos_periodo(_estado(conn, hoy)["transacciones"], periodo, hoy)
+    finally:
+        conn.close()
+
+
+@app.get("/api/dashboard/movimientos")
+def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
+    conn = db.get_conn()
+    try:
+        return {"items": dinero.movimientos_recientes(_estado(conn, hoy_bogota())["transacciones"], n)}
+    finally:
+        conn.close()
+
+
+@app.get("/api/tx")
+def listar_tx(
+    col: Literal["fecha", "tipo", "categoria", "descripcion", "monto"] = "fecha",
+    dir: Literal["1", "-1"] = "-1",
+    tipo: str = "",
+    mes: str = "",
+    cat: str = "",
+):
+    conn = db.get_conn()
+    try:
+        hoy = hoy_bogota()
+        return listados.listar_transacciones(_estado(conn, hoy)["transacciones"], col, int(dir), tipo, mes, cat, hoy)
+    finally:
+        conn.close()
+
+
+@app.get("/api/deudas/resumen")
+def deudas_resumen():
+    conn = db.get_conn()
+    try:
+        return operaciones.resumen_deudas(_estado(conn, hoy_bogota())["deudas"])
+    finally:
+        conn.close()
+
+
+@app.get("/api/inv/resumen")
+def inv_resumen():
+    conn = db.get_conn()
+    try:
+        return operaciones.resumen_inversiones(_estado(conn, hoy_bogota())["inversiones"])
+    finally:
+        conn.close()
+
+
+@app.get("/api/activos/resumen")
+def activos_resumen():
+    conn = db.get_conn()
+    try:
+        return operaciones.resumen_activos(_estado(conn, hoy_bogota())["activos"])
+    finally:
+        conn.close()
+
+
+@app.get("/api/rec/resumen")
+def rec_resumen():
+    conn = db.get_conn()
+    try:
+        return operaciones.resumen_recurrentes(_estado(conn, hoy_bogota())["recurrentes"])
+    finally:
+        conn.close()
+
+
+@app.get("/api/calc/tasa")
+def calc_tasa(valor: float, tipo: Literal["ea", "mv"] = "ea"):
+    if valor <= 0:
+        return {"ea": None, "mv": None}
+    if tipo == "ea":
+        return {"ea": valor, "mv": operaciones.ea_a_mv(valor)}
+    return {"ea": operaciones.mv_a_ea(valor), "mv": valor}
+
+
+# ── Previews (no mutan) ───────────────────────────────────────────────────────
+class PagoPreview(BaseModel):
+    total_pagado: MontoCero
+    nuevo_saldo: MontoCero
+
+
+class AdelantoPreview(BaseModel):
+    monto: MontoCero
+    nuevo_saldo: MontoCero
+
+
+class NuevoValor(BaseModel):
+    nuevo_valor: MontoCero
+
+
+class MontoPreview(BaseModel):
+    monto: MontoCero
+
+
+class PrecioPreview(BaseModel):
+    precio: MontoCero
+
+
+@app.post("/api/deuda/{deuda_id}/pago/preview")
+def pago_preview(deuda_id: int, body: PagoPreview):
+    conn = db.get_conn()
+    try:
+        deuda = get_row(conn, "deudas", deuda_id)
+        return operaciones.desglose_pago(deuda["saldo_actual"], body.total_pagado, body.nuevo_saldo)
+    finally:
+        conn.close()
+
+
+@app.post("/api/deuda/{deuda_id}/adelanto/preview")
+def adelanto_preview(deuda_id: int, body: AdelantoPreview):
+    conn = db.get_conn()
+    try:
+        deuda = get_row(conn, "deudas", deuda_id)
+        return {"comision": operaciones.comision_adelanto(deuda["saldo_actual"], body.monto, body.nuevo_saldo)}
+    finally:
+        conn.close()
+
+
+@app.post("/api/inv/{inv_id}/valor/preview")
+def inv_valor_preview(inv_id: int, body: NuevoValor):
+    conn = db.get_conn()
+    try:
+        inv = get_row(conn, "inversiones", inv_id)
+        return operaciones.cambio_valor(body.nuevo_valor, inv["valor_actual"], inv["monto_invertido"])
+    finally:
+        conn.close()
+
+
+@app.post("/api/inv/{inv_id}/aporte/preview")
+def inv_aporte_preview(inv_id: int, body: MontoPreview):
+    conn = db.get_conn()
+    try:
+        inv = get_row(conn, "inversiones", inv_id)
+        return {"nuevo_valor_estimado": inv["valor_actual"] + body.monto}
+    finally:
+        conn.close()
+
+
+@app.post("/api/activo/{activo_id}/valor/preview")
+def activo_valor_preview(activo_id: int, body: NuevoValor):
+    conn = db.get_conn()
+    try:
+        activo = get_row(conn, "activos", activo_id)
+        return operaciones.cambio_valor(body.nuevo_valor, activo["valor_actual"], activo["valor_inicial"])
+    finally:
+        conn.close()
+
+
+@app.post("/api/activo/{activo_id}/venta/preview")
+def activo_venta_preview(activo_id: int, body: PrecioPreview):
+    conn = db.get_conn()
+    try:
+        return operaciones.preview_venta_activo(get_row(conn, "activos", activo_id), body.precio)
+    finally:
+        conn.close()
+
+
+# ── Próximas operaciones y ops ocultas ────────────────────────────────────────
+class OpOculta(BaseModel):
+    clave: str
+
+    _v_clave = clave_opcional("clave")
+
+
+def _podar_ocultas(conn, hoy):
+    candidatas = operaciones.calcular_proximas_operaciones(
+        _filas(conn, "deudas"), _filas(conn, "inversiones"), _filas(conn, "recurrentes"), hoy
+    )
+    vigentes = operaciones.claves_vigentes(candidatas)
+    if vigentes:
+        conn.execute(f"DELETE FROM ops_ocultas WHERE clave NOT IN ({', '.join('?' * len(vigentes))})", list(vigentes))
+
+
+@app.get("/api/proximas-operaciones")
+def proximas_operaciones():
+    conn = db.get_conn()
+    try:
+        hoy = hoy_bogota()
+        candidatas = operaciones.calcular_proximas_operaciones(
+            _filas(conn, "deudas"), _filas(conn, "inversiones"), _filas(conn, "recurrentes"), hoy
+        )
+        ocultas = {r["clave"] for r in conn.execute("SELECT clave FROM ops_ocultas")}
+        return operaciones.armar_proximas(candidatas, ocultas, hoy)
+    finally:
+        conn.close()
+
+
+OPS_FUENTES = {"deuda": "deudas", "inversion": "inversiones", "recurrente": "recurrentes"}
+
+
+@app.get("/api/ops-ocultas")
+def listar_ops_ocultas():
+    conn = db.get_conn()
+    try:
+        items = []
+        for r in conn.execute("SELECT clave, tipo, fuente_id, fecha FROM ops_ocultas ORDER BY creada_en, clave").fetchall():
+            fuente = conn.execute(
+                f"SELECT nombre FROM {OPS_FUENTES[r['tipo']]} WHERE id = ?", (r["fuente_id"],)
+            ).fetchone()
+            items.append({**dict(r), "etiqueta": fuente["nombre"] if fuente else None})
+        return {"items": items}
+    finally:
+        conn.close()
+
+
+@app.post("/api/ops-ocultas", status_code=201)
+def crear_op_oculta(body: OpOculta):
+    conn = db.get_conn()
+    try:
+        ocultar_op(conn, body.clave)
+        conn.commit()
+        return {"clave": body.clave}
+    finally:
+        conn.close()
+
+
+@app.delete("/api/ops-ocultas", status_code=204)
+def borrar_ops_ocultas(clave: Optional[str] = None):
+    conn = db.get_conn()
+    try:
+        if clave is None:
+            conn.execute("DELETE FROM ops_ocultas")
+        elif conn.execute("DELETE FROM ops_ocultas WHERE clave = ?", (clave,)).rowcount == 0:
+            raise HTTPException(404, "operación oculta no encontrada")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# ── Categorías y ajustes ──────────────────────────────────────────────────────
+class CategoriaIn(BaseModel):
+    tipo: TipoTx
+    nombre: str
+
+
+class AjustesIn(BaseModel):
+    moneda_simbolo: str
+
+    @field_validator("moneda_simbolo")
+    @classmethod
+    def _simbolo(cls, v: str) -> str:
+        return listados.validar_simbolo(v)
+
+
+class MigracionLocal(BaseModel):
+    categorias: dict[str, list[Annotated[str, Field(max_length=60)]]] = Field(default={}, max_length=10)
+    ops_ocultas: list[Annotated[str, Field(max_length=100)]] = Field(default=[], max_length=500)
+    moneda_simbolo: Optional[str] = None
+
+
+@app.get("/api/categorias")
+def get_categorias():
+    conn = db.get_conn()
+    try:
+        return _categorias(conn)
+    finally:
+        conn.close()
+
+
+@app.post("/api/categorias", status_code=201)
+def crear_categoria(body: CategoriaIn):
+    conn = db.get_conn()
+    try:
+        existentes = {r["nombre"] for r in conn.execute("SELECT nombre FROM categorias WHERE tipo = ?", (body.tipo,))}
+        try:
+            nombre = listados.validar_categoria(body.tipo, body.nombre, existentes)
+        except listados.CategoriaDuplicada as e:
+            raise HTTPException(409, str(e))
+        except ValueError as e:
+            raise HTTPException(422, str(e))
+        conn.execute("INSERT INTO categorias (tipo, nombre) VALUES (?, ?)", (body.tipo, nombre))
+        conn.commit()
+        return _categorias(conn)
+    finally:
+        conn.close()
+
+
+@app.delete("/api/categorias")
+def borrar_categoria(tipo: TipoTx, nombre: str):
+    conn = db.get_conn()
+    try:
+        if listados.es_categoria_sistema(tipo, nombre):
+            raise HTTPException(409, "las categorías de sistema no se pueden borrar")
+        if conn.execute("DELETE FROM categorias WHERE tipo = ? AND nombre = ?", (tipo, nombre)).rowcount == 0:
+            raise HTTPException(404, "categoría no encontrada")
+        conn.commit()
+        return _categorias(conn)
+    finally:
+        conn.close()
+
+
+@app.get("/api/ajustes")
+def get_ajustes():
+    conn = db.get_conn()
+    try:
+        return _ajustes(conn)
+    finally:
+        conn.close()
+
+
+@app.put("/api/ajustes")
+def put_ajustes(body: AjustesIn):
+    conn = db.get_conn()
+    try:
+        conn.execute(
+            "INSERT INTO ajustes (clave, valor) VALUES ('moneda_simbolo', ?) "
+            "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+            (body.moneda_simbolo,),
+        )
+        conn.commit()
+        return _ajustes(conn)
+    finally:
+        conn.close()
+
+
+@app.post("/api/migrar-local")
+def migrar_local(body: MigracionLocal):
+    conn = db.get_conn()
+    try:
+        categorias = 0
+        for tipo, nombres in body.categorias.items():
+            if tipo not in listados.TIPOS:
+                continue
+            for nombre in nombres[:200]:
+                limpio = nombre.strip()
+                if limpio and not listados.es_categoria_sistema(tipo, limpio):
+                    categorias += conn.execute(
+                        "INSERT OR IGNORE INTO categorias (tipo, nombre) VALUES (?, ?)", (tipo, limpio)
+                    ).rowcount
+        ops = 0
+        for clave in body.ops_ocultas:
+            try:
+                ops += ocultar_op(conn, clave)
+            except ValueError:
+                continue
+        simbolo = False
+        if body.moneda_simbolo is not None:
+            try:
+                limpio = listados.validar_simbolo(body.moneda_simbolo)
+                simbolo = conn.execute(
+                    "INSERT OR IGNORE INTO ajustes (clave, valor) VALUES ('moneda_simbolo', ?)", (limpio,)
+                ).rowcount > 0
+            except ValueError:
+                pass
+        conn.commit()
+        return {"categorias": categorias, "ops_ocultas": ops, "moneda_simbolo": simbolo}
+    finally:
+        conn.close()
+
+
+# ── Web Push ──────────────────────────────────────────────────────────────────
+class PushKeys(BaseModel):
+    p256dh: str = Field(min_length=1, max_length=200)
+    auth: str = Field(min_length=1, max_length=100)
+
+
+class PushSub(BaseModel):
+    endpoint: str = Field(max_length=1000)
+    keys: PushKeys
+
+    @field_validator("endpoint")
+    @classmethod
+    def _endpoint(cls, v: str) -> str:
+        if not push.endpoint_permitido(v):
+            raise ValueError("endpoint de push no permitido")
+        return v
+
+
+class PushUnsub(BaseModel):
+    endpoint: str = Field(max_length=1000)
+
+
+@app.get("/api/push/key")
+def push_key():
+    return {"key": push.public_key()}
+
+
+@app.post("/api/push/subscribe")
+def push_subscribe(body: PushSub):
+    conn = db.get_conn()
+    try:
+        conn.execute(
+            "INSERT INTO push_subs (endpoint, p256dh, auth) VALUES (?, ?, ?) "
+            "ON CONFLICT(endpoint) DO UPDATE SET p256dh = excluded.p256dh, auth = excluded.auth",
+            (body.endpoint, body.keys.p256dh, body.keys.auth),
+        )
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+
+@app.post("/api/push/unsubscribe")
+def push_unsubscribe(body: PushUnsub):
+    conn = db.get_conn()
+    try:
+        conn.execute("DELETE FROM push_subs WHERE endpoint = ?", (body.endpoint,))
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
+
+@app.post("/api/push/test")
+def push_test():
+    return {"enviadas": push.enviar({"title": "Moni", "body": "Las notificaciones funcionan."})}
 
 
 # ── Static frontend (must come last so /api/* routes above take priority) ───

@@ -1,0 +1,4098 @@
+{
+ "hoy": "2026-06-15",
+ "dataset": {
+  "transacciones": [
+   {
+    "id": 1,
+    "fecha": "2025-12-18",
+    "tipo": "gasto",
+    "categoria": "Inversión",
+    "descripcion": "Uber 0",
+    "monto": 799000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 2,
+    "fecha": "2026-04-10",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Éxito 1",
+    "monto": 215000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 3,
+    "fecha": "2026-05-24T11:43",
+    "tipo": "gasto",
+    "categoria": "Café",
+    "descripcion": "netflix 2",
+    "monto": 831000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 4,
+    "fecha": "2026-01-23T03:19",
+    "tipo": "gasto",
+    "categoria": "Entretenimiento",
+    "descripcion": " 3",
+    "monto": 425000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 5,
+    "fecha": "2026-01-25",
+    "tipo": "gasto",
+    "categoria": "Entretenimiento",
+    "descripcion": "Renta 4",
+    "monto": 635500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 6,
+    "fecha": "2025-04-20T16:15",
+    "tipo": "gasto",
+    "categoria": "Educación",
+    "descripcion": "Pago 5",
+    "monto": 854000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 7,
+    "fecha": "2025-12-04",
+    "tipo": "ingreso",
+    "categoria": "Salario",
+    "descripcion": "netflix 6",
+    "monto": 257000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 8,
+    "fecha": "2026-05-14",
+    "tipo": "gasto",
+    "categoria": "Inversión",
+    "descripcion": "abono 7",
+    "monto": 23000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 9,
+    "fecha": "2026-02-19T11:57",
+    "tipo": "gasto",
+    "categoria": "",
+    "descripcion": "Éxito 8",
+    "monto": 17000,
+    "notas": "",
+    "tarjeta_id": 4
+   },
+   {
+    "id": 10,
+    "fecha": "2026-01-23",
+    "tipo": "gasto",
+    "categoria": "",
+    "descripcion": "Pago 9",
+    "monto": 176000,
+    "notas": "",
+    "tarjeta_id": 99
+   },
+   {
+    "id": 11,
+    "fecha": "2026-05-17",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "descripcion": "Uber 10",
+    "monto": 412000,
+    "notas": "",
+    "tarjeta_id": 99
+   },
+   {
+    "id": 12,
+    "fecha": "2026-05-07",
+    "tipo": "gasto",
+    "categoria": "Educación",
+    "descripcion": "Mercado 11",
+    "monto": 295000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 13,
+    "fecha": "2026-05-28",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "netflix 12",
+    "monto": 10000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 14,
+    "fecha": "2026-03-20",
+    "tipo": "gasto",
+    "categoria": "Inversión",
+    "descripcion": " 13",
+    "monto": 618500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 15,
+    "fecha": "2025-09-19T07:41",
+    "tipo": "gasto",
+    "categoria": "Cafe",
+    "descripcion": "Uber 14",
+    "monto": 303500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 16,
+    "fecha": "2026-06-11",
+    "tipo": "gasto",
+    "categoria": "Salud",
+    "descripcion": "netflix 15",
+    "monto": 434000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 17,
+    "fecha": "2026-05-10T14:23",
+    "tipo": "ingreso",
+    "categoria": "Salario",
+    "descripcion": "Uber 16",
+    "monto": 114500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 18,
+    "fecha": "2026-04-20T05:28",
+    "tipo": "gasto",
+    "categoria": "Cafe",
+    "descripcion": "Mercado 17",
+    "monto": 802000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 19,
+    "fecha": "2025-12-07",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "netflix 18",
+    "monto": 663000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 20,
+    "fecha": "2025-12-15",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "abono 19",
+    "monto": 620000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 21,
+    "fecha": "2026-04-01T11:27",
+    "tipo": "ingreso",
+    "categoria": "Intereses",
+    "descripcion": "abono 20",
+    "monto": 569000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 22,
+    "fecha": "2026-01-13",
+    "tipo": "gasto",
+    "categoria": "",
+    "descripcion": " 21",
+    "monto": 558000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 23,
+    "fecha": "2025-12-02T09:56",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Mercado 22",
+    "monto": 379000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 24,
+    "fecha": "2026-06-05",
+    "tipo": "ingreso",
+    "categoria": "Crédito recibido",
+    "descripcion": " 23",
+    "monto": 710000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 25,
+    "fecha": "2026-06-05",
+    "tipo": "gasto",
+    "categoria": "Inversión",
+    "descripcion": "Éxito 24",
+    "monto": 81000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 26,
+    "fecha": "2025-04-19T19:43",
+    "tipo": "gasto",
+    "categoria": "Entretenimiento",
+    "descripcion": " 25",
+    "monto": 186500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 27,
+    "fecha": "2026-06-12T07:51",
+    "tipo": "gasto",
+    "categoria": "Inversión",
+    "descripcion": "abono 26",
+    "monto": 183000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 28,
+    "fecha": "2026-04-07T02:14",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Pago 27",
+    "monto": 450500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 29,
+    "fecha": "2026-03-26T01:15",
+    "tipo": "gasto",
+    "categoria": "Educación",
+    "descripcion": "abono 28",
+    "monto": 518500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 30,
+    "fecha": "2026-01-18",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Mercado 29",
+    "monto": 533000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 31,
+    "fecha": "2026-01-02",
+    "tipo": "gasto",
+    "categoria": "Compra activos",
+    "descripcion": "Uber 30",
+    "monto": 182000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 32,
+    "fecha": "2026-01-14",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Pago 31",
+    "monto": 622000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 33,
+    "fecha": "2026-04-21T06:02",
+    "tipo": "gasto",
+    "categoria": "Educación",
+    "descripcion": "netflix 32",
+    "monto": 8500,
+    "notas": "",
+    "tarjeta_id": 99
+   },
+   {
+    "id": 34,
+    "fecha": "2026-05-17",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "abono 33",
+    "monto": 754000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 35,
+    "fecha": "2026-04-04",
+    "tipo": "gasto",
+    "categoria": "Inversión",
+    "descripcion": "Pago 34",
+    "monto": 820000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 36,
+    "fecha": "2026-04-04T23:24",
+    "tipo": "ingreso",
+    "categoria": "Dividendos",
+    "descripcion": "Mercado 35",
+    "monto": 837000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 37,
+    "fecha": "2026-06-12",
+    "tipo": "gasto",
+    "categoria": "Café",
+    "descripcion": "abono 36",
+    "monto": 56500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 38,
+    "fecha": "2026-01-25",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Uber 37",
+    "monto": 81000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 39,
+    "fecha": "2026-03-03T06:05",
+    "tipo": "gasto",
+    "categoria": "Café",
+    "descripcion": "Renta 38",
+    "monto": 99000,
+    "notas": "",
+    "tarjeta_id": 3
+   },
+   {
+    "id": 40,
+    "fecha": "2025-04-20",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Mercado 39",
+    "monto": 127500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 41,
+    "fecha": "2026-05-19T11:13",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "descripcion": "netflix 40",
+    "monto": 286000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 42,
+    "fecha": "2026-01-03T21:04",
+    "tipo": "gasto",
+    "categoria": "",
+    "descripcion": "Renta 41",
+    "monto": 175500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 43,
+    "fecha": "2026-06-12T23:18",
+    "tipo": "gasto",
+    "categoria": "Inversión",
+    "descripcion": "Pago 42",
+    "monto": 411000,
+    "notas": "",
+    "tarjeta_id": 4
+   },
+   {
+    "id": 44,
+    "fecha": "2026-02-01",
+    "tipo": "gasto",
+    "categoria": "Compra activos",
+    "descripcion": "Renta 43",
+    "monto": 331000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 45,
+    "fecha": "2026-02-09T19:29",
+    "tipo": "ingreso",
+    "categoria": "Intereses",
+    "descripcion": "Renta 44",
+    "monto": 871000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 46,
+    "fecha": "2026-01-24",
+    "tipo": "gasto",
+    "categoria": "",
+    "descripcion": " 45",
+    "monto": 116000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 47,
+    "fecha": "2025-12-14T20:16",
+    "tipo": "gasto",
+    "categoria": "Salud",
+    "descripcion": "Uber 46",
+    "monto": 11000,
+    "notas": "",
+    "tarjeta_id": 3
+   },
+   {
+    "id": 48,
+    "fecha": "2026-06-04",
+    "tipo": "gasto",
+    "categoria": "Café",
+    "descripcion": "Pago 47",
+    "monto": 190000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 49,
+    "fecha": "2026-02-21",
+    "tipo": "gasto",
+    "categoria": "",
+    "descripcion": "Renta 48",
+    "monto": 290000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 50,
+    "fecha": "2026-03-08T00:57",
+    "tipo": "ingreso",
+    "categoria": "Dividendos",
+    "descripcion": "Renta 49",
+    "monto": 740000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 51,
+    "fecha": "2026-03-02",
+    "tipo": "gasto",
+    "categoria": "Cafe",
+    "descripcion": "Pago 50",
+    "monto": 103000,
+    "notas": "",
+    "tarjeta_id": 3
+   },
+   {
+    "id": 52,
+    "fecha": "2026-03-23",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "descripcion": "Éxito 51",
+    "monto": 28000,
+    "notas": "",
+    "tarjeta_id": 99
+   },
+   {
+    "id": 53,
+    "fecha": "2025-04-04T23:35",
+    "tipo": "gasto",
+    "categoria": "Educación",
+    "descripcion": " 52",
+    "monto": 71000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 54,
+    "fecha": "2026-01-09",
+    "tipo": "gasto",
+    "categoria": "Cafe",
+    "descripcion": "Éxito 53",
+    "monto": 171000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 55,
+    "fecha": "2026-02-01T07:50",
+    "tipo": "gasto",
+    "categoria": "Entretenimiento",
+    "descripcion": "Renta 54",
+    "monto": 755000,
+    "notas": "",
+    "tarjeta_id": 3
+   },
+   {
+    "id": 56,
+    "fecha": "2025-09-23T15:47",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Éxito 55",
+    "monto": 379000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 57,
+    "fecha": "2025-09-25T21:39",
+    "tipo": "gasto",
+    "categoria": "Compra activos",
+    "descripcion": "Mercado 56",
+    "monto": 806000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 58,
+    "fecha": "2025-12-05T04:20",
+    "tipo": "gasto",
+    "categoria": "Cafe",
+    "descripcion": "abono 57",
+    "monto": 208000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 59,
+    "fecha": "2026-03-12T09:16",
+    "tipo": "gasto",
+    "categoria": "Compra activos",
+    "descripcion": "netflix 58",
+    "monto": 111000,
+    "notas": "",
+    "tarjeta_id": 99
+   },
+   {
+    "id": 60,
+    "fecha": "2026-02-21T07:29",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": " 59",
+    "monto": 740500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 61,
+    "fecha": "2026-02-14",
+    "tipo": "gasto",
+    "categoria": "",
+    "descripcion": "Mercado 60",
+    "monto": 868500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 62,
+    "fecha": "2026-05-25",
+    "tipo": "gasto",
+    "categoria": "Café",
+    "descripcion": " 61",
+    "monto": 576000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 63,
+    "fecha": "2025-09-10",
+    "tipo": "gasto",
+    "categoria": "Inversión",
+    "descripcion": "Pago 62",
+    "monto": 390000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 64,
+    "fecha": "2026-04-15T23:38",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Pago 63",
+    "monto": 127000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 65,
+    "fecha": "2026-06-04",
+    "tipo": "transfer",
+    "categoria": "Pago deuda",
+    "descripcion": "Mercado 64",
+    "monto": 250000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 66,
+    "fecha": "2026-01-03",
+    "tipo": "gasto",
+    "categoria": "Cafe",
+    "descripcion": "Uber 65",
+    "monto": 482000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 67,
+    "fecha": "2026-04-24T15:56",
+    "tipo": "ingreso",
+    "categoria": "Crédito recibido",
+    "descripcion": "Renta 66",
+    "monto": 293000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 68,
+    "fecha": "2026-01-12",
+    "tipo": "gasto",
+    "categoria": "Café",
+    "descripcion": " 67",
+    "monto": 672000,
+    "notas": "",
+    "tarjeta_id": 99
+   },
+   {
+    "id": 69,
+    "fecha": "2026-02-28",
+    "tipo": "gasto",
+    "categoria": "Café",
+    "descripcion": "Mercado 68",
+    "monto": 75500,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 70,
+    "fecha": "2025-12-21T15:16",
+    "tipo": "gasto",
+    "categoria": "Entretenimiento",
+    "descripcion": " 69",
+    "monto": 200000,
+    "notas": "",
+    "tarjeta_id": null
+   },
+   {
+    "id": 71,
+    "descripcion": "x71",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-06-15",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "monto": 10000
+   },
+   {
+    "id": 72,
+    "descripcion": "x72",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-06-15T23:59",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "monto": 11000
+   },
+   {
+    "id": 73,
+    "descripcion": "x73",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-06-14",
+    "tipo": "gasto",
+    "categoria": "Salud",
+    "monto": 12000
+   },
+   {
+    "id": 74,
+    "descripcion": "x74",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-06-08",
+    "tipo": "gasto",
+    "categoria": "Salud",
+    "monto": 13000
+   },
+   {
+    "id": 75,
+    "descripcion": "x75",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-06-07T23:59",
+    "tipo": "gasto",
+    "categoria": "Salud",
+    "monto": 14000
+   },
+   {
+    "id": 76,
+    "descripcion": "x76",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-06-01",
+    "tipo": "ingreso",
+    "categoria": "Salario",
+    "monto": 5000000
+   },
+   {
+    "id": 77,
+    "descripcion": "x77",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-05-15",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "monto": 15000
+   },
+   {
+    "id": 78,
+    "descripcion": "x78",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-05-14T23:59",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "monto": 16000
+   },
+   {
+    "id": 79,
+    "descripcion": "x79",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2026-03-15",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "monto": 17000
+   },
+   {
+    "id": 80,
+    "descripcion": "x80",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2025-12-15",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "monto": 18000
+   },
+   {
+    "id": 81,
+    "descripcion": "x81",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2025-06-15",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "monto": 19000
+   },
+   {
+    "id": 82,
+    "descripcion": "x82",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "2025-06-14T23:59",
+    "tipo": "gasto",
+    "categoria": "Comida",
+    "monto": 20000
+   },
+   {
+    "id": 83,
+    "descripcion": "x83",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "5/3/2026",
+    "tipo": "ingreso",
+    "categoria": "Freelance",
+    "monto": 700000
+   },
+   {
+    "id": 84,
+    "descripcion": "x84",
+    "notas": "",
+    "tarjeta_id": null,
+    "fecha": "10/4/2026 9:30",
+    "tipo": "ingreso",
+    "categoria": "Freelance",
+    "monto": 800000
+   }
+  ],
+  "deudas": [
+   {
+    "id": 1,
+    "nombre": "Crédito carro",
+    "monto_inicial": 40000000,
+    "saldo_actual": 25000000,
+    "tasa_ea": 18.5,
+    "cuota_mensual": 1200000,
+    "fecha_inicio": "2024-01-31",
+    "proxima_cuota": "2026-06-20",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 0
+   },
+   {
+    "id": 2,
+    "nombre": "Libranza",
+    "monto_inicial": 10000000,
+    "saldo_actual": 1.16e-10,
+    "tasa_ea": 20,
+    "cuota_mensual": 500000,
+    "fecha_inicio": "2023-01-15",
+    "proxima_cuota": "2026-06-10",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 1500000.5
+   },
+   {
+    "id": 3,
+    "nombre": "Visa Oro con un nombre larguisimo de prueba",
+    "monto_inicial": 0,
+    "saldo_actual": 1800000,
+    "tasa_ea": 28,
+    "cuota_mensual": 0,
+    "fecha_inicio": "2024-02-01",
+    "proxima_cuota": "",
+    "es_tarjeta": 1,
+    "cupo": 5000000,
+    "franquicia": "Visa",
+    "total_intereses": 0
+   },
+   {
+    "id": 4,
+    "nombre": "MC",
+    "monto_inicial": 0,
+    "saldo_actual": 0,
+    "tasa_ea": 0,
+    "cuota_mensual": 0,
+    "fecha_inicio": "",
+    "proxima_cuota": "",
+    "es_tarjeta": 1,
+    "cupo": 3000000,
+    "franquicia": "Mastercard",
+    "total_intereses": 0
+   },
+   {
+    "id": 5,
+    "nombre": "Moto",
+    "monto_inicial": 8000000,
+    "saldo_actual": 7999999.7,
+    "tasa_ea": 0,
+    "cuota_mensual": 300000,
+    "fecha_inicio": "2026-01-01",
+    "proxima_cuota": "2026-08-01",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 0
+   },
+   {
+    "id": 6,
+    "nombre": "Estudio",
+    "monto_inicial": 6000000,
+    "saldo_actual": 4000000,
+    "tasa_ea": 12,
+    "cuota_mensual": 20000,
+    "fecha_inicio": "2025-01-01",
+    "proxima_cuota": "2026-06-05",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 0
+   },
+   {
+    "id": 7,
+    "nombre": "Prestamo amigo",
+    "monto_inicial": 2000000,
+    "saldo_actual": 1500000,
+    "tasa_ea": 0,
+    "cuota_mensual": 0,
+    "fecha_inicio": "2026-03-01",
+    "proxima_cuota": "2026-05-30",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 0
+   },
+   {
+    "id": 8,
+    "nombre": "Sobrecupo",
+    "monto_inicial": 0,
+    "saldo_actual": 6000000,
+    "tasa_ea": 0,
+    "cuota_mensual": 0,
+    "fecha_inicio": "",
+    "proxima_cuota": "",
+    "es_tarjeta": 1,
+    "cupo": 5000000,
+    "franquicia": "Otra",
+    "total_intereses": 0
+   },
+   {
+    "id": 9,
+    "nombre": "Lejos",
+    "monto_inicial": 3000000,
+    "saldo_actual": 3000000,
+    "tasa_ea": 10,
+    "cuota_mensual": 100000,
+    "fecha_inicio": "2026-06-01",
+    "proxima_cuota": "2026-07-31",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 0
+   },
+   {
+    "id": 10,
+    "nombre": "Limite",
+    "monto_inicial": 3000000,
+    "saldo_actual": 3000000,
+    "tasa_ea": 10,
+    "cuota_mensual": 100000,
+    "fecha_inicio": "2026-06-01",
+    "proxima_cuota": "2026-07-30",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 0
+   },
+   {
+    "id": 11,
+    "nombre": "Pasado limite",
+    "monto_inicial": 3000000,
+    "saldo_actual": 3000000,
+    "tasa_ea": 10,
+    "cuota_mensual": 100000,
+    "fecha_inicio": "2026-06-01",
+    "proxima_cuota": "2026-06-05",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 0
+   },
+   {
+    "id": 12,
+    "nombre": "Pasado 11d",
+    "monto_inicial": 3000000,
+    "saldo_actual": 3000000,
+    "tasa_ea": 10,
+    "cuota_mensual": 100000,
+    "fecha_inicio": "2026-06-01",
+    "proxima_cuota": "2026-06-04",
+    "es_tarjeta": 0,
+    "cupo": 0,
+    "franquicia": "",
+    "total_intereses": 0
+   }
+  ],
+  "inversiones": [
+   {
+    "id": 1,
+    "nombre": "CDT",
+    "tipo": "fija",
+    "monto_invertido": 10000000,
+    "valor_actual": 10300000,
+    "tasa_ea": 11.5,
+    "fecha_inicio": "2025-09-10",
+    "pago": "mensual",
+    "dia_pago": 31,
+    "valor_actualizado_en": "2026-06-01"
+   },
+   {
+    "id": 2,
+    "nombre": "Fiducia",
+    "tipo": "fija",
+    "monto_invertido": 5000000,
+    "valor_actual": 5000000,
+    "tasa_ea": 9.25,
+    "fecha_inicio": "2026-01-05",
+    "pago": "mensual",
+    "dia_pago": 15,
+    "valor_actualizado_en": ""
+   },
+   {
+    "id": 3,
+    "nombre": "Acciones",
+    "tipo": "variable",
+    "monto_invertido": 3000000,
+    "valor_actual": 2500000,
+    "tasa_ea": null,
+    "fecha_inicio": "2024-11-20",
+    "pago": null,
+    "dia_pago": null,
+    "valor_actualizado_en": "2026-05-16"
+   },
+   {
+    "id": 4,
+    "nombre": "ETF",
+    "tipo": "variable",
+    "monto_invertido": 2000000,
+    "valor_actual": 2600000,
+    "tasa_ea": null,
+    "fecha_inicio": "2026-02-02",
+    "pago": null,
+    "dia_pago": null,
+    "valor_actualizado_en": "2026-05-17"
+   },
+   {
+    "id": 5,
+    "nombre": "CDT vencimiento",
+    "tipo": "fija",
+    "monto_invertido": 4000000,
+    "valor_actual": 4000000,
+    "tasa_ea": 12,
+    "fecha_inicio": "2026-03-01",
+    "pago": "vencimiento",
+    "dia_pago": null,
+    "valor_actualizado_en": ""
+   },
+   {
+    "id": 6,
+    "nombre": "Bono dia 29",
+    "tipo": "fija",
+    "monto_invertido": 1000000,
+    "valor_actual": 1000000,
+    "tasa_ea": 8,
+    "fecha_inicio": "2026-01-29",
+    "pago": "mensual",
+    "dia_pago": 29,
+    "valor_actualizado_en": ""
+   },
+   {
+    "id": 7,
+    "nombre": "Bono dia 14",
+    "tipo": "fija",
+    "monto_invertido": 1000000,
+    "valor_actual": 1000000,
+    "tasa_ea": 8,
+    "fecha_inicio": "2026-01-14",
+    "pago": "mensual",
+    "dia_pago": 14,
+    "valor_actualizado_en": ""
+   },
+   {
+    "id": 8,
+    "nombre": "Fija sin tasa",
+    "tipo": "fija",
+    "monto_invertido": 1000000,
+    "valor_actual": 1000000,
+    "tasa_ea": null,
+    "fecha_inicio": "",
+    "pago": "mensual",
+    "dia_pago": 10,
+    "valor_actualizado_en": ""
+   }
+  ],
+  "activos": [
+   {
+    "id": 1,
+    "nombre": "Casa",
+    "valor_inicial": 200000000,
+    "valor_actual": 230000000,
+    "fecha_adquisicion": "2022-01-01",
+    "valor_actualizado_en": "2026-05-16"
+   },
+   {
+    "id": 2,
+    "nombre": "Carro",
+    "valor_inicial": 60000000,
+    "valor_actual": 45000000,
+    "fecha_adquisicion": "2024-01-01",
+    "valor_actualizado_en": "2026-05-17"
+   },
+   {
+    "id": 3,
+    "nombre": "Moto",
+    "valor_inicial": 0,
+    "valor_actual": 5000000,
+    "fecha_adquisicion": "2024-01-01",
+    "valor_actualizado_en": ""
+   }
+  ],
+  "recurrentes": [
+   {
+    "id": 1,
+    "nombre": "Arriendo",
+    "tipo": "gasto",
+    "monto": 1500000,
+    "frecuencia": "mensual",
+    "activo": true,
+    "fecha_inicio": "2025-01-31",
+    "notas": ""
+   },
+   {
+    "id": 2,
+    "nombre": "Gym",
+    "tipo": "gasto",
+    "monto": 90000,
+    "frecuencia": "mensual",
+    "activo": true,
+    "fecha_inicio": "2024-02-29",
+    "notas": ""
+   },
+   {
+    "id": 3,
+    "nombre": "Salario",
+    "tipo": "ingreso",
+    "monto": 4000000,
+    "frecuencia": "quincenal",
+    "activo": true,
+    "fecha_inicio": "2026-01-02",
+    "notas": ""
+   },
+   {
+    "id": 4,
+    "nombre": "Aseo",
+    "tipo": "gasto",
+    "monto": 50000,
+    "frecuencia": "semanal",
+    "activo": true,
+    "fecha_inicio": "2026-06-01",
+    "notas": ""
+   },
+   {
+    "id": 5,
+    "nombre": "Seguro",
+    "tipo": "gasto",
+    "monto": 600000,
+    "frecuencia": "trimestral",
+    "activo": true,
+    "fecha_inicio": "2025-11-30",
+    "notas": ""
+   },
+   {
+    "id": 6,
+    "nombre": "Software",
+    "tipo": "gasto",
+    "monto": 120000,
+    "frecuencia": "bimestral",
+    "activo": true,
+    "fecha_inicio": "2026-01-31",
+    "notas": ""
+   },
+   {
+    "id": 7,
+    "nombre": "Predial",
+    "tipo": "gasto",
+    "monto": 900000,
+    "frecuencia": "semestral",
+    "activo": true,
+    "fecha_inicio": "2025-12-31",
+    "notas": ""
+   },
+   {
+    "id": 8,
+    "nombre": "Dominio",
+    "tipo": "gasto",
+    "monto": 60000,
+    "frecuencia": "anual",
+    "activo": true,
+    "fecha_inicio": "2024-02-29",
+    "notas": ""
+   },
+   {
+    "id": 9,
+    "nombre": "Pausado",
+    "tipo": "gasto",
+    "monto": 70000,
+    "frecuencia": "mensual",
+    "activo": false,
+    "fecha_inicio": "2025-01-10",
+    "notas": ""
+   },
+   {
+    "id": 10,
+    "nombre": "Rara",
+    "tipo": "gasto",
+    "monto": 10000,
+    "frecuencia": "decenal",
+    "activo": true,
+    "fecha_inicio": "2025-01-10",
+    "notas": ""
+   },
+   {
+    "id": 11,
+    "nombre": "Futuro",
+    "tipo": "ingreso",
+    "monto": 100000,
+    "frecuencia": "mensual",
+    "activo": true,
+    "fecha_inicio": "2026-07-01",
+    "notas": ""
+   },
+   {
+    "id": 12,
+    "nombre": "Hoy",
+    "tipo": "gasto",
+    "monto": 100000,
+    "frecuencia": "quincenal",
+    "activo": true,
+    "fecha_inicio": "2026-06-15",
+    "notas": ""
+   },
+   {
+    "id": 13,
+    "nombre": "Sin inicio",
+    "tipo": "gasto",
+    "monto": 100000,
+    "frecuencia": "mensual",
+    "activo": true,
+    "fecha_inicio": "",
+    "notas": ""
+   }
+  ]
+ },
+ "expected": {
+  "flujo_cartera": -9067500,
+  "flujo_patrimonio": -3744000,
+  "net_worth": 240032500.3,
+  "monthly_patrimonio": {
+   "1": [
+    4259500
+   ],
+   "7": [
+    -180000,
+    -3411000,
+    -1135000,
+    -65500,
+    558500,
+    -2316500,
+    4259500
+   ],
+   "12": [
+    0,
+    0,
+    -303500,
+    0,
+    0,
+    -180000,
+    -3411000,
+    -1135000,
+    -65500,
+    558500,
+    -2316500,
+    4259500
+   ]
+  },
+  "monthly_inv_delta": {
+   "6": [
+    0,
+    0,
+    -121500,
+    -17000,
+    23000,
+    675000
+   ],
+   "12": [
+    0,
+    0,
+    390000,
+    0,
+    0,
+    799000,
+    0,
+    0,
+    -121500,
+    -17000,
+    23000,
+    675000
+   ]
+  },
+  "serie_hacia_atras": [
+   -301000,
+   -1436000,
+   -1501500,
+   -943000,
+   -3259500,
+   1000000
+  ],
+  "month_labels": [
+   "may.",
+   "jun.",
+   "jul.",
+   "ago.",
+   "sept.",
+   "oct.",
+   "nov.",
+   "dic.",
+   "ene.",
+   "feb.",
+   "mar.",
+   "abr.",
+   "may.",
+   "jun."
+  ],
+  "fechas_tx": [
+   "2025-12-18",
+   "2026-04-10",
+   "2026-05-24",
+   "2026-01-23",
+   "2026-01-25",
+   "2025-04-20",
+   "2025-12-04",
+   "2026-05-14",
+   "2026-02-19",
+   "2026-01-23",
+   "2026-05-17",
+   "2026-05-07",
+   "2026-05-28",
+   "2026-03-20",
+   "2025-09-19",
+   "2026-06-11",
+   "2026-05-10",
+   "2026-04-20",
+   "2025-12-07",
+   "2025-12-15",
+   "2026-04-01",
+   "2026-01-13",
+   "2025-12-02",
+   "2026-06-05",
+   "2026-06-05",
+   "2025-04-19",
+   "2026-06-12",
+   "2026-04-07",
+   "2026-03-26",
+   "2026-01-18",
+   "2026-01-02",
+   "2026-01-14",
+   "2026-04-21",
+   "2026-05-17",
+   "2026-04-04",
+   "2026-04-04",
+   "2026-06-12",
+   "2026-01-25",
+   "2026-03-03",
+   "2025-04-20",
+   "2026-05-19",
+   "2026-01-03",
+   "2026-06-12",
+   "2026-02-01",
+   "2026-02-09",
+   "2026-01-24",
+   "2025-12-14",
+   "2026-06-04",
+   "2026-02-21",
+   "2026-03-08",
+   "2026-03-02",
+   "2026-03-23",
+   "2025-04-04",
+   "2026-01-09",
+   "2026-02-01",
+   "2025-09-23",
+   "2025-09-25",
+   "2025-12-05",
+   "2026-03-12",
+   "2026-02-21",
+   "2026-02-14",
+   "2026-05-25",
+   "2025-09-10",
+   "2026-04-15",
+   "2026-06-04",
+   "2026-01-03",
+   "2026-04-24",
+   "2026-01-12",
+   "2026-02-28",
+   "2025-12-21",
+   "2026-06-15",
+   "2026-06-15",
+   "2026-06-14",
+   "2026-06-08",
+   "2026-06-07",
+   "2026-06-01",
+   "2026-05-15",
+   "2026-05-14",
+   "2026-03-15",
+   "2025-12-15",
+   "2025-06-15",
+   "2025-06-14",
+   "2026-03-05",
+   "2026-04-10"
+  ],
+  "periodo_meses": {
+   "1M": [
+    2,
+    2,
+    2
+   ],
+   "3M": [
+    3,
+    3,
+    3
+   ],
+   "6M": [
+    6,
+    6,
+    6
+   ],
+   "1Y": [
+    12,
+    12,
+    12
+   ],
+   "ALL": [
+    15,
+    20,
+    6
+   ]
+  },
+  "resumen_dashboard": {
+   "patrimonio": 240032500.3,
+   "efectivo": -9067500,
+   "total_deuda": 58299999.7,
+   "total_inv": 27400000,
+   "total_activos": 280000000,
+   "ingresos_mes": 5710000,
+   "gastos_mes": 1004500,
+   "ahorro_pct": 78.02977232924694,
+   "proy_delta": -2593500,
+   "cuota_total": 1920000,
+   "deudas_activas": 10,
+   "total_invertido": 27000000,
+   "ganancia_inv": 400000,
+   "ganancia_inv_pct": 1.4814814814814816
+  },
+  "movimientos": {
+   "5": [
+    83,
+    72,
+    71,
+    73,
+    43
+   ],
+   "20": [
+    83,
+    72,
+    71,
+    73,
+    43,
+    27,
+    37,
+    16,
+    74,
+    75,
+    24,
+    25,
+    48,
+    65,
+    76,
+    13,
+    62,
+    3,
+    41,
+    11
+   ]
+  },
+  "gastos": {
+   "1W": {
+    "ids": [
+     16,
+     27,
+     37,
+     43,
+     71,
+     72,
+     73,
+     74
+    ],
+    "entries": [
+     [
+      "Inversión",
+      594000
+     ],
+     [
+      "Salud",
+      459000
+     ],
+     [
+      "Café",
+      56500
+     ],
+     [
+      "Comida",
+      21000
+     ]
+    ],
+    "detalle": {
+     "Salud": [
+      73,
+      16,
+      74
+     ],
+     "Inversión": [
+      43,
+      27
+     ],
+     "Café": [
+      37
+     ],
+     "Comida": [
+      72,
+      71
+     ]
+    },
+    "n": {
+     "Salud": 3,
+     "Inversión": 2,
+     "Café": 1,
+     "Comida": 2
+    }
+   },
+   "1M": {
+    "ids": [
+     3,
+     11,
+     16,
+     25,
+     27,
+     37,
+     41,
+     43,
+     48,
+     62,
+     71,
+     72,
+     73,
+     74,
+     75,
+     77
+    ],
+    "entries": [
+     [
+      "Café",
+      1653500
+     ],
+     [
+      "Comida",
+      734000
+     ],
+     [
+      "Inversión",
+      675000
+     ],
+     [
+      "Salud",
+      473000
+     ]
+    ],
+    "detalle": {
+     "Café": [
+      37,
+      48,
+      62,
+      3
+     ],
+     "Comida": [
+      72,
+      71,
+      41,
+      11,
+      77
+     ],
+     "Salud": [
+      73,
+      16,
+      74,
+      75
+     ],
+     "Inversión": [
+      43,
+      27,
+      25
+     ]
+    },
+    "n": {
+     "Café": 4,
+     "Comida": 5,
+     "Salud": 4,
+     "Inversión": 3
+    }
+   },
+   "3M": {
+    "ids": [
+     3,
+     8,
+     11,
+     12,
+     14,
+     16,
+     18,
+     25,
+     27,
+     29,
+     33,
+     35,
+     37,
+     41,
+     43,
+     48,
+     52,
+     62,
+     71,
+     72,
+     73,
+     74,
+     75,
+     77,
+     78,
+     79
+    ],
+    "entries": [
+     [
+      "Inversión",
+      2136500
+     ],
+     [
+      "Café",
+      1653500
+     ],
+     [
+      "Educación",
+      822000
+     ],
+     [
+      "Cafe",
+      802000
+     ],
+     [
+      "Comida",
+      795000
+     ],
+     [
+      "Salud",
+      473000
+     ]
+    ],
+    "detalle": {
+     "Café": [
+      37,
+      48,
+      62,
+      3
+     ],
+     "Inversión": [
+      43,
+      27,
+      25,
+      8,
+      35,
+      14
+     ],
+     "Comida": [
+      72,
+      71,
+      41,
+      11,
+      77,
+      78
+     ],
+     "Educación": [
+      12,
+      33,
+      29
+     ],
+     "Salud": [
+      73,
+      16,
+      74,
+      75
+     ],
+     "Cafe": [
+      18
+     ]
+    },
+    "n": {
+     "Café": 4,
+     "Inversión": 6,
+     "Comida": 8,
+     "Educación": 3,
+     "Salud": 4,
+     "Cafe": 1
+    }
+   },
+   "6M": {
+    "ids": [
+     1,
+     3,
+     4,
+     5,
+     8,
+     9,
+     10,
+     11,
+     12,
+     14,
+     16,
+     18,
+     22,
+     25,
+     27,
+     29,
+     31,
+     33,
+     35,
+     37,
+     39,
+     41,
+     42,
+     43,
+     44,
+     46,
+     48,
+     49,
+     51,
+     52,
+     54,
+     55,
+     59,
+     61,
+     62,
+     66,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     77,
+     78,
+     79,
+     80
+    ],
+    "entries": [
+     [
+      "Inversión",
+      2935500
+     ],
+     [
+      "Café",
+      2500000
+     ],
+     [
+      "Otros",
+      2201000
+     ],
+     [
+      "Entretenimiento",
+      2015500
+     ],
+     [
+      "Cafe",
+      1558000
+     ],
+     [
+      "Educación",
+      822000
+     ],
+     [
+      "Comida",
+      813000
+     ],
+     [
+      "Compra activos",
+      624000
+     ],
+     [
+      "Salud",
+      473000
+     ]
+    ],
+    "detalle": {
+     "Inversión": [
+      43,
+      27,
+      25,
+      8,
+      35,
+      14
+     ],
+     "Café": [
+      37,
+      48,
+      62,
+      3,
+      39,
+      69
+     ],
+     "Entretenimiento": [
+      55,
+      5,
+      4,
+      70
+     ],
+     "Otros": [
+      49,
+      9,
+      61,
+      46,
+      10,
+      22
+     ],
+     "Comida": [
+      72,
+      71,
+      41,
+      11,
+      77,
+      78
+     ],
+     "Educación": [
+      12,
+      33,
+      29
+     ],
+     "Salud": [
+      73,
+      16,
+      74,
+      75
+     ],
+     "Cafe": [
+      18,
+      51,
+      54,
+      66
+     ],
+     "Compra activos": [
+      59,
+      44,
+      31
+     ]
+    },
+    "n": {
+     "Inversión": 7,
+     "Café": 7,
+     "Entretenimiento": 4,
+     "Otros": 7,
+     "Comida": 9,
+     "Educación": 3,
+     "Salud": 4,
+     "Cafe": 4,
+     "Compra activos": 3
+    }
+   },
+   "1Y": {
+    "ids": [
+     1,
+     3,
+     4,
+     5,
+     8,
+     9,
+     10,
+     11,
+     12,
+     14,
+     15,
+     16,
+     18,
+     22,
+     25,
+     27,
+     29,
+     31,
+     33,
+     35,
+     37,
+     39,
+     41,
+     42,
+     43,
+     44,
+     46,
+     47,
+     48,
+     49,
+     51,
+     52,
+     54,
+     55,
+     57,
+     58,
+     59,
+     61,
+     62,
+     63,
+     66,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     77,
+     78,
+     79,
+     80,
+     81
+    ],
+    "entries": [
+     [
+      "Inversión",
+      3325500
+     ],
+     [
+      "Café",
+      2500000
+     ],
+     [
+      "Otros",
+      2201000
+     ],
+     [
+      "Cafe",
+      2069500
+     ],
+     [
+      "Entretenimiento",
+      2015500
+     ],
+     [
+      "Compra activos",
+      1430000
+     ],
+     [
+      "Comida",
+      832000
+     ],
+     [
+      "Educación",
+      822000
+     ],
+     [
+      "Salud",
+      484000
+     ]
+    ],
+    "detalle": {
+     "Inversión": [
+      43,
+      27,
+      25,
+      8,
+      35,
+      14
+     ],
+     "Café": [
+      37,
+      48,
+      62,
+      3,
+      39,
+      69
+     ],
+     "Entretenimiento": [
+      55,
+      5,
+      4,
+      70
+     ],
+     "Otros": [
+      49,
+      9,
+      61,
+      46,
+      10,
+      22
+     ],
+     "Comida": [
+      72,
+      71,
+      41,
+      11,
+      77,
+      78
+     ],
+     "Educación": [
+      12,
+      33,
+      29
+     ],
+     "Cafe": [
+      18,
+      51,
+      54,
+      66,
+      58,
+      15
+     ],
+     "Salud": [
+      73,
+      16,
+      74,
+      75,
+      47
+     ],
+     "Compra activos": [
+      59,
+      44,
+      31,
+      57
+     ]
+    },
+    "n": {
+     "Inversión": 8,
+     "Café": 7,
+     "Entretenimiento": 4,
+     "Otros": 7,
+     "Comida": 10,
+     "Educación": 3,
+     "Cafe": 6,
+     "Salud": 5,
+     "Compra activos": 4
+    }
+   },
+   "ALL": {
+    "ids": [
+     1,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     14,
+     15,
+     16,
+     18,
+     22,
+     25,
+     26,
+     27,
+     29,
+     31,
+     33,
+     35,
+     37,
+     39,
+     41,
+     42,
+     43,
+     44,
+     46,
+     47,
+     48,
+     49,
+     51,
+     52,
+     53,
+     54,
+     55,
+     57,
+     58,
+     59,
+     61,
+     62,
+     63,
+     66,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     77,
+     78,
+     79,
+     80,
+     81,
+     82
+    ],
+    "entries": [
+     [
+      "Inversión",
+      3325500
+     ],
+     [
+      "Café",
+      2500000
+     ],
+     [
+      "Entretenimiento",
+      2202000
+     ],
+     [
+      "Otros",
+      2201000
+     ],
+     [
+      "Cafe",
+      2069500
+     ],
+     [
+      "Educación",
+      1747000
+     ],
+     [
+      "Compra activos",
+      1430000
+     ],
+     [
+      "Comida",
+      852000
+     ],
+     [
+      "Salud",
+      484000
+     ]
+    ],
+    "detalle": {
+     "Inversión": [
+      43,
+      27,
+      25,
+      8,
+      35,
+      14
+     ],
+     "Café": [
+      37,
+      48,
+      62,
+      3,
+      39,
+      69
+     ],
+     "Entretenimiento": [
+      55,
+      5,
+      4,
+      70,
+      26
+     ],
+     "Educación": [
+      12,
+      33,
+      29,
+      6,
+      53
+     ],
+     "Otros": [
+      49,
+      9,
+      61,
+      46,
+      10,
+      22
+     ],
+     "Comida": [
+      72,
+      71,
+      41,
+      11,
+      77,
+      78
+     ],
+     "Cafe": [
+      18,
+      51,
+      54,
+      66,
+      58,
+      15
+     ],
+     "Salud": [
+      73,
+      16,
+      74,
+      75,
+      47
+     ],
+     "Compra activos": [
+      59,
+      44,
+      31,
+      57
+     ]
+    },
+    "n": {
+     "Inversión": 8,
+     "Café": 7,
+     "Entretenimiento": 5,
+     "Educación": 5,
+     "Otros": 7,
+     "Comida": 11,
+     "Cafe": 6,
+     "Salud": 5,
+     "Compra activos": 4
+    }
+   }
+  },
+  "proximas": [
+   {
+    "clave": "deuda:6:2026-06-05",
+    "tipo": "deuda",
+    "fuente_id": 6,
+    "fecha": "2026-06-05",
+    "etiqueta": "Estudio",
+    "sub": "Cuota deuda",
+    "monto": -20000,
+    "dias": -10,
+    "texto": "vencido 10d"
+   },
+   {
+    "clave": "deuda:11:2026-06-05",
+    "tipo": "deuda",
+    "fuente_id": 11,
+    "fecha": "2026-06-05",
+    "etiqueta": "Pasado limite",
+    "sub": "Cuota deuda",
+    "monto": -100000,
+    "dias": -10,
+    "texto": "vencido 10d"
+   },
+   {
+    "clave": "inversion:2:2026-06-15",
+    "tipo": "inversion",
+    "fuente_id": 2,
+    "fecha": "2026-06-15",
+    "etiqueta": "Fiducia",
+    "sub": "Rendimiento",
+    "monto": 36998,
+    "dias": 0,
+    "texto": "hoy"
+   },
+   {
+    "clave": "recurrente:4:2026-06-15",
+    "tipo": "recurrente",
+    "fuente_id": 4,
+    "fecha": "2026-06-15",
+    "etiqueta": "Aseo",
+    "sub": "Semanal",
+    "monto": -50000,
+    "dias": 0,
+    "texto": "hoy"
+   },
+   {
+    "clave": "recurrente:12:2026-06-15",
+    "tipo": "recurrente",
+    "fuente_id": 12,
+    "fecha": "2026-06-15",
+    "etiqueta": "Hoy",
+    "sub": "Quincenal",
+    "monto": -100000,
+    "dias": 0,
+    "texto": "hoy"
+   },
+   {
+    "clave": "recurrente:3:2026-06-19",
+    "tipo": "recurrente",
+    "fuente_id": 3,
+    "fecha": "2026-06-19",
+    "etiqueta": "Salario",
+    "sub": "Quincenal",
+    "monto": 4000000,
+    "dias": 4,
+    "texto": "en 4d"
+   },
+   {
+    "clave": "deuda:1:2026-06-20",
+    "tipo": "deuda",
+    "fuente_id": 1,
+    "fecha": "2026-06-20",
+    "etiqueta": "Crédito carro",
+    "sub": "Cuota deuda",
+    "monto": -1200000,
+    "dias": 5,
+    "texto": "en 5d"
+   },
+   {
+    "clave": "inversion:6:2026-06-29",
+    "tipo": "inversion",
+    "fuente_id": 6,
+    "fecha": "2026-06-29",
+    "etiqueta": "Bono dia 29",
+    "sub": "Rendimiento",
+    "monto": 6434,
+    "dias": 14,
+    "texto": "en 14d"
+   },
+   {
+    "clave": "recurrente:2:2026-06-29",
+    "tipo": "recurrente",
+    "fuente_id": 2,
+    "fecha": "2026-06-29",
+    "etiqueta": "Gym",
+    "sub": "Mensual",
+    "monto": -90000,
+    "dias": 14,
+    "texto": "en 14d"
+   },
+   {
+    "clave": "inversion:1:2026-06-30",
+    "tipo": "inversion",
+    "fuente_id": 1,
+    "fecha": "2026-06-30",
+    "etiqueta": "CDT",
+    "sub": "Rendimiento",
+    "monto": 91125,
+    "dias": 15,
+    "texto": "en 15d"
+   },
+   {
+    "clave": "recurrente:1:2026-06-30",
+    "tipo": "recurrente",
+    "fuente_id": 1,
+    "fecha": "2026-06-30",
+    "etiqueta": "Arriendo",
+    "sub": "Mensual",
+    "monto": -1500000,
+    "dias": 15,
+    "texto": "en 15d"
+   },
+   {
+    "clave": "recurrente:7:2026-06-30",
+    "tipo": "recurrente",
+    "fuente_id": 7,
+    "fecha": "2026-06-30",
+    "etiqueta": "Predial",
+    "sub": "Semestral",
+    "monto": -900000,
+    "dias": 15,
+    "texto": "en 15d"
+   },
+   {
+    "clave": "recurrente:11:2026-07-01",
+    "tipo": "recurrente",
+    "fuente_id": 11,
+    "fecha": "2026-07-01",
+    "etiqueta": "Futuro",
+    "sub": "Mensual",
+    "monto": 100000,
+    "dias": 16,
+    "texto": "en 16d"
+   },
+   {
+    "clave": "inversion:7:2026-07-14",
+    "tipo": "inversion",
+    "fuente_id": 7,
+    "fecha": "2026-07-14",
+    "etiqueta": "Bono dia 14",
+    "sub": "Rendimiento",
+    "monto": 6434,
+    "dias": 29,
+    "texto": "en 29d"
+   },
+   {
+    "clave": "deuda:10:2026-07-30",
+    "tipo": "deuda",
+    "fuente_id": 10,
+    "fecha": "2026-07-30",
+    "etiqueta": "Limite",
+    "sub": "Cuota deuda",
+    "monto": -100000,
+    "dias": 45,
+    "texto": "en 45d"
+   }
+  ],
+  "recurrente_proxima": [
+   [
+    1,
+    "2026-06-30",
+    "en 15d"
+   ],
+   [
+    2,
+    "2026-06-29",
+    "en 14d"
+   ],
+   [
+    3,
+    "2026-06-19",
+    "en 4d"
+   ],
+   [
+    4,
+    "2026-06-15",
+    "hoy"
+   ],
+   [
+    5,
+    "2026-08-30",
+    "en 76d"
+   ],
+   [
+    6,
+    "2026-07-31",
+    "en 46d"
+   ],
+   [
+    7,
+    "2026-06-30",
+    "en 15d"
+   ],
+   [
+    8,
+    "2027-02-28",
+    "en 258d"
+   ],
+   [
+    9,
+    "2026-07-10",
+    "en 25d"
+   ],
+   [
+    10,
+    null,
+    null
+   ],
+   [
+    11,
+    "2026-07-01",
+    "en 16d"
+   ],
+   [
+    12,
+    "2026-06-15",
+    "hoy"
+   ],
+   [
+    13,
+    null,
+    null
+   ]
+  ],
+  "recurrente_proxima_otras_fechas": [
+   {
+    "hoy": "2026-02-28",
+    "r": [
+     "2026-02-28",
+     "2026-02-28",
+     "2026-03-13",
+     "2026-06-01",
+     "2026-02-28",
+     "2026-03-31",
+     "2026-06-30",
+     "2026-02-28",
+     "2026-03-10",
+     null,
+     "2026-07-01",
+     "2026-06-15",
+     null
+    ]
+   },
+   {
+    "hoy": "2024-02-29",
+    "r": [
+     "2025-01-31",
+     "2024-02-29",
+     "2026-01-02",
+     "2026-06-01",
+     "2025-11-30",
+     "2026-01-31",
+     "2025-12-31",
+     "2024-02-29",
+     "2025-01-10",
+     null,
+     "2026-07-01",
+     "2026-06-15",
+     null
+    ]
+   },
+   {
+    "hoy": "2026-01-31",
+    "r": [
+     "2026-01-31",
+     "2026-02-28",
+     "2026-02-13",
+     "2026-06-01",
+     "2026-02-28",
+     "2026-01-31",
+     "2026-06-30",
+     "2026-02-28",
+     "2026-02-10",
+     null,
+     "2026-07-01",
+     "2026-06-15",
+     null
+    ]
+   },
+   {
+    "hoy": "2025-11-30",
+    "r": [
+     "2025-11-30",
+     "2025-12-29",
+     "2026-01-02",
+     "2026-06-01",
+     "2025-11-30",
+     "2026-01-31",
+     "2025-12-31",
+     "2026-02-28",
+     "2025-12-10",
+     null,
+     "2026-07-01",
+     "2026-06-15",
+     null
+    ]
+   },
+   {
+    "hoy": "2026-12-31",
+    "r": [
+     "2026-12-31",
+     "2027-01-29",
+     "2027-01-01",
+     "2027-01-04",
+     "2027-02-28",
+     "2027-01-31",
+     "2026-12-31",
+     "2027-02-28",
+     "2027-01-10",
+     null,
+     "2027-01-01",
+     "2027-01-11",
+     null
+    ]
+   }
+  ],
+  "inv_proxima": [
+   [
+    1,
+    "2026-07-01",
+    "en 16d"
+   ],
+   [
+    10,
+    "2026-07-10",
+    "en 25d"
+   ],
+   [
+    14,
+    "2026-07-14",
+    "en 29d"
+   ],
+   [
+    15,
+    "2026-06-15",
+    "hoy"
+   ],
+   [
+    16,
+    "2026-06-16",
+    "en 1d"
+   ],
+   [
+    28,
+    "2026-06-28",
+    "en 13d"
+   ],
+   [
+    29,
+    "2026-06-29",
+    "en 14d"
+   ],
+   [
+    30,
+    "2026-06-30",
+    "en 15d"
+   ],
+   [
+    31,
+    "2026-06-30",
+    "en 15d"
+   ]
+  ],
+  "inv_proxima_otras_fechas": [
+   {
+    "hoy": "2026-02-28",
+    "r": [
+     "2026-02-28",
+     "2026-02-28",
+     "2026-02-28",
+     "2026-03-15"
+    ]
+   },
+   {
+    "hoy": "2024-02-29",
+    "r": [
+     "2024-02-29",
+     "2024-02-29",
+     "2024-02-29",
+     "2024-03-15"
+    ]
+   },
+   {
+    "hoy": "2026-01-31",
+    "r": [
+     "2026-02-28",
+     "2026-02-28",
+     "2026-01-31",
+     "2026-02-15"
+    ]
+   },
+   {
+    "hoy": "2025-11-30",
+    "r": [
+     "2025-12-29",
+     "2025-11-30",
+     "2025-11-30",
+     "2025-12-15"
+    ]
+   },
+   {
+    "hoy": "2026-12-31",
+    "r": [
+     "2027-01-29",
+     "2027-01-30",
+     "2026-12-31",
+     "2027-01-15"
+    ]
+   }
+  ],
+  "to_mensual": [
+   [
+    "semanal",
+    4333333.333333333
+   ],
+   [
+    "quincenal",
+    2000000
+   ],
+   [
+    "mensual",
+    1000000
+   ],
+   [
+    "bimestral",
+    500000
+   ],
+   [
+    "trimestral",
+    333333.3333333333
+   ],
+   [
+    "semestral",
+    166666.66666666666
+   ],
+   [
+    "anual",
+    83333.33333333333
+   ],
+   [
+    "decenal",
+    1000000
+   ]
+  ],
+  "rendimiento": [
+   [
+    10000000,
+    11.5,
+    91125
+   ],
+   [
+    5000000,
+    9.25,
+    36998
+   ],
+   [
+    1000000,
+    8,
+    6434
+   ],
+   [
+    333333,
+    7.77,
+    2085
+   ],
+   [
+    2500000,
+    0.5,
+    1039
+   ],
+   [
+    1000,
+    1,
+    1
+   ],
+   [
+    3500000,
+    12.5,
+    34523
+   ],
+   [
+    4000000,
+    12,
+    37955
+   ]
+  ],
+  "tasas": [
+   [
+    0.5,
+    0.04157148447290204,
+    6.167781186449828
+   ],
+   [
+    1,
+    0.08295381143461622,
+    12.682503013196978
+   ],
+   [
+    7.77,
+    0.6255244556216955,
+    145.4565322310354
+   ],
+   [
+    11.5,
+    0.9112468436904608,
+    269.2312143382242
+   ],
+   [
+    12,
+    0.9488792934583046,
+    289.5975992546981
+   ],
+   [
+    28,
+    2.0784728489500193,
+    1834.2813113834072
+   ],
+   [
+    100,
+    5.946309435929531,
+    409500
+   ]
+  ],
+  "tasa_input": [
+   [
+    "",
+    "ea",
+    null
+   ],
+   [
+    "0",
+    "ea",
+    null
+   ],
+   [
+    "abc",
+    "ea",
+    null
+   ],
+   [
+    "12.5",
+    "ea",
+    12.5
+   ],
+   [
+    "1",
+    "mv",
+    12.682503013196978
+   ],
+   [
+    "0.9",
+    "mv",
+    11.350967495666753
+   ],
+   [
+    "-5",
+    "ea",
+    -5
+   ]
+  ],
+  "cambio_valor": [
+   [
+    2500000,
+    3000000,
+    3000000,
+    {
+     "delta": -500000,
+     "total": -500000,
+     "totalPct": -16.666666666666664
+    }
+   ],
+   [
+    3500000,
+    3000000,
+    0,
+    {
+     "delta": 500000,
+     "total": 3500000,
+     "totalPct": 0
+    }
+   ],
+   [
+    0,
+    5,
+    10,
+    {
+     "delta": -5,
+     "total": -10,
+     "totalPct": -100
+    }
+   ]
+  ],
+  "deudas": [
+   {
+    "id": 1,
+    "tiene_saldo": true,
+    "estimado": 9899664,
+    "intereses": {
+     "valor": 9899664,
+     "exacto": false
+    }
+   },
+   {
+    "id": 2,
+    "tiene_saldo": false,
+    "estimado": 2030266,
+    "intereses": {
+     "valor": 1500000.5,
+     "exacto": true
+    }
+   },
+   {
+    "id": 3,
+    "tiene_saldo": true,
+    "estimado": null,
+    "intereses": null
+   },
+   {
+    "id": 4,
+    "tiene_saldo": false,
+    "estimado": null,
+    "intereses": null
+   },
+   {
+    "id": 5,
+    "tiene_saldo": true,
+    "estimado": null,
+    "intereses": null
+   },
+   {
+    "id": 6,
+    "tiene_saldo": true,
+    "estimado": 0,
+    "intereses": {
+     "valor": 0,
+     "exacto": false
+    }
+   },
+   {
+    "id": 7,
+    "tiene_saldo": true,
+    "estimado": null,
+    "intereses": null
+   },
+   {
+    "id": 8,
+    "tiene_saldo": true,
+    "estimado": null,
+    "intereses": null
+   },
+   {
+    "id": 9,
+    "tiene_saldo": true,
+    "estimado": null,
+    "intereses": null
+   },
+   {
+    "id": 10,
+    "tiene_saldo": true,
+    "estimado": null,
+    "intereses": null
+   },
+   {
+    "id": 11,
+    "tiene_saldo": true,
+    "estimado": null,
+    "intereses": null
+   },
+   {
+    "id": 12,
+    "tiene_saldo": true,
+    "estimado": null,
+    "intereses": null
+   }
+  ],
+  "estimar_extra": [
+   [
+    [
+     40000000,
+     25000000,
+     18.5,
+     1200000
+    ],
+    9899664
+   ],
+   [
+    [
+     1000000,
+     500000,
+     30,
+     1000
+    ],
+    0
+   ],
+   [
+    [
+     1000000,
+     999000,
+     12,
+     100000
+    ],
+    9489
+   ],
+   [
+    [
+     5000000,
+     2000000,
+     24,
+     5000000
+    ],
+    90438
+   ]
+  ],
+  "desglose": [
+   [
+    1000000,
+    300000,
+    800000,
+    {
+     "capital": 200000,
+     "intereses": 100000
+    },
+    0
+   ],
+   [
+    1000000,
+    1200000,
+    800000,
+    {
+     "capital": 200000,
+     "intereses": 1000000
+    },
+    0
+   ],
+   [
+    500,
+    100,
+    600,
+    {
+     "capital": 0,
+     "intereses": 100
+    },
+    0
+   ]
+  ],
+  "listar": [
+   {
+    "args": [
+     "fecha",
+     -1,
+     "",
+     "",
+     ""
+    ],
+    "ids": [
+     83,
+     72,
+     71,
+     73,
+     43,
+     27,
+     37,
+     16,
+     74,
+     75,
+     24,
+     25,
+     48,
+     76,
+     62,
+     3,
+     41,
+     11,
+     77,
+     78,
+     8,
+     17,
+     12,
+     67,
+     33,
+     18,
+     36,
+     35,
+     21,
+     29,
+     52,
+     14,
+     79,
+     59,
+     50,
+     39,
+     51,
+     69,
+     49,
+     9,
+     61,
+     45,
+     55,
+     44,
+     5,
+     46,
+     4,
+     10,
+     22,
+     68,
+     54,
+     42,
+     66,
+     31,
+     70,
+     1,
+     80,
+     47,
+     58,
+     7,
+     57,
+     15,
+     63,
+     81,
+     82,
+     6,
+     26,
+     53,
+     84
+    ]
+   },
+   {
+    "args": [
+     "fecha",
+     1,
+     "",
+     "",
+     ""
+    ],
+    "ids": [
+     84,
+     53,
+     26,
+     6,
+     82,
+     81,
+     63,
+     15,
+     57,
+     7,
+     58,
+     47,
+     80,
+     1,
+     70,
+     31,
+     66,
+     42,
+     54,
+     68,
+     22,
+     10,
+     4,
+     46,
+     5,
+     44,
+     55,
+     45,
+     61,
+     9,
+     49,
+     69,
+     51,
+     39,
+     50,
+     59,
+     79,
+     14,
+     52,
+     29,
+     21,
+     35,
+     36,
+     18,
+     33,
+     67,
+     12,
+     17,
+     8,
+     78,
+     77,
+     11,
+     41,
+     3,
+     62,
+     76,
+     48,
+     24,
+     25,
+     75,
+     74,
+     16,
+     37,
+     27,
+     43,
+     73,
+     71,
+     72,
+     83
+    ]
+   },
+   {
+    "args": [
+     "monto",
+     -1,
+     "",
+     "",
+     ""
+    ],
+    "ids": [
+     76,
+     45,
+     61,
+     6,
+     36,
+     3,
+     35,
+     57,
+     18,
+     84,
+     1,
+     55,
+     50,
+     24,
+     83,
+     68,
+     5,
+     14,
+     62,
+     21,
+     22,
+     29,
+     66,
+     16,
+     4,
+     11,
+     43,
+     63,
+     44,
+     15,
+     12,
+     67,
+     49,
+     41,
+     7,
+     58,
+     70,
+     48,
+     26,
+     27,
+     31,
+     10,
+     42,
+     54,
+     46,
+     17,
+     59,
+     51,
+     39,
+     25,
+     69,
+     53,
+     37,
+     52,
+     8,
+     82,
+     81,
+     80,
+     9,
+     79,
+     78,
+     77,
+     75,
+     74,
+     73,
+     47,
+     72,
+     71,
+     33
+    ]
+   },
+   {
+    "args": [
+     "monto",
+     1,
+     "gasto",
+     "",
+     ""
+    ],
+    "ids": [
+     33,
+     71,
+     47,
+     72,
+     73,
+     74,
+     75,
+     77,
+     78,
+     9,
+     79,
+     80,
+     81,
+     82,
+     8,
+     52,
+     37,
+     53,
+     69,
+     25,
+     39,
+     51,
+     59,
+     46,
+     54,
+     42,
+     10,
+     31,
+     27,
+     26,
+     48,
+     70,
+     58,
+     41,
+     49,
+     12,
+     15,
+     44,
+     63,
+     43,
+     11,
+     4,
+     16,
+     66,
+     29,
+     22,
+     62,
+     14,
+     5,
+     68,
+     55,
+     1,
+     18,
+     57,
+     35,
+     3,
+     6,
+     61
+    ]
+   },
+   {
+    "args": [
+     "tipo",
+     1,
+     "",
+     "",
+     ""
+    ],
+    "ids": [
+     1,
+     3,
+     4,
+     5,
+     6,
+     8,
+     9,
+     10,
+     11,
+     12,
+     14,
+     15,
+     16,
+     18,
+     22,
+     25,
+     26,
+     27,
+     29,
+     31,
+     33,
+     35,
+     37,
+     39,
+     41,
+     42,
+     43,
+     44,
+     46,
+     47,
+     48,
+     49,
+     51,
+     52,
+     53,
+     54,
+     55,
+     57,
+     58,
+     59,
+     61,
+     62,
+     63,
+     66,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     77,
+     78,
+     79,
+     80,
+     81,
+     82,
+     7,
+     17,
+     21,
+     24,
+     36,
+     45,
+     50,
+     67,
+     76,
+     83,
+     84
+    ]
+   },
+   {
+    "args": [
+     "categoria",
+     1,
+     "",
+     "",
+     ""
+    ],
+    "ids": [
+     9,
+     10,
+     22,
+     42,
+     46,
+     49,
+     61,
+     15,
+     18,
+     51,
+     54,
+     58,
+     66,
+     3,
+     37,
+     39,
+     48,
+     62,
+     68,
+     69,
+     11,
+     41,
+     52,
+     71,
+     72,
+     77,
+     78,
+     79,
+     80,
+     81,
+     82,
+     31,
+     44,
+     57,
+     59,
+     24,
+     67,
+     36,
+     50,
+     6,
+     12,
+     29,
+     33,
+     53,
+     4,
+     5,
+     26,
+     55,
+     70,
+     83,
+     84,
+     21,
+     45,
+     1,
+     8,
+     14,
+     25,
+     27,
+     35,
+     43,
+     63,
+     7,
+     17,
+     76,
+     16,
+     47,
+     73,
+     74,
+     75
+    ]
+   },
+   {
+    "args": [
+     "categoria",
+     -1,
+     "gasto",
+     "2026-06",
+     ""
+    ],
+    "ids": [
+     16,
+     73,
+     74,
+     75,
+     25,
+     27,
+     43,
+     71,
+     72,
+     37,
+     48
+    ]
+   },
+   {
+    "args": [
+     "descripcion",
+     1,
+     "",
+     "",
+     ""
+    ],
+    "ids": [
+     14,
+     22,
+     24,
+     26,
+     4,
+     46,
+     53,
+     62,
+     68,
+     70,
+     21,
+     27,
+     29,
+     37,
+     58,
+     8,
+     25,
+     52,
+     54,
+     9,
+     12,
+     18,
+     36,
+     57,
+     61,
+     69,
+     16,
+     3,
+     33,
+     41,
+     59,
+     7,
+     35,
+     43,
+     48,
+     6,
+     51,
+     63,
+     10,
+     39,
+     5,
+     42,
+     44,
+     45,
+     49,
+     50,
+     55,
+     67,
+     1,
+     11,
+     15,
+     17,
+     31,
+     47,
+     66,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     78,
+     79,
+     80,
+     81,
+     82,
+     83,
+     84
+    ]
+   },
+   {
+    "args": [
+     "fecha",
+     -1,
+     "ingreso",
+     "2026-03",
+     ""
+    ],
+    "ids": [
+     83,
+     50
+    ]
+   },
+   {
+    "args": [
+     "fecha",
+     -1,
+     "",
+     "",
+     "Comida"
+    ],
+    "ids": [
+     72,
+     71,
+     41,
+     11,
+     77,
+     78,
+     52,
+     79,
+     80,
+     81,
+     82
+    ]
+   }
+  ],
+  "meses_disponibles": [
+   "2026-06",
+   "2026-05",
+   "2026-04",
+   "2026-03",
+   "2026-02",
+   "2026-01",
+   "2025-12",
+   "2025-09",
+   "2025-06",
+   "2025-04"
+  ],
+  "categorias_disponibles": [
+   "",
+   "Cafe",
+   "Café",
+   "Comida",
+   "Compra activos",
+   "Crédito recibido",
+   "Dividendos",
+   "Educación",
+   "Entretenimiento",
+   "Freelance",
+   "Intereses",
+   "Inversión",
+   "Pago deuda",
+   "Salario",
+   "Salud"
+  ],
+  "buckets": [
+   [
+    1,
+    "Diciembre - 2025"
+   ],
+   [
+    2,
+    "Abril - 2026"
+   ],
+   [
+    3,
+    "Mayo - 2026"
+   ],
+   [
+    4,
+    "Enero - 2026"
+   ],
+   [
+    5,
+    "Enero - 2026"
+   ],
+   [
+    6,
+    "Abril - 2025"
+   ],
+   [
+    7,
+    "Diciembre - 2025"
+   ],
+   [
+    8,
+    "Mayo - 2026"
+   ],
+   [
+    9,
+    "Febrero - 2026"
+   ],
+   [
+    10,
+    "Enero - 2026"
+   ],
+   [
+    11,
+    "Mayo - 2026"
+   ],
+   [
+    12,
+    "Mayo - 2026"
+   ],
+   [
+    13,
+    "Mayo - 2026"
+   ],
+   [
+    14,
+    "Marzo - 2026"
+   ],
+   [
+    15,
+    "Septiembre - 2025"
+   ],
+   [
+    16,
+    "Este mes"
+   ],
+   [
+    17,
+    "Mayo - 2026"
+   ],
+   [
+    18,
+    "Abril - 2026"
+   ],
+   [
+    19,
+    "Diciembre - 2025"
+   ],
+   [
+    20,
+    "Diciembre - 2025"
+   ],
+   [
+    21,
+    "Abril - 2026"
+   ],
+   [
+    22,
+    "Enero - 2026"
+   ],
+   [
+    23,
+    "Diciembre - 2025"
+   ],
+   [
+    24,
+    "Este mes"
+   ],
+   [
+    25,
+    "Este mes"
+   ],
+   [
+    26,
+    "Abril - 2025"
+   ],
+   [
+    27,
+    "Este mes"
+   ],
+   [
+    28,
+    "Abril - 2026"
+   ],
+   [
+    29,
+    "Marzo - 2026"
+   ],
+   [
+    30,
+    "Enero - 2026"
+   ],
+   [
+    31,
+    "Enero - 2026"
+   ],
+   [
+    32,
+    "Enero - 2026"
+   ],
+   [
+    33,
+    "Abril - 2026"
+   ],
+   [
+    34,
+    "Mayo - 2026"
+   ],
+   [
+    35,
+    "Abril - 2026"
+   ],
+   [
+    36,
+    "Abril - 2026"
+   ],
+   [
+    37,
+    "Este mes"
+   ],
+   [
+    38,
+    "Enero - 2026"
+   ],
+   [
+    39,
+    "Marzo - 2026"
+   ],
+   [
+    40,
+    "Abril - 2025"
+   ],
+   [
+    41,
+    "Mayo - 2026"
+   ],
+   [
+    42,
+    "Enero - 2026"
+   ],
+   [
+    43,
+    "Este mes"
+   ],
+   [
+    44,
+    "Febrero - 2026"
+   ],
+   [
+    45,
+    "Febrero - 2026"
+   ],
+   [
+    46,
+    "Enero - 2026"
+   ],
+   [
+    47,
+    "Diciembre - 2025"
+   ],
+   [
+    48,
+    "Este mes"
+   ],
+   [
+    49,
+    "Febrero - 2026"
+   ],
+   [
+    50,
+    "Marzo - 2026"
+   ],
+   [
+    51,
+    "Marzo - 2026"
+   ],
+   [
+    52,
+    "Marzo - 2026"
+   ],
+   [
+    53,
+    "Abril - 2025"
+   ],
+   [
+    54,
+    "Enero - 2026"
+   ],
+   [
+    55,
+    "Febrero - 2026"
+   ],
+   [
+    56,
+    "Septiembre - 2025"
+   ],
+   [
+    57,
+    "Septiembre - 2025"
+   ],
+   [
+    58,
+    "Diciembre - 2025"
+   ],
+   [
+    59,
+    "Marzo - 2026"
+   ],
+   [
+    60,
+    "Febrero - 2026"
+   ],
+   [
+    61,
+    "Febrero - 2026"
+   ],
+   [
+    62,
+    "Mayo - 2026"
+   ],
+   [
+    63,
+    "Septiembre - 2025"
+   ],
+   [
+    64,
+    "Abril - 2026"
+   ],
+   [
+    65,
+    "Este mes"
+   ],
+   [
+    66,
+    "Enero - 2026"
+   ],
+   [
+    67,
+    "Abril - 2026"
+   ],
+   [
+    68,
+    "Enero - 2026"
+   ],
+   [
+    69,
+    "Febrero - 2026"
+   ],
+   [
+    70,
+    "Diciembre - 2025"
+   ],
+   [
+    71,
+    "Hoy"
+   ],
+   [
+    72,
+    "Hoy"
+   ],
+   [
+    73,
+    "Ayer"
+   ],
+   [
+    74,
+    "Este mes"
+   ],
+   [
+    75,
+    "Este mes"
+   ],
+   [
+    76,
+    "Este mes"
+   ],
+   [
+    77,
+    "Mayo - 2026"
+   ],
+   [
+    78,
+    "Mayo - 2026"
+   ],
+   [
+    79,
+    "Marzo - 2026"
+   ],
+   [
+    80,
+    "Diciembre - 2025"
+   ],
+   [
+    81,
+    "Junio - 2025"
+   ],
+   [
+    82,
+    "Junio - 2025"
+   ],
+   [
+    83,
+    "Marzo - 2026"
+   ],
+   [
+    84,
+    "Abril - 2026"
+   ]
+  ],
+  "bucket_extra": [
+   [
+    "2026-06-15",
+    "Hoy"
+   ],
+   [
+    "2026-06-14",
+    "Ayer"
+   ],
+   [
+    "2026-06-13",
+    "Este mes"
+   ],
+   [
+    "2026-06-08",
+    "Este mes"
+   ],
+   [
+    "2026-06-01",
+    "Este mes"
+   ],
+   [
+    "2026-05-31",
+    "Mayo - 2026"
+   ],
+   [
+    "2025-12-31",
+    "Diciembre - 2025"
+   ],
+   [
+    "2026-01-01T10:00",
+    "Enero - 2026"
+   ]
+  ],
+  "stale": [
+   [
+    "2026-05-16",
+    true,
+    "2026-05-16"
+   ],
+   [
+    "2026-05-17",
+    false,
+    "2026-05-17"
+   ],
+   [
+    "2026-05-15",
+    true,
+    "2026-05-15"
+   ],
+   [
+    "2026-06-15",
+    false,
+    "2026-06-15"
+   ],
+   [
+    "2026-07-01",
+    false,
+    "2026-07-01"
+   ],
+   [
+    "",
+    false,
+    ""
+   ],
+   [
+    "basura",
+    false,
+    "basura"
+   ],
+   [
+    "16/5/2026",
+    true,
+    "2026-05-16"
+   ]
+  ],
+  "norm_fecha": [
+   [
+    "2026-06-15",
+    "2026-06-15"
+   ],
+   [
+    "2026-06-15 10:30:45",
+    "2026-06-15T10:30"
+   ],
+   [
+    "2026-06-15T09:05:00",
+    "2026-06-15T09:05"
+   ],
+   [
+    "5/3/2026",
+    "2026-03-05"
+   ],
+   [
+    "05-03-2026 9:30",
+    "2026-03-05T09:30"
+   ],
+   [
+    "5/3/2026, 14:07",
+    "2026-03-05T14:07"
+   ],
+   [
+    "xx",
+    "xx"
+   ],
+   [
+    "",
+    ""
+   ]
+  ]
+ }
+}
