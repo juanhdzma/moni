@@ -4,11 +4,17 @@ import { numToInput, parseMoney } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRetiro, Inversion } from '../../../types'
-import { FechaField, NotasField, RegistrarToggle } from '../../../controls/FormFields'
+import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
+import { TipoToggle } from '../../../controls/TipoToggle'
 import { InversionPanel } from './InversionPanel'
 import { hintClass } from './styles'
 import { useGuardar } from '@/shell/hooks/useGuardar'
+
+const TIPOS_RETIRO = [
+  { value: 'total', label: 'Total' },
+  { value: 'parcial', label: 'Parcial' },
+]
 
 export function RetiroForm({ inv }: { inv: Inversion }) {
   const { estado } = useData()
@@ -35,23 +41,13 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
 
   const save = async () => {
     const body = buildBody()
-    await guardar(() => apiAction(`/api/inv/${inv._id}/retiro`, body))
+    await guardar(() => apiAction(`/api/inv/${inv.id}/retiro`, body))
   }
 
   return (
     <>
       <InversionPanel inv={inv} />
-      <div className="form-group">
-        <div className="form-label" id="lbl-grp-4">Tipo de retiro</div>
-        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-4">
-          <button type="button" className={'tipo-btn ingreso' + (tipo === 'total' ? ' sel' : '')} data-retiro="total" onClick={() => setTipo('total')}>
-            Total
-          </button>
-          <button type="button" className={'tipo-btn transfer' + (tipo === 'parcial' ? ' sel' : '')} data-retiro="parcial" onClick={() => setTipo('parcial')}>
-            Parcial
-          </button>
-        </div>
-      </div>
+      <TipoToggle label="Tipo de retiro" value={tipo} opciones={TIPOS_RETIRO} tonos={{ total: 'ingreso' }} onChange={setTipo} />
 
       <div id="retiro-total-fields" style={tipo === 'total' ? undefined : { display: 'none' }}>
         <div className="form-group">
@@ -79,8 +75,17 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
         </div>
       </div>
 
-      <FechaField id="m-fecha-retiro" type="date" label="Fecha" value={fecha} onChange={setFecha} />
-      <NotasField id="m-notas-retiro" placeholder="Ej. Vencimiento CDT" value={notas} onChange={setNotas} />
+      <FechaNotas
+        fechaType="date"
+        fechaId="m-fecha-retiro"
+        notasId="m-notas-retiro"
+        fechaLabel="Fecha"
+        fecha={fecha}
+        onFecha={setFecha}
+        notas={notas}
+        onNotas={setNotas}
+        notasPlaceholder="Ej. Vencimiento CDT"
+      />
       <RegistrarToggle checked={registrar} onChange={setRegistrar} />
       <FormFooter saveLabel="Confirmar retiro" onSave={() => void save()} />
     </>

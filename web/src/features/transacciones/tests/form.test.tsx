@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiAll, categoriasBase, estado, tx } from '../../../test/factories'
+import { categoriasBase, estado, tx } from '../../../test/factories'
 import { failure } from '../../../test/mockFetch'
 import { renderWithProviders } from '../../../test/render'
 import { expectLabels, modalBody } from '../../../test/labels'
@@ -19,11 +19,12 @@ describe('tx form: edición de datos atípicos', () => {
     const user = userEvent.setup()
     ui(estado({ transacciones: [t] }))
     await user.click(await screen.findByRole('button', { name: /Editar/ }))
+    await screen.findByRole('button', { name: 'Guardar cambios' })
     return user
   }
 
   it('conserva la categoría que ya no está en la lista', async () => {
-    const t = tx('gasto', 'Categoría vieja', 100, { _id: 9, id: 9, fecha: '2026-03-10T10:00', descripcion: 'x' })
+    const t = tx('gasto', 'Categoría vieja', 100, { id: 9, fecha: '2026-03-10T10:00', descripcion: 'x' })
     const f = mockFetch({
       'PUT /api/tx/9': { ok: true },
       'GET /api/tx': listado({ items: [filaDe(t)] }),
@@ -42,7 +43,7 @@ describe('tx form: edición de datos atípicos', () => {
   })
 
   it('una fecha sin hora abre con T00:00 y guarda', async () => {
-    const t = tx('gasto', 'Comida', 100, { _id: 9, id: 9, fecha: '2026-03-10', descripcion: 'x' })
+    const t = tx('gasto', 'Comida', 100, { id: 9, fecha: '2026-03-10', descripcion: 'x' })
     const f = mockFetch({
       'PUT /api/tx/9': { ok: true },
       'GET /api/tx': listado({ items: [filaDe(t)] }),
@@ -115,7 +116,7 @@ describe('tx form', () => {
         creada = true
         return conMascotas
       },
-      'GET /api/all': apiAll({ ...datos(), categorias: conMascotas }),
+      'GET /api/bootstrap': estado({ categorias: conMascotas }),
       'GET /api/tx/opciones': () =>
         opcionesTx({ categorias: { ingreso: ['Crédito recibido'], gasto: creada ? ['Inversión', 'Mascotas'] : ['Inversión'] } }),
     })
@@ -127,7 +128,7 @@ describe('tx form', () => {
     expect(document.getElementById('new-cat-wrap')).toBeNull()
   })
 
-  it('edit sends PUT without _id and delete confirms then sends DELETE', async () => {
+  it('edit sends PUT without id and delete confirms then sends DELETE', async () => {
     const f = mockFetch({
       'PUT /api/tx/1': { ok: true },
       'GET /api/tx/opciones': opcionesTx({
@@ -138,6 +139,7 @@ describe('tx form', () => {
     const user = userEvent.setup()
     ui()
     await user.click(await screen.findByRole('button', { name: 'Editar Mercado' }))
+    await screen.findByRole('button', { name: 'Guardar cambios' })
     await user.clear(document.getElementById('m-desc') as HTMLElement)
     await user.type(document.getElementById('m-desc') as HTMLElement, 'Nuevo')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
@@ -148,7 +150,7 @@ describe('tx form', () => {
       headers: { 'X-Moni-Request': '1' },
       body: { fecha: '2026-03-10T10:00', tipo: 'gasto', categoria: 'Comida', descripcion: 'Nuevo', monto: 5000, tarjeta_id: 5 },
     })
-    expect(f.mutations()[0]?.body).not.toHaveProperty('_id')
+    expect(f.mutations()[0]?.body).not.toHaveProperty('id')
   })
 
   it('delete confirms then sends DELETE', async () => {
@@ -172,7 +174,7 @@ describe('tx form', () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
     await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    await waitFor(() => expect(f.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     confirm.mockRestore()
   })
 
@@ -190,8 +192,8 @@ describe('tx form', () => {
   it('does not open the form for transfers', () => {
     mockFetch()
     ui()
-    const ctx = { openModal: vi.fn(), setPendingProxOp: vi.fn(), estado: datos() }
-    openTxForm(ctx, datos().transacciones[2])
+    const ctx = { openModal: vi.fn(), setPendingProxOp: vi.fn(), showBanner: vi.fn() }
+    openTxForm(ctx, tx('transfer', 'Pago deuda', 100, { id: 3 }))
     expect(ctx.openModal).not.toHaveBeenCalled()
   })
 })

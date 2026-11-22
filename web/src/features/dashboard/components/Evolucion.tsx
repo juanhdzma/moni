@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { cargarEvolucion, cargarPeriodos } from '@/lib/api'
+import { cargarEvolucion } from '@/lib/api'
 import { cop, copShort } from '@/lib/format'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
 import type { PeriodoEvolucion, SerieEvolucion } from '@/types'
 import { FraseTexto, Panel, Periodos } from '@/components/panel'
@@ -17,7 +18,7 @@ export function Evolucion() {
   const [serie, setSerie] = useState<Serie>('patrimonio')
   const [period, setPeriod] = useState<PeriodoEvolucion>('6M')
   const { data: ev } = useVista(`${serie}:${period}`, () => cargarEvolucion(serie, period))
-  const { data: periodos } = useVista('periodos', cargarPeriodos)
+  const meta = useMeta()
   const loading = ev === null
   const datos = ev?.puntos ?? []
   const color = serie === 'patrimonio' ? 'var(--cartera)' : 'var(--inversiones)'
@@ -29,7 +30,7 @@ export function Evolucion() {
       extra={
         <div className="flex flex-wrap gap-2">
           <Periodos id="evol-serie" label="Serie" options={SERIES} value={serie} onChange={setSerie} />
-          <Periodos id="evol-period-pills" label="Período" options={periodos?.evolucion ?? []} value={period} onChange={setPeriod} />
+          <Periodos id="evol-period-pills" label="Período" options={(meta?.periodos.evolucion ?? []) as { value: PeriodoEvolucion; label: string }[]} value={period} onChange={setPeriod} />
         </div>
       }
       frase={

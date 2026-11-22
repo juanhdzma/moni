@@ -1,4 +1,5 @@
-import type { Activo, ApiAll, Categorias, Deuda, Estado, Inversion, Recurrente, Transaccion } from '../types'
+import type { Activo, Categorias, Deuda, Estado, Inversion, Recurrente, Transaccion } from '../types'
+import { registrarFilas, type Filas } from './filas'
 
 export const tx = (
   tipo: Transaccion['tipo'],
@@ -7,7 +8,6 @@ export const tx = (
   extra: Partial<Transaccion> = {},
 ): Transaccion => ({
   id: 0,
-  _id: 0,
   tipo,
   categoria,
   monto,
@@ -25,7 +25,6 @@ export const tx = (
 
 export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
   id: 1,
-  _id: 1,
   nombre: 'Deuda',
   monto_inicial: 0,
   saldo_actual: 0,
@@ -52,7 +51,6 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
 
 export const inversion = (extra: Partial<Inversion> = {}): Inversion => ({
   id: 1,
-  _id: 1,
   nombre: 'Inv',
   tipo: 'variable',
   monto_invertido: 0,
@@ -73,7 +71,6 @@ export const inversion = (extra: Partial<Inversion> = {}): Inversion => ({
 
 export const activo = (extra: Partial<Activo> = {}): Activo => ({
   id: 1,
-  _id: 1,
   nombre: 'Activo',
   valor_inicial: 0,
   valor_actual: 0,
@@ -87,7 +84,6 @@ export const activo = (extra: Partial<Activo> = {}): Activo => ({
 
 export const recurrente = (extra: Partial<Recurrente> = {}): Recurrente => ({
   id: 1,
-  _id: 1,
   nombre: 'Rec',
   tipo: 'gasto',
   monto: 0,
@@ -109,19 +105,17 @@ export const categoriasBase = (): Categorias => ({
   transfer: ['Pago deuda'].map(sistema),
 })
 
-export const estado = (extra: Partial<Estado> = {}): Estado => ({
-  transacciones: [],
-  deudas: [],
-  inversiones: [],
-  activos: [],
-  recurrentes: [],
-  hoy: '2026-08-20',
-  mes_actual: '2026-08',
-  ajustes: { moneda_simbolo: '$' },
-  categorias: categoriasBase(),
-  alertas: { activos: false, inversiones: false },
-  conteos: { activos: 0, inversiones: 0 },
-  ...extra,
-})
-
-export const apiAll = (extra: Partial<ApiAll> = {}): ApiAll => ({ ...estado(), ...extra })
+export const estado = (extra: Partial<Estado> & Filas = {}): Estado => {
+  const { transacciones, deudas, inversiones, activos, recurrentes, ...bootstrap } = extra
+  registrarFilas({ transacciones, deudas, inversiones, activos, recurrentes })
+  return {
+    hoy: '2026-08-20',
+    ahora: '2026-08-20T10:30',
+    ajustes: { moneda_simbolo: '$' },
+    categorias: categoriasBase(),
+    alertas: { activos: false, inversiones: false },
+    conteos: { activos: 0, inversiones: 0 },
+    desactualizado: { dias: 30, texto: 'Valor sin actualizar hace más de 1 mes' },
+    ...bootstrap,
+  }
+}

@@ -1,8 +1,8 @@
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from backend.calculos.constantes import CATEGORIAS_SISTEMA, tiene_saldo
-from backend.calculos.fechas import TZ, es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
+from backend.calculos.fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
 
 
 TIPOS = tuple(CATEGORIAS_SISTEMA)
@@ -195,10 +195,6 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
         "pills": pills,
         "resumen": resumen_tx(items),
     }
-
-
-def ahora_bogota():
-    return datetime.now(TZ).strftime("%Y-%m-%dT%H:%M")
 
 
 def _fecha_con_hora(fecha):

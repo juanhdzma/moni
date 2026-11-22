@@ -1,5 +1,6 @@
-import { useOpenerCtx, type OpenerCtx } from '@/shell/hooks/openers'
+import { openConFila, useOpenerCtx, type OpenerCtx } from '@/shell/hooks/openers'
 import { useModal } from '@/shell/providers/ModalProvider'
+import { cargarInversion } from '../../../lib/api'
 import type { Inversion } from '../../../types'
 import { InversionForm } from './InversionForm'
 
@@ -8,7 +9,7 @@ export function openInvForm(ctx: OpenerCtx, inv: Inversion | null = null): void 
 }
 
 export function openInvFormById(ctx: OpenerCtx, id: number): void {
-  openInvForm(ctx, ctx.estado.inversiones.find((i) => i._id === id) ?? null)
+  openConFila(ctx, () => cargarInversion(id), (inv) => openInvForm(ctx, inv))
 }
 
 export function useEditarInversion(inv: Inversion): () => void {
@@ -16,6 +17,6 @@ export function useEditarInversion(inv: Inversion): () => void {
   const { closeModal } = useModal()
   return () => {
     closeModal()
-    openInvFormById(ctx, inv._id)
+    openInvFormById(ctx, inv.id)
   }
 }

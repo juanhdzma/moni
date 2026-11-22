@@ -2,24 +2,30 @@ import { useState } from 'react'
 import { AdvancedToggle } from '../../../controls/AdvancedToggle'
 import { DatePicker } from '../../../controls/DatePicker'
 import { MoneyInput } from '../../../controls/MoneyInput'
+import { NombreField } from '../../../controls/NombreField'
+import { TipoToggle } from '../../../controls/TipoToggle'
 import { cargarTasa } from '../../../lib/api'
-import { cargarTiposInversion } from '../../../lib/api/inversiones'
 import { useData } from '@/shell/providers/DataProvider'
-import { useVista } from '@/shell/hooks/useVista'
 import { numToInput, parseMoney, pct } from '../../../lib/format'
+import { useConfirmDelete } from '@/shell/hooks/useConfirmDelete'
+import { useGuardar } from '@/shell/hooks/useGuardar'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useMutations } from '@/shell/hooks/useMutations'
+import { usePreview } from '@/shell/hooks/usePreview'
 import type { InvIn, Inversion, PagoInv, TipoInv } from '../../../types'
 import { FormFooter } from '../../../controls/FormFooter'
 import { hintClass, rateBtn } from './styles'
-import { useGuardar } from '@/shell/hooks/useGuardar'
-import { usePreview } from './usePreview'
+
+const TONOS_TIPO = { fija: 'ingreso', variable: 'gasto' } as const
+const TONOS_PAGO = { mensual: 'ingreso' } as const
 
 export function InversionForm({ inv }: { inv: Inversion | null }) {
   const { estado } = useData()
-  const { crudOp, crudOpOrBanner } = useMutations()
+  const { crudOp } = useMutations()
+  const meta = useMeta()
+  const eliminar = useConfirmDelete('inv', inv, `¿Eliminar "${inv?.nombre}"?`)
   const guardar = useGuardar()
   const isEdit = inv !== null
-  const { data: tipos } = useVista(isEdit ? 'inv-tipos' : null, cargarTiposInversion)
   const [nombre, setNombre] = useState(inv?.nombre ?? '')
   const [tipo, setTipo] = useState<TipoInv>(inv?.tipo || 'fija')
   const [invertido, setInvertido] = useState(inv ? numToInput(inv.monto_invertido) : '')
@@ -62,48 +68,22 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
       ...(tasa_ea !== null ? { tasa_tipo: rateType } : {}),
     }
 
-    await guardar(() => (inv ? crudOp('inv', 'update', { ...data, _id: inv._id }) : crudOp('inv', 'add', { ...data, crear_tx: esNueva })))
-  }
-
-  const remove = async () => {
-    if (!inv) return
-    if (!confirm(`¿Eliminar "${inv.nombre}"?`)) return
-    await crudOpOrBanner('inv', 'delete', { _id: inv._id })
+    await guardar(() => (inv ? crudOp('inv', 'update', { ...data, id: inv.id }) : crudOp('inv', 'add', { ...data, crear_tx: esNueva })))
   }
 
   return (
     <>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-nombre">
-          Nombre
-        </label>
-        <input
-          className="form-input"
-          type="text"
-          id="m-nombre"
-          maxLength={40}
-          value={nombre}
-          placeholder="Ej. CDT Bancolombia"
-          onChange={(e) => setNombre(e.target.value)}
-        />
-      </div>
-      <div className="form-group">
-        <div className="form-label" id="lbl-grp-1">Tipo</div>
-        {isEdit ? (
+      <NombreField value={nombre} onChange={setNombre} placeholder="Ej. CDT Bancolombia" />
+      {isEdit ? (
+        <div className="form-group">
+          <div className="form-label">Tipo</div>
           <div className="rounded-md border bg-muted px-3 py-2 text-[15px] font-medium text-muted-foreground">
-            {tipos?.find((t) => t.valor === tipo)?.label ?? ''}
+            {meta?.tipos_inversion.find((t) => t.value === tipo)?.label ?? ''}
           </div>
-        ) : (
-          <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-1">
-            <button type="button" className={'tipo-btn ingreso ' + (tipo === 'fija' ? 'sel' : '')} onClick={() => setTipo('fija')}>
-              Fija
-            </button>
-            <button type="button" className={'tipo-btn gasto ' + (tipo === 'variable' ? 'sel' : '')} onClick={() => setTipo('variable')}>
-              Variable
-            </button>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <TipoToggle value={tipo} opciones={meta?.tipos_inversion ?? []} tonos={TONOS_TIPO} onChange={setTipo} />
+      )}
       <div className="form-row-2">
         <div className="form-group">
           <label className="form-label" htmlFor="m-invertido">
@@ -145,16 +125,15 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
           {equiv}
         </div>
       </div>
-      <div id="m-pago-wrap" className="form-group" style={tipo === 'fija' ? undefined : { display: 'none' }}>
-        <div className="form-label" id="lbl-grp-2">Pago de rendimientos</div>
-        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-2">
-          <button type="button" id="rp-mensual" className={'tipo-btn ingreso  ' + (pago === 'mensual' ? 'sel' : '')} onClick={() => setPago('mensual')}>
-            Mensual
-          </button>
-          <button type="button" id="rp-vencimiento" className={'tipo-btn transfer ' + (pago === 'vencimiento' ? 'sel' : '')} onClick={() => setPago('vencimiento')}>
-            Al vencimiento
-          </button>
-        </div>
+      <div id="m-pago-wrap" style={tipo === 'fija' ? undefined : { display: 'none' }}>
+        <TipoToggle
+          label="Pago de rendimientos"
+          value={pago}
+          opciones={meta?.pagos_inversion ?? []}
+          tonos={TONOS_PAGO}
+          idPrefix="rp"
+          onChange={setPago}
+        />
       </div>
       <div id="m-dia-pago-wrap" className="form-group" style={tipo === 'fija' && pago === 'mensual' ? undefined : { display: 'none' }}>
         <label className="form-label" htmlFor="m-dia-pago">
@@ -178,7 +157,7 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
         <DatePicker id="m-fecha-ini" value={fecha} onChange={setFecha} />
       </div>
       {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
-      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar inversión'} onSave={() => void save()} onDelete={isEdit ? () => void remove() : undefined} />
+      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar inversión'} onSave={() => void save()} onDelete={eliminar} />
     </>
   )
 }

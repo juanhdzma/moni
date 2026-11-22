@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { TabActivaProvider } from '@/shell/layout/TabActiva'
 import { TabContent } from '@/shell/layout/TabContent'
 
 interface Props {
@@ -27,6 +28,6 @@ export class TabBoundary extends Component<Props, { failed: boolean }> {
 
   render() {
     if (this.state.failed) return <TabContent id={this.props.name} active={this.props.active} />
-    return this.props.children
+    return <TabActivaProvider value={this.props.active}>{this.props.children}</TabActivaProvider>
   }
 }

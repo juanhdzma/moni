@@ -6,7 +6,7 @@ from .flujos import (
     flujo_patrimonio,
     net_worth,
 )
-from .formato import cop, cop_corto, frase, plural, porcentaje_texto
+from ..formato import cop, cop_corto, frase, plural, porcentaje_texto
 from .gastos import (
     PERIODOS_EVOLUCION_VISIBLES,
     opciones_periodo,

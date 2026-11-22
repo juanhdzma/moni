@@ -104,6 +104,3 @@ def test_resumen_trae_texto_de_posiciones_y_tipos(client):
     assert client.get("/api/inv/resumen").json()["texto_posiciones"] == "0 posiciones"
     _crear(client)
     assert client.get("/api/inv/resumen").json()["texto_posiciones"] == "1 posición"
-    assert client.get("/api/inv/tipos").json() == [
-        {"valor": "fija", "label": "Fija"}, {"valor": "variable", "label": "Variable"},
-    ]

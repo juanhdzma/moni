@@ -1,9 +1,9 @@
-import type { Activo, ActivoIn, ApiActivo } from './activo'
+import type { ActivoIn } from './activo'
 import type { Categorias, TipoTx } from './comun'
-import type { ApiDeuda, Deuda, DeudaIn } from './deuda'
-import type { ApiInversion, InvIn, Inversion } from './inversion'
-import type { ApiRecurrente, RecIn, Recurrente } from './recurrente'
-import type { ApiTransaccion, Transaccion, TxIn } from './transaccion'
+import type { DeudaIn } from './deuda'
+import type { InvIn } from './inversion'
+import type { RecIn } from './recurrente'
+import type { TxIn } from './transaccion'
 
 export interface Ajustes {
   moneda_simbolo: string
@@ -19,32 +19,19 @@ export interface Conteos {
   inversiones: number
 }
 
-export interface ApiAll {
-  transacciones: ApiTransaccion[]
-  deudas: ApiDeuda[]
-  inversiones: ApiInversion[]
-  activos: ApiActivo[]
-  recurrentes: ApiRecurrente[]
-  hoy: string
-  mes_actual: string
-  ajustes: Ajustes
-  categorias: Categorias
-  alertas: Alertas
-  conteos: Conteos
+export interface UmbralDesactualizado {
+  dias: number
+  texto: string
 }
 
 export interface Estado {
-  transacciones: Transaccion[]
-  deudas: Deuda[]
-  inversiones: Inversion[]
-  activos: Activo[]
-  recurrentes: Recurrente[]
   hoy: string
-  mes_actual: string
-  ajustes: Ajustes
+  ahora: string
   categorias: Categorias
+  ajustes: Ajustes
   alertas: Alertas
   conteos: Conteos
+  desactualizado: UmbralDesactualizado
 }
 
 export type CrudEntity = 'tx' | 'deuda' | 'inv' | 'activo' | 'rec'

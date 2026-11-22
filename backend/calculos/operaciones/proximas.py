@@ -2,7 +2,7 @@ import datetime
 
 from ..fechas import mes_corto, parse_fecha, texto_dias
 from ..constantes import tiene_saldo
-from ..dinero.formato import cop, frase, plural
+from ..formato import cop, frase, plural
 from .finanzas import proxima_fecha_inversion, rendimiento_mensual_fija
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente
 

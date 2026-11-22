@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { AdvancedToggle } from '../../../controls/AdvancedToggle'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { cop, numToInput, parseMoney, pct } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
@@ -7,11 +6,18 @@ import { useVista } from '@/shell/hooks/useVista'
 import { cargarRendimientoDefaults } from '../../../lib/api/inversiones'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRendimiento, Inversion } from '../../../types'
-import { FechaField, NotasField } from '../../../controls/FormFields'
+import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
+import { ModalPanel } from '../../../controls/ModalPanel'
+import { TipoToggle } from '../../../controls/TipoToggle'
 import { hintClass } from './styles'
 import { useEditarInversion } from './openInvForm'
 import { useGuardar } from '@/shell/hooks/useGuardar'
+
+const DESTINOS = [
+  { value: 'cuenta', label: 'Me lo pagan' },
+  { value: 'capitaliza', label: 'Capitaliza' },
+]
 
 const REND_HINT = {
   capitaliza: 'Sube el valor de la inversión. No entra plata a tu cartera.',
@@ -26,7 +32,7 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
   const mv = inv.tasa_mv ?? 0
   const expected = inv.rendimiento_esperado ?? 0
   const [monto, setMonto] = useState(expected ? numToInput(expected) : '')
-  const { data: defaults } = useVista(`inv-rend-defaults:${inv._id}`, () => cargarRendimientoDefaults(inv._id))
+  const { data: defaults } = useVista(`inv-rend-defaults:${inv.id}`, () => cargarRendimientoDefaults(inv.id))
   const [eleccion, setCapitaliza] = useState<boolean | null>(null)
   const capitaliza = eleccion ?? defaults?.capitaliza_default ?? false
   const [fecha, setFecha] = useState(estado.hoy)
@@ -41,26 +47,24 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
       capitaliza,
       registrar_tx: registrar,
     }
-    await guardar(() => apiAction(`/api/inv/${inv._id}/rendimiento`, body))
+    await guardar(() => apiAction(`/api/inv/${inv.id}/rendimiento`, body))
   }
 
   return (
     <>
-      <div className="modal-panel">
-        <div>
-          <div className="modal-panel-label">Valor actual</div>
-          <div className="modal-panel-value text-inversiones-text">{cop(inv.valor_actual)}</div>
-        </div>
-        {inv.tasa_ea ? (
-          <div className="text-right">
-            <div className="mb-0.5 text-xs text-muted-foreground">
-              {pct(inv.tasa_ea, 2)}% EA · {pct(mv, 4)}% MV
-            </div>
-            <div className="text-sm text-muted-foreground">Mensual esperado</div>
-            <div className="text-lg font-semibold text-inversiones-text">{cop(expected)}</div>
-          </div>
-        ) : null}
-      </div>
+      <ModalPanel
+        izquierda={{ label: 'Valor actual', valor: cop(inv.valor_actual), clase: 'text-inversiones-text' }}
+        derecha={
+          inv.tasa_ea
+            ? {
+                label: 'Mensual esperado',
+                valor: cop(expected),
+                clase: 'text-inversiones-text',
+                detalle: `${pct(inv.tasa_ea, 2)}% EA · ${pct(mv, 4)}% MV`,
+              }
+            : undefined
+        }
+      />
       <div className="form-group">
         <label className="form-label" htmlFor="m-monto">
           Monto recibido (COP)
@@ -68,29 +72,19 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
         {expected ? <div className={hintClass}>Pre-llenado con el rendimiento esperado del período.</div> : null}
       </div>
-      <div className="form-group">
-        <div className="form-label" id="lbl-grp-3">¿Dónde queda el rendimiento?</div>
-        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-3">
-          <button type="button" id="rend-cuenta" className={'tipo-btn ingreso  ' + (capitaliza ? '' : 'sel')} onClick={() => setCapitaliza(false)}>
-            Me lo pagan
-          </button>
-          <button type="button" id="rend-capitaliza" className={'tipo-btn transfer ' + (capitaliza ? 'sel' : '')} onClick={() => setCapitaliza(true)}>
-            Capitaliza
-          </button>
-        </div>
-        <div id="rend-hint" className={hintClass}>
-          {capitaliza ? REND_HINT.capitaliza : REND_HINT.cuenta}
-        </div>
-      </div>
-      <FechaField id="m-fecha" type="date" label="Fecha" value={fecha} onChange={setFecha} />
-      <NotasField id="m-notas" placeholder="Ej. Intereses mes de junio" value={notas} onChange={setNotas} />
+      <TipoToggle
+        label="¿Dónde queda el rendimiento?"
+        value={capitaliza ? 'capitaliza' : 'cuenta'}
+        opciones={DESTINOS}
+        tonos={{ cuenta: 'ingreso' }}
+        ids={{ cuenta: 'rend-cuenta', capitaliza: 'rend-capitaliza' }}
+        hintId="rend-hint"
+        hint={capitaliza ? REND_HINT.capitaliza : REND_HINT.cuenta}
+        onChange={(v) => setCapitaliza(v === 'capitaliza')}
+      />
+      <FechaNotas fechaType="date" fechaLabel="Fecha" fecha={fecha} onFecha={setFecha} notas={notas} onNotas={setNotas} notasPlaceholder="Ej. Intereses mes de junio" />
       <div id="wrap-rend-advanced" style={capitaliza ? { display: 'none' } : undefined}>
-        <AdvancedToggle
-          checked={registrar}
-          onChange={setRegistrar}
-          label="Registrar en transacciones"
-          hint="Desactivá si ya lo registraste en otra parte."
-        />
+        <RegistrarToggle checked={registrar} onChange={setRegistrar} />
       </div>
       <FormFooter saveLabel="Registrar" onSave={() => void save()} onEdit={editar} editLabel="Editar inversión" />
     </>

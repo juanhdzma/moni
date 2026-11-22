@@ -1,12 +1,13 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { apiAll } from '../../test/factories'
+import { estado } from '../../test/factories'
 import {
   agregarCategoria,
   apiFetch,
   cargarListadoTx,
   cargarResumenDeudas,
+  cargarBootstrap,
+  cargarDeuda,
   guardarAjustes,
-  loadAll,
   previewPago,
   quitarCategoria,
   restaurarOp,
@@ -59,34 +60,17 @@ test('sin cuerpo JSON el error es "Error <status>"', async () => {
   await expect(apiFetch('/x')).rejects.toThrow('Error 502')
 })
 
-test('loadAll agrega _id a cada fila y conserva lo demás tal cual llega', async () => {
-  const base = apiAll()
-  mockFetch({
-    json: () =>
-      Promise.resolve({
-        ...base,
-        transacciones: [{ id: 4 }],
-        deudas: [{ id: 5 }],
-        inversiones: [{ id: 6 }],
-        activos: [{ id: 7 }],
-        recurrentes: [
-          { id: 8, activo: true },
-          { id: 9, activo: false },
-        ],
-        hoy: '2026-11-22',
-        ajustes: { moneda_simbolo: 'US$' },
-      }),
-  })
-  const e = await loadAll()
-  expect(e.transacciones[0]).toMatchObject({ id: 4, _id: 4 })
-  expect(e.deudas[0]?._id).toBe(5)
-  expect(e.inversiones[0]?._id).toBe(6)
-  expect(e.activos[0]?._id).toBe(7)
-  expect(e.recurrentes.map((r) => r.activo)).toEqual([true, false])
-  expect(e.recurrentes[0]?._id).toBe(8)
-  expect(e.hoy).toBe('2026-11-22')
-  expect(e.ajustes).toEqual({ moneda_simbolo: 'US$' })
-  expect(e.categorias).toEqual(base.categorias)
+test('cargarBootstrap pide /api/bootstrap y devuelve el cuerpo tal cual', async () => {
+  const cuerpo = estado({ hoy: '2026-11-22', ajustes: { moneda_simbolo: 'US$' } })
+  const fn = mockFetch({ json: () => Promise.resolve(cuerpo) })
+  expect(await cargarBootstrap()).toEqual(cuerpo)
+  expect(fn).toHaveBeenCalledWith('/api/bootstrap', { method: 'GET', headers: {}, body: undefined })
+})
+
+test('cargarDeuda pide GET /api/deuda/{id}', async () => {
+  const fn = mockFetch({ json: () => Promise.resolve({ id: 5 }) })
+  expect(await cargarDeuda(5)).toEqual({ id: 5 })
+  expect(fn).toHaveBeenCalledWith('/api/deuda/5', { method: 'GET', headers: {}, body: undefined })
 })
 
 test('cargarListadoTx arma el query solo con lo definido', async () => {
@@ -97,12 +81,12 @@ test('cargarListadoTx arma el query solo con lo definido', async () => {
   expect(fn).toHaveBeenLastCalledWith('/api/tx', expect.objectContaining({ method: 'GET' }))
 })
 
-test('los resúmenes agregan _id a las filas', async () => {
+test('el resumen de deudas llega con las filas tal cual, con id', async () => {
   mockFetch({
     json: () => Promise.resolve({ total: 1, creditos: [{ id: 2 }], tarjetas: [{ id: 3 }], terminadas: [{ id: 4 }] }),
   })
   const r = await cargarResumenDeudas()
-  expect([r.creditos[0]?._id, r.tarjetas[0]?._id, r.terminadas[0]?._id]).toEqual([2, 3, 4])
+  expect([r.creditos[0]?.id, r.tarjetas[0]?.id, r.terminadas[0]?.id]).toEqual([2, 3, 4])
   expect(r.total).toBe(1)
 })
 

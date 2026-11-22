@@ -2,26 +2,28 @@ import datetime
 
 import pytest
 
-from .builders import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, HOY_ISO, INV_DERIVADOS, MES, REC_DERIVADOS, TX_DERIVADOS, TX_KEYS, sembrar, tx
+from .builders import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, HOY_ISO, INV_DERIVADOS, REC_DERIVADOS, TX_DERIVADOS, TX_KEYS, sembrar, tx
 
 
-def test_all_gana_campos_derivados_sin_perder_los_crudos(client):
+def test_all_exporta_solo_colecciones_con_derivados_sin_perder_los_crudos(client):
     s = sembrar(client)
     body = client.get("/api/all").json()
-    assert set(body) == {
-        "transacciones", "deudas", "inversiones", "activos", "recurrentes",
-        "hoy", "mes_actual", "ajustes", "categorias", "alertas", "conteos",
-    }
-    assert body["hoy"] == HOY_ISO and body["mes_actual"] == MES
-    assert body["ajustes"] == {"moneda_simbolo": "$"}
-    assert body["alertas"] == {"activos": False, "inversiones": True}
-    assert body["conteos"] == {"activos": 1, "inversiones": 2}
+    assert set(body) == {"transacciones", "deudas", "inversiones", "activos", "recurrentes"}
     assert set(body["transacciones"][0]) == TX_KEYS | TX_DERIVADOS
     assert set(body["deudas"][0]) >= set(s["deuda"]) | DEUDA_DERIVADOS
     assert set(body["inversiones"][0]) >= set(s["inv"]) | INV_DERIVADOS
     assert set(body["activos"][0]) >= set(s["activo"]) | ACTIVO_DERIVADOS
     assert set(body["recurrentes"][0]) >= set(s["rec"]) | REC_DERIVADOS
     assert body["recurrentes"][0]["activo"] is True
+
+
+def test_bootstrap_lleva_contexto_de_la_sesion(client):
+    sembrar(client)
+    body = client.get("/api/bootstrap").json()
+    assert body["hoy"] == HOY_ISO
+    assert body["ajustes"] == {"moneda_simbolo": "$"}
+    assert body["alertas"] == {"activos": False, "inversiones": True}
+    assert body["conteos"] == {"activos": 1, "inversiones": 2}
     assert body["categorias"]["ingreso"][0] == {"nombre": "Crédito recibido", "sistema": True}
 
 

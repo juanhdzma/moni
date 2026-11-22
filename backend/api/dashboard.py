@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 
-from ..calculos import dinero, listados, operaciones
+from ..calculos import dinero, operaciones
 from ..calculos.fechas import hoy_bogota
 from ..core import estado as store
 from ..core.db import conexion
@@ -21,18 +21,9 @@ def _estado_de_hoy(conn):
 
 
 @router.get("/api/all")
-def get_all():
+def exportar_todo():
     with conexion() as conn:
-        estado, hoy = _estado_de_hoy(conn)
-        return {
-            **estado,
-            "hoy": hoy.isoformat(),
-            "mes_actual": hoy.isoformat()[:7],
-            "ajustes": store.ajustes(conn),
-            "categorias": store.categorias(conn),
-            "alertas": listados.alertas(estado["activos"], estado["inversiones"], hoy),
-            "conteos": store.conteos(estado),
-        }
+        return store.cargar_estado(conn, hoy_bogota())
 
 
 @router.get("/api/dashboard/resumen")
@@ -40,7 +31,7 @@ def dashboard_resumen():
     with conexion() as conn:
         estado, hoy = _estado_de_hoy(conn)
         resumen = dinero.resumen_dashboard(estado, hoy)
-        partes = dinero.partes_patrimonio(resumen, store.conteos(estado), _simbolo(conn))
+        partes = dinero.partes_patrimonio(resumen, store.conteos(conn), _simbolo(conn))
         return {**resumen, "partes": partes}
 
 

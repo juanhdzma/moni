@@ -3,23 +3,32 @@ import { AdvancedToggle } from '../../../controls/AdvancedToggle'
 import { DatePicker } from '../../../controls/DatePicker'
 import { FormFooter } from '../../../controls/FormFooter'
 import { MoneyInput } from '../../../controls/MoneyInput'
+import { NombreField } from '../../../controls/NombreField'
 import { Select } from '../../../controls/Select'
+import { TipoToggle } from '../../../controls/TipoToggle'
 import { numToInput, parseMoney } from '../../../lib/format'
+import { useConfirmDelete } from '@/shell/hooks/useConfirmDelete'
+import { useGuardar } from '@/shell/hooks/useGuardar'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { Deuda, DeudaIn } from '../../../types'
-import { useGuardar } from '@/shell/hooks/useGuardar'
 
-const FRANQUICIAS = ['Visa', 'Mastercard', 'Amex', 'Otra'].map((f) => ({ value: f, label: f }))
+const CLASES_DEUDA = [
+  { value: 'prestamo', label: 'Préstamo' },
+  { value: 'tarjeta', label: 'Tarjeta' },
+]
 
 export function DeudaForm({ d }: { d: Deuda | null }) {
   const guardar = useGuardar()
-  const { crudOp, crudOpOrBanner } = useMutations()
+  const { crudOp } = useMutations()
+  const meta = useMeta()
+  const eliminar = useConfirmDelete('deuda', d, `¿Eliminar "${d?.nombre}"?`)
   const isEdit = d !== null
   const [esTarjeta, setEsTarjeta] = useState(Boolean(d?.es_tarjeta))
   const [nombre, setNombre] = useState(d?.nombre || '')
   const [montoIni, setMontoIni] = useState(d ? numToInput(d.monto_inicial) : '')
   const [cupo, setCupo] = useState(d ? numToInput(d.cupo) : '')
-  const [franquicia, setFranquicia] = useState(d && FRANQUICIAS.some((f) => f.value === d.franquicia) ? d.franquicia : 'Visa')
+  const [franquicia, setFranquicia] = useState(d?.franquicia || 'Visa')
   const [saldo, setSaldo] = useState(d ? numToInput(d.saldo_actual) : '')
   const [tasa, setTasa] = useState(d?.tasa_ea ? String(d.tasa_ea) : '')
   const [cuota, setCuota] = useState(d ? numToInput(d.cuota_mensual) : '')
@@ -41,42 +50,19 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
       franquicia,
     }
     await guardar(async () => {
-      if (d) await crudOp('deuda', 'update', { ...data, _id: d._id })
+      if (d) await crudOp('deuda', 'update', { ...data, id: d.id })
       else await crudOp('deuda', 'add', { ...data, crear_tx: esNueva })
     })
   }
 
-  const remove = async () => {
-    if (!d) return
-    if (!confirm(`¿Eliminar "${d.nombre}"?`)) return
-    await crudOpOrBanner('deuda', 'delete', { _id: d._id })
-  }
-
   return (
     <>
-      <div className="form-group">
-        <div className="form-label" id="lbl-grp-1">Tipo</div>
-        <div className="tipo-toggle" role="group" aria-labelledby="lbl-grp-1">
-          <button type="button" className={'tipo-btn transfer prestamo ' + (!esTarjeta ? 'sel' : '')} onClick={() => setEsTarjeta(false)}>
-            Préstamo
-          </button>
-          <button type="button" className={'tipo-btn transfer tarjeta  ' + (esTarjeta ? 'sel' : '')} onClick={() => setEsTarjeta(true)}>
-            Tarjeta
-          </button>
-        </div>
-      </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-nombre">Nombre</label>
-        <input
-          className="form-input"
-          type="text"
-          id="m-nombre"
-          maxLength={40}
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          placeholder={esTarjeta ? 'Ej. Tarjeta Visa' : 'Ej. Crédito de consumo'}
-        />
-      </div>
+      <TipoToggle
+        value={esTarjeta ? 'tarjeta' : 'prestamo'}
+        opciones={CLASES_DEUDA}
+        onChange={(v) => setEsTarjeta(v === 'tarjeta')}
+      />
+      <NombreField value={nombre} onChange={setNombre} placeholder={esTarjeta ? 'Ej. Tarjeta Visa' : 'Ej. Crédito de consumo'} />
       <div className="form-group" id="wrap-monto-ini" style={esTarjeta ? { display: 'none' } : undefined}>
         <label className="form-label" htmlFor="m-monto-ini">{isEdit ? 'Monto inicial' : 'Monto del crédito'} (COP)</label>
         <MoneyInput id="m-monto-ini" value={montoIni} onChange={setMontoIni} />
@@ -88,7 +74,7 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
         </div>
         <div className="form-group">
           <label className="form-label" htmlFor="m-franquicia">Franquicia</label>
-          <Select id="m-franquicia" value={franquicia} onChange={setFranquicia} options={FRANQUICIAS} />
+          <Select id="m-franquicia" value={franquicia} onChange={setFranquicia} options={meta?.franquicias ?? []} />
         </div>
       </div>
       <div className="form-group">
@@ -136,7 +122,7 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
       <div id="wrap-advanced" style={esTarjeta ? { display: 'none' } : undefined}>
         {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
       </div>
-      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar deuda'} onSave={() => void save()} onDelete={isEdit ? () => void remove() : undefined} />
+      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar deuda'} onSave={() => void save()} onDelete={eliminar} />
     </>
   )
 }

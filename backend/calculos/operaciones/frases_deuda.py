@@ -1,25 +1,12 @@
-import datetime
 from typing import Optional
 
-from ..fechas import TZ, redondear_js
+from ..formato import cop, porcentaje_texto
 
 SIMBOLO_POR_DEFECTO = "$"
 
 
-def monto_texto(valor: float, simbolo: str = SIMBOLO_POR_DEFECTO) -> str:
-    return f"{simbolo}{redondear_js(valor):,}".replace(",", ".")
-
-
-def porcentaje_texto(valor: float) -> str:
-    return f"{valor:,.1f}".replace(",", "_").replace(".", ",").replace("_", ".")
-
-
-def ahora_bogota() -> str:
-    return datetime.datetime.now(TZ).strftime("%Y-%m-%dT%H:%M")
-
-
 def descripcion_pago(nombre: str, capital: float, intereses: float, simbolo: str = SIMBOLO_POR_DEFECTO) -> str:
-    return f"Cuota · {nombre} (capital {monto_texto(capital, simbolo)}, intereses {monto_texto(intereses, simbolo)})"
+    return f"Cuota · {nombre} (capital {cop(capital, simbolo)}, intereses {cop(intereses, simbolo)})"
 
 
 def descripcion_adelanto(nombre: str) -> str:
@@ -34,7 +21,7 @@ def _intereses_texto(deuda: dict, simbolo: str) -> Optional[str]:
     intereses = deuda["intereses_pagados"]
     if intereses is None:
         return None
-    return ("" if intereses["exacto"] else "~") + monto_texto(intereses["valor"], simbolo)
+    return ("" if intereses["exacto"] else "~") + cop(intereses["valor"], simbolo)
 
 
 def frases_deuda(deuda: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
@@ -43,9 +30,9 @@ def frases_deuda(deuda: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
     intereses = _intereses_texto(deuda, simbolo)
     return {
         "detalle": (
-            f"Cupo {monto_texto(cupo, simbolo)}" if cupo > 0 else "Sin cupo definido"
+            f"Cupo {cop(cupo, simbolo)}" if cupo > 0 else "Sin cupo definido"
         ) if deuda["es_tarjeta"] else (
-            f"{porcentaje_texto(deuda['tasa_ea'])}% EA · {monto_texto(deuda['cuota_mensual'], simbolo)}/mes"
+            f"{porcentaje_texto(deuda['tasa_ea'])}% EA · {cop(deuda['cuota_mensual'], simbolo)}/mes"
             if deuda["activa"] else f"{porcentaje_texto(deuda['tasa_ea'])}% EA"
         ),
         "meses_restantes_texto": f"~{meses}m" if meses else None,
@@ -63,9 +50,9 @@ def frases_deuda(deuda: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
 def frases_resumen(resumen: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
     intereses = resumen["total_intereses"]
     return {
-        "cuotas": monto_texto(resumen["total_cuotas"], simbolo),
+        "cuotas": cop(resumen["total_cuotas"], simbolo),
         "cuotas_sufijo": "/mes en cuotas",
-        "intereses": ("~" if resumen["intereses_aproximado"] else "") + monto_texto(intereses, simbolo) if intereses > 0 else None,
+        "intereses": ("~" if resumen["intereses_aproximado"] else "") + cop(intereses, simbolo) if intereses > 0 else None,
         "intereses_sufijo": "pagados en intereses",
     }
 

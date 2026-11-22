@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from fastapi import APIRouter, HTTPException
 
 from ..calculos import listados
-from ..calculos.fechas import hoy_bogota
+from ..calculos.fechas import ahora_bogota, hoy_bogota
 from ..core.db import conexion
 from ..core import estado as store
 from ..core.estado import coleccion
@@ -13,9 +13,11 @@ from ..core.sql import delete_row, get_row, insert_row, update_row
 from ..core.tablas import TX_COLS
 from ..schemas.transaccion import TxIn
 from ..schemas.validadores import ColumnaTx
+from .crud import register_lectura
 
 logger = logging.getLogger("moni")
 router = APIRouter()
+register_lectura(router, "tx", "transacciones")
 
 
 def ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
@@ -81,7 +83,7 @@ def opciones_tx(tx_id: Optional[int] = None):
     with conexion() as conn:
         tx = get_row(conn, "transacciones", tx_id) if tx_id is not None else None
         return listados.opciones_tx(
-            store.categorias(conn), coleccion(conn, "deudas"), tx, listados.ahora_bogota()
+            store.categorias(conn), coleccion(conn, "deudas"), tx, ahora_bogota()
         )
 
 

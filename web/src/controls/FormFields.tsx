@@ -19,8 +19,6 @@ type NotasProps = {
   placeholder: string
   value: string
   onChange: (v: string) => void
-  /** @deprecated una sola variante visual; el valor se ignora */
-  labelClassName?: string
 }
 
 export function NotasField({ id, placeholder, value, onChange }: NotasProps) {
@@ -42,13 +40,29 @@ export function NotasField({ id, placeholder, value, onChange }: NotasProps) {
   )
 }
 
-export function RegistrarToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+type FechaNotasProps = {
+  fechaLabel: string
+  fecha: string
+  onFecha: (v: string) => void
+  notas: string
+  onNotas: (v: string) => void
+  notasPlaceholder: string
+  fechaType?: 'date' | 'datetime-local'
+  fechaId?: string
+  notasId?: string
+}
+
+export function FechaNotas({ fechaLabel, fecha, onFecha, notas, onNotas, notasPlaceholder, fechaType, fechaId = 'm-fecha', notasId = 'm-notas' }: FechaNotasProps) {
   return (
-    <AdvancedToggle
-      checked={checked}
-      onChange={onChange}
-      label="Registrar en transacciones"
-      hint="Desactivá si ya lo registraste en otra parte."
-    />
+    <>
+      <FechaField id={fechaId} label={fechaLabel} value={fecha} onChange={onFecha} type={fechaType} />
+      <NotasField id={notasId} placeholder={notasPlaceholder} value={notas} onChange={onNotas} />
+    </>
   )
+}
+
+type RegistrarProps = { checked: boolean; onChange: (v: boolean) => void; label?: string }
+
+export function RegistrarToggle({ checked, onChange, label = 'Registrar en transacciones' }: RegistrarProps) {
+  return <AdvancedToggle checked={checked} onChange={onChange} label={label} hint="Desactivá si ya lo registraste en otra parte." />
 }

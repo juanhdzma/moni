@@ -12,7 +12,7 @@ describe('actualizar valor (variable)', () => {
     const f = mockInv({ 'PUT /api/inv/6': {}, 'POST /api/inv/6/valor/preview': { delta: 150000, total: 100000, total_pct: 20 } })
     await setup()
     await clickInGrid(user, 'variable', 'Actualizar')
-    expect(document.getElementById('inv-value-preview')).toHaveStyle({ display: 'none' })
+    expect(document.getElementById('inv-value-preview')).not.toHaveClass('visible')
     await typeMoney(user, 'm-nuevo-valor', '600000')
     await waitFor(() => expect(document.getElementById('inv-delta')).toHaveTextContent('+$150.000'))
     expect(f.callsTo('POST', '/api/inv/6/valor/preview')[0]).toMatchObject({ headers: H, body: { nuevo_valor: 600000 } })

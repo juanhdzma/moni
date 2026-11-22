@@ -1,6 +1,6 @@
-import type { PagoInv, ProximoPago, Segmento, TipoInv, WithId } from './comun'
+import type { PagoInv, ProximoPago, Segmento, TipoInv } from './comun'
 
-export interface ApiInversion {
+export interface Inversion {
   id: number
   nombre: string
   tipo: TipoInv
@@ -19,21 +19,8 @@ export interface ApiInversion {
   desactualizada: boolean
 }
 
-export type Inversion = ApiInversion & WithId
-
-export interface InvIn {
-  nombre: string
-  tipo: TipoInv
-  monto_invertido: number
-  valor_actual?: number
-  tasa_ea: number | null
-  fecha_inicio: string
-  pago: PagoInv | null
-  dia_pago: number | null
-  valor_actualizado_en?: string
-  tasa_tipo?: 'ea' | 'mv'
-  crear_tx?: boolean
-}
+export type InvIn = Pick<Inversion, 'nombre' | 'tipo' | 'monto_invertido' | 'tasa_ea' | 'fecha_inicio' | 'pago' | 'dia_pago'> &
+  Partial<Pick<Inversion, 'valor_actual' | 'valor_actualizado_en'>> & { tasa_tipo?: 'ea' | 'mv'; crear_tx?: boolean }
 
 export interface InvRendimiento {
   monto: number

@@ -6,11 +6,11 @@ import { Transacciones } from '..'
 
 export const datos = () =>
   estado({
-    deudas: [deuda({ _id: 5, nombre: 'Visa Oro', es_tarjeta: 1, franquicia: 'Visa' })],
+    deudas: [deuda({ id: 5, nombre: 'Visa Oro', es_tarjeta: 1, franquicia: 'Visa' })],
     transacciones: [
-      tx('gasto', 'Comida', 5000, { _id: 1, id: 1, fecha: '2026-03-10T10:00', descripcion: 'Mercado', tarjeta_id: 5 }),
-      tx('ingreso', 'Salario', 900000, { _id: 2, id: 2, fecha: '2026-04-02T08:00' }),
-      tx('transfer', 'Pago deuda', 100, { _id: 3, id: 3, fecha: '2026-04-03T08:00' }),
+      tx('gasto', 'Comida', 5000, { id: 1, fecha: '2026-03-10T10:00', descripcion: 'Mercado', tarjeta_id: 5 }),
+      tx('ingreso', 'Salario', 900000, { id: 2, fecha: '2026-04-02T08:00' }),
+      tx('transfer', 'Pago deuda', 100, { id: 3, fecha: '2026-04-03T08:00' }),
     ],
   })
 

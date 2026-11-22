@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from ..calculos.listados import ahora_bogota
+from ..calculos.fechas import ahora_bogota
 from .validadores import Monto, TipoTx, _check_fecha, clave_opcional
 
 

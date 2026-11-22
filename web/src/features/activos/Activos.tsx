@@ -15,8 +15,8 @@ const chip = (n: number) => (n >= 0 ? 'bg-inversiones/15 text-inversiones-text' 
 
 export function Activos({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { loaded } = useData()
-  const { data: resumen } = useVista('activos-resumen', cargarResumenActivos)
+  const { loaded, estado } = useData()
+  const { data: resumen } = useVista('activos-resumen', cargarResumenActivos, ['activos'])
   const activos = resumen?.items ?? []
   const variacion = resumen?.variacion ?? 0
 
@@ -62,11 +62,11 @@ export function Activos({ active }: TabProps) {
           {activos.map((a) => {
             const { cambio, cambio_pct: cambioPct } = a
             return (
-              <article className="asset-card flex flex-col rounded-2xl border bg-card p-5 text-card-foreground" key={a._id}>
+              <article className="asset-card flex flex-col rounded-2xl border bg-card p-5 text-card-foreground" key={a.id}>
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="inv-name min-w-0 truncate text-[15px] font-semibold">{a.nombre}</h3>
                   <div className="flex shrink-0 items-center gap-1">
-                    {a.desactualizado && <Desactualizado />}
+                    {a.desactualizado && <Desactualizado texto={estado.desactualizado.texto} />}
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', chip(cambio))}>
                       {signStr(cambioPct)}{pct(Math.abs(cambioPct))}%
                     </span>

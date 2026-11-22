@@ -52,7 +52,7 @@ describe('Próximas operaciones', () => {
     renderWithProviders(<Dashboard active />)
     const row = (await screen.findByText('Banco')).closest('.prox-op-row') as HTMLElement
     fireEvent.click(within(row).getByTitle('No tomar esta vez'))
-    await waitFor(() => expect(m.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     expect(within(list()).getByText('Banco')).toBeInTheDocument()
   })
 

@@ -4,7 +4,6 @@ import { deuda, estado } from '../../../test/factories'
 import { mockFetch } from '../../../test/mockFetch'
 
 export const credito = deuda({
-  _id: 1,
   id: 1,
   nombre: 'Crédito carro',
   monto_inicial: 10000000,
@@ -30,7 +29,6 @@ export const credito = deuda({
   },
 })
 export const tarjeta = deuda({
-  _id: 2,
   id: 2,
   nombre: 'Visa Oro',
   es_tarjeta: 1,
@@ -54,7 +52,6 @@ export const tarjeta = deuda({
   },
 })
 export const saldado = deuda({
-  _id: 3,
   id: 3,
   nombre: 'Moto',
   monto_inicial: 3000000,

@@ -1,4 +1,5 @@
-import type { OpenerCtx } from '@/shell/hooks/openers'
+import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
+import { cargarDeuda } from '../../../lib/api'
 import type { Deuda } from '../../../types'
 import { AdelantoForm } from './AdelantoForm'
 import { DeudaForm } from './DeudaForm'
@@ -9,17 +10,17 @@ export function openDeudaForm(ctx: OpenerCtx, d: Deuda | null = null): void {
 }
 
 export function openDeudaFormById(ctx: OpenerCtx, id: number): void {
-  openDeudaForm(ctx, ctx.estado.deudas.find((d) => d._id === id) ?? null)
+  openConFila(ctx, () => cargarDeuda(id), (d) => openDeudaForm(ctx, d))
 }
 
 export function openDeudaPayFormById(ctx: OpenerCtx, id: number, liquidar = false): void {
-  const d = ctx.estado.deudas.find((x) => x._id === id)
-  if (!d) return
-  ctx.openModal(liquidar ? `Abonar · ${d.nombre}` : `Pagar cuota · ${d.nombre}`, <PagoForm d={d} liquidar={liquidar} />)
+  openConFila(
+    ctx,
+    () => cargarDeuda(id),
+    (d) => ctx.openModal(liquidar ? `Abonar · ${d.nombre}` : `Pagar cuota · ${d.nombre}`, <PagoForm d={d} liquidar={liquidar} />),
+  )
 }
 
 export function openDeudaAdelantoFormById(ctx: OpenerCtx, id: number): void {
-  const d = ctx.estado.deudas.find((x) => x._id === id)
-  if (!d) return
-  ctx.openModal(`Pedir adelanto · ${d.nombre}`, <AdelantoForm d={d} />)
+  openConFila(ctx, () => cargarDeuda(id), (d) => ctx.openModal(`Pedir adelanto · ${d.nombre}`, <AdelantoForm d={d} />))
 }

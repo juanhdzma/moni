@@ -1,4 +1,4 @@
-from backend.calculos.dinero.formato import cop, cop_corto, frase, porcentaje_texto
+from backend.calculos.formato import cop, cop_corto, frase, porcentaje_texto
 
 
 def test_cop_formatea_como_es_co():

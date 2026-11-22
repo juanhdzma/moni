@@ -32,6 +32,7 @@ function EmptyCard({ label }: { label: string }) {
 
 function InvCard({ inv }: { inv: Inversion }) {
   const ctx = useOpenerCtx()
+  const { estado } = useData()
   const gan = inv.ganancia
   const ganP = inv.ganancia_pct
   const mv = inv.tasa_mv
@@ -42,7 +43,7 @@ function InvCard({ inv }: { inv: Inversion }) {
       <div className="flex items-start justify-between gap-3">
         <div className="inv-name min-w-0 truncate text-[15px] font-semibold">{inv.nombre}</div>
         <div className="flex shrink-0 items-center gap-1">
-          {inv.desactualizada && <Desactualizado />}
+          {inv.desactualizada && <Desactualizado texto={estado.desactualizado.texto} />}
           <span className={cn('text-sm font-semibold', gainColor(gan))}>
             {signStr(ganP)}
             {pct(Math.abs(ganP))}%
@@ -71,21 +72,21 @@ function InvCard({ inv }: { inv: Inversion }) {
       {inv.fecha_inicio ? <div className="mt-0.5 text-xs text-muted-foreground">Desde {fmtDate(inv.fecha_inicio)}</div> : null}
       <div className="card-actions mt-4 flex flex-wrap gap-2">
         {inv.tipo === 'fija' ? (
-          <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvYieldFormById(ctx, inv._id)}>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvYieldFormById(ctx, inv.id)}>
             Rendimiento
           </button>
         ) : (
-          <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvUpdateValueFormById(ctx, inv._id)}>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvUpdateValueFormById(ctx, inv.id)}>
             Actualizar
           </button>
         )}
-        <button className="btn btn-dim btn-sm" onClick={() => openInvAddMoreFormById(ctx, inv._id)}>
+        <button className="btn btn-dim btn-sm" onClick={() => openInvAddMoreFormById(ctx, inv.id)}>
           + Más
         </button>
-        <button className="btn btn-dim btn-sm text-deudas" onClick={() => openInvRetirarFormById(ctx, inv._id)}>
+        <button className="btn btn-dim btn-sm text-deudas" onClick={() => openInvRetirarFormById(ctx, inv.id)}>
           Retirar
         </button>
-        <button className="btn btn-dim btn-sm" onClick={() => openInvFormById(ctx, inv._id)}>
+        <button className="btn btn-dim btn-sm" onClick={() => openInvFormById(ctx, inv.id)}>
           Editar
         </button>
       </div>
@@ -96,7 +97,7 @@ function InvCard({ inv }: { inv: Inversion }) {
 export function Inversiones({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { loaded: cargado } = useData()
-  const { data } = useVista('inv-resumen', cargarResumenInversiones)
+  const { data } = useVista('inv-resumen', cargarResumenInversiones, ['inversiones'])
   const loaded = cargado && data !== null
   const totalInv = data?.total_invertido ?? 0
   const totalActual = data?.total_actual ?? 0
@@ -140,12 +141,12 @@ export function Inversiones({ active }: TabProps) {
         <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
           <Panel id="inv-fijas" titulo="Fijas">
             <ul id="inv-grid-fija" className="card-list divide-y">
-              {loaded && (fijas.length ? fijas.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones fijas" />)}
+              {loaded && (fijas.length ? fijas.map((i) => <InvCard key={i.id} inv={i} />) : <EmptyCard label="inversiones fijas" />)}
             </ul>
           </Panel>
           <Panel id="inv-variables" titulo="Variables">
             <ul id="inv-grid-variable" className="card-list divide-y">
-              {loaded && (variables.length ? variables.map((i) => <InvCard key={i._id} inv={i} />) : <EmptyCard label="inversiones variables" />)}
+              {loaded && (variables.length ? variables.map((i) => <InvCard key={i.id} inv={i} />) : <EmptyCard label="inversiones variables" />)}
             </ul>
           </Panel>
         </div>

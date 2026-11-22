@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
+import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyInput } from '../../../controls/MoneyInput'
+import { Variacion } from '../../../controls/Variacion'
 import { previewValorInversion } from '../../../lib/api'
-import { cop, parseMoney, pct, signStr } from '../../../lib/format'
+import { cop, parseMoney } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvIn, Inversion } from '../../../types'
@@ -9,7 +12,7 @@ import { FechaField } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { useEditarInversion } from './openInvForm'
 import { useGuardar } from '@/shell/hooks/useGuardar'
-import { usePreview } from './usePreview'
+import { usePreview } from '@/shell/hooks/usePreview'
 
 export function ValorForm({ inv }: { inv: Inversion }) {
   const { estado } = useData()
@@ -20,12 +23,7 @@ export function ValorForm({ inv }: { inv: Inversion }) {
   const [fecha, setFecha] = useState(estado.hoy)
   const nuevo = parseMoney(valor)
 
-  const cambio = usePreview(nuevo > 0 ? `v:${nuevo}` : null, () => previewValorInversion(inv._id, nuevo))
-  const delta = cambio?.delta ?? 0
-  const totalGain = cambio?.total ?? 0
-  const totalGainPct = cambio?.total_pct ?? 0
-  const deltaColor = delta >= 0 ? 'text-inversiones-text' : 'text-deudas'
-  const gainColor = totalGain >= 0 ? 'text-inversiones-text' : 'text-deudas'
+  const cambio = usePreview(nuevo > 0 ? `v:${nuevo}` : null, () => previewValorInversion(inv.id, nuevo))
 
   const save = async () => {
     const body: InvIn = {
@@ -39,59 +37,26 @@ export function ValorForm({ inv }: { inv: Inversion }) {
       dia_pago: inv.dia_pago,
       valor_actualizado_en: fecha,
     }
-    await guardar(() => crudOp('inv', 'update', { ...body, _id: inv._id }))
+    await guardar(() => crudOp('inv', 'update', { ...body, id: inv.id }))
   }
 
   return (
     <>
-      <div className="modal-panel">
-        <div className="modal-panel-col">
-          <div className="modal-panel-label">Último valor</div>
-          <div className="modal-panel-value">{cop(inv.valor_actual)}</div>
-        </div>
-        <div className="modal-panel-col right">
-          <div className="modal-panel-label">Invertido</div>
-          <div className="text-lg font-semibold">{cop(inv.monto_invertido)}</div>
-        </div>
-      </div>
+      <ModalPanel izquierda={{ label: 'Último valor', valor: cop(inv.valor_actual) }} derecha={{ label: 'Invertido', valor: cop(inv.monto_invertido) }} />
       <div className="form-group">
         <label className="form-label" htmlFor="m-nuevo-valor">
           Nuevo valor total (COP)
         </label>
         <MoneyInput id="m-nuevo-valor" value={valor} onChange={setValor} />
       </div>
-      <div id="inv-value-preview" className="mb-4 overflow-hidden rounded-lg border" style={{ display: nuevo ? 'block' : 'none' }}>
-        <div className="flex items-center justify-between border-b px-3.5 py-2.5">
-          <span className="text-sm text-muted-foreground">Cambio desde último</span>
-          <span className="text-[15px] font-semibold" id="inv-delta">
-            {cambio ? (
-              <span className={deltaColor}>
-                {signStr(delta)}
-                {cop(Math.abs(delta))}
-              </span>
-            ) : (
-              '—'
-            )}
-          </span>
-        </div>
-        <div className="flex items-center justify-between px-3.5 py-2.5">
-          <span className="text-sm text-muted-foreground">Ganancia total vs invertido</span>
-          <span className="text-[15px] font-semibold" id="inv-total-gain">
-            {cambio ? (
-              <span className={gainColor}>
-                {signStr(totalGain)}
-                {cop(Math.abs(totalGain))}{' '}
-                <span className="text-xs font-medium">
-                  ({signStr(totalGainPct)}
-                  {pct(Math.abs(totalGainPct))}%)
-                </span>
-              </span>
-            ) : (
-              '—'
-            )}
-          </span>
-        </div>
-      </div>
+      <Breakdown id="inv-value-preview" visible={nuevo > 0}>
+        <BreakdownRow id="inv-delta" label="Cambio desde último">
+          {cambio ? <Variacion valor={cambio.delta} /> : '—'}
+        </BreakdownRow>
+        <BreakdownRow id="inv-total-gain" label="Ganancia total vs invertido">
+          {cambio ? <Variacion valor={cambio.total} porcentaje={cambio.total_pct} /> : '—'}
+        </BreakdownRow>
+      </Breakdown>
       <FechaField id="m-fecha" type="date" label="Fecha de valoración" value={fecha} onChange={setFecha} />
       <FormFooter saveLabel="Actualizar" onSave={() => void save()} onEdit={editar} editLabel="Editar inversión" />
     </>

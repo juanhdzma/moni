@@ -1,4 +1,4 @@
-import type { Nivel, Segmento, WithId } from './comun'
+import type { Nivel, Segmento } from './comun'
 
 export interface InteresesPagados {
   valor: number
@@ -21,7 +21,7 @@ export interface DatoResumenDeudas {
   intereses_sufijo: string
 }
 
-export interface ApiDeuda {
+export interface Deuda {
   id: number
   nombre: string
   monto_inicial: number
@@ -47,21 +47,10 @@ export interface ApiDeuda {
   frases?: FrasesDeuda
 }
 
-export type Deuda = ApiDeuda & WithId
-
-export interface DeudaIn {
-  nombre: string
-  monto_inicial: number
-  saldo_actual: number
-  tasa_ea: number
-  cuota_mensual: number
-  fecha_inicio: string
-  proxima_cuota: string
-  es_tarjeta: boolean
-  cupo: number
-  franquicia: string
-  crear_tx?: boolean
-}
+export type DeudaIn = Pick<
+  Deuda,
+  'nombre' | 'monto_inicial' | 'saldo_actual' | 'tasa_ea' | 'cuota_mensual' | 'fecha_inicio' | 'proxima_cuota' | 'cupo' | 'franquicia'
+> & { es_tarjeta: boolean; crear_tx?: boolean }
 
 export interface DeudaPago {
   nuevo_saldo: number

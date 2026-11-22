@@ -1,6 +1,6 @@
-import type { Segmento, WithId } from './comun'
+import type { Segmento } from './comun'
 
-export interface ApiActivo {
+export interface Activo {
   id: number
   nombre: string
   valor_inicial: number
@@ -12,16 +12,8 @@ export interface ApiActivo {
   desactualizado: boolean
 }
 
-export type Activo = ApiActivo & WithId
-
-export interface ActivoIn {
-  nombre: string
-  valor_inicial: number
-  valor_actual?: number
-  fecha_adquisicion?: string
-  valor_actualizado_en?: string
-  crear_tx?: boolean
-}
+export type ActivoIn = Pick<Activo, 'nombre' | 'valor_inicial'> &
+  Partial<Pick<Activo, 'valor_actual' | 'fecha_adquisicion' | 'valor_actualizado_en'>> & { crear_tx?: boolean }
 
 export interface ActivoVenta {
   precio: number

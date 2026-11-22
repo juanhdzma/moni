@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import type {
-  ApiAll,
+  Estado,
   EsteMes,
   Evolucion,
   GastosPeriodo,
@@ -12,7 +12,9 @@ import type {
   ProximasOperaciones,
   ResumenDashboard,
 } from '../types'
-import { apiAll, categoriasBase } from './factories'
+import { categoriasBase, estado } from './factories'
+import { filaRegistrada } from './filas'
+import { META } from './meta'
 
 export interface RecordedCall {
   method: string
@@ -23,7 +25,7 @@ export interface RecordedCall {
 
 export type Handler = unknown
 
-export const EMPTY_ALL: ApiAll = apiAll()
+export const ESTADO_INICIAL: Estado = estado()
 
 const FRASE_SIN_INGRESOS = {
   tipo: 'sin_ingresos' as const,
@@ -83,7 +85,7 @@ const PERIODOS: PeriodosDashboard = { gastos: [], evolucion: [] }
 
 const MOVIMIENTOS: Movimientos = { items: [] }
 
-const PROXIMAS: ProximasOperaciones = { hoy: EMPTY_ALL.hoy, items: [], vencidas: 0, salen_total: 0, dias_ventana: 45, visibles: 5, frase: null, texto_vacio: 'Sin operaciones en los próximos 45 días.' }
+const PROXIMAS: ProximasOperaciones = { hoy: ESTADO_INICIAL.hoy, items: [], vencidas: 0, salen_total: 0, dias_ventana: 45, visibles: 5, frase: null, texto_vacio: 'Sin operaciones en los próximos 45 días.' }
 
 const LISTADO_TX: ListadoTx = {
   items: [],
@@ -108,6 +110,7 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/dashboard/este-mes': ESTE_MES,
   'GET /api/dashboard/gastos': GASTOS,
   'GET /api/dashboard/periodos': PERIODOS,
+  'GET /api/meta': META,
   'GET /api/dashboard/movimientos': MOVIMIENTOS,
   'GET /api/proximas-operaciones': PROXIMAS,
   'GET /api/tx': LISTADO_TX,
@@ -144,7 +147,7 @@ const VISTAS_VACIAS: Record<string, Handler> = {
     gastos: [],
   },
   'GET /api/categorias': categoriasBase(),
-  'GET /api/ajustes': EMPTY_ALL.ajustes,
+  'GET /api/ajustes': ESTADO_INICIAL.ajustes,
   'GET /api/ops-ocultas': OPS_OCULTAS,
   'GET /api/auth/estado': { configurado: true, autenticado: true, passkeys: 0, bloqueada: false },
   'GET /api/auth/sesiones': [],
@@ -161,7 +164,7 @@ export const failure = (status: number, detail: unknown): Response => json({ det
 
 export function mockFetch(routes: Record<string, Handler> = {}) {
   const calls: RecordedCall[] = []
-  const table: Record<string, Handler> = { 'GET /api/all': EMPTY_ALL, ...VISTAS_VACIAS, ...routes }
+  const table: Record<string, Handler> = { 'GET /api/bootstrap': ESTADO_INICIAL, ...VISTAS_VACIAS, ...routes }
 
   const fn = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const method = init?.method ?? 'GET'
@@ -174,7 +177,7 @@ export function mockFetch(routes: Record<string, Handler> = {}) {
     }
     calls.push(call)
     const exacta = `${method} ${url}`
-    const h = exacta in table ? table[exacta] : table[`${method} ${url.split('?')[0] ?? url}`]
+    const h = exacta in table ? table[exacta] : (table[`${method} ${url.split('?')[0] ?? url}`] ?? (method === 'GET' ? filaRegistrada(url) : undefined))
     if (h === undefined) return Promise.resolve(failure(404, `sin mock: ${method} ${url}`))
     const out = typeof h === 'function' ? (h as (c: RecordedCall) => unknown)(call) : h
     return Promise.resolve(out instanceof Response ? out : json(out))

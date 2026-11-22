@@ -93,7 +93,7 @@ describe('Shell', () => {
   })
 
   it('carga inicial: banner con el error del backend', async () => {
-    mockFetch({ 'GET /api/all': failure(500, 'caído') })
+    mockFetch({ 'GET /api/bootstrap': failure(500, 'caído') })
     render(
       <AuthProvider initialEstado={ESTADO_AUTENTICADO}>
         <DataProvider>

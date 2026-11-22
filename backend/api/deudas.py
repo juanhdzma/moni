@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from ..calculos import operaciones
+from ..calculos.fechas import ahora_bogota
 from ..calculos.operaciones import frases_deuda as frases, movimientos
 from ..calculos.operaciones.movimientos import ErrorDeDominio
 from ..core.db import conexion
@@ -11,14 +12,14 @@ from ..core.montos import pesos
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import get_row, insert_tx
 from ..core.tablas import CAT_INGRESO, CAT_TRANSFER, DEUDA_COLS
-from ..schemas.deuda import AdelantoPreview, DeudaAdelanto, DeudaIn, DeudaPago
+from ..schemas.deuda import AdelantoPreview, DeudaAdelanto, DeudaCrear, DeudaIn, DeudaPago
 from ..schemas.previews import PagoPreview
 from .crud import register_crud
 
 logger = logging.getLogger("moni")
 router = APIRouter()
 
-register_crud(router, "deuda", "deudas", DEUDA_COLS, DeudaIn, linked_tx={
+register_crud(router, "deuda", "deudas", DEUDA_COLS, DeudaIn, model_crear=DeudaCrear, linked_tx={
     "tipo": "ingreso", "categoria": CAT_INGRESO["credito_recibido"], "fecha_field": "fecha_inicio",
     "desc_fn": lambda d: f"Crédito · {d['nombre']}",
     "monto_fn": lambda d: d.get("monto_inicial") or d["saldo_actual"],
@@ -58,7 +59,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
         if body.registrar_tx:
             simbolo = ajustes(conn)["moneda_simbolo"]
             insert_tx(
-                conn, fecha=body.fecha or frases.ahora_bogota(), tipo="transfer", categoria=CAT_TRANSFER["pago_deuda"],
+                conn, fecha=body.fecha or ahora_bogota(), tipo="transfer", categoria=CAT_TRANSFER["pago_deuda"],
                 descripcion=body.descripcion or frases.descripcion_pago(
                     deuda["nombre"], desglose["capital"], intereses, simbolo
                 ),
@@ -79,7 +80,7 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
         conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (pesos(nuevo_saldo), deuda_id))
         if body.registrar_tx:
             insert_tx(
-                conn, fecha=body.fecha or frases.ahora_bogota(), tipo="ingreso", categoria=CAT_INGRESO["avance_tarjeta"],
+                conn, fecha=body.fecha or ahora_bogota(), tipo="ingreso", categoria=CAT_INGRESO["avance_tarjeta"],
                 descripcion=body.descripcion or frases.descripcion_adelanto(tarjeta["nombre"]),
                 monto=body.monto, notas=body.notas,
             )

@@ -42,13 +42,13 @@ function PrestamoCard({ d }: { d: Deuda }) {
       sub={frases?.detalle}
       actions={
         <>
-          <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d._id)}>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d.id)}>
             Pagar cuota
           </button>
-          <button className="btn btn-dim btn-sm" onClick={() => openDeudaPayFormById(ctx, d._id, true)}>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaPayFormById(ctx, d.id, true)}>
             Abonar
           </button>
-          <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d._id)}>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d.id)}>
             Editar
           </button>
         </>
@@ -101,13 +101,13 @@ function TarjetaCard({ d }: { d: Deuda }) {
       sub={d.frases?.detalle}
       actions={
         <>
-          <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d._id, true)}>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d.id, true)}>
             Abonar
           </button>
-          <button className="btn btn-dim btn-sm" onClick={() => openDeudaAdelantoFormById(ctx, d._id)}>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaAdelantoFormById(ctx, d.id)}>
             Adelanto
           </button>
-          <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d._id)}>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d.id)}>
             Editar
           </button>
         </>
@@ -153,7 +153,7 @@ function Terminada({ d }: { d: Deuda }) {
       badge={<span className="shrink-0 rounded-full bg-inversiones/15 px-2 py-0.5 text-xs font-medium text-inversiones-text">Saldado</span>}
       sub={frases?.detalle}
       actions={
-        <button className="btn btn-dim btn-sm flex-1" onClick={() => openDeudaFormById(ctx, d._id)}>
+        <button className="btn btn-dim btn-sm flex-1" onClick={() => openDeudaFormById(ctx, d.id)}>
           Ver / Editar
         </button>
       }
@@ -168,7 +168,7 @@ function Terminada({ d }: { d: Deuda }) {
 export function Deudas({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { loaded: cargado } = useData()
-  const { data } = useVista('deudas', cargarResumenDeudas)
+  const { data } = useVista('deudas', cargarResumenDeudas, ['deudas'])
   const loaded = cargado && data !== null
   const total = data?.total ?? 0
   const creditos = data?.creditos ?? []
@@ -212,7 +212,7 @@ export function Deudas({ active }: TabProps) {
             <div id="deudas-grid-credito" className="space-y-3">
               {loaded &&
                 (creditos.length ? (
-                  creditos.map((d) => <PrestamoCard key={d._id} d={d} />)
+                  creditos.map((d) => <PrestamoCard key={d.id} d={d} />)
                 ) : (
                   <Empty
                     icon={<PartyPopper aria-hidden="true" className="size-6" />}
@@ -226,7 +226,7 @@ export function Deudas({ active }: TabProps) {
             <div id="deudas-grid-tarjeta" className="space-y-3">
               {loaded &&
                 (tarjetas.length ? (
-                  tarjetas.map((d) => <TarjetaCard key={d._id} d={d} />)
+                  tarjetas.map((d) => <TarjetaCard key={d.id} d={d} />)
                 ) : (
                   <Empty icon={<CreditCard aria-hidden="true" className="size-6" />} titulo="Sin tarjetas" texto="Agregá una para cargarle gastos y seguir su cupo." />
                 ))}
@@ -238,7 +238,7 @@ export function Deudas({ active }: TabProps) {
             <Panel id="deudas-terminadas" titulo="Préstamos terminados">
               <div className="grid gap-3 md:grid-cols-2">
                 {terminadas.map((d) => (
-                  <Terminada key={d._id} d={d} />
+                  <Terminada key={d.id} d={d} />
                 ))}
               </div>
             </Panel>

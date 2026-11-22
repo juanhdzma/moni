@@ -64,9 +64,9 @@ Below 1024px the header nav collapses into a menu button and a slide-out drawer.
 
 FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/core/db.py`) and, at the same time, serves the built frontend (`web/dist`) as static files: one process, one port in production.
 
-All business logic lives in the backend: the money definitions (cash flow vs. net worth), date handling in the `America/Bogota` time zone, derived fields and the upcoming-operations projection are pure functions in `backend/calculos/`, exposed through read endpoints that return data ready to render (`/api/all`, `/api/dashboard/*`, `/api/tx`, `/api/*/resumen`, `/api/proximas-operaciones`). Custom categories, hidden operations and the currency symbol are stored in SQLite too, not in the browser.
+All business logic lives in the backend: the money definitions (cash flow vs. net worth), date handling in the `America/Bogota` time zone, derived fields and the upcoming-operations projection are pure functions in `backend/calculos/`, exposed through read endpoints that return data ready to render (`/api/bootstrap`, `/api/meta`, `/api/dashboard/*`, `/api/tx`, `/api/*/resumen`, `/api/proximas-operaciones`, and `GET /api/<resource>/<id>` for edit forms). Validation errors are returned as `422` with Spanish messages. `/api/all` exists only to export a backup. Custom categories, hidden operations and the currency symbol are stored in SQLite too, not in the browser.
 
-The frontend (`web/`) is React + TypeScript built with Vite, and only fetches and paints. Every tab is one folder under `web/src/features/` that owns its own component and modal forms; the shared data comes from a `DataProvider` populated from `GET /api/all`, and each view refetches its calculated endpoint when its filters change or after any mutation. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes.
+The frontend (`web/`) is React + TypeScript built with Vite, and only fetches and paints. Every tab is one folder under `web/src/features/` that owns its own component and modal forms; the shared session context (today, categories, currency symbol, alerts) comes from `GET /api/bootstrap` through a `DataProvider`, static form options from `GET /api/meta`, and each view refetches its own calculated endpoint when its filters change or when a mutation touches an entity it depends on. Each feature keeps its modal forms in a `forms/` folder. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes.
 
 Styling is Tailwind CSS + shadcn/ui with Recharts charts; Recharts and the Archivo webfont are bundled from npm, so the app works on a LAN with no internet access. Only `web/dist` is reachable over HTTP; the backend code, the SQLite file and the frontend sources are not.
 
@@ -173,7 +173,7 @@ CI runs all of the above before building the image. Each backend test gets a thr
 Mutating requests need an `X-Moni-Request` header. Without it the backend answers `403`; this is what stops a cross-origin `<form>` from hitting a destructive endpoint (see `require_csrf_header` in `backend/core/csrf.py`). Reads need nothing.
 
 ```bash
-curl localhost:8080/api/all
+curl localhost:8080/api/bootstrap
 curl 'localhost:8080/api/dashboard/gastos?periodo=3M'
 curl -X POST localhost:8080/api/tx -H 'X-Moni-Request: 1' -H 'Content-Type: application/json' \
   -d '{"fecha":"2026-07-31","tipo":"gasto","categoria":"Mercado","monto":50000}'

@@ -1,6 +1,6 @@
-import type { ProximoPago, Segmento, TipoRec, WithId } from './comun'
+import type { ProximoPago, Segmento, TipoRec } from './comun'
 
-export interface ApiRecurrente {
+export interface Recurrente {
   id: number
   nombre: string
   tipo: TipoRec
@@ -15,17 +15,7 @@ export interface ApiRecurrente {
   proximo_pago: ProximoPago | null
 }
 
-export type Recurrente = ApiRecurrente & WithId
-
-export interface RecIn {
-  nombre: string
-  tipo: TipoRec
-  monto: number
-  frecuencia: string
-  activo?: boolean
-  fecha_inicio: string
-  notas: string
-}
+export type RecIn = Pick<Recurrente, 'nombre' | 'tipo' | 'monto' | 'frecuencia' | 'fecha_inicio' | 'notas'> & Partial<Pick<Recurrente, 'activo'>>
 
 export interface OpcionFrecuencia {
   value: string

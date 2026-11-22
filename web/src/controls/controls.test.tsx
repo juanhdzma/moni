@@ -141,8 +141,11 @@ describe('AdvancedToggle', () => {
 
 describe('DatePicker', () => {
   it('parse/format ida y vuelta', () => {
-    expect(formatValue(parseValue('2026-08-05', '2026-08-20'), false)).toBe('2026-08-05')
-    expect(formatValue(parseValue('2026-08-05T07:09', '2026-08-20'), true)).toBe('2026-08-05T07:09')
+    const fecha = parseValue('2026-08-05', '2026-08-20')
+    const fechaHora = parseValue('2026-08-05T07:09', '2026-08-20T10:30')
+    expect(fecha && formatValue(fecha, false)).toBe('2026-08-05')
+    expect(fechaHora && formatValue(fechaHora, true)).toBe('2026-08-05T07:09')
+    expect(parseValue('', '')).toBeNull()
   })
 
   function H({ type = 'date' as 'date' | 'datetime-local', initial = '2026-08-05' }) {
@@ -181,6 +184,23 @@ describe('DatePicker', () => {
     renderWithProviders(<H initial="" />, { estado: estado({ hoy: '2026-08-20' }) })
     await user.click(screen.getByRole('button', { name: 'Seleccionar fecha' }))
     expect(document.querySelector('.cdp-month')).toHaveTextContent('Agosto de 2026')
+  })
+
+  it('datetime: Hoy toma fecha y hora reales de estado.ahora', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H type="datetime-local" initial="2026-03-05T07:09" />, { estado: estado({ ahora: '2026-08-20T14:45' }) })
+    await user.click(screen.getByRole('button', { name: /05\/03\/2026 07:09/ }))
+    await user.click(screen.getByText('Hoy'))
+    await user.click(screen.getByText('Aceptar'))
+    expect(screen.getByTestId('v')).toHaveTextContent('2026-08-20T14:45')
+  })
+
+  it('con estado.hoy vacío no abre un calendario con fecha inválida', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H initial="" />, { estado: estado({ hoy: '', ahora: '' }) })
+    await user.click(screen.getByRole('button', { name: 'Seleccionar fecha' }))
+    expect(document.querySelector('.cdp-panel')).not.toHaveClass('open')
+    expect(screen.getByTestId('v')).toHaveTextContent('')
   })
 
   it('navegar de mes y Escape cancela sin confirmar', async () => {

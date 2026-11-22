@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from ..core.db import conexion
+from ..core.estado import detalle
 from ..core.sql import delete_row, get_row, insert_row, insert_tx, update_row
 from ..calculos import operaciones
 
@@ -12,9 +13,28 @@ def _normalizar_tasa(data):
     return data
 
 
-def register_crud(router: APIRouter, path, table, cols, model, linked_tx=None):
+def register_lectura(router: APIRouter, path, table):
+    @router.get(f"/api/{path}/{{row_id:int}}", name=f"get_{path}")
+    def leer(row_id: int):
+        with conexion() as conn:
+            return detalle(conn, table, row_id)
+
+
+def register_borrado(router: APIRouter, path, table):
+    @router.delete(f"/api/{path}/{{row_id}}", status_code=204, name=f"delete_{path}")
+    def borrar(row_id: int):
+        with conexion() as conn:
+            delete_row(conn, table, row_id)
+            if table == "deudas":
+                conn.execute("UPDATE transacciones SET tarjeta_id = NULL WHERE tarjeta_id = ?", (row_id,))
+            conn.commit()
+
+
+def register_crud(router: APIRouter, path, table, cols, model, linked_tx=None, model_crear=None):
+    model_crear = model_crear or model
+
     @router.post(f"/api/{path}", name=f"create_{path}")
-    def create(body: model):
+    def create(body: model_crear):
         with conexion() as conn:
             data = _normalizar_tasa(body.model_dump())
             crear_tx = data.pop("crear_tx", False)
@@ -41,10 +61,5 @@ def register_crud(router: APIRouter, path, table, cols, model, linked_tx=None):
             conn.commit()
             return get_row(conn, table, row_id)
 
-    @router.delete(f"/api/{path}/{{row_id}}", status_code=204, name=f"delete_{path}")
-    def delete(row_id: int):
-        with conexion() as conn:
-            delete_row(conn, table, row_id)
-            if table == "deudas":
-                conn.execute("UPDATE transacciones SET tarjeta_id = NULL WHERE tarjeta_id = ?", (row_id,))
-            conn.commit()
+    register_lectura(router, path, table)
+    register_borrado(router, path, table)

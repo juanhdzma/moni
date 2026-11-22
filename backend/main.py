@@ -4,10 +4,13 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 
 from . import push, seguridad
 from .api import router as api_router
+from .api import meta
+from .api.errores import errores_de_validacion
 from .calculos.fechas import hoy_bogota
 from .core import db
 from .core.csrf import require_csrf_header
@@ -38,6 +41,8 @@ app.middleware("http")(seguridad.middleware_headers)
 app.include_router(seguridad.router)
 app.include_router(push.router)
 app.include_router(api_router)
+app.include_router(meta.router)
+app.add_exception_handler(RequestValidationError, errores_de_validacion)
 
 if FRONTEND_DIR.is_dir():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="static")

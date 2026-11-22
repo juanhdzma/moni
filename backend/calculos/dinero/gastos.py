@@ -1,7 +1,7 @@
 import datetime
 
 from ..fechas import parse_fecha_hora, restar_meses
-from .formato import frase, porcentaje_texto
+from ..formato import frase, porcentaje_texto
 
 PERIODOS_GASTOS = ("1W", "1M", "3M", "6M", "1Y", "ALL")
 NOMBRE_PERIODO_GASTOS = {

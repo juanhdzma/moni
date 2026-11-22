@@ -126,12 +126,12 @@ describe('crear / editar / eliminar', () => {
     expect(f.mutations()[0]?.body).not.toHaveProperty('valor_actualizado_en')
   })
 
-  it('editar muestra el tipo con la etiqueta que manda el backend', async () => {
+  it('editar muestra el tipo con la etiqueta de /api/meta', async () => {
     const user = userEvent.setup()
-    mockInv({ 'GET /api/inv/tipos': [{ valor: 'fija', label: 'Renta fija (API)' }] })
+    mockInv()
     await setup()
     await clickInGrid(user, 'fija', 'Editar')
-    await waitFor(() => expect(modal().getByText('Renta fija (API)')).toBeInTheDocument())
+    await waitFor(() => expect(modal().getByText('Fija')).toBeInTheDocument())
   })
 
   it('eliminar: confirm y DELETE', async () => {

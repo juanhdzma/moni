@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import type { OpenerCtx } from '@/shell/hooks/openers'
+import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
+import { cargarInversion } from '../../../lib/api'
 import type { Inversion } from '../../../types'
 import { AporteForm } from './AporteForm'
 import { RendimientoForm } from './RendimientoForm'
@@ -9,9 +10,7 @@ import { ValorForm } from './ValorForm'
 export { openInvForm, openInvFormById } from './openInvForm'
 
 function openWithInv(ctx: OpenerCtx, id: number, title: string, render: (inv: Inversion) => ReactNode): void {
-  const inv = ctx.estado.inversiones.find((i) => i._id === id)
-  if (!inv) return
-  ctx.openModal(`${title} · ${inv.nombre}`, render(inv))
+  openConFila(ctx, () => cargarInversion(id), (inv) => ctx.openModal(`${title} · ${inv.nombre}`, render(inv)))
 }
 
 export const openInvYieldFormById = (ctx: OpenerCtx, id: number) =>

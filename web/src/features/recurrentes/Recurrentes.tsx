@@ -2,8 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Pause, Play, Plus } from 'lucide-react'
 import { Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
-import { cop, errMsg, signStr } from '../../lib/format'
-import { useData } from '@/shell/providers/DataProvider'
+import { cop, signStr } from '../../lib/format'
 import { useResumenRecurrentes } from './useResumenRecurrentes'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
@@ -13,20 +12,12 @@ import { openRecurrenteForm, openRecurrenteFormById } from './forms'
 
 function RecCard({ r }: { r: Recurrente }) {
   const ctx = useOpenerCtx()
-  const { apiAction } = useMutations()
-  const { reload, showBanner } = useData()
+  const { apiActionOrBanner } = useMutations()
   const nextStr = r.proximo_pago?.texto ?? null
-  const toggle = async () => {
-    try {
-      await apiAction(`/api/rec/${r._id}/pausar`)
-    } catch (err) {
-      await reload()
-      showBanner(errMsg(err))
-    }
-  }
+  const toggle = () => apiActionOrBanner(`/api/rec/${r.id}/pausar`)
   const Icono = r.activo ? Pause : Play
   return (
-    <li data-rec={r._id} data-inactive={r.activo ? undefined : ''} className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5', !r.activo && 'opacity-50')}>
+    <li data-rec={r.id} data-inactive={r.activo ? undefined : ''} className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5', !r.activo && 'opacity-50')}>
       <div className="min-w-0 flex-1 basis-40">
         <div data-rec-name className="truncate text-sm font-medium">
           {r.nombre}
@@ -62,7 +53,7 @@ function RecCard({ r }: { r: Recurrente }) {
         </button>
         <button
           type="button"
-          onClick={() => openRecurrenteFormById(ctx, r._id)}
+          onClick={() => openRecurrenteFormById(ctx, r.id)}
           className="h-8 cursor-pointer rounded-md px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           Editar
@@ -80,7 +71,7 @@ function Lista({ id, titulo, frase, items, emptyMsg, loaded }: { id: string; tit
       ) : (
         <ul className="divide-y">
           {items.map((r) => (
-            <RecCard key={r._id} r={r} />
+            <RecCard key={r.id} r={r} />
           ))}
         </ul>
       )}

@@ -39,7 +39,7 @@ describe('forms', () => {
         crear_tx: true,
       },
     })
-    await waitFor(() => expect(f.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
   })
 
   it('crear crédito con crear_tx desactivado', async () => {
@@ -111,11 +111,12 @@ describe('forms', () => {
     expect(document.getElementById('m-status')).toHaveClass('err')
   })
 
-  it('editar: PUT sin crear_tx ni _id en el body', async () => {
+  it('editar: PUT sin crear_tx ni id en el body', async () => {
     const user = userEvent.setup()
     const f = conResumen(resumenCompleto, { 'PUT /api/deuda/1': {} })
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Editar'))
+    expect(f.callsTo('GET', '/api/deuda/1')).toHaveLength(1)
     expect(document.getElementById('m-nombre')).toHaveValue('Crédito carro')
     expect(document.getElementById('m-saldo')).toHaveValue('6.000.000')
     expect(document.getElementById('m-es-nueva')).toBeNull()
@@ -140,7 +141,7 @@ describe('forms', () => {
       },
     })
     expect(m?.body).not.toHaveProperty('crear_tx')
-    expect(m?.body).not.toHaveProperty('_id')
+    expect(m?.body).not.toHaveProperty('id')
   })
 
   it('eliminar: confirm y DELETE', async () => {
@@ -167,7 +168,7 @@ describe('forms', () => {
     conf.mockReturnValue(true)
     await user.click(screen.getByText('Eliminar'))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    await waitFor(() => expect(f.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     conf.mockRestore()
   })
 })

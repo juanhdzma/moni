@@ -1,9 +1,8 @@
-import datetime
-
 from fastapi import APIRouter
 
 from ..calculos import operaciones
-from ..calculos.fechas import TZ, hoy_bogota
+from ..calculos.fechas import ahora_bogota, hoy_bogota
+from ..calculos.formato import plural, porcentaje_texto
 from ..calculos.numeros import porcentaje
 from ..core.db import conexion
 from ..core.estado import coleccion
@@ -11,16 +10,11 @@ from ..core.sql import delete_row, get_row, insert_row, insert_tx, update_row
 from ..core.tablas import ACTIVO_COLS, CAT_GASTO, CAT_INGRESO
 from ..schemas.activo import ActivoIn, ActivoValor, ActivoVenta
 from ..schemas.previews import NuevoValor, PrecioPreview
+from .crud import register_borrado, register_lectura
 
 router = APIRouter()
-
-
-def _ahora_bogota() -> str:
-    return datetime.datetime.now(TZ).strftime("%Y-%m-%dT%H:%M")
-
-
-def _formato_pct(valor: float) -> str:
-    return f"{abs(valor):.1f}".replace(".", ",")
+register_lectura(router, "activo", "activos")
+register_borrado(router, "activo", "activos")
 
 
 def _datos_activo(body: ActivoIn, anterior: dict | None) -> dict:
@@ -35,7 +29,7 @@ def _datos_activo(body: ActivoIn, anterior: dict | None) -> dict:
         elif anterior["valor_actual"] == datos["valor_actual"]:
             datos["valor_actualizado_en"] = anterior["valor_actualizado_en"]
         else:
-            datos["valor_actualizado_en"] = _ahora_bogota()
+            datos["valor_actualizado_en"] = ahora_bogota()
     return datos
 
 
@@ -62,20 +56,13 @@ def actualizar_activo(activo_id: int, body: ActivoIn):
         return get_row(conn, "activos", activo_id)
 
 
-@router.delete("/api/activo/{activo_id}", status_code=204, name="delete_activo")
-def borrar_activo(activo_id: int):
-    with conexion() as conn:
-        delete_row(conn, "activos", activo_id)
-        conn.commit()
-
-
 @router.post("/api/activo/{activo_id}/valor")
 def actualizar_valor(activo_id: int, body: ActivoValor):
     with conexion() as conn:
         get_row(conn, "activos", activo_id)
         conn.execute(
             "UPDATE activos SET valor_actual = ?, valor_actualizado_en = ? WHERE id = ?",
-            (body.nuevo_valor, body.fecha or _ahora_bogota(), activo_id),
+            (body.nuevo_valor, body.fecha or ahora_bogota(), activo_id),
         )
         conn.commit()
         return get_row(conn, "activos", activo_id)
@@ -88,7 +75,7 @@ def vender_activo(activo_id: int, body: ActivoVenta):
         delete_row(conn, "activos", activo_id)
         if body.registrar_tx:
             insert_tx(
-                conn, fecha=body.fecha or _ahora_bogota(), tipo="ingreso", categoria=CAT_INGRESO["venta_activos"],
+                conn, fecha=body.fecha or ahora_bogota(), tipo="ingreso", categoria=CAT_INGRESO["venta_activos"],
                 descripcion=f"Venta · {activo['nombre']}", monto=body.precio, notas=body.notas,
             )
         conn.commit()
@@ -115,6 +102,6 @@ def activos_resumen():
     resumen = operaciones.resumen_activos(activos)
     return {
         **resumen,
-        "texto_variacion": f"{_formato_pct(resumen['variacion_pct'])}% sobre lo pagado" if resumen["total_inicial"] > 0 else "",
-        "texto_conteo": f"{len(activos)} activo{'' if len(activos) == 1 else 's'}",
+        "texto_variacion": f"{porcentaje_texto(abs(resumen['variacion_pct']))}% sobre lo pagado" if resumen["total_inicial"] > 0 else "",
+        "texto_conteo": plural(len(activos), "activo", "activos"),
     }

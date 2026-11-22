@@ -1,4 +1,6 @@
 SALDO_MINIMO = 1
+DIAS_DESACTUALIZADO = 30
+TEXTO_DESACTUALIZADO = "Valor sin actualizar hace más de 1 mes"
 
 CATEGORIAS_SISTEMA = {
     "ingreso": {

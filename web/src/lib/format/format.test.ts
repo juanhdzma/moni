@@ -6,15 +6,12 @@ import {
   fmtDateShort,
   fmtDateTime,
   fmtMoneyInput,
-  isoDate,
   mediodia,
-  nowStr,
   numToInput,
   normDate,
   parseMoney,
   pct,
   setCurrencySymbol,
-  todayStr,
 } from './index'
 
 function input(value: string, caret = value.length) {
@@ -119,12 +116,5 @@ describe('formato', () => {
     expect([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()]).toEqual([2026, 7, 1, 12])
     expect(mediodia('15/08/2026').getDate()).toBe(15)
     expect(Number.isNaN(mediodia('basura').getTime())).toBe(true)
-  })
-
-  test('todayStr y nowStr son del día local aunque UTC ya sea el siguiente', () => {
-    const tarde = new Date(2026, 7, 15, 21, 30)
-    expect(todayStr(tarde)).toBe('2026-08-15')
-    expect(nowStr(tarde)).toBe('2026-08-15T21:30')
-    expect(isoDate(new Date(2026, 0, 5))).toBe('2026-01-05')
   })
 })

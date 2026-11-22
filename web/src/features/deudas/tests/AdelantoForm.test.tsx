@@ -22,7 +22,6 @@ describe('adelanto', () => {
     await user.type(document.getElementById('m-disponible-nuevo') as HTMLElement, '3450000')
     await waitFor(() => expect(document.getElementById('adelanto-deuda')).toHaveTextContent('1.550.000'))
     await waitFor(() => expect(document.getElementById('adelanto-comision')).toHaveTextContent('50.000'))
-    expect(document.getElementById('adelanto-comision-row')).toHaveStyle({ display: 'flex' })
     const previews = f.mutations().filter((c) => c.url === '/api/deuda/2/adelanto/preview')
     expect(previews.at(-1)).toMatchObject({ method: 'POST', headers: hdr, body: { monto: 500000, disponible_nuevo: 3450000 } })
     await user.click(screen.getByText('Pedir adelanto'))

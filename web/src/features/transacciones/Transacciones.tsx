@@ -104,7 +104,7 @@ export function Transacciones({ active }: TabProps) {
   const [catSel, setCatSel] = useState('')
 
   const params: FiltrosTx = { col: sort.col, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel }
-  const { data, loading } = useVista(loaded ? JSON.stringify(params) : null, () => cargarListadoTx(params))
+  const { data, loading } = useVista(loaded ? JSON.stringify(params) : null, () => cargarListadoTx(params), ['transacciones'])
 
   if (data && !loading) {
     if (data.filtros.mes !== mesSel) setMesSel(data.filtros.mes)

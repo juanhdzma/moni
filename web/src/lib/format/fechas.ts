@@ -35,18 +35,6 @@ export function fmtDateShort(s: string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
 }
 
-export function isoDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-export function todayStr(now: Date = new Date()): string {
-  return isoDate(now)
-}
-
-export function nowStr(now: Date = new Date()): string {
-  return `${isoDate(now)}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-}
-
 export function fmtDateTime(s: string | null | undefined): string {
   if (!s) return '—'
   const timePart = normDate(s).split('T')[1]

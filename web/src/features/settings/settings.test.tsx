@@ -27,7 +27,7 @@ describe('categorias', () => {
     const f = mockFetch({ 'POST /api/categorias': { ingreso: [], gasto: [], transfer: [] } })
     renderWithProviders(<Settings active />)
     await userEvent.type(document.getElementById('settings-new-cat-gasto') as HTMLInputElement, 'Mascotas{Enter}')
-    await waitFor(() => expect(f.callsTo('GET', '/api/all').length).toBeGreaterThan(0))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap').length).toBeGreaterThan(0))
     expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/categorias', headers: { 'X-Moni-Request': '1' }, body: { tipo: 'gasto', nombre: 'Mascotas' } })
     expect((document.getElementById('settings-new-cat-gasto') as HTMLInputElement).value).toBe('')
   })
@@ -59,7 +59,7 @@ describe('operaciones ocultas', () => {
     await userEvent.click(screen.getAllByRole('button', { name: 'Restaurar' })[0] as HTMLElement)
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/ops-ocultas?clave=deuda%3A1%3A2026-01-01', headers: { 'X-Moni-Request': '1' } })
-    expect(f.callsTo('GET', '/api/all').length).toBeGreaterThan(0)
+    expect(f.callsTo('GET', '/api/bootstrap').length).toBeGreaterThan(0)
   })
 
   it('restaurar todas manda DELETE sin clave', async () => {
@@ -111,7 +111,7 @@ describe('backup', () => {
     const blob = (create.mock.calls[0] as unknown as [Blob])[0]
     expect(blob.type).toBe('application/json')
     expect(await blob.text()).toBe(JSON.stringify(data, null, 2))
-    expect(download).toBe('moni-backup-2026-06-15.json')
+    expect(download).toBe('moni-backup-2026-08-20.json')
     expect(revoke).toHaveBeenCalledWith('blob:x')
     click.mockRestore()
   })
@@ -154,7 +154,7 @@ describe('zona de peligro', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Borrar todo' }))
     await waitFor(() => expect(screen.queryByPlaceholderText('BORRAR')).toBeNull())
     expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/truncate', headers: { 'X-Moni-Request': '1' } })
-    expect(f.callsTo('GET', '/api/all').length).toBeGreaterThan(0)
+    expect(f.callsTo('GET', '/api/bootstrap').length).toBeGreaterThan(0)
   })
 })
 

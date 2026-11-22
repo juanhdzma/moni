@@ -1,12 +1,12 @@
 import { useState, type ChangeEvent } from 'react'
 import { Panel } from '@/components/panel'
 import { apiFetch } from '../../lib/api'
-import { errMsg, todayStr } from '../../lib/format'
+import { errMsg } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { HINT } from './estilos'
 
 function Backup() {
-  const { reload } = useData()
+  const { reload, estado } = useData()
   const [status, setStatus] = useState({ cls: 'form-status', msg: '' })
 
   const exportar = async () => {
@@ -16,7 +16,7 @@ function Backup() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `moni-backup-${todayStr()}.json`
+      a.download = `moni-backup-${estado.hoy}.json`
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {

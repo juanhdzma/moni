@@ -1,0 +1,58 @@
+import { useState } from 'react'
+import { AdvancedToggle } from '../../../controls/AdvancedToggle'
+import { FechaField } from '../../../controls/FormFields'
+import { FormFooter } from '../../../controls/FormFooter'
+import { MoneyInput } from '../../../controls/MoneyInput'
+import { NombreField } from '../../../controls/NombreField'
+import { numToInput, parseMoney } from '../../../lib/format'
+import { useConfirmDelete } from '@/shell/hooks/useConfirmDelete'
+import { useGuardar } from '@/shell/hooks/useGuardar'
+import { useMutations } from '@/shell/hooks/useMutations'
+import { useData } from '@/shell/providers/DataProvider'
+import type { Activo, ActivoIn } from '../../../types'
+
+export function ActivoForm({ activo }: { activo: Activo | null }) {
+  const isEdit = activo !== null
+  const guardar = useGuardar()
+  const { hoy } = useData().estado
+  const { crudOp } = useMutations()
+  const eliminar = useConfirmDelete('activo', activo, `¿Eliminar "${activo?.nombre}"?`)
+  const [nombre, setNombre] = useState(activo?.nombre ?? '')
+  const [valIni, setValIni] = useState(activo ? numToInput(activo.valor_inicial) : '')
+  const [valAct, setValAct] = useState(activo ? numToInput(activo.valor_actual) : '')
+  const [fechaAdq, setFechaAdq] = useState(activo?.fecha_adquisicion?.split('T')[0] || hoy)
+  const [esNueva, setEsNueva] = useState(true)
+
+  const save = async () => {
+    const valorActual = parseMoney(valAct)
+    const data: ActivoIn = {
+      nombre: nombre.trim(),
+      valor_inicial: parseMoney(valIni),
+      fecha_adquisicion: fechaAdq,
+      ...(valorActual > 0 && { valor_actual: valorActual }),
+    }
+    await guardar(async () => {
+      if (activo) await crudOp('activo', 'update', { ...data, id: activo.id })
+      else await crudOp('activo', 'add', { ...data, crear_tx: esNueva })
+    })
+  }
+
+  return (
+    <>
+      <NombreField value={nombre} onChange={setNombre} placeholder="Ej. Apartamento Bogotá" />
+      <div className="form-row-2">
+        <div className="form-group">
+          <label className="form-label" htmlFor="m-val-ini">{isEdit ? 'Valor inicial' : 'Precio de compra'} (COP)</label>
+          <MoneyInput id="m-val-ini" value={valIni} onChange={setValIni} />
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="m-val-act">Valor actual (COP)</label>
+          <MoneyInput id="m-val-act" value={valAct} onChange={setValAct} placeholder="Igual al inicial si no cambia" />
+        </div>
+      </div>
+      <FechaField id="m-fecha-adq" label="Fecha de adquisición" value={fechaAdq} onChange={setFechaAdq} type="date" />
+      {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
+      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar activo'} onSave={() => void save()} onDelete={eliminar} cancelClassName="sm:ml-auto" />
+    </>
+  )
+}

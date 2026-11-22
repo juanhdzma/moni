@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { AdvancedToggle } from '../../../controls/AdvancedToggle'
+import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
+import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
+import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { previewAdelanto } from '../../../lib/api'
 import { cop, parseMoney } from '../../../lib/format'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { Deuda, DeudaAdelanto, PreviewAdelanto } from '../../../types'
-import { FechaNotas } from './FechaNotas'
-import { usePreview } from './usePreview'
 import { useGuardar } from '@/shell/hooks/useGuardar'
+import { usePreview } from '@/shell/hooks/usePreview'
+import type { Deuda, DeudaAdelanto } from '../../../types'
 
 export function AdelantoForm({ d }: { d: Deuda }) {
   const { setModalStatus } = useModal()
@@ -28,8 +29,8 @@ export function AdelantoForm({ d }: { d: Deuda }) {
   const saldoBody = (): Pick<DeudaAdelanto, 'nuevo_saldo' | 'disponible_nuevo'> =>
     tieneCupo ? { disponible_nuevo: parseMoney(disponible) } : { nuevo_saldo: parseMoney(saldoNuevoIn) }
   const showBreakdown = Boolean(montoV) && saldoEscrito.trim() !== ''
-  const preview = usePreview<PreviewAdelanto>(showBreakdown, `${montoV}:${saldoEscrito}`, () =>
-    previewAdelanto(d._id, { monto: montoV, ...saldoBody() }),
+  const preview = usePreview(showBreakdown ? `${montoV}:${saldoEscrito}` : null, () =>
+    previewAdelanto(d.id, { monto: montoV, ...saldoBody() }),
   )
   const comision = preview?.comision ?? 0
 
@@ -50,24 +51,16 @@ export function AdelantoForm({ d }: { d: Deuda }) {
         notas: notas.trim(),
         registrar_tx: registrarTx,
       }
-      await apiAction(`/api/deuda/${d._id}/adelanto`, body)
+      await apiAction(`/api/deuda/${d.id}/adelanto`, body)
     })
   }
 
   return (
     <>
-      <div className="modal-panel">
-        <div className="modal-panel-col">
-          <div className="modal-panel-label">Debes</div>
-          <div className="modal-panel-value text-deudas">{cop(d.saldo_actual)}</div>
-        </div>
-        {tieneCupo && (
-          <div className="modal-panel-col right">
-            <div className="modal-panel-label">Disponible</div>
-            <div className="text-base font-semibold">{cop(d.disponible)}</div>
-          </div>
-        )}
-      </div>
+      <ModalPanel
+        izquierda={{ label: 'Debes', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
+        derecha={tieneCupo ? { label: 'Disponible', valor: cop(d.disponible) } : undefined}
+      />
       <div className="form-group">
         <label className="form-label" htmlFor="m-monto">Monto del adelanto (COP)</label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
@@ -94,29 +87,25 @@ export function AdelantoForm({ d }: { d: Deuda }) {
           />
         </div>
       )}
-      <div id="adelanto-breakdown" className="breakdown" style={{ display: showBreakdown ? 'block' : 'none' }}>
-        <div className="breakdown-row">
-          <span className="breakdown-label">Deuda total después</span>
-          <span className="breakdown-value text-deudas" id="adelanto-deuda">
-            {preview ? cop(preview.nuevo_saldo) : '—'}
-          </span>
-        </div>
-        <div className="breakdown-row" style={{ display: comision > 0 ? 'flex' : 'none' }} id="adelanto-comision-row">
-          <span className="breakdown-label">Comisión / cargos</span>
-          <span className="breakdown-value text-deudas" id="adelanto-comision">
-            {preview ? cop(comision) : '—'}
-          </span>
-        </div>
-      </div>
+      <Breakdown id="adelanto-breakdown" visible={showBreakdown}>
+        <BreakdownRow id="adelanto-deuda" label="Deuda total después">
+          <span className="text-deudas">{preview ? cop(preview.nuevo_saldo) : '—'}</span>
+        </BreakdownRow>
+        {comision > 0 && (
+          <BreakdownRow id="adelanto-comision" label="Comisión / cargos">
+            <span className="text-deudas">{cop(comision)}</span>
+          </BreakdownRow>
+        )}
+      </Breakdown>
       <FechaNotas
         fechaLabel="Fecha (ahora si se omite)"
         fecha={fecha}
         onFecha={setFecha}
         notas={notas}
         onNotas={setNotas}
-        notasPlaceholder={"Ej. Adelanto cajero"}
+        notasPlaceholder="Ej. Adelanto cajero"
       />
-      <AdvancedToggle checked={registrarTx} onChange={setRegistrarTx} label="Registrar como ingreso" hint="Desactivá si ya lo registraste en otra parte." />
+      <RegistrarToggle checked={registrarTx} onChange={setRegistrarTx} label="Registrar como ingreso" />
       <FormFooter saveLabel="Pedir adelanto" onSave={() => void save()} />
     </>
   )

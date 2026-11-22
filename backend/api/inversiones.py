@@ -2,17 +2,21 @@ from fastapi import APIRouter, HTTPException
 
 from ..calculos import operaciones
 from ..core.db import conexion
-from ..core.estado import coleccion
+from ..core.estado import coleccion, detalle
 from ..core.montos import pesos
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import delete_row, get_row, insert_row, insert_tx, update_row
 from ..core.tablas import CAT_GASTO, CAT_INGRESO, INV_COLS
 from ..schemas.inversion import InvAporte, InvIn, InvRendimiento, InvRetiro
 from ..schemas.previews import MontoPreview, NuevoValor
+from .crud import register_borrado, register_lectura
 from ..calculos.fechas import hoy_bogota
+from ..calculos.formato import plural
 from ..calculos.operaciones.movimientos import ErrorDeDominio, retiro_parcial, valor_estimado_tras_aporte
 
 router = APIRouter()
+register_lectura(router, "inv", "inversiones")
+register_borrado(router, "inv", "inversiones")
 
 DESCRIPCION_RENDIMIENTO = (
     "Un rendimiento cuenta de UN solo lado, nunca de los dos.\n\n"
@@ -22,8 +26,6 @@ DESCRIPCION_RENDIMIENTO = (
     "la inversión y no entró a la cartera; si te la pagan, salió de la inversión\n"
     "y su valor no se mueve."
 )
-
-TIPOS = [{"valor": "fija", "label": "Fija"}, {"valor": "variable", "label": "Variable"}]
 
 
 def _datos_inversion(body: InvIn, hoy) -> dict:
@@ -69,23 +71,10 @@ def actualizar_inv(row_id: int, body: InvIn):
         return get_row(conn, "inversiones", row_id)
 
 
-@router.delete("/api/inv/{row_id}", status_code=204, name="delete_inv")
-def borrar_inv(row_id: int):
-    with conexion() as conn:
-        delete_row(conn, "inversiones", row_id)
-        conn.commit()
-
-
-@router.get("/api/inv/tipos")
-def inv_tipos():
-    return TIPOS
-
-
 @router.get("/api/inv/{inv_id}/rendimiento/defaults")
 def rendimiento_defaults(inv_id: int):
     with conexion() as conn:
-        inv = get_row(conn, "inversiones", inv_id)
-        return {"capitaliza_default": inv["pago"] == "vencimiento"}
+        return {"capitaliza_default": detalle(conn, "inversiones", inv_id)["capitaliza_default"]}
 
 
 @router.post("/api/inv/{inv_id}/rendimiento", description=DESCRIPCION_RENDIMIENTO)
@@ -173,5 +162,5 @@ def inv_resumen():
     with conexion() as conn:
         resumen = operaciones.resumen_inversiones(coleccion(conn, "inversiones"))
     posiciones = len(resumen["fijas"]) + len(resumen["variables"])
-    resumen["texto_posiciones"] = f"{posiciones} {'posición' if posiciones == 1 else 'posiciones'}"
+    resumen["texto_posiciones"] = plural(posiciones, "posición", "posiciones")
     return resumen

@@ -39,7 +39,7 @@ describe('gating', () => {
   it('autenticado monta la app y carga los datos', async () => {
     const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK })
     render(<App />)
-    await waitFor(() => expect(m.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     expect(screen.queryByLabelText('Clave')).toBeNull()
   })
 
@@ -74,7 +74,7 @@ describe('login con clave', () => {
     render(<App />)
     await user.type(await screen.findByLabelText('Clave'), 'una-clave-larga')
     await user.click(screen.getByRole('button', { name: 'Entrar' }))
-    await waitFor(() => expect(m.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     const login = m.callsTo('POST', '/api/auth/login')
     expect(login).toHaveLength(1)
     expect(login[0]?.body).toEqual({ clave: 'una-clave-larga' })
@@ -125,16 +125,16 @@ describe('login con clave', () => {
 
 describe('sesion vencida', () => {
   it('un 401 en un fetch de datos vuelve al login sin reintentar en bucle', async () => {
-    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK, 'GET /api/all': failure(401, 'No autenticado') })
+    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK, 'GET /api/bootstrap': failure(401, 'No autenticado') })
     render(<App />)
     expect(await screen.findByLabelText('Clave')).toBeInTheDocument()
     await new Promise((r) => setTimeout(r, 50))
-    expect(m.callsTo('GET', '/api/all')).toHaveLength(1)
+    expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1)
     expect(m.callsTo('GET', '/api/auth/estado')).toHaveLength(1)
   })
 
   it('un 403 de bloqueo en un fetch de datos vuelve al login bloqueado', async () => {
-    mockFetch({ 'GET /api/auth/estado': ESTADO_OK, 'GET /api/all': json({ detail: 'IP bloqueada', reintentar_en_s: 600 }, 403) })
+    mockFetch({ 'GET /api/auth/estado': ESTADO_OK, 'GET /api/bootstrap': json({ detail: 'IP bloqueada', reintentar_en_s: 600 }, 403) })
     render(<App />)
     expect(await screen.findByText(/Intentá de nuevo en 10 min/)).toBeInTheDocument()
   })
@@ -161,7 +161,7 @@ describe('login con Face ID', () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(await screen.findByRole('button', { name: 'Entrar con Face ID' }))
-    await waitFor(() => expect(m.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     expect(webauthn.startAuthentication).toHaveBeenCalledWith({ optionsJSON: opciones })
     const opc = m.callsTo('POST', '/api/auth/passkey/login/opciones')[0]
     expect(opc?.headers['X-Moni-Request']).toBe('1')
@@ -227,7 +227,7 @@ describe('oferta de Face ID', () => {
     render(<App />)
     await user.type(await screen.findByLabelText('Clave'), 'una-clave-larga')
     await user.click(screen.getByRole('button', { name: 'Entrar' }))
-    await waitFor(() => expect(m.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     return user
   }
 
@@ -290,7 +290,7 @@ describe('oferta de Face ID', () => {
   it('no se ofrece si la sesion ya estaba abierta (no fue login con clave)', async () => {
     const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK })
     render(<App />)
-    await waitFor(() => expect(m.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     await new Promise((r) => setTimeout(r, 20))
     expect(screen.queryByRole('dialog', { name: 'Activar Face ID' })).toBeNull()
   })

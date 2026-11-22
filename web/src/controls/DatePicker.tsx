@@ -14,6 +14,8 @@ interface Pending {
   mm: number
 }
 
+const SIN_FECHA: Pending = { y: 1970, m: 0, d: 1, hh: 0, mm: 0 }
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
 function parseDateTime(value: string): Pending {
@@ -23,8 +25,9 @@ function parseDateTime(value: string): Pending {
   return { y, m: mo - 1, d, hh: hh || 0, mm: mm || 0 }
 }
 
-export function parseValue(value: string, hoy: string): Pending {
-  return parseDateTime(value || hoy)
+export function parseValue(value: string, referencia: string): Pending | null {
+  const origen = value || referencia
+  return origen ? parseDateTime(origen) : null
 }
 
 export function formatValue(s: Pending, isDateTime: boolean): string {
@@ -74,8 +77,9 @@ interface Props {
 export function DatePicker({ value, onChange, type = 'date', id, style }: Props) {
   const isDateTime = type === 'datetime-local'
   const [open, setOpen] = useState(false)
-  const { hoy } = useData().estado
-  const [pending, setPending] = useState<Pending>(() => parseValue(value, hoy))
+  const { hoy, ahora } = useData().estado
+  const referencia = isDateTime ? ahora : hoy
+  const [pending, setPending] = useState<Pending>(() => parseValue(value, referencia) ?? SIN_FECHA)
   const [view, setView] = useState({ y: pending.y, m: pending.m })
   const [timeText, setTimeText] = useState({ hh: '', mm: '' })
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -123,7 +127,8 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
       setOpen(false)
       return
     }
-    const p = parseValue(value, hoy)
+    const p = parseValue(value, referencia)
+    if (!p) return
     setPending(p)
     setView({ y: p.y, m: p.m })
     setTimeText({ hh: pad(p.hh), mm: pad(p.mm) })
@@ -143,10 +148,12 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
   }
 
   const today = () => {
-    const t = parseDateTime(hoy)
-    const p = { ...pending, y: t.y, m: t.m, d: t.d }
+    if (!referencia) return
+    const t = parseDateTime(referencia)
+    const p = isDateTime ? t : { ...pending, y: t.y, m: t.m, d: t.d }
     setPending(p)
     setView({ y: p.y, m: p.m })
+    setTimeText({ hh: pad(p.hh), mm: pad(p.mm) })
     if (!isDateTime) finish(p)
   }
 
@@ -172,7 +179,7 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
     setTimeText((t) => ({ ...t, [field]: pad(val) }))
   }
 
-  const todayCell = parseDateTime(hoy)
+  const todayCell = hoy ? parseDateTime(hoy) : null
   const monthLabel = new Date(view.y, view.m, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
   const label = !value ? 'Seleccionar fecha' : isDateTime ? fmtDateTime(value) : fmtDate(value)
 
@@ -217,7 +224,7 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
             </div>
             <div className="cdp-days">
               {buildCells(view.y, view.m).map((c) => {
-                const isToday = c.y === todayCell.y && c.m === todayCell.m && c.d === todayCell.d
+                const isToday = todayCell !== null && c.y === todayCell.y && c.m === todayCell.m && c.d === todayCell.d
                 const isSel = c.y === pending.y && c.m === pending.m && c.d === pending.d
                 const cls = ['cdp-day', c.dim && 'dim', isToday && 'today', isSel && 'sel'].filter(Boolean).join(' ')
                 return (

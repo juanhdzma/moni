@@ -12,9 +12,9 @@ import { Recurrentes, openRecurrenteMaterializeFormById } from '.'
 
 const H = { 'X-Moni-Request': '1' }
 
-const salario = recurrente({ _id: 1, id: 1, nombre: 'Salario', tipo: 'ingreso', monto: 1000000, frecuencia: 'mensual', fecha_inicio: '2026-08-15', mensual: 1000000, proximo_pago: { fecha: '2026-08-15', dias: 0, texto: 'hoy' } })
-const netflix = recurrente({ _id: 2, id: 2, nombre: 'Netflix', tipo: 'gasto', monto: 30000, frecuencia: 'mensual', fecha_inicio: '2026-08-20', notas: 'plan', mensual: 30000, proximo_pago: { fecha: '2026-08-20', dias: 5, texto: 'en 5d' } })
-const gym = recurrente({ _id: 3, id: 3, nombre: 'Gym', tipo: 'gasto', monto: 120000, frecuencia: 'trimestral', frecuencia_label: 'Trimestral', activo: false, fecha_inicio: '2026-01-01', mensual: 40000, proximo_pago: null })
+const salario = recurrente({ id: 1, nombre: 'Salario', tipo: 'ingreso', monto: 1000000, frecuencia: 'mensual', fecha_inicio: '2026-08-15', mensual: 1000000, proximo_pago: { fecha: '2026-08-15', dias: 0, texto: 'hoy' } })
+const netflix = recurrente({ id: 2, nombre: 'Netflix', tipo: 'gasto', monto: 30000, frecuencia: 'mensual', fecha_inicio: '2026-08-20', notas: 'plan', mensual: 30000, proximo_pago: { fecha: '2026-08-20', dias: 5, texto: 'en 5d' } })
+const gym = recurrente({ id: 3, nombre: 'Gym', tipo: 'gasto', monto: 120000, frecuencia: 'trimestral', frecuencia_label: 'Trimestral', activo: false, fecha_inicio: '2026-01-01', mensual: 40000, proximo_pago: null })
 const items = [salario, netflix, gym]
 
 const frecuencias = [
@@ -128,7 +128,7 @@ describe('toggle', () => {
   it('failure shows the banner and refetches', async () => {
     const f = view(items, resumen(), { 'POST /api/rec/2/pausar': new Response(JSON.stringify({ detail: 'boom' }), { status: 500 }) })
     await userEvent.click((await screen.findAllByTitle('Pausar'))[1] as HTMLElement)
-    await waitFor(() => expect(f.callsTo('GET', '/api/all').length).toBeGreaterThan(0))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap').length).toBeGreaterThan(0))
     await waitFor(() => expect(screen.getByTestId('banner').textContent).toContain('boom'))
   })
 })
@@ -164,7 +164,7 @@ describe('create / edit / delete', () => {
     expect(f.mutations()[0]?.body).toMatchObject({ tipo: 'ingreso', monto: 5000 })
   })
 
-  it('edit PUTs without _id and without activo (the backend keeps it)', async () => {
+  it('edit PUTs without id and without activo (the backend keeps it)', async () => {
     const f = view(items, resumen(), { 'PUT /api/rec/3': {} })
     const row = (await screen.findByText('Gym')).closest('[data-rec]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
@@ -179,7 +179,7 @@ describe('create / edit / delete', () => {
       headers: H,
       body: { nombre: 'Gym', tipo: 'gasto', monto: 120000, frecuencia: 'trimestral', fecha_inicio: '2026-01-01', notas: '' },
     })
-    expect(f.mutations()[0]?.body).not.toHaveProperty('_id')
+    expect(f.mutations()[0]?.body).not.toHaveProperty('id')
     expect(f.mutations()[0]?.body).not.toHaveProperty('activo')
   })
 
@@ -241,7 +241,7 @@ describe('materialize', () => {
     const f = mockFetch({ 'GET /api/rec/resumen': resumen() as unknown as Record<string, unknown>, 'POST /api/tx': {} })
     renderWithProviders(<Harness id={2} />, { estado: estado({ recurrentes: items }) })
     act(() => screen.getByText('open').click())
-    expect(screen.getByText('Registrar · Netflix')).toBeTruthy()
+    expect(await screen.findByText('Registrar · Netflix')).toBeTruthy()
     expect((document.getElementById('m-desc') as HTMLInputElement).value).toBe('Netflix')
     expect((document.getElementById('m-monto') as HTMLInputElement).value).toBe('30.000')
     await userEvent.click(screen.getByText('Registrar'))
@@ -258,15 +258,17 @@ describe('materialize', () => {
     mockFetch({ 'POST /api/tx': new Response(JSON.stringify({ detail: 'x' }), { status: 422 }) })
     renderWithProviders(<Harness id={1} />, { estado: estado({ recurrentes: items }) })
     act(() => screen.getByText('open').click())
+    await screen.findByText('Registrar · Salario')
     await userEvent.clear(document.getElementById('m-monto') as HTMLElement)
     await userEvent.click(screen.getByText('Registrar'))
     await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('x'))
   })
 
-  it('unknown id opens nothing', () => {
+  it('unknown id opens nothing and shows the error banner', async () => {
     mockFetch()
-    renderWithProviders(<Harness id={99} />, { estado: estado({ recurrentes: items }) })
+    renderWithProviders(<><Banner /><Harness id={99} /></>, { estado: estado({ recurrentes: items }) })
     act(() => screen.getByText('open').click())
+    await waitFor(() => expect(screen.getByTestId('banner').textContent).toContain('sin mock'))
     expect(document.getElementById('m-desc')).toBeNull()
   })
 })

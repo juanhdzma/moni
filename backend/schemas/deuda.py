@@ -30,10 +30,16 @@ class DeudaIn(BaseModel):
             self.fecha_inicio = self.proxima_cuota = ""
             self.crear_tx = False
         else:
-            if not self.saldo_actual:
-                raise ValueError("Saldo requerido")
             self.cupo = 0
             self.franquicia = ""
+        return self
+
+
+class DeudaCrear(DeudaIn):
+    @model_validator(mode="after")
+    def exigir_saldo_en_creditos(self):
+        if not self.es_tarjeta and not self.saldo_actual:
+            raise ValueError("Saldo requerido")
         return self
 
 

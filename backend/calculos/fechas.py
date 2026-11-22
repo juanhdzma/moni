@@ -5,6 +5,8 @@ import re
 from typing import Optional
 from zoneinfo import ZoneInfo
 
+from .constantes import DIAS_DESACTUALIZADO
+
 TZ = ZoneInfo("America/Bogota")
 
 MESES_CORTOS = ("ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic.")
@@ -20,6 +22,10 @@ _LEGACY = re.compile(r"^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:[\s,]+(\d{1,2}:\d{2}
 
 def hoy_bogota() -> datetime.date:
     return datetime.datetime.now(TZ).date()
+
+
+def ahora_bogota() -> str:
+    return datetime.datetime.now(TZ).strftime("%Y-%m-%dT%H:%M")
 
 
 def normalizar_fecha(s: Optional[str]) -> str:
@@ -99,7 +105,7 @@ def redondear_js(x: float) -> int:
     return math.floor(x + 0.5)
 
 
-def es_desactualizado(fecha: Optional[str], hoy: datetime.date, dias: int = 30) -> bool:
+def es_desactualizado(fecha: Optional[str], hoy: datetime.date, dias: int = DIAS_DESACTUALIZADO) -> bool:
     d = parse_fecha(fecha) if fecha else None
     if d is None:
         return False

@@ -47,6 +47,7 @@ def derivar_inversion(fila: dict, hoy: datetime.date) -> dict:
     dia = fila.get("dia_pago")
     return {
         **fila,
+        "capitaliza_default": fila.get("pago") == "vencimiento",
         "ganancia": ganancia,
         "ganancia_pct": porcentaje(ganancia, fila["monto_invertido"]),
         "tasa_mv": ea_a_mv(tasa) if fija and tasa else None,

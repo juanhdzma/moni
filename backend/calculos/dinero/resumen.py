@@ -4,7 +4,7 @@ from ..fechas import mes_de
 from ..constantes import tiene_saldo
 from ..numeros import porcentaje
 from .flujos import es_gasto_cartera, flujo_cartera, net_worth
-from .formato import cop, cop_corto, frase, plural, porcentaje_texto
+from ..formato import cop, cop_corto, frase, plural, porcentaje_texto
 from .gastos import PERIODOS_GASTOS
 from .series import (
     _clave_mes,

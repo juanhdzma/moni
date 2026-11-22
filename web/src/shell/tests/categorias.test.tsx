@@ -38,12 +38,12 @@ describe('CategoriasProvider', () => {
     expect(screen.getByTestId('custom')).toHaveTextContent('false')
   })
 
-  it('agregar hace POST /api/categorias y recarga /api/all', async () => {
+  it('agregar hace POST /api/categorias y recarga /api/bootstrap', async () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/categorias': categoriasBase() })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('add'))
-    await waitFor(() => expect(f.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     const [post] = f.callsTo('POST', '/api/categorias')
     expect(post?.headers['X-Moni-Request']).toBe('1')
     expect(post?.body).toEqual({ tipo: 'gasto', nombre: 'Mascotas' })
@@ -54,7 +54,7 @@ describe('CategoriasProvider', () => {
     const f = mockFetch({ 'DELETE /api/categorias?tipo=gasto&nombre=Mascotas': categoriasBase() })
     renderWithProviders(<Harness />, { estado: conMascotas() })
     await user.click(screen.getByText('del'))
-    await waitFor(() => expect(f.callsTo('GET', '/api/all')).toHaveLength(1))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     expect(f.mutations()).toMatchObject([{ method: 'DELETE', headers: { 'X-Moni-Request': '1' } }])
   })
 
@@ -64,6 +64,6 @@ describe('CategoriasProvider', () => {
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('add'))
     await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('ya existe'))
-    expect(f.callsTo('GET', '/api/all')).toHaveLength(0)
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
   })
 })

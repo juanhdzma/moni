@@ -5,12 +5,12 @@ import { cop, numToInput, parseMoney } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvAporte, Inversion } from '../../../types'
-import { FechaField, NotasField, RegistrarToggle } from '../../../controls/FormFields'
+import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { InversionPanel } from './InversionPanel'
 import { hintClass } from './styles'
 import { useGuardar } from '@/shell/hooks/useGuardar'
-import { usePreview } from './usePreview'
+import { usePreview } from '@/shell/hooks/usePreview'
 
 export function AporteForm({ inv }: { inv: Inversion }) {
   const { estado } = useData()
@@ -23,7 +23,7 @@ export function AporteForm({ inv }: { inv: Inversion }) {
   const [registrar, setRegistrar] = useState(true)
 
   const aporteVal = parseMoney(monto)
-  const estimado = usePreview(aporteVal > 0 ? `a:${aporteVal}` : null, () => previewAporte(inv._id, aporteVal))?.nuevo_valor_estimado ?? null
+  const estimado = usePreview(aporteVal > 0 ? `a:${aporteVal}` : null, () => previewAporte(inv.id, aporteVal))?.nuevo_valor_estimado ?? null
 
   const save = async () => {
     const body: InvAporte = {
@@ -33,7 +33,7 @@ export function AporteForm({ inv }: { inv: Inversion }) {
       notas: notas.trim(),
       registrar_tx: registrar,
     }
-    await guardar(() => apiAction(`/api/inv/${inv._id}/aporte`, body))
+    await guardar(() => apiAction(`/api/inv/${inv.id}/aporte`, body))
   }
 
   return (
@@ -61,8 +61,7 @@ export function AporteForm({ inv }: { inv: Inversion }) {
             : 'Estimado como valor actual + aporte. Ajustá si el mercado se movió.'}
         </div>
       </div>
-      <FechaField id="m-fecha" type="date" label="Fecha" value={fecha} onChange={setFecha} />
-      <NotasField id="m-notas" placeholder="Ej. Aporte mensual" value={notas} onChange={setNotas} />
+      <FechaNotas fechaType="date" fechaLabel="Fecha" fecha={fecha} onFecha={setFecha} notas={notas} onNotas={setNotas} notasPlaceholder="Ej. Aporte mensual" />
       <RegistrarToggle checked={registrar} onChange={setRegistrar} />
       <FormFooter saveLabel="Agregar aporte" onSave={() => void save()} />
     </>

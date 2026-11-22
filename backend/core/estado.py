@@ -1,5 +1,6 @@
 from ..calculos import listados, operaciones
 from ..calculos.fechas import hoy_bogota
+from .sql import get_row
 
 
 def filas(conn, table):
@@ -43,5 +44,13 @@ def coleccion(conn, nombre):
     return _derivar(conn, nombre, hoy_bogota(), por_id)
 
 
-def conteos(estado):
-    return {"activos": len(estado["activos"]), "inversiones": len(estado["inversiones"])}
+def detalle(conn, nombre, row_id):
+    por_id = _deudas_por_id(conn) if nombre == "transacciones" else None
+    return DERIVADORES[nombre](get_row(conn, nombre, row_id), hoy_bogota(), por_id)
+
+
+def conteos(conn):
+    return {
+        nombre: conn.execute(f"SELECT COUNT(*) FROM {nombre}").fetchone()[0]
+        for nombre in ("activos", "inversiones")
+    }

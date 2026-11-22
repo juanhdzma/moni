@@ -1,4 +1,4 @@
-from ..fechas import redondear_js
+from .fechas import redondear_js
 
 TONOS = ("positivo", "negativo", "fuerte")
 

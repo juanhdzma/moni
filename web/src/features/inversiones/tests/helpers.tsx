@@ -8,7 +8,6 @@ import type { Inversion, ResumenInversiones } from '../../../types'
 import { Inversiones } from '../index'
 
 export const CDT = inversion({
-  _id: 5,
   id: 5,
   nombre: 'CDT Uno',
   tipo: 'fija',
@@ -25,7 +24,6 @@ export const CDT = inversion({
   rendimiento_esperado: 9584,
 })
 export const FONDO = inversion({
-  _id: 6,
   id: 6,
   nombre: 'Fondo X',
   tipo: 'variable',
@@ -73,10 +71,6 @@ let actual: Inversion[] = DEFAULT
 export const mockInv = (routes: Record<string, unknown> = {}) =>
   mockFetch({
     'GET /api/inv/resumen': () => resumenDe(actual),
-    'GET /api/inv/tipos': [
-      { valor: 'fija', label: 'Fija' },
-      { valor: 'variable', label: 'Variable' },
-    ],
     'GET /api/inv/5/rendimiento/defaults': { capitaliza_default: true },
     ...routes,
   })

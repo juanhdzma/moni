@@ -4,11 +4,14 @@ from ..calculos import operaciones
 from ..calculos.operaciones.frecuencias import opciones_frecuencia
 from ..core.db import conexion
 from ..core.estado import categorias, coleccion
-from ..core.sql import delete_row, get_row, insert_row, update_row
+from ..core.sql import get_row, insert_row, update_row
 from ..core.tablas import REC_COLS
 from ..schemas.recurrente import RecIn
+from .crud import register_borrado, register_lectura
 
 router = APIRouter()
+register_lectura(router, "rec", "recurrentes")
+register_borrado(router, "rec", "recurrentes")
 
 
 def _categoria_sugerida(rec: dict, nombres_por_tipo: dict) -> str:
@@ -35,13 +38,6 @@ def actualizar_rec(row_id: int, body: RecIn):
         update_row(conn, "recurrentes", REC_COLS, row_id, data)
         conn.commit()
         return get_row(conn, "recurrentes", row_id)
-
-
-@router.delete("/api/rec/{row_id}", status_code=204, name="delete_rec")
-def borrar_rec(row_id: int):
-    with conexion() as conn:
-        delete_row(conn, "recurrentes", row_id)
-        conn.commit()
 
 
 @router.post("/api/rec/{row_id}/pausar")

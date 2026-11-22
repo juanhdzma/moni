@@ -18,14 +18,14 @@ afterEach(() => {
   cleanup()
 })
 
-const a1 = activo({ _id: 4, id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', valor_actualizado_en: '2026-06-01T10:00', cambio: 50000, cambio_pct: 50 })
+const a1 = activo({ id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', valor_actualizado_en: '2026-06-01T10:00', cambio: 50000, cambio_pct: 50 })
 
 const resumenDe = (activos: typeof a1[]) => ({
   total_inicial: activos.reduce((s, a) => s + a.valor_inicial, 0),
   total_actual: activos.reduce((s, a) => s + a.valor_actual, 0),
   variacion: activos.length ? 50000 : 0,
   variacion_pct: activos.length ? 50 : 0,
-  segmentos: activos.map((a) => ({ key: String(a._id), label: a.nombre, valor: a.valor_actual })),
+  segmentos: activos.map((a) => ({ key: String(a.id), label: a.nombre, valor: a.valor_actual })),
   items: activos,
   texto_variacion: '50,0% sobre lo pagado',
   texto_conteo: `${activos.length} activo${activos.length === 1 ? '' : 's'}`,
@@ -44,6 +44,15 @@ async function setup(activos = [a1]) {
 }
 
 describe('Activos render', () => {
+  it('el aviso de desactualizado usa el texto del bootstrap', async () => {
+    const viejo = { ...a1, desactualizado: true }
+    mockFetch({ 'GET /api/activos/resumen': resumenDe([viejo]) })
+    renderWithProviders(<Activos active />, {
+      estado: estado({ desactualizado: { dias: 45, texto: 'Sin actualizar hace más de 45 días' } }),
+    })
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Sin actualizar hace más de 45 días')
+  })
+
   it('shows empty state and totals', async () => {
     const { f } = await setup([])
     await waitFor(() => expect(f.calls.some((c) => c.url === '/api/activos/resumen')).toBe(true))
@@ -126,7 +135,7 @@ describe('Activos forms', () => {
       method: 'PUT', url: '/api/activo/4', headers: H,
       body: { nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02' },
     })
-    for (const k of ['crear_tx', '_id', 'valor_actualizado_en', 'cambio', 'desactualizado']) expect(guardados()[0]?.body).not.toHaveProperty(k)
+    for (const k of ['crear_tx', 'id', 'valor_actualizado_en', 'cambio', 'desactualizado']) expect(guardados()[0]?.body).not.toHaveProperty(k)
   })
 
   it('edit with changed value sends it without stamping a date', async () => {

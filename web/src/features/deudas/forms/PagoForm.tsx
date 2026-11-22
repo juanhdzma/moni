@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import { RegistrarToggle } from '../../../controls/FormFields'
+import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
+import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
+import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { previewPago } from '../../../lib/api'
 import { cop, numToInput, parseMoney } from '../../../lib/format'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { Deuda, DeudaPago, PreviewPago } from '../../../types'
-import { FechaNotas } from './FechaNotas'
-import { openDeudaFormById } from './openers'
-import { usePreview } from './usePreview'
 import { useGuardar } from '@/shell/hooks/useGuardar'
+import { usePreview } from '@/shell/hooks/usePreview'
+import type { Deuda, DeudaPago } from '../../../types'
+import { openDeudaFormById } from './openers'
 
 export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
   const ctx = useOpenerCtx()
@@ -28,14 +29,13 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
     : 'Pre-llenado con la cuota mensual — ajustá si aplica.'
 
   const total = parseMoney(monto)
-  const showBreakdown = Boolean(total) && saldoNuevo.trim() !== ''
   const saldoNuevoN = parseMoney(saldoNuevo)
-  const preview = usePreview<PreviewPago>(showBreakdown, `${total}:${saldoNuevoN}`, () =>
-    previewPago(d._id, { total_pagado: total, nuevo_saldo: saldoNuevoN }),
+  const showBreakdown = Boolean(total) && saldoNuevo.trim() !== ''
+  const preview = usePreview(showBreakdown ? `${total}:${saldoNuevoN}` : null, () =>
+    previewPago(d.id, { total_pagado: total, nuevo_saldo: saldoNuevoN }),
   )
 
   const save = async () => {
-    const saldoNuevoV = parseMoney(saldoNuevo)
     if (!monto.trim()) {
       setModalStatus('err', 'Ingresá el monto total pagado')
       return
@@ -46,29 +46,23 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
     }
     await guardar(async () => {
       const body: DeudaPago = {
-        nuevo_saldo: saldoNuevoV,
+        nuevo_saldo: saldoNuevoN,
         total_pagado: total,
         fecha: fecha || undefined,
         notas: notas.trim(),
         registrar_tx: registrarTx,
         avanzar_cuota: !liquidar,
       }
-      await apiAction(`/api/deuda/${d._id}/pago`, body)
+      await apiAction(`/api/deuda/${d.id}/pago`, body)
     })
   }
 
   return (
     <>
-      <div className="modal-panel">
-        <div className="modal-panel-col">
-          <div className="modal-panel-label">Saldo pendiente</div>
-          <div className="modal-panel-value text-deudas">{cop(d.saldo_actual)}</div>
-        </div>
-        <div className="modal-panel-col right">
-          <div className="modal-panel-label">Cuota mensual</div>
-          <div className="text-base font-semibold">{cop(d.cuota_mensual)}</div>
-        </div>
-      </div>
+      <ModalPanel
+        izquierda={{ label: 'Saldo pendiente', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
+        derecha={{ label: 'Cuota mensual', valor: cop(d.cuota_mensual) }}
+      />
       <div className="form-group">
         <label className="form-label" htmlFor="m-monto">Monto total pagado (COP)</label>
         <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
@@ -78,20 +72,14 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         <label className="form-label" htmlFor="m-saldo-nuevo">Saldo capital después del pago</label>
         <MoneyInput id="m-saldo-nuevo" value={saldoNuevo} onChange={setSaldoNuevo} placeholder="Lo que muestra tu banco después" />
       </div>
-      <div id="pay-breakdown" className="breakdown" style={{ display: showBreakdown ? 'block' : 'none' }}>
-        <div className="breakdown-row">
-          <span className="breakdown-label">A capital</span>
-          <span className="breakdown-value text-cartera" id="pay-capital">
-            {preview ? cop(preview.capital) : '—'}
-          </span>
-        </div>
-        <div className="breakdown-row">
-          <span className="breakdown-label">A intereses</span>
-          <span className="breakdown-value text-deudas" id="pay-intereses">
-            {preview ? cop(preview.intereses) : '—'}
-          </span>
-        </div>
-      </div>
+      <Breakdown id="pay-breakdown" visible={showBreakdown}>
+        <BreakdownRow id="pay-capital" label="A capital">
+          <span className="text-cartera">{preview ? cop(preview.capital) : '—'}</span>
+        </BreakdownRow>
+        <BreakdownRow id="pay-intereses" label="A intereses">
+          <span className="text-deudas">{preview ? cop(preview.intereses) : '—'}</span>
+        </BreakdownRow>
+      </Breakdown>
       <FechaNotas
         fechaLabel="Fecha del pago (ahora si se omite)"
         fecha={fecha}
@@ -106,7 +94,7 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         onSave={() => void save()}
         onEdit={() => {
           closeModal()
-          openDeudaFormById(ctx, d._id)
+          openDeudaFormById(ctx, d.id)
         }}
         editLabel="Editar deuda"
       />

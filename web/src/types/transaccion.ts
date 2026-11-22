@@ -1,6 +1,6 @@
-import type { Segmento, TipoTx, WithId } from './comun'
+import type { Segmento, TipoTx } from './comun'
 
-export interface ApiTransaccion {
+export interface Transaccion {
   id: number
   fecha: string
   tipo: TipoTx
@@ -16,16 +16,8 @@ export interface ApiTransaccion {
   metodo_pago: string
 }
 
-export type Transaccion = ApiTransaccion & WithId
-
-export interface TxIn {
+export type TxIn = Pick<Transaccion, 'tipo' | 'categoria' | 'descripcion' | 'monto' | 'notas' | 'tarjeta_id'> & {
   fecha?: string
-  tipo: TipoTx
-  categoria: string
-  descripcion: string
-  monto: number
-  notas: string
-  tarjeta_id: number | null
   op_clave?: string | null
 }
 
@@ -39,7 +31,7 @@ export interface FiltrosTx {
   cat?: string
 }
 
-export interface FilaTx extends ApiTransaccion {
+export interface FilaTx extends Transaccion {
   tipo_label: string
   grupo: string | null
 }

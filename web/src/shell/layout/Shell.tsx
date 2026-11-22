@@ -47,7 +47,7 @@ function AvisoPrecio() {
 export function Shell() {
   const [tab, setTab] = useState<TabId>('dashboard')
   const [drawer, setDrawer] = useState(false)
-  const { estado, version, banner, reportRenderFailure } = useData()
+  const { estado, banner, reportRenderFailure } = useData()
   const { closeModal } = useModal()
   const openerCtx = useOpenerCtx()
 
@@ -157,7 +157,7 @@ export function Shell() {
           <span>{banner}</span>
         </div>
         {TABS.map(({ id, Tab }) => (
-          <TabBoundary key={id} name={id} active={tab === id} resetKeys={[estado, version]} onFail={reportRenderFailure}>
+          <TabBoundary key={id} name={id} active={tab === id} resetKeys={[estado]} onFail={reportRenderFailure}>
             <Tab active={tab === id} />
           </TabBoundary>
         ))}

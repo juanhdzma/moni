@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cargarMovimientos } from '../../lib/api'
+import { useState } from 'react'
+import { cargarMovimientos, cargarResumenDeudas, cargarResumenRecurrentes } from '../../lib/api'
+import { TabActivaProvider } from '@/shell/layout/TabActiva'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { DataProvider, ESTADO_VACIO, useData } from '@/shell/providers/DataProvider'
 import { useVista } from '@/shell/hooks/useVista'
@@ -23,7 +25,7 @@ function Harness({ clave }: { clave: string | null }) {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('useVista', () => {
-  it('carga al montar y vuelve a pedir cuando reload() termina', async () => {
+  it('carga al montar y vuelve a pedir cuando reload() sube la versión', async () => {
     const user = userEvent.setup()
     let n = 1
     const f = mockFetch({ 'GET /api/dashboard/movimientos': () => ({ items: Array.from({ length: n }, (_, i) => ({ id: i })) }) })
@@ -77,5 +79,68 @@ describe('useVista', () => {
     await waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent('mal'))
     expect(screen.getByTestId('banner')).toHaveTextContent('mal')
     expect(screen.getByTestId('n')).toHaveTextContent('-')
+  })
+
+  it('una mutación de deuda refetchea las vistas de deudas y no la de recurrentes', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch({
+      'GET /api/deudas/resumen': { creditos: [] },
+      'GET /api/rec/resumen': { ingresos: [] },
+    })
+    function Vistas() {
+      const { reload } = useData()
+      useVista('deudas', cargarResumenDeudas, ['deudas'])
+      useVista('rec', cargarResumenRecurrentes, ['recurrentes'])
+      return <button onClick={() => void reload(['deudas', 'transacciones'])}>mutar deuda</button>
+    }
+    render(
+      <DataProvider initialEstado={ESTADO_VACIO}>
+        <Vistas />
+      </DataProvider>,
+    )
+    await waitFor(() => expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(1))
+    expect(f.callsTo('GET', '/api/rec/resumen')).toHaveLength(1)
+    await user.click(screen.getByText('mutar deuda'))
+    await waitFor(() => expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(2))
+    expect(f.callsTo('GET', '/api/rec/resumen')).toHaveLength(1)
+  })
+
+  it('una vista de pestaña inactiva no pide nada hasta que se activa, y solo si cambió algo', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch({ 'GET /api/deudas/resumen': { creditos: [] } })
+    function Vista() {
+      useVista('deudas', cargarResumenDeudas, ['deudas'])
+      return null
+    }
+    function Pestana({ activa }: { activa: boolean }) {
+      return (
+        <TabActivaProvider value={activa}>
+          <Vista />
+        </TabActivaProvider>
+      )
+    }
+    function App() {
+      const { reload } = useData()
+      const [activa, setActiva] = useState(false)
+      return (
+        <>
+          <button onClick={() => void reload(['deudas'])}>mutar</button>
+          <button onClick={() => setActiva((a) => !a)}>alternar</button>
+          <Pestana activa={activa} />
+        </>
+      )
+    }
+    render(
+      <DataProvider initialEstado={ESTADO_VACIO}>
+        <App />
+      </DataProvider>,
+    )
+    await user.click(screen.getByText('mutar'))
+    expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(0)
+    await user.click(screen.getByText('alternar'))
+    await waitFor(() => expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(1))
+    await user.click(screen.getByText('alternar'))
+    await user.click(screen.getByText('alternar'))
+    expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(1)
   })
 })

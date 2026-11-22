@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { cargarGastos, cargarPeriodos } from '@/lib/api'
+import { cargarGastos } from '@/lib/api'
 import { cop, copShort, fmtDateShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
 import type { PeriodoGastos } from '@/types'
 import { Barra, FraseTexto, Panel, Periodos, Total } from '@/components/panel'
@@ -11,7 +12,7 @@ export function Gastos() {
   const [period, setPeriod] = useState<PeriodoGastos>('1M')
   const [abierta, setAbierta] = useState<string | null>(null)
   const { data: g } = useVista(period, () => cargarGastos(period))
-  const { data: periodos } = useVista('periodos', cargarPeriodos)
+  const meta = useMeta()
   const entries = g?.categorias ?? []
   const sel = abierta && entries.some((c) => c.categoria === abierta) ? abierta : null
 
@@ -23,7 +24,7 @@ export function Gastos() {
         <Periodos
           id="gastos-period-pills"
           label="Período de gastos"
-          options={periodos?.gastos ?? []}
+          options={(meta?.periodos.gastos ?? []) as { value: PeriodoGastos; label: string }[]}
           value={period}
           onChange={(p) => {
             setPeriod(p)
