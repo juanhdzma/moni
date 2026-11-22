@@ -17,13 +17,14 @@ Personal finance tracker for a single household: spending, credit cards, loans, 
 - [How it fits together](#how-it-fits-together)
 - [Running locally](#running-locally)
 - [Running via Docker](#running-via-docker)
+- [Notifications](#notifications)
 - [Deploying](#deploying)
 - [Testing](#testing)
 - [License](#license)
 
 ## Features
 
-Six data tabs plus Ajustes (custom categories, hidden upcoming operations, currency symbol, backup import/export), all reading from and writing to the same dataset — a debt payment, an investment contribution, or an asset sale can each optionally drop a linked entry into the transaction ledger, so the numbers stay consistent everywhere.
+Six data tabs plus Ajustes (custom categories, currency symbol, push notifications, backup import/export), all reading from and writing to the same dataset — a debt payment, an investment contribution, or an asset sale can each optionally drop a linked entry into the transaction ledger, so the numbers stay consistent everywhere.
 
 **Dashboard** — compact cards that each open with one plain sentence: net worth with a composition bar (activos, inversiones, cartera, deudas), how it moved over time (area chart), where the money goes by category for a chosen period (tap one to see its movements), this month's cash as a sum (in − out = left) with six months of bars, recent transactions, and a "próximas operaciones" list that projects upcoming debt installments, investment yields, and recurring charges so you can confirm or skip them before they happen.
 
@@ -64,7 +65,9 @@ Below 1024px the header nav collapses into a menu button and a slide-out drawer.
 
 FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/db.py`) and, at the same time, serves the built frontend (`web/dist`) as static files: one process, one port in production.
 
-The frontend (`web/`) is React + TypeScript built with Vite. Every tab is one folder under `web/src/features/` that owns its own component and modal forms; all of them read from a single `DataProvider` populated wholesale from `GET /api/all`. Any change (a new transaction, a debt payment, an edited category) goes through the API and then refetches everything. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes. The money math lives in pure, unit-tested functions under `web/src/lib/`.
+All business logic lives in the backend: the money definitions (cash flow vs. net worth), date handling in the `America/Bogota` time zone, derived fields and the upcoming-operations projection are pure functions in `backend/calculos/`, exposed through read endpoints that return data ready to render (`/api/all`, `/api/dashboard/*`, `/api/tx`, `/api/*/resumen`, `/api/proximas-operaciones`). Custom categories, hidden operations and the currency symbol are stored in SQLite too, not in the browser.
+
+The frontend (`web/`) is React + TypeScript built with Vite, and only fetches and paints. Every tab is one folder under `web/src/features/` that owns its own component and modal forms; the shared data comes from a `DataProvider` populated from `GET /api/all`, and each view refetches its calculated endpoint when its filters change or after any mutation. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes.
 
 Styling is Tailwind CSS + shadcn/ui with Recharts charts; Recharts and the Archivo webfont are bundled from npm, so the app works on a LAN with no internet access. Only `web/dist` is reachable over HTTP; the backend code, the SQLite file and the frontend sources are not.
 
@@ -98,6 +101,23 @@ docker compose up --build
 
 Serves on port 8080 (mapped to container port 80). The image is built in two stages: Node builds `web/`, and the final Python image carries only `backend/` and `web/dist`. SQLite file persists in the `moni-data` named volume at `/app/backend/data`.
 
+## Notifications
+
+Moni can send a push notification at 8:00 (America/Bogota) with the operations due today and tomorrow (debt installments, investment yields, recurring charges). The job runs inside the backend process, so run a single instance.
+
+To enable them, open Ajustes, go to Notificaciones, tap activate and accept the browser permission. "Probar" sends a test notification. Each browser or device subscribes on its own.
+
+- **HTTPS is required.** Service workers and the Notification API only work on a secure origin (or `localhost`), so serve the app behind an HTTPS reverse proxy, for example `https://moni.nufi.com.co`. Over plain HTTP on the LAN the panel can't subscribe.
+- **iOS:** push only works from the installed PWA (Safari, Share, Add to Home Screen) and on iOS 16.4 or later; open Moni from the home screen icon and enable notifications from there.
+- **`VAPID_SUBJECT`:** optional env var with the contact (`https://...` or `mailto:...`) sent to the push service in the VAPID claim. Defaults to `https://moni.nufi.com.co`; set your own domain.
+- **VAPID keys** are generated on first start and saved as `vapid_private.pem` in the data volume (`/app/backend/data`). Keep the volume: if the key is lost, every device has to subscribe again.
+- Subscriptions are only accepted for the browsers' push services (FCM, Apple, Mozilla, Windows) and are deleted automatically when the service reports them expired.
+
+```yaml
+    environment:
+      VAPID_SUBJECT: "https://moni.example.com"
+```
+
 ## Deploying
 
 `.github/workflows/build-push.yml` runs lint, typecheck, tests and the frontend build, then the backend tests, and, if all pass, builds and pushes the image to `ghcr.io/<owner>/moni` (tags `latest` and the commit SHA) on every push to `main`. In production, point `docker-compose.yml` at that image instead of `build: .`:
@@ -118,7 +138,7 @@ volumes:
 
 ## Testing
 
-The backend has a pytest suite covering the money-moving paths (card balance adjustments, the composite actions: payment, contribution, withdrawal, sale), input validation, the export/import round-trip and the static docroot. `test_static.py` reads `web/dist`, so build the frontend first.
+The backend has a pytest suite covering the money-moving paths (card balance adjustments, the composite actions: payment, contribution, withdrawal, sale), the `calculos` modules and the calculated endpoints, push, input validation, the export/import round-trip and the static docroot. `test_parity.py` checks the Python money and date math against fixtures captured from the original TypeScript implementation. `test_static.py` reads `web/dist`, so build the frontend first.
 
 ```bash
 cd web && npm ci && npm run build && cd ..
@@ -126,7 +146,7 @@ pip install -r backend/requirements-dev.txt
 python -m pytest backend/tests -q
 ```
 
-The frontend runs on Vitest + Testing Library. It covers the money and date math (cartera vs. net worth flows, recurring-payment dates, frequency normalization, money-input masking) and each tab's key flows, asserting the exact request sent to a mocked `fetch`. The test script pins the timezone to `America/Bogota`, so date bugs don't depend on where you run it.
+The frontend runs on Vitest + Testing Library. It covers formatting helpers, the data and view providers and each tab's key flows, asserting the exact request sent to a mocked `fetch`; the calculations themselves are tested in the backend. The test script pins the timezone to `America/Bogota`, so date bugs don't depend on where you run it.
 
 ```bash
 cd web
@@ -143,6 +163,7 @@ Mutating requests need an `X-Moni-Request` header. Without it the backend answer
 
 ```bash
 curl localhost:8080/api/all
+curl 'localhost:8080/api/dashboard/gastos?periodo=3M'
 curl -X POST localhost:8080/api/tx -H 'X-Moni-Request: 1' -H 'Content-Type: application/json' \
   -d '{"fecha":"2026-07-31","tipo":"gasto","categoria":"Mercado","monto":50000}'
 ```
