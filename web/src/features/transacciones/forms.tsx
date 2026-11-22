@@ -3,56 +3,46 @@ import { useState } from 'react'
 import { FormFooter } from '../../controls/FormFooter'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { Select } from '../../controls/Select'
-import { errMsg, nowStr, normDate, numToInput, parseMoney } from '../../lib/format'
+import { cargarOpcionesTx } from '../../lib/api/transacciones'
+import { numToInput, parseMoney } from '../../lib/format'
 import { useCategorias } from '@/shell/providers/CategoriasProvider'
-import { useData } from '@/shell/providers/DataProvider'
-import { useModal } from '@/shell/providers/ModalProvider'
+import { useVista } from '@/shell/hooks/useVista'
 import type { OpenerCtx } from '@/shell/hooks/openers'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { Transaccion } from '../../types'
+import type { OpcionesTx, Transaccion } from '../../types'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { FechaField, NotasField } from '../../controls/FormFields'
 
 const SIN_CATEGORIAS = 'Sin categorías — agregá una con +'
 
-function initialFecha(tx: Transaccion | null): string {
-  if (!tx) return nowStr()
-  const f = normDate(tx.fecha)
-  if (/^\d{4}-\d{2}-\d{2}$/.test(f)) return `${f}T00:00`
-  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(f) ? f : ''
+function TxForm({ tx }: { tx: Transaccion | null }) {
+  const { data: opciones } = useVista(`tx-opciones:${tx?._id ?? 'nuevo'}`, () => cargarOpcionesTx(tx?._id))
+  if (!opciones) return <p className="py-6 text-center text-sm text-muted-foreground">Cargando...</p>
+  return <TxFormCampos tx={tx} opciones={opciones} />
 }
 
-function TxForm({ tx }: { tx: Transaccion | null }) {
-  const { estado, showBanner } = useData()
-  const { categorias, addCategoria } = useCategorias()
-  const { setModalStatus } = useModal()
+function TxFormCampos({ tx, opciones }: { tx: Transaccion | null; opciones: OpcionesTx }) {
+  const { addCategoria } = useCategorias()
   const guardar = useGuardar()
-  const { crudOp } = useMutations()
+  const { crudOp, crudOpOrBanner } = useMutations()
   const isEdit = tx !== null
-  const tarjetas = estado.deudas.filter((d) => d.es_tarjeta)
+  const { tarjetas, inicial } = opciones
 
-  const [tipo, setTipo] = useState<'ingreso' | 'gasto'>(tx?.tipo === 'ingreso' ? 'ingreso' : 'gasto')
-  const [categoria, setCategoria] = useState(() => {
-    const cats = categorias[tx?.tipo === 'ingreso' ? 'ingreso' : 'gasto'] || []
-    return tx?.categoria || (cats[0] ?? '')
-  })
+  const [tipo, setTipo] = useState(inicial.tipo)
+  const [categoria, setCategoria] = useState(inicial.categoria)
   const [newCatOpen, setNewCatOpen] = useState(false)
   const [newCat, setNewCat] = useState('')
   const [descripcion, setDescripcion] = useState(tx?.descripcion || '')
   const [monto, setMonto] = useState(tx ? numToInput(tx.monto) : '')
-  const [tarjeta, setTarjeta] = useState(() =>
-    tx?.tarjeta_id != null && tarjetas.some((d) => d._id === tx.tarjeta_id) ? String(tx.tarjeta_id) : '',
-  )
-  const [fecha, setFecha] = useState(() => initialFecha(tx))
+  const [tarjeta, setTarjeta] = useState(inicial.tarjeta_id != null ? String(inicial.tarjeta_id) : '')
+  const [fecha, setFecha] = useState(inicial.fecha)
   const [notas, setNotas] = useState(tx?.notas || '')
 
-  const baseCats = categorias[tipo] || []
-  const tipoOriginal = tx?.tipo === 'ingreso' ? 'ingreso' : 'gasto'
-  const cats = tx?.categoria && tipo === tipoOriginal && !baseCats.includes(tx.categoria) ? [...baseCats, tx.categoria] : baseCats
+  const cats = opciones.categorias[tipo]
 
   const changeTipo = (t: 'ingreso' | 'gasto') => {
     setTipo(t)
-    setCategoria((categorias[t] || [])[0] ?? '')
+    setCategoria(opciones.categoria_default[t])
     setNewCatOpen(false)
   }
 
@@ -67,32 +57,15 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
   }
 
   const save = async () => {
-    const montoNum = parseMoney(monto)
-    const tarjeta_id = tipo === 'gasto' && tarjeta ? Number(tarjeta) : null
-
-    if (!categoria) {
-      setModalStatus('err', 'Agregá una categoría con el botón +')
-      return
-    }
-    if (!montoNum || montoNum <= 0) {
-      setModalStatus('err', 'Ingresá un monto válido')
-      return
-    }
-    if (!fecha) {
-      setModalStatus('err', 'Fecha requerida')
-      return
-    }
-
     const data = {
-      fecha: fecha.includes('T') ? fecha : `${fecha}T00:00`,
+      fecha,
       tipo,
       categoria,
       descripcion: descripcion.trim(),
-      monto: montoNum,
+      monto: parseMoney(monto),
       notas: notas.trim(),
-      tarjeta_id,
+      tarjeta_id: tipo === 'gasto' && tarjeta ? Number(tarjeta) : null,
     }
-
     await guardar(async () => {
       if (tx) await crudOp('tx', 'update', { ...data, _id: tx._id })
       else await crudOp('tx', 'add', data)
@@ -101,11 +74,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
 
   const remove = async () => {
     if (!tx || !confirm('¿Eliminar este movimiento?')) return
-    try {
-      await crudOp('tx', 'delete', { _id: tx._id })
-    } catch (err) {
-      showBanner(errMsg(err))
-    }
+    await crudOpOrBanner('tx', 'delete', { _id: tx._id })
   }
 
   return (
@@ -189,7 +158,7 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
             value={tarjeta}
             onChange={setTarjeta}
             ariaLabel="Pagado con"
-            options={[{ value: '', label: 'Efectivo / Débito' }, ...tarjetas.map((d) => ({ value: String(d._id), label: d.nombre }))]}
+            options={[{ value: '', label: 'Efectivo / Débito' }, ...tarjetas.map((d) => ({ value: String(d.id), label: d.nombre }))]}
           />
         </div>
       )}

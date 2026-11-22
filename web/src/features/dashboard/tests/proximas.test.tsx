@@ -4,7 +4,7 @@ import { renderWithProviders } from '../../../test/render'
 import { failure, mockFetch } from '../../../test/mockFetch'
 import type { OperacionProxima } from '../../../types'
 import { Dashboard } from '../index'
-import { PROXIMAS, list, rutas, stat } from './fixtures'
+import { PROXIMAS, frase, list, rutas, stat } from './fixtures'
 
 const spies = vi.hoisted(() => ({ pay: vi.fn(), yield: vi.fn(), mat: vi.fn() }))
 vi.mock('../../deudas', () => ({ openDeudaPayFormById: spies.pay }))
@@ -72,7 +72,7 @@ describe('Próximas operaciones', () => {
   })
 
   it('muestra el mensaje vacío', async () => {
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { hoy: '2026-08-15', items: [], vencidas: 0, salen_total: 0 } }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items: [], vencidas: 0, salen_total: 0, frase: null } }))
     renderWithProviders(<Dashboard active />)
     expect(await screen.findByText('Sin operaciones en los próximos 45 días.')).toBeInTheDocument()
   })
@@ -88,12 +88,20 @@ describe('Próximas operaciones', () => {
     expect(buttons[1]).toHaveAccessibleName('Registrar: Gym')
   })
 
+  it('el corte de visibles sale del backend', async () => {
+    const items = Array.from({ length: 4 }, (_, i) => ({ ...(PROXIMAS.items[0] as OperacionProxima), clave: `recurrente:${i + 1}:2026-08-17`, fuente_id: i + 1, etiqueta: `R${i + 1}` }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items, visibles: 2 } }))
+    renderWithProviders(<Dashboard active />)
+    await screen.findByText('Ver las 4')
+    expect(list().querySelectorAll('.prox-op-row')).toHaveLength(2)
+  })
+
   it('resume por pagar y vencidos con los totales del backend', async () => {
     mockFetch(rutas())
     const { unmount } = renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('dash-proximas')).toHaveTextContent('$70.000 por pagar en los próximos 45 días.'))
     unmount()
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, vencidas: 1, salen_total: 20000 } }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, vencidas: 1, salen_total: 20000, frase: frase('Tenés ', ['1 pago vencido', 'negativo'], ' y ', ['$20.000', 'fuerte'], ' por pagar en 45 días.') } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('dash-proximas')).toHaveTextContent('Tenés 1 pago vencido y $20.000 por pagar en 45 días.'))
   })

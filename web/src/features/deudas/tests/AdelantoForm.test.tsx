@@ -12,30 +12,32 @@ describe('adelanto', () => {
   const abrir = async (user: ReturnType<typeof userEvent.setup>) =>
     user.click(await within(document.getElementById('deudas-grid-tarjeta') as HTMLElement).findByText('Adelanto'))
 
-  it('tarjeta con cupo: deriva saldo desde disponible', async () => {
+  it('tarjeta con cupo: manda el disponible y el backend deriva el saldo', async () => {
     const user = userEvent.setup()
-    const f = conResumen(resumenCompleto, { 'POST /api/deuda/2/adelanto': {}, 'POST /api/deuda/2/adelanto/preview': { comision: 50000 } })
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/2/adelanto': {}, 'POST /api/deuda/2/adelanto/preview': { comision: 50000, nuevo_saldo: 1550000 } })
     renderWithProviders(<Deudas active />, { estado: full() })
     await abrir(user)
     expect(dialog()).toHaveTextContent('Pedir adelanto · Visa Oro')
     await user.type(document.getElementById('m-monto') as HTMLElement, '500000')
     await user.type(document.getElementById('m-disponible-nuevo') as HTMLElement, '3450000')
-    expect(document.getElementById('adelanto-deuda')).toHaveTextContent('1.550.000')
+    await waitFor(() => expect(document.getElementById('adelanto-deuda')).toHaveTextContent('1.550.000'))
     await waitFor(() => expect(document.getElementById('adelanto-comision')).toHaveTextContent('50.000'))
     expect(document.getElementById('adelanto-comision-row')).toHaveStyle({ display: 'flex' })
     const previews = f.mutations().filter((c) => c.url === '/api/deuda/2/adelanto/preview')
-    expect(previews.at(-1)).toMatchObject({ method: 'POST', headers: hdr, body: { monto: 500000, nuevo_saldo: 1550000 } })
+    expect(previews.at(-1)).toMatchObject({ method: 'POST', headers: hdr, body: { monto: 500000, disponible_nuevo: 3450000 } })
     await user.click(screen.getByText('Pedir adelanto'))
     await waitFor(() => expect(acc(f)).toHaveLength(1))
     const m = acc(f)[0]
     expect(m).toMatchObject({ method: 'POST', url: '/api/deuda/2/adelanto', headers: hdr })
     expect(m?.body).toMatchObject({
       monto: 500000,
-      nuevo_saldo: 1550000,
+      disponible_nuevo: 3450000,
       notas: '',
-      descripcion: 'Adelanto · Visa Oro',
       registrar_tx: true,
     })
+    expect(m?.body).not.toHaveProperty('nuevo_saldo')
+    expect(m?.body).not.toHaveProperty('descripcion')
+    expect(m?.body).not.toHaveProperty('fecha')
   })
 
   it('tarjeta sin cupo: pide saldo después; validaciones', async () => {

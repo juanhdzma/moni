@@ -1,3 +1,5 @@
+import type { Frase } from './dashboard'
+
 export interface OperacionProxima {
   clave: string
   tipo: 'deuda' | 'inversion' | 'recurrente'
@@ -18,6 +20,10 @@ export interface ProximasOperaciones {
   items: OperacionProxima[]
   vencidas: number
   salen_total: number
+  dias_ventana: number
+  visibles: number
+  frase: Frase | null
+  texto_vacio: string
 }
 
 export interface OpOculta {

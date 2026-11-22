@@ -2,30 +2,27 @@ import { Button } from '@/components/ui/button'
 import { Pause, Play, Plus } from 'lucide-react'
 import { Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
-import { cop, signStr } from '../../lib/format'
-import { cargarResumenRecurrentes } from '../../lib/api'
+import { cop, errMsg, signStr } from '../../lib/format'
+import { useData } from '@/shell/providers/DataProvider'
+import { useResumenRecurrentes } from './useResumenRecurrentes'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useMutations } from '@/shell/hooks/useMutations'
-import { useVista } from '@/shell/hooks/useVista'
 import type { Recurrente } from '../../types'
 import { openRecurrenteForm, openRecurrenteFormById } from './forms'
 
 function RecCard({ r }: { r: Recurrente }) {
   const ctx = useOpenerCtx()
-  const { crudOpOrBanner } = useMutations()
+  const { apiAction } = useMutations()
+  const { reload, showBanner } = useData()
   const nextStr = r.proximo_pago?.texto ?? null
-  const toggle = () => {
-    void crudOpOrBanner('rec', 'update', {
-      _id: r._id,
-      nombre: r.nombre,
-      tipo: r.tipo,
-      monto: r.monto,
-      frecuencia: r.frecuencia,
-      activo: !r.activo,
-      fecha_inicio: r.fecha_inicio,
-      notas: r.notas,
-    })
+  const toggle = async () => {
+    try {
+      await apiAction(`/api/rec/${r._id}/pausar`)
+    } catch (err) {
+      await reload()
+      showBanner(errMsg(err))
+    }
   }
   const Icono = r.activo ? Pause : Play
   return (
@@ -56,7 +53,7 @@ function RecCard({ r }: { r: Recurrente }) {
       <div className="flex shrink-0 items-center gap-1">
         <button
           type="button"
-          onClick={toggle}
+          onClick={() => void toggle()}
           title={r.activo ? 'Pausar' : 'Activar'}
           aria-label={`${r.activo ? 'Pausar' : 'Activar'}: ${r.nombre}`}
           className="grid size-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -93,7 +90,7 @@ function Lista({ id, titulo, frase, items, emptyMsg, loaded }: { id: string; tit
 
 export function Recurrentes({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { data } = useVista('rec', cargarResumenRecurrentes)
+  const { data } = useResumenRecurrentes()
   const loaded = data !== null
   const neto = data?.neto_mensual ?? 0
   const totalIng = data?.total_ingresos_mensual ?? 0

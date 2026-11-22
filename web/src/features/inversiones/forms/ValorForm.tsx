@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { previewValorInversion } from '../../../lib/api'
-import { cop, nowStr, parseMoney, pct, signStr } from '../../../lib/format'
-import { useModal } from '@/shell/providers/ModalProvider'
+import { cop, parseMoney, pct, signStr } from '../../../lib/format'
+import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvIn, Inversion } from '../../../types'
 import { FechaField } from '../../../controls/FormFields'
@@ -12,12 +12,12 @@ import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from './usePreview'
 
 export function ValorForm({ inv }: { inv: Inversion }) {
-  const { setModalStatus } = useModal()
+  const { estado } = useData()
   const { crudOp } = useMutations()
   const guardar = useGuardar()
   const editar = useEditarInversion(inv)
   const [valor, setValor] = useState('')
-  const [fecha, setFecha] = useState(nowStr())
+  const [fecha, setFecha] = useState(estado.hoy)
   const nuevo = parseMoney(valor)
 
   const cambio = usePreview(nuevo > 0 ? `v:${nuevo}` : null, () => previewValorInversion(inv._id, nuevo))
@@ -28,10 +28,6 @@ export function ValorForm({ inv }: { inv: Inversion }) {
   const gainColor = totalGain >= 0 ? 'text-inversiones-text' : 'text-deudas'
 
   const save = async () => {
-    if (!nuevo || nuevo <= 0) {
-      setModalStatus('err', 'Valor inválido')
-      return
-    }
     const body: InvIn = {
       nombre: inv.nombre,
       tipo: inv.tipo,
@@ -96,7 +92,7 @@ export function ValorForm({ inv }: { inv: Inversion }) {
           </span>
         </div>
       </div>
-      <FechaField id="m-fecha" label="Fecha de valoración" value={fecha} onChange={setFecha} />
+      <FechaField id="m-fecha" type="date" label="Fecha de valoración" value={fecha} onChange={setFecha} />
       <FormFooter saveLabel="Actualizar" onSave={() => void save()} onEdit={editar} editLabel="Editar inversión" />
     </>
   )

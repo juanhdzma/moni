@@ -5,15 +5,13 @@ import { FormFooter } from '../../../controls/FormFooter'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { Select } from '../../../controls/Select'
 import { numToInput, parseMoney } from '../../../lib/format'
-import { useModal } from '@/shell/providers/ModalProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { Deuda } from '../../../types'
+import type { Deuda, DeudaIn } from '../../../types'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 
 const FRANQUICIAS = ['Visa', 'Mastercard', 'Amex', 'Otra'].map((f) => ({ value: f, label: f }))
 
 export function DeudaForm({ d }: { d: Deuda | null }) {
-  const { setModalStatus } = useModal()
   const guardar = useGuardar()
   const { crudOp, crudOpOrBanner } = useMutations()
   const isEdit = d !== null
@@ -30,44 +28,21 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
   const [esNueva, setEsNueva] = useState(true)
 
   const save = async () => {
-    const nombreV = nombre.trim()
-    const saldoV = parseMoney(saldo)
-    if (!nombreV) {
-      setModalStatus('err', 'Nombre requerido')
-      return
+    const data: DeudaIn = {
+      nombre: nombre.trim(),
+      monto_inicial: parseMoney(montoIni),
+      saldo_actual: parseMoney(saldo),
+      tasa_ea: parseFloat(tasa) || 0,
+      cuota_mensual: parseMoney(cuota),
+      fecha_inicio: fechaIni,
+      proxima_cuota: proxima,
+      es_tarjeta: esTarjeta,
+      cupo: parseMoney(cupo),
+      franquicia,
     }
-    if (!esTarjeta && !saldoV) {
-      setModalStatus('err', 'Saldo requerido')
-      return
-    }
-    const data = esTarjeta
-      ? {
-          nombre: nombreV,
-          monto_inicial: 0,
-          saldo_actual: saldoV,
-          tasa_ea: 0,
-          cuota_mensual: 0,
-          fecha_inicio: '',
-          proxima_cuota: '',
-          es_tarjeta: true,
-          cupo: parseMoney(cupo),
-          franquicia,
-        }
-      : {
-          nombre: nombreV,
-          monto_inicial: parseMoney(montoIni),
-          saldo_actual: saldoV,
-          tasa_ea: parseFloat(tasa) || 0,
-          cuota_mensual: parseMoney(cuota),
-          fecha_inicio: fechaIni,
-          proxima_cuota: proxima,
-          es_tarjeta: false,
-          cupo: 0,
-          franquicia: '',
-        }
     await guardar(async () => {
       if (d) await crudOp('deuda', 'update', { ...data, _id: d._id })
-      else await crudOp('deuda', 'add', { ...data, crear_tx: esTarjeta ? false : esNueva })
+      else await crudOp('deuda', 'add', { ...data, crear_tx: esNueva })
     })
   }
 

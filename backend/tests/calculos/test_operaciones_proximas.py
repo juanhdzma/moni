@@ -86,3 +86,27 @@ def test_operaciones_proximas_ventana_de_un_dia():
     ops = op.operaciones_proximas(deudas, [inversion(3, dia_pago=20)], recs, HOY)
     assert ops == [(D(2026, 8, 15), "Salario", 3_000_000), (D(2026, 8, 16), "Credito", -100_000)]
     assert len(op.operaciones_proximas(deudas, [inversion(3, dia_pago=20)], recs, HOY, dias=5)) == 3
+
+
+def test_armar_proximas_frase_con_y_sin_vencidas():
+    r = op.armar_proximas(candidatas_mixtas(), set(), HOY)
+    assert r["frase"]["texto"] == "Tenés 1 pago vencido y $430.010 por pagar en 45 días."
+    assert [p["tono"] for p in r["frase"]["partes"]] == [None, "negativo", None, "fuerte", None]
+    sin_vencidas = op.calcular_proximas_operaciones([deuda(1, cuota_mensual=70_000, proxima_cuota="2026-08-20")], [], [], HOY)
+    assert op.armar_proximas(sin_vencidas, set(), HOY, "US$")["frase"]["texto"] == "US$70.000 por pagar en los próximos 45 días."
+
+
+def test_armar_proximas_plural_vencidas_y_vacio():
+    ops = op.calcular_proximas_operaciones(
+        [deuda(1, proxima_cuota="2026-08-10"), deuda(2, proxima_cuota="2026-08-11")], [], [], HOY
+    )
+    assert "2 pagos vencidos" in op.armar_proximas(ops, set(), HOY)["frase"]["texto"]
+    vacio = op.armar_proximas([], set(), HOY)
+    assert vacio["frase"] is None and vacio["dias_ventana"] == 45
+    assert vacio["texto_vacio"] == "Sin operaciones en los próximos 45 días."
+
+
+def test_armar_proximas_corta_a_20_pero_cuenta_todas():
+    deudas = [deuda(i, proxima_cuota="2026-08-20") for i in range(1, 26)]
+    r = op.armar_proximas(op.calcular_proximas_operaciones(deudas, [], [], HOY), set(), HOY)
+    assert len(r["items"]) == 20 and r["visibles"] == 5

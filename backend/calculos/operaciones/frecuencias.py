@@ -15,6 +15,10 @@ FRECUENCIAS = {
 }
 
 
+def opciones_frecuencia() -> list[dict]:
+    return [{"value": clave, "label": info["label"]} for clave, info in FRECUENCIAS.items()]
+
+
 def frecuencia_label(frecuencia: str) -> str:
     info = FRECUENCIAS.get(frecuencia)
     return info["label"] if info else frecuencia

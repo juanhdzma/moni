@@ -3,6 +3,21 @@ import { TriangleAlert } from 'lucide-react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { copShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import type { Frase, TonoFrase } from '@/types'
+
+const CLASE_TONO: Record<Exclude<TonoFrase, null>, string> = {
+  positivo: 'font-semibold text-inversiones-text',
+  negativo: 'font-semibold text-deudas',
+  fuerte: 'font-semibold',
+}
+
+export function FraseTexto({ frase }: { frase: Frase }) {
+  return (
+    <>
+      {frase.partes.map((p, i) => (p.tono ? <span key={i} className={CLASE_TONO[p.tono]}>{p.texto}</span> : p.texto))}
+    </>
+  )
+}
 
 export function Panel({
   id,
@@ -154,7 +169,9 @@ export function Resumen({
   )
 }
 
-export function Desactualizado() {
+export const TEXTO_DESACTUALIZADO = 'Valor sin actualizar hace más de 1 mes'
+
+export function Desactualizado({ texto = TEXTO_DESACTUALIZADO }: { texto?: string }) {
   const [open, setOpen] = useState(false)
   const id = useId()
   return (
@@ -174,7 +191,7 @@ export function Desactualizado() {
         role="tooltip"
         className={cn(open ? 'absolute top-full right-0 z-20 mt-1 w-max max-w-64 rounded-md bg-foreground px-2.5 py-1.5 text-xs font-medium text-background shadow-lg' : 'sr-only')}
       >
-        Valor sin actualizar hace más de 1 mes
+        {texto}
       </span>
     </span>
   )

@@ -53,6 +53,7 @@ const RESUMEN: ResumenInversiones = {
   total_actual: 1_460_000,
   ganancia: -40_000,
   ganancia_pct: -2.67,
+  texto_posiciones: '2 posiciones',
   segmentos: [
     { key: '5', label: 'CDT Uno', valor: 1_010_000 },
     { key: '6', label: 'Fondo X', valor: 450_000 },
@@ -64,13 +65,21 @@ const RESUMEN: ResumenInversiones = {
 const resumenDe = (invs: Inversion[]): ResumenInversiones =>
   invs === DEFAULT
     ? RESUMEN
-    : { ...RESUMEN, total_invertido: 0, total_actual: 0, ganancia: 0, ganancia_pct: 0, segmentos: [], fijas: invs.filter((i) => i.tipo === 'fija'), variables: invs.filter((i) => i.tipo === 'variable') }
+    : { ...RESUMEN, texto_posiciones: `${invs.length} ${invs.length === 1 ? 'posición' : 'posiciones'}`, total_invertido: 0, total_actual: 0, ganancia: 0, ganancia_pct: 0, segmentos: [], fijas: invs.filter((i) => i.tipo === 'fija'), variables: invs.filter((i) => i.tipo === 'variable') }
 
 export const DEFAULT = [CDT, FONDO]
 let actual: Inversion[] = DEFAULT
 
 export const mockInv = (routes: Record<string, unknown> = {}) =>
-  mockFetch({ 'GET /api/inv/resumen': () => resumenDe(actual), ...routes })
+  mockFetch({
+    'GET /api/inv/resumen': () => resumenDe(actual),
+    'GET /api/inv/tipos': [
+      { valor: 'fija', label: 'Fija' },
+      { valor: 'variable', label: 'Variable' },
+    ],
+    'GET /api/inv/5/rendimiento/defaults': { capitaliza_default: true },
+    ...routes,
+  })
 
 export async function setup(invs = DEFAULT) {
   actual = invs

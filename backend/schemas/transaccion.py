@@ -1,12 +1,13 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-from .validadores import Monto, TipoTx, clave_opcional, fecha_requerida
+from ..calculos.listados import ahora_bogota
+from .validadores import Monto, TipoTx, _check_fecha, clave_opcional
 
 
 class TxIn(BaseModel):
-    fecha: str
+    fecha: Optional[str] = Field(default=None, validate_default=True)
     tipo: TipoTx
     categoria: str = Field(min_length=1)
     descripcion: str = ""
@@ -15,5 +16,10 @@ class TxIn(BaseModel):
     tarjeta_id: Optional[int] = None
     op_clave: Optional[str] = None
 
-    _v_fecha = fecha_requerida("fecha")
+
+    @field_validator("fecha")
+    @classmethod
+    def _v_fecha(cls, v):
+        return ahora_bogota() if v is None else _check_fecha(v, requerida=True)
+
     _v_clave = clave_opcional("op_clave")

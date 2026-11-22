@@ -3,7 +3,7 @@ import { AdvancedToggle } from '../../../controls/AdvancedToggle'
 import { FormFooter } from '../../../controls/FormFooter'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { previewAdelanto } from '../../../lib/api'
-import { cop, nowStr, parseMoney } from '../../../lib/format'
+import { cop, parseMoney } from '../../../lib/format'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { Deuda, DeudaAdelanto, PreviewAdelanto } from '../../../types'
@@ -19,40 +19,35 @@ export function AdelantoForm({ d }: { d: Deuda }) {
   const [monto, setMonto] = useState('')
   const [disponible, setDisponible] = useState('')
   const [saldoNuevoIn, setSaldoNuevoIn] = useState('')
-  const [fecha, setFecha] = useState(nowStr())
+  const [fecha, setFecha] = useState('')
   const [notas, setNotas] = useState('')
   const [registrarTx, setRegistrarTx] = useState(true)
 
   const montoV = parseMoney(monto)
-  const saldoNuevo: number | null = tieneCupo
-    ? disponible.trim()
-      ? d.cupo - parseMoney(disponible)
-      : null
-    : saldoNuevoIn.trim()
-      ? parseMoney(saldoNuevoIn)
-      : null
-  const showBreakdown = Boolean(montoV) && saldoNuevo !== null
-  const preview = usePreview<PreviewAdelanto>(showBreakdown, `${montoV}:${saldoNuevo}`, () =>
-    previewAdelanto(d._id, { monto: montoV, nuevo_saldo: saldoNuevo ?? 0 }),
+  const saldoEscrito = tieneCupo ? disponible : saldoNuevoIn
+  const saldoBody = (): Pick<DeudaAdelanto, 'nuevo_saldo' | 'disponible_nuevo'> =>
+    tieneCupo ? { disponible_nuevo: parseMoney(disponible) } : { nuevo_saldo: parseMoney(saldoNuevoIn) }
+  const showBreakdown = Boolean(montoV) && saldoEscrito.trim() !== ''
+  const preview = usePreview<PreviewAdelanto>(showBreakdown, `${montoV}:${saldoEscrito}`, () =>
+    previewAdelanto(d._id, { monto: montoV, ...saldoBody() }),
   )
   const comision = preview?.comision ?? 0
 
   const save = async () => {
-    if (!montoV || montoV <= 0) {
+    if (!monto.trim()) {
       setModalStatus('err', 'Ingresá el monto del adelanto')
       return
     }
-    if (saldoNuevo === null) {
+    if (!saldoEscrito.trim()) {
       setModalStatus('err', tieneCupo ? 'Ingresá el cupo disponible después del adelanto' : 'Ingresá el saldo después del adelanto')
       return
     }
     await guardar(async () => {
       const body: DeudaAdelanto = {
         monto: montoV,
-        nuevo_saldo: saldoNuevo,
-        fecha,
+        ...saldoBody(),
+        fecha: fecha || undefined,
         notas: notas.trim(),
-        descripcion: `Adelanto · ${d.nombre}`,
         registrar_tx: registrarTx,
       }
       await apiAction(`/api/deuda/${d._id}/adelanto`, body)
@@ -103,7 +98,7 @@ export function AdelantoForm({ d }: { d: Deuda }) {
         <div className="breakdown-row">
           <span className="breakdown-label">Deuda total después</span>
           <span className="breakdown-value text-deudas" id="adelanto-deuda">
-            {showBreakdown && saldoNuevo !== null ? cop(saldoNuevo) : '—'}
+            {preview ? cop(preview.nuevo_saldo) : '—'}
           </span>
         </div>
         <div className="breakdown-row" style={{ display: comision > 0 ? 'flex' : 'none' }} id="adelanto-comision-row">
@@ -114,7 +109,7 @@ export function AdelantoForm({ d }: { d: Deuda }) {
         </div>
       </div>
       <FechaNotas
-        fechaLabel="Fecha"
+        fechaLabel="Fecha (ahora si se omite)"
         fecha={fecha}
         onFecha={setFecha}
         notas={notas}

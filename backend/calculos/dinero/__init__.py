@@ -6,7 +6,10 @@ from .flujos import (
     flujo_patrimonio,
     net_worth,
 )
+from .formato import cop, cop_corto, frase, plural, porcentaje_texto
 from .gastos import (
+    PERIODOS_EVOLUCION_VISIBLES,
+    opciones_periodo,
     MAX_DETALLE,
     NOMBRE_PERIODO_GASTOS,
     PERIODOS_GASTOS,
@@ -15,7 +18,7 @@ from .gastos import (
     gastos_periodo,
     movimientos_recientes,
 )
-from .resumen import PERIODOS_EVOLUCION, este_mes, evolucion, frase_mes, partes_patrimonio, resumen_dashboard
+from .resumen import MESES_ESTE_MES, PERIODOS_EVOLUCION, este_mes, evolucion, frase_mes, partes_patrimonio, resumen_dashboard
 from .series import (
     etiquetas_meses,
     fechas_inversiones,

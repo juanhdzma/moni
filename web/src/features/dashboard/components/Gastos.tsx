@@ -1,24 +1,17 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { cargarGastos } from '@/lib/api'
-import { cop, copShort, fmtDateShort, pct } from '@/lib/format'
+import { cargarGastos, cargarPeriodos } from '@/lib/api'
+import { cop, copShort, fmtDateShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useVista } from '@/shell/hooks/useVista'
 import type { PeriodoGastos } from '@/types'
-import { Barra, Panel, Periodos, Total } from '@/components/panel'
+import { Barra, FraseTexto, Panel, Periodos, Total } from '@/components/panel'
 
-const PERIODOS: readonly { value: PeriodoGastos; label: string }[] = [
-  { value: '1W', label: '1S' },
-  { value: '1M', label: '1M' },
-  { value: '3M', label: '3M' },
-  { value: '6M', label: '6M' },
-  { value: '1Y', label: '1A' },
-  { value: 'ALL', label: 'Todo' },
-]
 export function Gastos() {
   const [period, setPeriod] = useState<PeriodoGastos>('1M')
   const [abierta, setAbierta] = useState<string | null>(null)
   const { data: g } = useVista(period, () => cargarGastos(period))
+  const { data: periodos } = useVista('periodos', cargarPeriodos)
   const entries = g?.categorias ?? []
   const sel = abierta && entries.some((c) => c.categoria === abierta) ? abierta : null
 
@@ -30,7 +23,7 @@ export function Gastos() {
         <Periodos
           id="gastos-period-pills"
           label="Período de gastos"
-          options={PERIODOS}
+          options={periodos?.gastos ?? []}
           value={period}
           onChange={(p) => {
             setPeriod(p)
@@ -39,10 +32,9 @@ export function Gastos() {
         />
       }
       frase={
-        g?.top ? (
+        g?.frase ? (
           <span id="gastos-frase">
-            <span className="font-semibold">{g.top.categoria}</span> se lleva el <span className="font-semibold">{pct(g.top.pct, 0)}%</span> de lo que
-            gastaste en {g.nombre_periodo}.
+            <FraseTexto frase={g.frase} />
           </span>
         ) : undefined
       }

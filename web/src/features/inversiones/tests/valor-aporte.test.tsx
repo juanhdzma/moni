@@ -1,6 +1,7 @@
 import { waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import { failure } from '../../../test/mockFetch'
 import { H, clickInGrid, mockInv, modal, reales, setup, typeMoney, installFakeClock } from './helpers'
 
 installFakeClock()
@@ -28,18 +29,17 @@ describe('actualizar valor (variable)', () => {
       fecha_inicio: '2026-02-01',
       pago: null,
       dia_pago: null,
-      valor_actualizado_en: '2026-11-12T10:30',
+      valor_actualizado_en: '2026-08-20',
     })
   })
 
-  it('valor inválido', async () => {
+  it('valor inválido lo rechaza el backend', async () => {
     const user = userEvent.setup()
-    const f = mockInv()
+    mockInv({ 'PUT /api/inv/6': failure(422, [{ msg: 'Input should be greater than 0' }]) })
     await setup()
     await clickInGrid(user, 'variable', 'Actualizar')
     await user.click(modal().getByRole('button', { name: 'Actualizar' }))
-    expect(document.getElementById('m-status')).toHaveTextContent('Valor inválido')
-    expect(f.mutations()).toHaveLength(0)
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('greater than 0'))
   })
 })
 
@@ -59,8 +59,9 @@ describe('aporte', () => {
       method: 'POST',
       url: '/api/inv/6/aporte',
       headers: H,
-      body: { monto: 50000, nuevo_valor: 500000, fecha: '2026-11-12T10:30', notas: '', registrar_tx: true },
+      body: { monto: 50000, fecha: '2026-08-20', notas: '', registrar_tx: true },
     })
+    expect(reales(f)[0]?.body).not.toHaveProperty('nuevo_valor')
   })
 
   it('nuevo valor explícito, notas y sin registrar', async () => {
@@ -78,13 +79,12 @@ describe('aporte', () => {
     expect(f.mutations()[0]?.body).toMatchObject({ monto: 50000, nuevo_valor: 520000, notas: 'mensual', registrar_tx: false })
   })
 
-  it('monto requerido', async () => {
+  it('monto requerido lo valida el backend', async () => {
     const user = userEvent.setup()
-    const f = mockInv()
+    mockInv({ 'POST /api/inv/6/aporte': failure(422, [{ msg: 'monto requerido' }]) })
     await setup()
     await clickInGrid(user, 'variable', '+ Más')
     await user.click(modal().getByRole('button', { name: 'Agregar aporte' }))
-    expect(document.getElementById('m-status')).toHaveTextContent('Ingresá el monto que agregas')
-    expect(f.mutations()).toHaveLength(0)
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('monto requerido'))
   })
 })

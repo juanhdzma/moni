@@ -11,6 +11,10 @@ from ..schemas.validadores import PeriodoEvolucion, PeriodoGastos
 router = APIRouter()
 
 
+def _simbolo(conn) -> str:
+    return store.ajustes(conn)["moneda_simbolo"]
+
+
 def _estado_de_hoy(conn):
     hoy = hoy_bogota()
     return store.cargar_estado(conn, hoy), hoy
@@ -36,7 +40,8 @@ def dashboard_resumen():
     with conexion() as conn:
         estado, hoy = _estado_de_hoy(conn)
         resumen = dinero.resumen_dashboard(estado, hoy)
-        return {**resumen, "partes": dinero.partes_patrimonio(resumen, store.conteos(estado))}
+        partes = dinero.partes_patrimonio(resumen, store.conteos(estado), _simbolo(conn))
+        return {**resumen, "partes": partes}
 
 
 @router.get("/api/dashboard/evolucion")
@@ -46,7 +51,7 @@ def dashboard_evolucion(
 ):
     with conexion() as conn:
         estado, hoy = _estado_de_hoy(conn)
-        return dinero.evolucion(estado, serie, periodo, hoy)
+        return dinero.evolucion(estado, serie, periodo, hoy, _simbolo(conn))
 
 
 @router.get("/api/dashboard/este-mes")
@@ -63,6 +68,14 @@ def dashboard_gastos(periodo: PeriodoGastos = "1M"):
         return dinero.gastos_periodo(estado["transacciones"], periodo, hoy)
 
 
+@router.get("/api/dashboard/periodos")
+def dashboard_periodos():
+    return {
+        "gastos": dinero.opciones_periodo(dinero.PERIODOS_GASTOS),
+        "evolucion": dinero.opciones_periodo(dinero.PERIODOS_EVOLUCION_VISIBLES),
+    }
+
+
 @router.get("/api/dashboard/movimientos")
 def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
     with conexion() as conn:
@@ -74,6 +87,5 @@ def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
 def calc_tasa(valor: float, tipo: Literal["ea", "mv"] = "ea"):
     if valor <= 0:
         return {"ea": None, "mv": None}
-    if tipo == "ea":
-        return {"ea": valor, "mv": operaciones.ea_a_mv(valor)}
-    return {"ea": operaciones.mv_a_ea(valor), "mv": valor}
+    ea = operaciones.convertir_tasa(valor, tipo)
+    return {"ea": ea, "mv": valor if tipo == "mv" else operaciones.ea_a_mv(ea)}

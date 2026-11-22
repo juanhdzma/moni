@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { AdvancedToggle } from '../../../controls/AdvancedToggle'
 import { MoneyInput } from '../../../controls/MoneyInput'
-import { cop, nowStr, numToInput, parseMoney, pct } from '../../../lib/format'
-import { useModal } from '@/shell/providers/ModalProvider'
+import { cop, numToInput, parseMoney, pct } from '../../../lib/format'
+import { useData } from '@/shell/providers/DataProvider'
+import { useVista } from '@/shell/hooks/useVista'
+import { cargarRendimientoDefaults } from '../../../lib/api/inversiones'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRendimiento, Inversion } from '../../../types'
 import { FechaField, NotasField } from '../../../controls/FormFields'
@@ -17,30 +19,27 @@ const REND_HINT = {
 }
 
 export function RendimientoForm({ inv }: { inv: Inversion }) {
-  const { setModalStatus } = useModal()
+  const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()
   const editar = useEditarInversion(inv)
   const mv = inv.tasa_mv ?? 0
   const expected = inv.rendimiento_esperado ?? 0
   const [monto, setMonto] = useState(expected ? numToInput(expected) : '')
-  const [capitaliza, setCapitaliza] = useState(inv.pago === 'vencimiento')
-  const [fecha, setFecha] = useState(nowStr())
+  const { data: defaults } = useVista(`inv-rend-defaults:${inv._id}`, () => cargarRendimientoDefaults(inv._id))
+  const [eleccion, setCapitaliza] = useState<boolean | null>(null)
+  const capitaliza = eleccion ?? defaults?.capitaliza_default ?? false
+  const [fecha, setFecha] = useState(estado.hoy)
   const [notas, setNotas] = useState('')
   const [registrar, setRegistrar] = useState(true)
 
   const save = async () => {
-    const valor = parseMoney(monto)
-    if (!valor || valor <= 0) {
-      setModalStatus('err', 'Ingresá un monto válido')
-      return
-    }
     const body: InvRendimiento = {
-      monto: valor,
+      monto: parseMoney(monto),
       fecha,
       notas: notas.trim(),
       capitaliza,
-      registrar_tx: !capitaliza && registrar,
+      registrar_tx: registrar,
     }
     await guardar(() => apiAction(`/api/inv/${inv._id}/rendimiento`, body))
   }
@@ -83,7 +82,7 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
           {capitaliza ? REND_HINT.capitaliza : REND_HINT.cuenta}
         </div>
       </div>
-      <FechaField id="m-fecha" label="Fecha" value={fecha} onChange={setFecha} />
+      <FechaField id="m-fecha" type="date" label="Fecha" value={fecha} onChange={setFecha} />
       <NotasField id="m-notas" placeholder="Ej. Intereses mes de junio" value={notas} onChange={setNotas} />
       <div id="wrap-rend-advanced" style={capitaliza ? { display: 'none' } : undefined}>
         <AdvancedToggle

@@ -17,17 +17,22 @@ export type Activo = ApiActivo & WithId
 export interface ActivoIn {
   nombre: string
   valor_inicial: number
-  valor_actual: number
-  fecha_adquisicion: string
-  valor_actualizado_en: string
+  valor_actual?: number
+  fecha_adquisicion?: string
+  valor_actualizado_en?: string
   crear_tx?: boolean
 }
 
 export interface ActivoVenta {
   precio: number
-  fecha: string
+  fecha?: string
   notas: string
   registrar_tx: boolean
+}
+
+export interface ActivoValor {
+  nuevo_valor: number
+  fecha?: string
 }
 
 export interface ResumenActivos {
@@ -37,6 +42,8 @@ export interface ResumenActivos {
   variacion_pct: number
   segmentos: Segmento[]
   items: Activo[]
+  texto_variacion: string
+  texto_conteo: string
 }
 
 export interface PreviewVenta {

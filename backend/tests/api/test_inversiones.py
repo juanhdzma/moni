@@ -1,0 +1,109 @@
+import pytest
+
+from backend.calculos.fechas import hoy_bogota
+
+
+def _crear(client, **extra):
+    body = {"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, **extra}
+    return client.post("/api/inv", json=body).json()
+
+
+def _inv(client, inv_id):
+    return next(i for i in client.get("/api/all").json()["inversiones"] if i["id"] == inv_id)
+
+
+def test_crear_sin_valor_actual_usa_monto_y_fecha_inicio(client):
+    inv = _crear(client, fecha_inicio="2026-03-01")
+    assert inv["valor_actual"] == 1000
+    assert inv["valor_actualizado_en"] == "2026-03-01"
+
+
+def test_crear_sin_fechas_usa_hoy(client):
+    inv = _crear(client)
+    assert inv["fecha_inicio"] == hoy_bogota().isoformat()
+    assert inv["valor_actualizado_en"] == inv["fecha_inicio"]
+
+
+def test_crear_con_crear_tx_registra_el_gasto(client):
+    inv = _crear(client, fecha_inicio="2026-03-01", crear_tx=True)
+    tx = client.get("/api/all").json()["transacciones"][0]
+    assert (tx["tipo"], tx["monto"], tx["fecha"], tx["descripcion"]) == ("gasto", 1000, "2026-03-01", f"Nueva inversión · {inv['nombre']}")
+
+
+@pytest.mark.parametrize("campos", [{"nombre": "   "}, {"monto_invertido": 0}, {"valor_actual": 0}])
+def test_crear_rechaza_nombre_vacio_y_montos_cero(client, campos):
+    body = {"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, **campos}
+    assert client.post("/api/inv", json=body).status_code == 422
+
+
+def test_editar_conserva_fecha_si_el_valor_no_cambia_y_usa_hoy_si_cambia(client):
+    inv = _crear(client, valor_actual=1000, valor_actualizado_en="2026-01-05")
+    base = {"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 1000}
+    igual = client.put(f"/api/inv/{inv['id']}", json=base).json()
+    assert igual["valor_actualizado_en"] == "2026-01-05"
+    cambia = client.put(f"/api/inv/{inv['id']}", json={**base, "valor_actual": 1200}).json()
+    assert cambia["valor_actualizado_en"] == hoy_bogota().isoformat()
+
+
+def test_editar_respeta_fecha_explicita(client):
+    inv = _crear(client)
+    r = client.put(f"/api/inv/{inv['id']}", json={
+        "nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 900, "valor_actualizado_en": "2026-02-02",
+    }).json()
+    assert r["valor_actualizado_en"] == "2026-02-02"
+
+
+def test_editar_y_borrar_inexistente_dan_404(client):
+    body = {"nombre": "X", "tipo": "fija", "monto_invertido": 1}
+    assert client.put("/api/inv/999", json=body).status_code == 404
+    assert client.delete("/api/inv/999").status_code == 404
+
+
+def test_aporte_sin_nuevo_valor_suma_el_monto_al_valor_actual(client):
+    inv = _crear(client, valor_actual=1200)
+    client.post(f"/api/inv/{inv['id']}/aporte", json={"monto": 300, "fecha": "2026-05-01"})
+    i = _inv(client, inv["id"])
+    assert (i["monto_invertido"], i["valor_actual"]) == (1300, 1500)
+
+
+def test_rendimiento_que_capitaliza_ignora_registrar_tx(client):
+    inv = _crear(client, valor_actual=1000)
+    client.post(f"/api/inv/{inv['id']}/rendimiento", json={
+        "monto": 50, "fecha": "2026-05-01", "capitaliza": True, "registrar_tx": True,
+    })
+    estado = client.get("/api/all").json()
+    assert estado["transacciones"] == []
+    assert _inv(client, inv["id"])["valor_actual"] == 1050
+
+
+@pytest.mark.parametrize("pago,esperado", [("vencimiento", True), ("mensual", False), (None, False)])
+def test_capitaliza_default_segun_pago(client, pago, esperado):
+    inv = _crear(client, pago=pago, dia_pago=15 if pago == "mensual" else None)
+    assert client.get(f"/api/inv/{inv['id']}/rendimiento/defaults").json() == {"capitaliza_default": esperado}
+
+
+def test_retiro_total_borra_y_parcial_prorratea(client):
+    inv = _crear(client, valor_actual=1000)
+    r = client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "parcial", "monto": 250, "saldo_queda": 750, "fecha": "2026-05-01"})
+    assert r.status_code == 200
+    i = _inv(client, inv["id"])
+    assert (i["valor_actual"], i["monto_invertido"]) == (750, 750)
+    assert client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "total", "monto": 750, "fecha": "2026-05-01"}).status_code == 200
+    assert client.get("/api/all").json()["inversiones"] == []
+
+
+def test_retiro_parcial_sin_saldo_o_con_saldo_mayor_da_400(client):
+    inv = _crear(client, valor_actual=1000)
+    url = f"/api/inv/{inv['id']}/retiro"
+    base = {"tipo": "parcial", "monto": 100, "fecha": "2026-05-01"}
+    assert client.post(url, json=base).status_code == 400
+    assert client.post(url, json={**base, "saldo_queda": 5000}).status_code == 400
+
+
+def test_resumen_trae_texto_de_posiciones_y_tipos(client):
+    assert client.get("/api/inv/resumen").json()["texto_posiciones"] == "0 posiciones"
+    _crear(client)
+    assert client.get("/api/inv/resumen").json()["texto_posiciones"] == "1 posición"
+    assert client.get("/api/inv/tipos").json() == [
+        {"valor": "fija", "label": "Fija"}, {"valor": "variable", "label": "Variable"},
+    ]

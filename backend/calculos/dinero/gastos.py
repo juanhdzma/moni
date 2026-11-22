@@ -1,6 +1,7 @@
 import datetime
 
 from ..fechas import parse_fecha_hora, restar_meses
+from .formato import frase, porcentaje_texto
 
 PERIODOS_GASTOS = ("1W", "1M", "3M", "6M", "1Y", "ALL")
 NOMBRE_PERIODO_GASTOS = {
@@ -11,7 +12,13 @@ NOMBRE_PERIODO_GASTOS = {
     "1Y": "el último año",
     "ALL": "todo el historial",
 }
+LABEL_PERIODO = {"1W": "1S", "1M": "1M", "3M": "3M", "6M": "6M", "1Y": "1A", "ALL": "Todo"}
+PERIODOS_EVOLUCION_VISIBLES = ("3M", "6M", "1Y", "ALL")
 MAX_DETALLE = 6
+
+
+def opciones_periodo(periodos) -> list[dict]:
+    return [{"value": p, "label": LABEL_PERIODO[p]} for p in periodos]
 
 
 def gastos_en_periodo(txs, periodo: str, hoy: datetime.date) -> list[dict]:
@@ -61,6 +68,15 @@ def agrupar_gastos(txs) -> list[dict]:
     return sorted(filas, key=lambda f: f["valor"], reverse=True)
 
 
+def _frase_top(top: dict, nombre_periodo: str) -> dict:
+    return frase(
+        (top["categoria"], "fuerte"),
+        " se lleva el ",
+        (f"{porcentaje_texto(top['pct'], 0)}%", "fuerte"),
+        f" de lo que gastaste en {nombre_periodo}.",
+    )
+
+
 def gastos_periodo(txs, periodo: str, hoy: datetime.date) -> dict:
     categorias = agrupar_gastos(gastos_en_periodo(txs, periodo, hoy))
     total = sum(c["valor"] for c in categorias)
@@ -74,6 +90,7 @@ def gastos_periodo(txs, periodo: str, hoy: datetime.date) -> dict:
         "total": total,
         "max": max((c["valor"] for c in categorias), default=0),
         "top": top,
+        "frase": top and _frase_top(top, NOMBRE_PERIODO_GASTOS[periodo]),
         "categorias": categorias,
     }
 

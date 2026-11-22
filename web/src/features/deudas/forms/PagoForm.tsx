@@ -3,7 +3,7 @@ import { RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { previewPago } from '../../../lib/api'
-import { cop, nowStr, numToInput, parseMoney } from '../../../lib/format'
+import { cop, numToInput, parseMoney } from '../../../lib/format'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useMutations } from '@/shell/hooks/useMutations'
@@ -20,7 +20,7 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
   const { apiAction } = useMutations()
   const [monto, setMonto] = useState(liquidar ? numToInput(d.saldo_actual) : numToInput(d.cuota_mensual))
   const [saldoNuevo, setSaldoNuevo] = useState(liquidar ? '0' : '')
-  const [fecha, setFecha] = useState(nowStr())
+  const [fecha, setFecha] = useState('')
   const [notas, setNotas] = useState('')
   const [registrarTx, setRegistrarTx] = useState(true)
   const hint = liquidar
@@ -36,7 +36,7 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
 
   const save = async () => {
     const saldoNuevoV = parseMoney(saldoNuevo)
-    if (!total || total <= 0) {
+    if (!monto.trim()) {
       setModalStatus('err', 'Ingresá el monto total pagado')
       return
     }
@@ -45,15 +45,11 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
       return
     }
     await guardar(async () => {
-      const { capital, intereses } = await previewPago(d._id, { total_pagado: total, nuevo_saldo: saldoNuevoV })
-      const desc = `Cuota · ${d.nombre} (capital ${cop(capital)}, intereses ${cop(intereses)})`
       const body: DeudaPago = {
         nuevo_saldo: saldoNuevoV,
         total_pagado: total,
-        intereses,
-        fecha,
+        fecha: fecha || undefined,
         notas: notas.trim(),
-        descripcion: desc,
         registrar_tx: registrarTx,
         avanzar_cuota: !liquidar,
       }
@@ -97,7 +93,7 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         </div>
       </div>
       <FechaNotas
-        fechaLabel="Fecha del pago"
+        fechaLabel="Fecha del pago (ahora si se omite)"
         fecha={fecha}
         onFecha={setFecha}
         notas={notas}

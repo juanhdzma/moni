@@ -7,6 +7,7 @@ import type {
   Movimientos,
   PeriodoEvolucion,
   PeriodoGastos,
+  PeriodosDashboard,
   ProximasOperaciones,
   ResumenDashboard,
   SerieEvolucion,
@@ -16,6 +17,7 @@ import { get, query } from './client'
 export const cargarResumenDashboard = () => get<ResumenDashboard>('/api/dashboard/resumen')
 export const cargarEvolucion = (serie: SerieEvolucion, periodo: PeriodoEvolucion) =>
   get<Evolucion>(`/api/dashboard/evolucion${query({ serie, periodo })}`)
+export const cargarPeriodos = () => get<PeriodosDashboard>('/api/dashboard/periodos')
 export const cargarEsteMes = () => get<EsteMes>('/api/dashboard/este-mes')
 export const cargarGastos = (periodo: PeriodoGastos) => get<GastosPeriodo>(`/api/dashboard/gastos${query({ periodo })}`)
 export const cargarMovimientos = (n?: number) => get<Movimientos>(`/api/dashboard/movimientos${query({ n })}`)

@@ -1,4 +1,4 @@
-import { cop, copShort, pct, signStr } from '@/lib/format'
+import { cop, copShort, signStr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { ParteResumen, ResumenDashboard } from '@/types'
 
@@ -11,13 +11,6 @@ const ESTILO: Record<ParteResumen['id'], { fondo: string; texto: string }> = {
 
 const fondo = (p: ParteResumen) => (p.id === 'balance' && p.negativo ? 'bg-deudas' : ESTILO[p.id].fondo)
 const texto = (p: ParteResumen) => (p.id === 'balance' && p.negativo ? 'text-deudas' : ESTILO[p.id].texto)
-
-function detalleTexto(p: ParteResumen): string {
-  const d = p.detalle_datos
-  if (d && 'ganancia' in d) return `${d.ganancia >= 0 ? '+' : ''}${copShort(d.ganancia)} (${signStr(d.ganancia_pct)}${pct(Math.abs(d.ganancia_pct))}%)`
-  if (d) return `${cop(d.cuota_total)}/mes · ${d.n}`
-  return p.detalle ?? ''
-}
 
 const PARTES_VACIAS: ParteResumen[] = [
   { id: 'activos', nombre: 'Activos', valor: 0, negativo: false, detalle: null },
@@ -71,7 +64,7 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
             <div className={cn('mt-0.5 text-lg font-semibold', texto(p))}>
               {loading ? '—' : `${p.negativo ? '−' : ''}${copShort(Math.abs(p.valor))}`}
             </div>
-            <div className="truncate text-xs text-muted-foreground">{loading ? '' : detalleTexto(p)}</div>
+            <div className="truncate text-xs text-muted-foreground">{loading ? '' : p.detalle}</div>
           </li>
         ))}
       </ul>

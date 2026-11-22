@@ -5,11 +5,12 @@ from ..core.db import conexion
 from ..core.estado import coleccion
 from ..core.montos import pesos
 from ..core.ops_ocultas import ocultar_op
-from ..core.sql import get_row, insert_tx
+from ..core.sql import delete_row, get_row, insert_row, insert_tx, update_row
 from ..core.tablas import CAT_GASTO, CAT_INGRESO, INV_COLS
 from ..schemas.inversion import InvAporte, InvIn, InvRendimiento, InvRetiro
 from ..schemas.previews import MontoPreview, NuevoValor
-from .crud import register_crud
+from ..calculos.fechas import hoy_bogota
+from ..calculos.operaciones.movimientos import ErrorDeDominio, retiro_parcial, valor_estimado_tras_aporte
 
 router = APIRouter()
 
@@ -22,11 +23,69 @@ DESCRIPCION_RENDIMIENTO = (
     "y su valor no se mueve."
 )
 
-register_crud(router, "inv", "inversiones", INV_COLS, InvIn, linked_tx={
-    "tipo": "gasto", "categoria": CAT_GASTO["inversion"], "fecha_field": "fecha_inicio",
-    "desc_fn": lambda d: f"Nueva inversión · {d['nombre']}",
-    "monto_fn": lambda d: d["monto_invertido"],
-})
+TIPOS = [{"valor": "fija", "label": "Fija"}, {"valor": "variable", "label": "Variable"}]
+
+
+def _datos_inversion(body: InvIn, hoy) -> dict:
+    data = body.model_dump()
+    tipo_tasa = data.pop("tasa_tipo")
+    if data["tasa_ea"]:
+        data["tasa_ea"] = operaciones.convertir_tasa(data["tasa_ea"], tipo_tasa)
+    if data["valor_actual"] is None:
+        data["valor_actual"] = data["monto_invertido"]
+    data["fecha_inicio"] = data["fecha_inicio"] or hoy.isoformat()
+    return data
+
+
+@router.post("/api/inv", name="create_inv")
+def crear_inv(body: InvIn):
+    hoy = hoy_bogota()
+    with conexion() as conn:
+        data = _datos_inversion(body, hoy)
+        data["valor_actualizado_en"] = data["valor_actualizado_en"] or data["fecha_inicio"]
+        crear_tx = data.pop("crear_tx")
+        new_id = insert_row(conn, "inversiones", INV_COLS, data)
+        if crear_tx:
+            insert_tx(
+                conn, fecha=data["fecha_inicio"], tipo="gasto", categoria=CAT_GASTO["inversion"],
+                descripcion=f"Nueva inversión · {data['nombre']}", monto=data["monto_invertido"], notas="",
+            )
+        conn.commit()
+        return get_row(conn, "inversiones", new_id)
+
+
+@router.put("/api/inv/{row_id}", name="update_inv")
+def actualizar_inv(row_id: int, body: InvIn):
+    hoy = hoy_bogota()
+    with conexion() as conn:
+        anterior = get_row(conn, "inversiones", row_id)
+        data = _datos_inversion(body, hoy)
+        data.pop("crear_tx")
+        if not data["valor_actualizado_en"]:
+            mismo_valor = anterior["valor_actual"] == data["valor_actual"]
+            data["valor_actualizado_en"] = anterior["valor_actualizado_en"] if mismo_valor else hoy.isoformat()
+        update_row(conn, "inversiones", INV_COLS, row_id, data)
+        conn.commit()
+        return get_row(conn, "inversiones", row_id)
+
+
+@router.delete("/api/inv/{row_id}", status_code=204, name="delete_inv")
+def borrar_inv(row_id: int):
+    with conexion() as conn:
+        delete_row(conn, "inversiones", row_id)
+        conn.commit()
+
+
+@router.get("/api/inv/tipos")
+def inv_tipos():
+    return TIPOS
+
+
+@router.get("/api/inv/{inv_id}/rendimiento/defaults")
+def rendimiento_defaults(inv_id: int):
+    with conexion() as conn:
+        inv = get_row(conn, "inversiones", inv_id)
+        return {"capitaliza_default": inv["pago"] == "vencimiento"}
 
 
 @router.post("/api/inv/{inv_id}/rendimiento", description=DESCRIPCION_RENDIMIENTO)
@@ -53,9 +112,12 @@ def registrar_rendimiento(inv_id: int, body: InvRendimiento):
 def aportar_inv(inv_id: int, body: InvAporte):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
+        nuevo_valor = body.nuevo_valor
+        if nuevo_valor is None:
+            nuevo_valor = valor_estimado_tras_aporte(inv["valor_actual"], body.monto)
         conn.execute(
             "UPDATE inversiones SET monto_invertido = ?, valor_actual = ?, valor_actualizado_en = ? WHERE id = ?",
-            (pesos(inv["monto_invertido"] + body.monto), pesos(body.nuevo_valor), body.fecha, inv_id),
+            (pesos(inv["monto_invertido"] + body.monto), pesos(nuevo_valor), body.fecha, inv_id),
         )
         if body.registrar_tx:
             insert_tx(
@@ -71,18 +133,16 @@ def retirar_inv(inv_id: int, body: InvRetiro):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
         if body.tipo == "total":
-            conn.execute("DELETE FROM inversiones WHERE id = ?", (inv_id,))
+            delete_row(conn, "inversiones", inv_id)
             descripcion = f"Retiro total · {inv['nombre']}"
         else:
-            if body.saldo_queda is None:
-                raise HTTPException(400, "saldo_queda requerido para retiro parcial")
-            if body.saldo_queda > inv["valor_actual"]:
-                raise HTTPException(400, "El saldo que queda no puede superar el valor actual")
-            pct_retiro = (body.monto / inv["valor_actual"]) if inv["valor_actual"] > 0 else 0
-            nuevo_invertido = pesos(max(0.0, inv["monto_invertido"] * (1 - pct_retiro)))
+            try:
+                nuevo = retiro_parcial(inv["valor_actual"], inv["monto_invertido"], body.monto, body.saldo_queda)
+            except ErrorDeDominio as e:
+                raise HTTPException(e.status, e.mensaje)
             conn.execute(
                 "UPDATE inversiones SET valor_actual = ?, monto_invertido = ?, valor_actualizado_en = ? WHERE id = ?",
-                (pesos(body.saldo_queda), nuevo_invertido, body.fecha, inv_id),
+                (nuevo.valor_actual, nuevo.monto_invertido, body.fecha, inv_id),
             )
             descripcion = f"Retiro parcial · {inv['nombre']}"
         if body.registrar_tx:
@@ -105,10 +165,13 @@ def inv_valor_preview(inv_id: int, body: NuevoValor):
 def inv_aporte_preview(inv_id: int, body: MontoPreview):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
-        return {"nuevo_valor_estimado": inv["valor_actual"] + body.monto}
+        return {"nuevo_valor_estimado": valor_estimado_tras_aporte(inv["valor_actual"], body.monto)}
 
 
 @router.get("/api/inv/resumen")
 def inv_resumen():
     with conexion() as conn:
-        return operaciones.resumen_inversiones(coleccion(conn, "inversiones"))
+        resumen = operaciones.resumen_inversiones(coleccion(conn, "inversiones"))
+    posiciones = len(resumen["fijas"]) + len(resumen["variables"])
+    resumen["texto_posiciones"] = f"{posiciones} {'posición' if posiciones == 1 else 'posiciones'}"
+    return resumen

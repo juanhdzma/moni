@@ -95,7 +95,7 @@ function InvCard({ inv }: { inv: Inversion }) {
 
 export function Inversiones({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado, loaded: cargado } = useData()
+  const { loaded: cargado } = useData()
   const { data } = useVista('inv-resumen', cargarResumenInversiones)
   const loaded = cargado && data !== null
   const totalInv = data?.total_invertido ?? 0
@@ -104,7 +104,6 @@ export function Inversiones({ active }: TabProps) {
   const ganPct = data?.ganancia_pct ?? 0
   const fijas = data?.fijas ?? []
   const variables = data?.variables ?? []
-  const posiciones = estado.conteos.inversiones
 
   return (
     <TabContent id="inversiones" active={active}>
@@ -127,7 +126,7 @@ export function Inversiones({ active }: TabProps) {
               )}
               <span className="text-muted-foreground">
                 {totalInv > 0 && ' · '}
-                {posiciones} {posiciones === 1 ? 'posición' : 'posiciones'}
+                {data?.texto_posiciones}
               </span>
             </>
           }

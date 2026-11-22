@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { estado } from '../../../test/factories'
+import { failure } from '../../../test/mockFetch'
 import { renderWithProviders } from '../../../test/render'
 import { Deudas } from '../index'
 import { acc, conResumen, credito, dialog, full, hdr, resumenCompleto, installFakeDate } from './fixtures'
@@ -33,13 +34,13 @@ describe('pago', () => {
     expect(m?.body).toMatchObject({
       nuevo_saldo: 5600000,
       total_pagado: 500000,
-      intereses: 100000,
       notas: 'Cuota #1',
       registrar_tx: true,
       avanzar_cuota: true,
     })
-    expect((m?.body as { fecha: string }).fecha).toBe('2026-09-05T10:30')
-    expect((m?.body as { descripcion: string }).descripcion).toBe('Cuota · Crédito carro (capital $400.000, intereses $100.000)')
+    expect(m?.body).not.toHaveProperty('intereses')
+    expect(m?.body).not.toHaveProperty('descripcion')
+    expect(m?.body).not.toHaveProperty('fecha')
   })
 
   it('muestra el desglose que devuelve el backend para un saldo fraccionario', async () => {
@@ -80,7 +81,7 @@ describe('pago', () => {
     await waitFor(() => expect(acc(f)).toHaveLength(1))
     expect(acc(f)[0]).toMatchObject({
       url: '/api/deuda/1/pago',
-      body: { nuevo_saldo: 0, total_pagado: 6000000, intereses: 0, avanzar_cuota: false, registrar_tx: true },
+      body: { nuevo_saldo: 0, total_pagado: 6000000, avanzar_cuota: false, registrar_tx: true },
     })
   })
 
@@ -98,6 +99,17 @@ describe('pago', () => {
     await user.type(document.getElementById('m-monto') as HTMLElement, '10')
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '7000000')
     expect(status()).not.toHaveTextContent('El saldo nuevo no puede superar el saldo anterior')
+  })
+
+  it('muestra el 400 del backend y no calcula nada en el cliente', async () => {
+    const user = userEvent.setup()
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': failure(400, 'El saldo después del pago no puede superar el saldo actual') })
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await user.click(await pagar('Pagar cuota'))
+    await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '7000000')
+    await user.click(screen.getByText('Registrar pago'))
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('no puede superar el saldo actual'))
+    expect(f.mutations().filter((c) => c.url === '/api/deuda/1/pago')).toHaveLength(1)
   })
 
   it('"Editar deuda" desde el pago abre el form de edición', async () => {

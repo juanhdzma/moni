@@ -6,7 +6,7 @@ import { failure } from '../../../test/mockFetch'
 import { renderWithProviders } from '../../../test/render'
 import { expectLabels, modalBody } from '../../../test/labels'
 import { Transacciones, openTxForm } from '..'
-import { datos, filaDe, listado, mockFetch, ui } from './fixtures'
+import { datos, filaDe, listado, mockFetch, opcionesTx, ui } from './fixtures'
 
 beforeEach(() => vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) }))
 afterEach(() => {
@@ -24,8 +24,17 @@ describe('tx form: edición de datos atípicos', () => {
 
   it('conserva la categoría que ya no está en la lista', async () => {
     const t = tx('gasto', 'Categoría vieja', 100, { _id: 9, id: 9, fecha: '2026-03-10T10:00', descripcion: 'x' })
-    const f = mockFetch({ 'PUT /api/tx/9': { ok: true }, 'GET /api/tx': listado({ items: [filaDe(t)] }) })
+    const f = mockFetch({
+      'PUT /api/tx/9': { ok: true },
+      'GET /api/tx': listado({ items: [filaDe(t)] }),
+      'GET /api/tx/opciones': opcionesTx({
+        categorias: { ingreso: [], gasto: ['Inversión', 'Categoría vieja'] },
+        inicial: { tipo: 'gasto', categoria: 'Categoría vieja', tarjeta_id: null, fecha: '2026-03-10T10:00' },
+      }),
+    })
     const user = await editar(t)
+    expect(await screen.findByRole('button', { name: 'Guardar cambios' })).toBeTruthy()
+    expect(f.callsTo('GET', '/api/tx/opciones?tx_id=9')).toHaveLength(1)
     expect(document.getElementById('m-cat')).toHaveTextContent('Categoría vieja')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
@@ -34,7 +43,11 @@ describe('tx form: edición de datos atípicos', () => {
 
   it('una fecha sin hora abre con T00:00 y guarda', async () => {
     const t = tx('gasto', 'Comida', 100, { _id: 9, id: 9, fecha: '2026-03-10', descripcion: 'x' })
-    const f = mockFetch({ 'PUT /api/tx/9': { ok: true }, 'GET /api/tx': listado({ items: [filaDe(t)] }) })
+    const f = mockFetch({
+      'PUT /api/tx/9': { ok: true },
+      'GET /api/tx': listado({ items: [filaDe(t)] }),
+      'GET /api/tx/opciones': opcionesTx({ inicial: { tipo: 'gasto', categoria: 'Comida', tarjeta_id: null, fecha: '2026-03-10T00:00' } }),
+    })
     const user = await editar(t)
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
@@ -85,20 +98,26 @@ describe('tx form', () => {
     expect(f.mutations()[0]?.body).toMatchObject({ tipo: 'ingreso', categoria: 'Crédito recibido', tarjeta_id: null, monto: 1000 })
   })
 
-  it('validates monto and shows status', async () => {
-    const f = mockFetch()
+  it('sin validar en el cliente: muestra el 422 del backend', async () => {
+    const f = mockFetch({ 'POST /api/tx': failure(422, 'monto: debe ser mayor que 0') })
     const user = await abrirNuevo()
-    await user.click(screen.getByRole('button', { name: 'Agregar' }))
-    expect(document.getElementById('m-status')?.textContent).toBe('Ingresá un monto válido')
+    await user.click(await screen.findByRole('button', { name: 'Agregar' }))
+    await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('monto: debe ser mayor que 0'))
     expect(document.getElementById('m-status')?.className).toContain('err')
-    expect(f.mutations()).toHaveLength(0)
+    expect(f.mutations()[0]?.body).toMatchObject({ monto: 0, fecha: '2026-06-15T10:30' })
   })
 
   it('adds a custom category: POST /api/categorias then selects it', async () => {
     const conMascotas = { ...categoriasBase(), gasto: [...categoriasBase().gasto, { nombre: 'Mascotas', sistema: false }] }
+    let creada = false
     const f = mockFetch({
-      'POST /api/categorias': conMascotas,
+      'POST /api/categorias': () => {
+        creada = true
+        return conMascotas
+      },
       'GET /api/all': apiAll({ ...datos(), categorias: conMascotas }),
+      'GET /api/tx/opciones': () =>
+        opcionesTx({ categorias: { ingreso: ['Crédito recibido'], gasto: creada ? ['Inversión', 'Mascotas'] : ['Inversión'] } }),
     })
     const user = await abrirNuevo()
     await user.click(screen.getByTitle('Agregar categoría'))
@@ -109,7 +128,13 @@ describe('tx form', () => {
   })
 
   it('edit sends PUT without _id and delete confirms then sends DELETE', async () => {
-    const f = mockFetch({ 'PUT /api/tx/1': { ok: true } })
+    const f = mockFetch({
+      'PUT /api/tx/1': { ok: true },
+      'GET /api/tx/opciones': opcionesTx({
+        categorias: { ingreso: [], gasto: ['Inversión', 'Comida'] },
+        inicial: { tipo: 'gasto', categoria: 'Comida', tarjeta_id: 5, fecha: '2026-03-10T10:00' },
+      }),
+    })
     const user = userEvent.setup()
     ui()
     await user.click(await screen.findByRole('button', { name: 'Editar Mercado' }))
@@ -139,12 +164,24 @@ describe('tx form', () => {
     confirm.mockRestore()
   })
 
+  it('un delete fallido recarga y muestra el banner', async () => {
+    const f = mockFetch({ 'DELETE /api/tx/1': failure(500, 'no se pudo borrar') })
+    const user = userEvent.setup()
+    ui()
+    await user.click(await screen.findByRole('button', { name: 'Editar Mercado' }))
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    await waitFor(() => expect(f.callsTo('GET', '/api/all')).toHaveLength(1))
+    confirm.mockRestore()
+  })
+
   it('shows API error in modal status', async () => {
     mockFetch({ 'PUT /api/tx/1': failure(422, 'monto inválido') })
     const user = userEvent.setup()
     ui()
     await user.click(await screen.findByRole('button', { name: 'Editar Mercado' }))
-    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await user.click(await screen.findByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('monto inválido'))
     expect(document.getElementById('m-status')?.className).toContain('err')
     expect(screen.getByText('Editar movimiento')).toBeTruthy()
@@ -165,7 +202,7 @@ describe('labels', () => {
     const user = userEvent.setup()
     renderWithProviders(<Transacciones active />, { estado: datos() })
     await user.click(screen.getByRole('button', { name: 'Nuevo movimiento' }))
-    await user.click(screen.getByRole('button', { name: 'Gasto' }))
+    await user.click(await screen.findByRole('button', { name: 'Gasto' }))
     expectLabels(modalBody(), {
       Categoría: 'm-cat',
       Descripción: 'm-desc',

@@ -11,10 +11,7 @@ import type { OperacionProxima } from '@/types'
 import { openDeudaPayFormById } from '../../deudas'
 import { openInvYieldFormById } from '../../inversiones'
 import { openRecurrenteMaterializeFormById } from '../../recurrentes'
-import { Panel } from '@/components/panel'
-
-const VISIBLES = 5
-const MAX = 20
+import { FraseTexto, Panel } from '@/components/panel'
 
 function tinta(e: OperacionProxima): string {
   if (e.tipo === 'deuda') return 'text-deudas'
@@ -51,23 +48,11 @@ export function ProximasOperaciones() {
     await reload()
   }
 
-  const capped = events.slice(0, MAX)
-  const shown = todas ? capped : capped.slice(0, VISIBLES)
-  const vencidas = data?.vencidas ?? 0
-  const salen = data?.salen_total ?? 0
-  const frase = !events.length ? undefined : vencidas ? (
-    <>
-      Tenés <span className="font-semibold text-deudas">{vencidas} {vencidas === 1 ? 'pago vencido' : 'pagos vencidos'}</span> y{' '}
-      <span className="font-semibold">{cop(salen)}</span> por pagar en 45 días.
-    </>
-  ) : (
-    <>
-      <span className="font-semibold">{cop(salen)}</span> por pagar en los próximos 45 días.
-    </>
-  )
+  const visibles = data?.visibles ?? 0
+  const shown = todas ? events : events.slice(0, visibles)
 
   return (
-    <Panel id="dash-proximas" titulo="Lo que viene" frase={frase}>
+    <Panel id="dash-proximas" titulo="Lo que viene" frase={data?.frase ? <FraseTexto frase={data.frase} /> : undefined}>
       {!loaded ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
@@ -75,7 +60,7 @@ export function ProximasOperaciones() {
           ))}
         </div>
       ) : !events.length ? (
-        <p className="py-3 text-sm text-muted-foreground">Sin operaciones en los próximos 45 días.</p>
+        <p className="py-3 text-sm text-muted-foreground">{data?.texto_vacio}</p>
       ) : (
         <>
           <ul id="dash-upcoming" className="divide-y">
@@ -123,14 +108,14 @@ export function ProximasOperaciones() {
               )
             })}
           </ul>
-          {capped.length > VISIBLES && (
+          {events.length > visibles && (
             <button
               type="button"
               onClick={() => setTodas((v) => !v)}
               aria-expanded={todas}
               className="mt-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground"
             >
-              {todas ? 'Ver menos' : `Ver las ${capped.length}`}
+              {todas ? 'Ver menos' : `Ver las ${events.length}`}
             </button>
           )}
         </>

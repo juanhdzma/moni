@@ -3,12 +3,12 @@ import { PartyPopper, Plus, CreditCard } from 'lucide-react'
 import { Barra, Panel, Resumen } from '@/components/panel'
 import { Button } from '@/components/ui/button'
 import { cargarResumenDeudas } from '../../lib/api'
-import { FRANQUICIA_ICONS, cop, fmtDate, pct } from '../../lib/format'
+import { FRANQUICIA_ICONS, cop, fmtDate } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useVista } from '@/shell/hooks/useVista'
-import type { Deuda, InteresesPagados, Nivel } from '../../types'
+import type { Deuda, Nivel } from '../../types'
 import { openDeudaAdelantoFormById, openDeudaForm, openDeudaFormById, openDeudaPayFormById } from './forms/openers'
 
 const itemCls = 'rounded-xl border p-4'
@@ -17,8 +17,6 @@ const miniValue = 'text-sm font-semibold'
 
 const COLOR_PROGRESO: Record<Nivel, string> = { alto: 'bg-inversiones', medio: 'bg-activos', bajo: 'bg-deudas' }
 const COLOR_USO: Record<Nivel, string> = { alto: 'bg-deudas', medio: 'bg-alerta', bajo: 'bg-inversiones' }
-
-const fmtIntereses = (i: InteresesPagados) => (i.exacto ? '' : '~') + cop(i.valor)
 
 function Item({ nombre, badge, sub, children, actions, className }: { nombre: string; badge?: ReactNode; sub: ReactNode; children: ReactNode; actions: ReactNode; className?: string }) {
   return (
@@ -36,16 +34,12 @@ function Item({ nombre, badge, sub, children, actions, className }: { nombre: st
 
 function PrestamoCard({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
-  const intereses = d.intereses_pagados
+  const frases = d.frases
   return (
     <Item
       nombre={d.nombre}
-      badge={d.meses_restantes ? <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">~{d.meses_restantes}m</span> : undefined}
-      sub={
-        <>
-          {pct(d.tasa_ea)}% EA · {cop(d.cuota_mensual)}/mes
-        </>
-      }
+      badge={frases?.meses_restantes_texto ? <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{frases.meses_restantes_texto}</span> : undefined}
+      sub={frases?.detalle}
       actions={
         <>
           <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d._id)}>
@@ -62,7 +56,7 @@ function PrestamoCard({ d }: { d: Deuda }) {
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="text-2xl font-semibold leading-none tracking-tight text-deudas">{cop(d.saldo_actual)}</div>
-        <div className="text-sm font-medium text-muted-foreground">{pct(d.progreso_pct)}% pagado</div>
+        <div className="text-sm font-medium text-muted-foreground">{frases?.progreso_texto}</div>
       </div>
       <div className="mt-3">
         <Barra valor={Math.min(100, d.progreso_pct)} max={100} className={COLOR_PROGRESO[d.nivel_progreso]} />
@@ -72,14 +66,11 @@ function PrestamoCard({ d }: { d: Deuda }) {
           <div className={miniLabel}>Capital</div>
           <div className={miniValue}>{cop(d.capital_pagado)}</div>
         </div>
-        {intereses !== null && (
+        {frases?.intereses_texto != null && (
           <div className="text-center">
             <div className={miniLabel}>Intereses</div>
-            <div
-              className={miniValue + ' text-deudas'}
-              title={intereses.exacto ? 'Suma de los pagos registrados en Moni' : 'Estimado por amortización — todavía no hay pagos registrados'}
-            >
-              {fmtIntereses(intereses)}
+            <div className={miniValue + ' text-deudas'} title={frases.intereses_ayuda}>
+              {frases.intereses_texto}
             </div>
           </div>
         )}
@@ -107,7 +98,7 @@ function TarjetaCard({ d }: { d: Deuda }) {
           <img src={FRANQUICIA_ICONS[d.franquicia] || FRANQUICIA_ICONS.Otra} width="20" height="20" alt={d.franquicia || 'Tarjeta'} />
         </span>
       }
-      sub={d.cupo > 0 ? `Cupo ${cop(d.cupo)}` : 'Sin cupo definido'}
+      sub={d.frases?.detalle}
       actions={
         <>
           <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d._id, true)}>
@@ -154,13 +145,13 @@ function Empty({ icon, titulo, texto }: { icon: ReactNode; titulo: string; texto
 
 function Terminada({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
-  const intereses = d.intereses_pagados
+  const frases = d.frases
   return (
     <Item
       className="opacity-80"
       nombre={d.nombre}
       badge={<span className="shrink-0 rounded-full bg-inversiones/15 px-2 py-0.5 text-xs font-medium text-inversiones-text">Saldado</span>}
-      sub={<>{pct(d.tasa_ea)}% EA</>}
+      sub={frases?.detalle}
       actions={
         <button className="btn btn-dim btn-sm flex-1" onClick={() => openDeudaFormById(ctx, d._id)}>
           Ver / Editar
@@ -169,7 +160,7 @@ function Terminada({ d }: { d: Deuda }) {
     >
       <div className="text-xl font-semibold leading-none tracking-tight">{cop(d.monto_inicial)}</div>
       <div className="mt-1 text-sm text-muted-foreground">capital total pagado</div>
-      {intereses !== null && <div className="mt-1 text-sm text-deudas">{fmtIntereses(intereses)} en intereses</div>}
+      {frases?.intereses_saldada_texto && <div className="mt-1 text-sm text-deudas">{frases.intereses_saldada_texto}</div>}
     </Item>
   )
 }
@@ -196,19 +187,18 @@ export function Deudas({ active }: TabProps) {
           color="bg-deudas"
           segmentos={data?.segmentos ?? []}
           dato={
-            <span className="text-muted-foreground">
-              <strong className="font-semibold text-foreground">{cop(data?.total_cuotas ?? 0)}</strong>/mes en cuotas
-              {(data?.total_intereses ?? 0) > 0 && (
-                <>
-                  {' · '}
-                  <strong className="font-semibold text-deudas">
-                    {data?.intereses_aproximado ? '~' : ''}
-                    {cop(data?.total_intereses ?? 0)}
-                  </strong>{' '}
-                  pagados en intereses
-                </>
-              )}
-            </span>
+            data && (
+              <span className="text-muted-foreground">
+                <strong className="font-semibold text-foreground">{data.dato.cuotas}</strong>
+                {data.dato.cuotas_sufijo}
+                {data.dato.intereses && (
+                  <>
+                    {' · '}
+                    <strong className="font-semibold text-deudas">{data.dato.intereses}</strong> {data.dato.intereses_sufijo}
+                  </>
+                )}
+              </span>
+            )
           }
           extra={
             <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openDeudaForm(ctx)}>

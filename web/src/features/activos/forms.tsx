@@ -2,59 +2,50 @@ import { useState, type ReactNode } from 'react'
 import { AdvancedToggle } from '../../controls/AdvancedToggle'
 import { FormFooter } from '../../controls/FormFooter'
 import { MoneyInput } from '../../controls/MoneyInput'
-import { cop, nowStr, numToInput, parseMoney, pct, signStr, todayStr } from '../../lib/format'
+import { cop, numToInput, parseMoney, pct, signStr } from '../../lib/format'
 import { previewValorActivo, previewVenta } from '../../lib/api'
 import { useOpenerCtx, type OpenerCtx } from '@/shell/hooks/openers'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { useVista } from '@/shell/hooks/useVista'
-import type { Activo, ActivoVenta } from '../../types'
+import { useData } from '@/shell/providers/DataProvider'
+import type { Activo, ActivoIn, ActivoValor, ActivoVenta } from '../../types'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { FechaField, NotasField, RegistrarToggle } from '../../controls/FormFields'
 
 const tone = (n: number) => (n >= 0 ? 'text-inversiones-text' : 'text-deudas')
 
-
 export function openActivoForm(ctx: OpenerCtx, activo: Activo | null = null): void {
   ctx.openModal(activo ? 'Editar activo' : 'Nuevo activo', <ActivoForm activo={activo} />)
 }
 
-export function openActivoFormById(ctx: OpenerCtx, id: number): void {
-  openActivoForm(ctx, ctx.estado.activos.find((a) => a._id === id) ?? null)
-}
-
-export function openActivoUpdateFormById(ctx: OpenerCtx, id: number): void {
-  const a = ctx.estado.activos.find((x) => x._id === id)
-  if (!a) return
+export function openActivoUpdateForm(ctx: OpenerCtx, a: Activo): void {
   ctx.openModal(`Actualizar valor · ${a.nombre}`, <ActivoUpdateForm activo={a} />)
 }
 
-export function openActivoSellFormById(ctx: OpenerCtx, id: number): void {
-  const a = ctx.estado.activos.find((x) => x._id === id)
-  if (!a) return
+export function openActivoSellForm(ctx: OpenerCtx, a: Activo): void {
   ctx.openModal(`Vender · ${a.nombre}`, <ActivoSellForm activo={a} />)
 }
 
 function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
   const isEdit = activo !== null
-  const { setModalStatus } = useModal()
   const guardar = useGuardar()
+  const { hoy } = useData().estado
   const { crudOp, crudOpOrBanner } = useMutations()
   const [nombre, setNombre] = useState(activo?.nombre ?? '')
   const [valIni, setValIni] = useState(activo ? numToInput(activo.valor_inicial) : '')
   const [valAct, setValAct] = useState(activo ? numToInput(activo.valor_actual) : '')
-  const [fechaAdq, setFechaAdq] = useState(activo?.fecha_adquisicion?.split('T')[0] || todayStr())
+  const [fechaAdq, setFechaAdq] = useState(activo?.fecha_adquisicion?.split('T')[0] || hoy)
   const [esNueva, setEsNueva] = useState(true)
 
   const save = async () => {
-    const nom = nombre.trim()
-    const ini = parseMoney(valIni)
-    const act = parseMoney(valAct)
-    if (!nom) { setModalStatus('err', 'Nombre requerido'); return }
-    if (!ini) { setModalStatus('err', 'Precio de compra requerido'); return }
-    const valorActual = act || ini
-    const valorActualizadoEn = !activo ? fechaAdq : activo.valor_actual === valorActual ? activo.valor_actualizado_en : todayStr()
-    const data = { nombre: nom, valor_inicial: ini, valor_actual: valorActual, fecha_adquisicion: fechaAdq, valor_actualizado_en: valorActualizadoEn }
+    const valorActual = parseMoney(valAct)
+    const data: ActivoIn = {
+      nombre: nombre.trim(),
+      valor_inicial: parseMoney(valIni),
+      fecha_adquisicion: fechaAdq,
+      ...(valorActual > 0 && { valor_actual: valorActual }),
+    }
     await guardar(async () => {
       if (activo) await crudOp('activo', 'update', { ...data, _id: activo._id })
       else await crudOp('activo', 'add', { ...data, crear_tx: esNueva })
@@ -92,20 +83,20 @@ function ActivoForm({ activo }: { activo: Activo | null }): ReactNode {
 
 function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
   const ctx = useOpenerCtx()
-  const { closeModal, setModalStatus } = useModal()
+  const { closeModal } = useModal()
   const guardar = useGuardar()
-  const { crudOp } = useMutations()
+  const { apiAction } = useMutations()
   const [nuevoTxt, setNuevoTxt] = useState('')
-  const [fecha, setFecha] = useState(nowStr())
+  const [fecha, setFecha] = useState('')
   const { cambio, cambio_pct: cambioPct } = a
   const nuevo = parseMoney(nuevoTxt)
   const { data: prev } = useVista(nuevo > 0 ? `activo-valor:${a._id}:${nuevo}` : null, () => previewValorActivo(a._id, nuevo))
   const { delta, total, total_pct: totalPct } = prev ?? { delta: 0, total: 0, total_pct: 0 }
 
   const save = async () => {
-    if (!nuevo || nuevo <= 0) { setModalStatus('err', 'Valor inválido'); return }
     await guardar(async () => {
-      await crudOp('activo', 'update', { ...a, valor_actual: nuevo, valor_actualizado_en: fecha, _id: a._id })
+      const body: ActivoValor = { nuevo_valor: nuevo, ...(fecha && { fecha }) }
+      await apiAction(`/api/activo/${a._id}/valor`, body)
     })
   }
 
@@ -141,18 +132,17 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
           </span>
         </div>
       </div>
-      <FechaField id="m-fecha" label="Fecha de valoración" value={fecha} onChange={setFecha} />
-      <FormFooter saveLabel="Actualizar" onSave={() => void save()} onEdit={() => { closeModal(); openActivoFormById(ctx, a._id) }} editLabel="Editar activo" cancelClassName="sm:ml-auto" />
+      <FechaField id="m-fecha" label="Fecha de valoración (hoy si se omite)" value={fecha} onChange={setFecha} />
+      <FormFooter saveLabel="Actualizar" onSave={() => void save()} onEdit={() => { closeModal(); openActivoForm(ctx, a) }} editLabel="Editar activo" cancelClassName="sm:ml-auto" />
     </>
   )
 }
 
 function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
-  const { setModalStatus } = useModal()
   const guardar = useGuardar()
   const { apiAction } = useMutations()
   const [precioTxt, setPrecioTxt] = useState(numToInput(a.valor_actual))
-  const [fecha, setFecha] = useState(nowStr())
+  const [fecha, setFecha] = useState('')
   const [notas, setNotas] = useState('')
   const [registrarTx, setRegistrarTx] = useState(true)
   const precio = parseMoney(precioTxt)
@@ -161,9 +151,8 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
   const vsAct = prev?.vs_actual ?? 0
 
   const save = async () => {
-    if (!precio || precio <= 0) { setModalStatus('err', 'Precio de venta inválido'); return }
     await guardar(async () => {
-      const body: ActivoVenta = { precio, fecha, notas: notas.trim(), registrar_tx: registrarTx }
+      const body: ActivoVenta = { precio, notas: notas.trim(), registrar_tx: registrarTx, ...(fecha && { fecha }) }
       await apiAction(`/api/activo/${a._id}/venta`, body)
     })
   }
@@ -198,7 +187,7 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
           </span>
         </div>
       </div>
-      <FechaField id="m-fecha" label="Fecha de venta" value={fecha} onChange={setFecha} />
+      <FechaField id="m-fecha" label="Fecha de venta (hoy si se omite)" value={fecha} onChange={setFecha} />
       <NotasField id="m-notas" placeholder="Ej. Vendido a tercero" value={notas} onChange={setNotas} labelClassName="" />
       <RegistrarToggle checked={registrarTx} onChange={setRegistrarTx} />
       <FormFooter saveLabel="Confirmar venta" onSave={() => void save()} cancelClassName="sm:ml-auto" />

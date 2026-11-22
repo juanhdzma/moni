@@ -1,7 +1,7 @@
 import { deuda, estado, tx } from '../../../test/factories'
 import { mockFetch as base } from '../../../test/mockFetch'
 import { renderWithProviders } from '../../../test/render'
-import type { ListadoTx } from '../../../types'
+import type { ListadoTx, OpcionesTx } from '../../../types'
 import { Transacciones } from '..'
 
 export const datos = () =>
@@ -29,6 +29,7 @@ export const mercado: ListadoTx['items'][number] = {
   tarjeta_nombre: 'Visa Oro',
   tarjeta_franquicia: 'Visa',
   grupo: 'Marzo - 2026',
+  tipo_label: 'Gasto',
 }
 export const salario: ListadoTx['items'][number] = {
   id: 2,
@@ -45,6 +46,7 @@ export const salario: ListadoTx['items'][number] = {
   tarjeta_nombre: null,
   tarjeta_franquicia: null,
   grupo: 'Abril - 2026',
+  tipo_label: 'Ingreso',
 }
 export const opciones = {
   meses: [
@@ -52,6 +54,10 @@ export const opciones = {
     { value: '2026-03', label: 'marzo de 2026' },
   ],
   categorias: ['Comida', 'Salario'],
+  tipos: [
+    { value: 'ingreso', label: 'Ingresos' },
+    { value: 'gasto', label: 'Gastos' },
+  ],
 }
 export const listado = (extra: Partial<ListadoTx> = {}): ListadoTx => ({
   items: [salario, mercado],
@@ -66,7 +72,15 @@ export const listado = (extra: Partial<ListadoTx> = {}): ListadoTx => ({
   },
   ...extra,
 })
-export const mockFetch = (routes: Record<string, unknown> = {}) => base({ 'GET /api/tx': listado(), ...routes })
+export const opcionesTx = (extra: Partial<OpcionesTx> = {}): OpcionesTx => ({
+  tarjetas: [{ id: 5, nombre: 'Visa Oro' }],
+  categorias: { ingreso: ['Crédito recibido', 'Salario'], gasto: ['Inversión', 'Compra activos'] },
+  categoria_default: { ingreso: 'Crédito recibido', gasto: 'Inversión' },
+  inicial: { tipo: 'gasto', categoria: 'Inversión', tarjeta_id: null, fecha: '2026-06-15T10:30' },
+  ...extra,
+})
+export const mockFetch = (routes: Record<string, unknown> = {}) =>
+  base({ 'GET /api/tx': listado(), 'GET /api/tx/opciones': opcionesTx(), ...routes })
 export const URL_BASE = '/api/tx?col=fecha&dir=-1&tipo=&mes=&cat='
 
 export const filaDe = (t: ReturnType<typeof tx>): ListadoTx['items'][number] => ({ ...mercado, ...t, tarjeta_franquicia: null, grupo: null })

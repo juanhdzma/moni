@@ -2,11 +2,14 @@ import datetime
 
 from ..fechas import mes_corto, parse_fecha, texto_dias
 from ..constantes import tiene_saldo
+from ..dinero.formato import cop, frase, plural
 from .finanzas import proxima_fecha_inversion, rendimiento_mensual_fija
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente
 
 PROX_OP_OVERDUE_DAYS = 10
 PROX_OP_ADELANTE_DIAS = 45
+PROX_OP_MAX_ITEMS = 20
+PROX_OP_VISIBLES = 5
 
 
 def clave_op(tipo: str, fuente_id: int, fecha_iso: str) -> str:
@@ -59,7 +62,15 @@ def calcular_proximas_operaciones(deudas: list, inversiones: list, recurrentes: 
     return sorted(ops, key=lambda o: o["fecha"])
 
 
-def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date) -> dict:
+def _frase_proximas(vencidas: int, salen_total: float, simbolo: str) -> dict:
+    por_pagar = (cop(salen_total, simbolo), "fuerte")
+    if vencidas:
+        pagos = (plural(vencidas, "pago vencido", "pagos vencidos"), "negativo")
+        return frase("Tenés ", pagos, " y ", por_pagar, f" por pagar en {PROX_OP_ADELANTE_DIAS} días.")
+    return frase(por_pagar, f" por pagar en los próximos {PROX_OP_ADELANTE_DIAS} días.")
+
+
+def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date, simbolo: str = "$") -> dict:
     items = []
     for c in candidatas:
         if c["clave"] in ocultas:
@@ -81,11 +92,17 @@ def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date
                 "vencida": dias < 0,
             }
         )
+    vencidas = sum(1 for i in items if i["dias"] < 0)
+    salen_total = sum(-i["monto"] for i in items if i["monto"] < 0)
     return {
         "hoy": hoy.isoformat(),
-        "items": items,
-        "vencidas": sum(1 for i in items if i["dias"] < 0),
-        "salen_total": sum(-i["monto"] for i in items if i["monto"] < 0),
+        "items": items[:PROX_OP_MAX_ITEMS],
+        "vencidas": vencidas,
+        "salen_total": salen_total,
+        "dias_ventana": PROX_OP_ADELANTE_DIAS,
+        "visibles": PROX_OP_VISIBLES,
+        "frase": _frase_proximas(vencidas, salen_total, simbolo) if items else None,
+        "texto_vacio": f"Sin operaciones en los próximos {PROX_OP_ADELANTE_DIAS} días.",
     }
 
 

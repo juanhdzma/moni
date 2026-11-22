@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { cargarEvolucion } from '@/lib/api'
-import { cop, copShort, signStr } from '@/lib/format'
-import { cn } from '@/lib/utils'
+import { cargarEvolucion, cargarPeriodos } from '@/lib/api'
+import { cop, copShort } from '@/lib/format'
 import { useVista } from '@/shell/hooks/useVista'
 import type { PeriodoEvolucion, SerieEvolucion } from '@/types'
-import { Panel, Periodos } from '@/components/panel'
+import { FraseTexto, Panel, Periodos } from '@/components/panel'
 
 type Serie = SerieEvolucion
 
@@ -14,22 +13,15 @@ const SERIES: readonly { value: Serie; label: string }[] = [
   { value: 'patrimonio', label: 'Patrimonio' },
   { value: 'inversiones', label: 'Inversiones' },
 ]
-const PERIODOS: readonly { value: PeriodoEvolucion; label: string }[] = [
-  { value: '3M', label: '3M' },
-  { value: '6M', label: '6M' },
-  { value: '1Y', label: '1A' },
-  { value: 'ALL', label: 'Todo' },
-]
-
 export function Evolucion() {
   const [serie, setSerie] = useState<Serie>('patrimonio')
   const [period, setPeriod] = useState<PeriodoEvolucion>('6M')
   const { data: ev } = useVista(`${serie}:${period}`, () => cargarEvolucion(serie, period))
+  const { data: periodos } = useVista('periodos', cargarPeriodos)
   const loading = ev === null
   const datos = ev?.puntos ?? []
-  const cambio = ev?.cambio ?? 0
   const color = serie === 'patrimonio' ? 'var(--cartera)' : 'var(--inversiones)'
-  const config = { valor: { label: serie === 'patrimonio' ? 'Patrimonio' : 'Inversiones', color } } satisfies ChartConfig
+  const config = { valor: { label: ev?.nombre_serie ?? '', color } } satisfies ChartConfig
   return (
     <Panel
       id="dash-evolucion"
@@ -37,26 +29,16 @@ export function Evolucion() {
       extra={
         <div className="flex flex-wrap gap-2">
           <Periodos id="evol-serie" label="Serie" options={SERIES} value={serie} onChange={setSerie} />
-          <Periodos id="evol-period-pills" label="Período" options={PERIODOS} value={period} onChange={setPeriod} />
+          <Periodos id="evol-period-pills" label="Período" options={periodos?.evolucion ?? []} value={period} onChange={setPeriod} />
         </div>
       }
       frase={
-        loading ? (
-          ' '
-        ) : (
+        ev ? (
           <span id="evol-resumen">
-            {ev?.verbo}
-            {cambio !== 0 && (
-              <>
-                {' '}
-                <span className={cn('font-semibold', cambio < 0 ? 'text-deudas' : 'text-inversiones-text')}>
-                  {signStr(cambio)}
-                  {copShort(Math.abs(cambio))}
-                </span>
-              </>
-            )}
-            {ev?.sujeto} desde fin de {ev?.mes_desde}: de {copShort(ev?.desde ?? 0)} a <span className="font-semibold">{copShort(ev?.hasta ?? 0)}</span>.
+            <FraseTexto frase={ev.frase} />
           </span>
+        ) : (
+          ' '
         )
       }
     >

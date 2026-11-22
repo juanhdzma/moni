@@ -57,7 +57,15 @@ describe('Deudas render', () => {
       ...resumenCompleto,
       total_intereses: 420000,
       intereses_aproximado: true,
-      creditos: [{ ...credito, total_intereses: 0, intereses_pagados: { valor: 420000, exacto: false } }],
+      dato: { ...resumenCompleto.dato, intereses: '~$420.000' },
+      creditos: [
+        {
+          ...credito,
+          total_intereses: 0,
+          intereses_pagados: { valor: 420000, exacto: false },
+          frases: { ...credito.frases!, intereses_texto: '~$420.000', intereses_ayuda: 'Estimado por amortización — todavía no hay pagos registrados' },
+        },
+      ],
       tarjetas: [],
       terminadas: [],
     })
@@ -69,7 +77,7 @@ describe('Deudas render', () => {
   })
 
   it('empty states', async () => {
-    const f = conResumen({ ...resumenCompleto, total: 0, total_cuotas: 0, total_intereses: 0, segmentos: [], creditos: [], tarjetas: [], terminadas: [] })
+    const f = conResumen({ ...resumenCompleto, total: 0, total_cuotas: 0, total_intereses: 0, dato: { ...resumenCompleto.dato, intereses: null }, segmentos: [], creditos: [], tarjetas: [], terminadas: [] })
     renderWithProviders(<Deudas active />)
     expect(await screen.findByText('Sin créditos')).toBeInTheDocument()
     expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(1)
@@ -89,7 +97,7 @@ describe('Deudas render', () => {
   it('tarjeta sin cupo', async () => {
     conResumen({
       ...resumenCompleto,
-      tarjetas: [{ ...tarjeta, saldo_actual: 0, cupo: 0, total_intereses: 0, disponible: null, uso_pct: 0, intereses_pagados: null }],
+      tarjetas: [{ ...tarjeta, saldo_actual: 0, cupo: 0, total_intereses: 0, disponible: null, uso_pct: 0, intereses_pagados: null, frases: { ...tarjeta.frases!, detalle: 'Sin cupo definido' } }],
     })
     renderWithProviders(<Deudas active />, { estado: full() })
     expect(await screen.findByText('Sin cupo definido')).toBeInTheDocument()

@@ -35,7 +35,7 @@ describe('Transacciones tab', () => {
   })
 
   it('shows empty state', async () => {
-    mockFetch({ 'GET /api/tx': listado({ items: [], opciones: { meses: [], categorias: [] } }) })
+    mockFetch({ 'GET /api/tx': listado({ items: [], opciones: { meses: [], categorias: [], tipos: [] } }) })
     ui(estado())
     expect(await screen.findByText('Sin movimientos')).toBeTruthy()
   })

@@ -1,6 +1,7 @@
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { fmtDate, fmtDateTime } from '../lib/format'
+import { useData } from '@/shell/providers/DataProvider'
 import { clearActivePopup, openPopup, repositionPopup } from './popups'
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
@@ -15,21 +16,15 @@ interface Pending {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-export function parseValue(value: string, isDateTime: boolean): Pending {
-  const now = new Date()
-  if (!value) {
-    return {
-      y: now.getFullYear(),
-      m: now.getMonth(),
-      d: now.getDate(),
-      hh: isDateTime ? now.getHours() : 0,
-      mm: isDateTime ? now.getMinutes() : 0,
-    }
-  }
+function parseDateTime(value: string): Pending {
   const [datePart = '', timePart] = value.split('T')
   const [y = 0, mo = 1, d = 1] = datePart.split('-').map(Number)
   const [hh, mm] = (timePart || '00:00').split(':').map(Number)
   return { y, m: mo - 1, d, hh: hh || 0, mm: mm || 0 }
+}
+
+export function parseValue(value: string, hoy: string): Pending {
+  return parseDateTime(value || hoy)
 }
 
 export function formatValue(s: Pending, isDateTime: boolean): string {
@@ -79,7 +74,8 @@ interface Props {
 export function DatePicker({ value, onChange, type = 'date', id, style }: Props) {
   const isDateTime = type === 'datetime-local'
   const [open, setOpen] = useState(false)
-  const [pending, setPending] = useState<Pending>(() => parseValue(value, isDateTime))
+  const { hoy } = useData().estado
+  const [pending, setPending] = useState<Pending>(() => parseValue(value, hoy))
   const [view, setView] = useState({ y: pending.y, m: pending.m })
   const [timeText, setTimeText] = useState({ hh: '', mm: '' })
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -127,7 +123,7 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
       setOpen(false)
       return
     }
-    const p = parseValue(value, isDateTime)
+    const p = parseValue(value, hoy)
     setPending(p)
     setView({ y: p.y, m: p.m })
     setTimeText({ hh: pad(p.hh), mm: pad(p.mm) })
@@ -147,13 +143,10 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
   }
 
   const today = () => {
-    const now = new Date()
-    const p = isDateTime
-      ? { y: now.getFullYear(), m: now.getMonth(), d: now.getDate(), hh: now.getHours(), mm: now.getMinutes() }
-      : { ...pending, y: now.getFullYear(), m: now.getMonth(), d: now.getDate() }
+    const t = parseDateTime(hoy)
+    const p = { ...pending, y: t.y, m: t.m, d: t.d }
     setPending(p)
     setView({ y: p.y, m: p.m })
-    setTimeText({ hh: pad(p.hh), mm: pad(p.mm) })
     if (!isDateTime) finish(p)
   }
 
@@ -179,7 +172,7 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
     setTimeText((t) => ({ ...t, [field]: pad(val) }))
   }
 
-  const now = new Date()
+  const todayCell = parseDateTime(hoy)
   const monthLabel = new Date(view.y, view.m, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
   const label = !value ? 'Seleccionar fecha' : isDateTime ? fmtDateTime(value) : fmtDate(value)
 
@@ -224,7 +217,7 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
             </div>
             <div className="cdp-days">
               {buildCells(view.y, view.m).map((c) => {
-                const isToday = c.y === now.getFullYear() && c.m === now.getMonth() && c.d === now.getDate()
+                const isToday = c.y === todayCell.y && c.m === todayCell.m && c.d === todayCell.d
                 const isSel = c.y === pending.y && c.m === pending.m && c.d === pending.d
                 const cls = ['cdp-day', c.dim && 'dim', isToday && 'today', isSel && 'sel'].filter(Boolean).join(' ')
                 return (

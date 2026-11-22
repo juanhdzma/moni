@@ -17,7 +17,7 @@ describe('rendimiento', () => {
     const f = mockInv({ 'POST /api/inv/5/rendimiento': {} })
     await abrir(user)
     expect(document.getElementById('m-monto')).toHaveValue('9.584')
-    expect(document.getElementById('rend-hint')).toHaveTextContent('Sube el valor de la inversión. No entra plata a tu cartera.')
+    await waitFor(() => expect(document.getElementById('rend-hint')).toHaveTextContent('Sube el valor de la inversión. No entra plata a tu cartera.'))
     expect(document.getElementById('wrap-rend-advanced')).toHaveStyle({ display: 'none' })
     await user.type(document.getElementById('m-notas') as HTMLElement, ' nota ')
     await user.click(modal().getByRole('button', { name: 'Registrar' }))
@@ -26,7 +26,7 @@ describe('rendimiento', () => {
       method: 'POST',
       url: '/api/inv/5/rendimiento',
       headers: H,
-      body: { monto: 9584, fecha: '2026-11-12T10:30', notas: 'nota', capitaliza: true, registrar_tx: false },
+      body: { monto: 9584, fecha: '2026-08-20', notas: 'nota', capitaliza: true, registrar_tx: true },
     })
   })
 
@@ -44,9 +44,12 @@ describe('rendimiento', () => {
 
   it('me lo pagan sin registrar en transacciones', async () => {
     const user = userEvent.setup()
-    const f = mockInv({ 'POST /api/inv/5/rendimiento': {} })
+    const f = mockInv({
+      'POST /api/inv/5/rendimiento': {},
+      'GET /api/inv/5/rendimiento/defaults': { capitaliza_default: false },
+    })
     await abrir(user, { ...CDT, pago: 'mensual', dia_pago: 15 })
-    expect(document.getElementById('rend-hint')).toHaveTextContent('Entra como ingreso')
+    await waitFor(() => expect(document.getElementById('rend-hint')).toHaveTextContent('Entra como ingreso'))
     await user.click(modal().getByText('Opciones de registro'))
     await user.click(modal().getByLabelText('Registrar en transacciones'))
     await user.click(modal().getByRole('button', { name: 'Registrar' }))
@@ -54,14 +57,11 @@ describe('rendimiento', () => {
     expect(f.mutations()[0]?.body).toMatchObject({ capitaliza: false, registrar_tx: false })
   })
 
-  it('monto inválido y error del backend', async () => {
+  it('el monto inválido lo rechaza el backend y se muestra el error', async () => {
     const user = userEvent.setup()
-    mockInv({ 'POST /api/inv/5/rendimiento': failure(400, 'rechazado') })
+    mockInv({ 'POST /api/inv/5/rendimiento': failure(422, [{ msg: 'rechazado' }]) })
     await abrir(user)
     await typeMoney(user, 'm-monto', '0')
-    await user.click(modal().getByRole('button', { name: 'Registrar' }))
-    expect(document.getElementById('m-status')).toHaveTextContent('Ingresá un monto válido')
-    await typeMoney(user, 'm-monto', '500')
     await user.click(modal().getByRole('button', { name: 'Registrar' }))
     await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('rechazado'))
     expect(document.getElementById('m-status')).toHaveClass('err')

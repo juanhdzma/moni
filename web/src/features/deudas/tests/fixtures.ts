@@ -20,6 +20,14 @@ export const credito = deuda({
   meses_restantes: 12,
   nivel_progreso: 'medio',
   intereses_pagados: { valor: 800000, exacto: true },
+  frases: {
+    detalle: '20,0% EA · $500.000/mes',
+    meses_restantes_texto: '~12m',
+    progreso_texto: '40,0% pagado',
+    intereses_texto: '$800.000',
+    intereses_ayuda: 'Suma de los pagos registrados en Moni',
+    intereses_saldada_texto: '$800.000 en intereses',
+  },
 })
 export const tarjeta = deuda({
   _id: 2,
@@ -36,6 +44,14 @@ export const tarjeta = deuda({
   uso_pct: 20,
   nivel_uso: 'bajo',
   intereses_pagados: { valor: 12000, exacto: true },
+  frases: {
+    detalle: 'Cupo $5.000.000',
+    meses_restantes_texto: null,
+    progreso_texto: '0,0% pagado',
+    intereses_texto: '$12.000',
+    intereses_ayuda: 'Suma de los pagos registrados en Moni',
+    intereses_saldada_texto: null,
+  },
 })
 export const saldado = deuda({
   _id: 3,
@@ -50,6 +66,14 @@ export const saldado = deuda({
   capital_pagado: 3000000,
   nivel_progreso: 'alto',
   intereses_pagados: { valor: 150000, exacto: true },
+  frases: {
+    detalle: '18,0% EA',
+    meses_restantes_texto: null,
+    progreso_texto: '100,0% pagado',
+    intereses_texto: '$150.000',
+    intereses_ayuda: 'Suma de los pagos registrados en Moni',
+    intereses_saldada_texto: '$150.000 en intereses',
+  },
 })
 
 export const full = () => estado({ deudas: [credito, tarjeta, saldado] })
@@ -59,6 +83,7 @@ export const resumenCompleto = {
   total_cuotas: 500000,
   total_intereses: 962000,
   intereses_aproximado: false,
+  dato: { cuotas: '$500.000', cuotas_sufijo: '/mes en cuotas', intereses: '$962.000', intereses_sufijo: 'pagados en intereses' },
   segmentos: [
     { key: '1', label: 'Crédito carro', valor: 6000000 },
     { key: '2', label: 'Visa Oro', valor: 1000000 },

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { previewAporte } from '../../../lib/api'
-import { cop, nowStr, numToInput, parseMoney } from '../../../lib/format'
-import { useModal } from '@/shell/providers/ModalProvider'
+import { cop, numToInput, parseMoney } from '../../../lib/format'
+import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvAporte, Inversion } from '../../../types'
 import { FechaField, NotasField, RegistrarToggle } from '../../../controls/FormFields'
@@ -13,12 +13,12 @@ import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from './usePreview'
 
 export function AporteForm({ inv }: { inv: Inversion }) {
-  const { setModalStatus } = useModal()
+  const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()
   const [monto, setMonto] = useState('')
   const [nuevoValor, setNuevoValor] = useState('')
-  const [fecha, setFecha] = useState(nowStr())
+  const [fecha, setFecha] = useState(estado.hoy)
   const [notas, setNotas] = useState('')
   const [registrar, setRegistrar] = useState(true)
 
@@ -26,22 +26,14 @@ export function AporteForm({ inv }: { inv: Inversion }) {
   const estimado = usePreview(aporteVal > 0 ? `a:${aporteVal}` : null, () => previewAporte(inv._id, aporteVal))?.nuevo_valor_estimado ?? null
 
   const save = async () => {
-    const aporte = parseMoney(monto)
-    if (!aporte || aporte <= 0) {
-      setModalStatus('err', 'Ingresá el monto que agregas')
-      return
+    const body: InvAporte = {
+      monto: parseMoney(monto),
+      ...(nuevoValor ? { nuevo_valor: parseMoney(nuevoValor) } : {}),
+      fecha,
+      notas: notas.trim(),
+      registrar_tx: registrar,
     }
-    await guardar(async () => {
-      const nuevoVal = nuevoValor ? parseMoney(nuevoValor) : (await previewAporte(inv._id, aporte)).nuevo_valor_estimado
-      const body: InvAporte = {
-        monto: aporte,
-        nuevo_valor: nuevoVal,
-        fecha,
-        notas: notas.trim(),
-        registrar_tx: registrar,
-      }
-      await apiAction(`/api/inv/${inv._id}/aporte`, body)
-    })
+    await guardar(() => apiAction(`/api/inv/${inv._id}/aporte`, body))
   }
 
   return (
@@ -69,7 +61,7 @@ export function AporteForm({ inv }: { inv: Inversion }) {
             : 'Estimado como valor actual + aporte. Ajustá si el mercado se movió.'}
         </div>
       </div>
-      <FechaField id="m-fecha" label="Fecha" value={fecha} onChange={setFecha} />
+      <FechaField id="m-fecha" type="date" label="Fecha" value={fecha} onChange={setFecha} />
       <NotasField id="m-notas" placeholder="Ej. Aporte mensual" value={notas} onChange={setNotas} />
       <RegistrarToggle checked={registrar} onChange={setRegistrar} />
       <FormFooter saveLabel="Agregar aporte" onSave={() => void save()} />

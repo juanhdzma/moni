@@ -1,15 +1,15 @@
 from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 from .validadores import Monto, MontoCero, TasaTipo, clave_opcional, fecha_opcional, fecha_requerida
 
 
 class InvIn(BaseModel):
-    nombre: str = Field(min_length=1)
+    nombre: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     tipo: Literal["fija", "variable"]
-    monto_invertido: MontoCero
-    valor_actual: MontoCero
+    monto_invertido: Monto
+    valor_actual: Optional[Monto] = None
     tasa_ea: Optional[MontoCero] = None
     tasa_tipo: TasaTipo = "ea"
     fecha_inicio: str = ""
@@ -35,7 +35,7 @@ class InvRendimiento(BaseModel):
 
 class InvAporte(BaseModel):
     monto: Monto
-    nuevo_valor: MontoCero
+    nuevo_valor: Optional[MontoCero] = None
     fecha: str
     notas: str = ""
     registrar_tx: bool = True

@@ -6,7 +6,9 @@ import type {
   GastosPeriodo,
   ListadoTx,
   Movimientos,
+  OpcionesTx,
   OpsOcultas,
+  PeriodosDashboard,
   ProximasOperaciones,
   ResumenDashboard,
 } from '../types'
@@ -22,6 +24,12 @@ export interface RecordedCall {
 export type Handler = unknown
 
 export const EMPTY_ALL: ApiAll = apiAll()
+
+const FRASE_SIN_INGRESOS = {
+  tipo: 'sin_ingresos' as const,
+  texto: 'Todavía no entró plata este mes.',
+  partes: [{ texto: 'Todavía no entró plata este mes.', tono: null }],
+}
 
 const RESUMEN_DASHBOARD: ResumenDashboard = {
   patrimonio: 0,
@@ -41,7 +49,7 @@ const RESUMEN_DASHBOARD: ResumenDashboard = {
   ganancia_inv_pct: 0,
   partes: [],
   total_barra: 0,
-  frase_mes: { tipo: 'sin_ingresos' },
+  frase_mes: FRASE_SIN_INGRESOS,
 }
 
 const EVOLUCION: Evolucion = {
@@ -55,9 +63,11 @@ const EVOLUCION: Evolucion = {
   verbo: 'Te mantuviste',
   sujeto: '',
   mes_desde: '',
+  nombre_serie: 'Patrimonio',
+  frase: { texto: '', partes: [] },
 }
 
-const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, quedo: 0, ahorro_pct: 0, frase: { tipo: 'sin_ingresos' }, meses: [] }
+const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, quedo: 0, ahorro_pct: 0, frase: FRASE_SIN_INGRESOS, descripcion_grafico: 'Entró y salió por mes, últimos 6 meses', meses: [] }
 
 const GASTOS: GastosPeriodo = {
   periodo: '1M',
@@ -65,19 +75,29 @@ const GASTOS: GastosPeriodo = {
   total: 0,
   max: 0,
   top: null,
+  frase: null,
   categorias: [],
 }
 
+const PERIODOS: PeriodosDashboard = { gastos: [], evolucion: [] }
+
 const MOVIMIENTOS: Movimientos = { items: [] }
 
-const PROXIMAS: ProximasOperaciones = { hoy: EMPTY_ALL.hoy, items: [], vencidas: 0, salen_total: 0 }
+const PROXIMAS: ProximasOperaciones = { hoy: EMPTY_ALL.hoy, items: [], vencidas: 0, salen_total: 0, dias_ventana: 45, visibles: 5, frase: null, texto_vacio: 'Sin operaciones en los próximos 45 días.' }
 
 const LISTADO_TX: ListadoTx = {
   items: [],
   filtros: { tipo: '', mes: '', cat: '' },
-  opciones: { meses: [], categorias: [] },
+  opciones: { meses: [], categorias: [], tipos: [] },
   pills: [],
   resumen: { ingresos: 0, gastos: 0, neto: 0, segmentos: [] },
+}
+
+const OPCIONES_TX: OpcionesTx = {
+  tarjetas: [],
+  categorias: { ingreso: ['Crédito recibido'], gasto: ['Inversión', 'Compra activos'] },
+  categoria_default: { ingreso: 'Crédito recibido', gasto: 'Inversión' },
+  inicial: { tipo: 'gasto', categoria: 'Inversión', tarjeta_id: null, fecha: '2026-08-20T10:30' },
 }
 
 const OPS_OCULTAS: OpsOcultas = { items: [] }
@@ -87,14 +107,17 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/dashboard/evolucion': EVOLUCION,
   'GET /api/dashboard/este-mes': ESTE_MES,
   'GET /api/dashboard/gastos': GASTOS,
+  'GET /api/dashboard/periodos': PERIODOS,
   'GET /api/dashboard/movimientos': MOVIMIENTOS,
   'GET /api/proximas-operaciones': PROXIMAS,
   'GET /api/tx': LISTADO_TX,
+  'GET /api/tx/opciones': OPCIONES_TX,
   'GET /api/deudas/resumen': {
     total: 0,
     total_cuotas: 0,
     total_intereses: 0,
     intereses_aproximado: false,
+    dato: { cuotas: '$0', cuotas_sufijo: '/mes en cuotas', intereses: null, intereses_sufijo: 'pagados en intereses' },
     segmentos: [],
     creditos: [],
     tarjetas: [],
@@ -105,12 +128,14 @@ const VISTAS_VACIAS: Record<string, Handler> = {
     total_actual: 0,
     ganancia: 0,
     ganancia_pct: 0,
+    texto_posiciones: '0 posiciones',
     segmentos: [],
     fijas: [],
     variables: [],
   },
   'GET /api/activos/resumen': { total_inicial: 0, total_actual: 0, variacion: 0, variacion_pct: 0, segmentos: [], items: [] },
   'GET /api/rec/resumen': {
+    frecuencias: [],
     total_gastos_mensual: 0,
     total_ingresos_mensual: 0,
     neto_mensual: 0,

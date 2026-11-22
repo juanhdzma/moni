@@ -17,13 +17,19 @@ const netflix = recurrente({ _id: 2, id: 2, nombre: 'Netflix', tipo: 'gasto', mo
 const gym = recurrente({ _id: 3, id: 3, nombre: 'Gym', tipo: 'gasto', monto: 120000, frecuencia: 'trimestral', frecuencia_label: 'Trimestral', activo: false, fecha_inicio: '2026-01-01', mensual: 40000, proximo_pago: null })
 const items = [salario, netflix, gym]
 
+const frecuencias = [
+  { value: 'mensual', label: 'Mensual' },
+  { value: 'trimestral', label: 'Trimestral' },
+]
+
 const resumen = (extra: Partial<ResumenRecurrentes> = {}): ResumenRecurrentes => ({
+  frecuencias,
   total_gastos_mensual: 30000,
   total_ingresos_mensual: 1000000,
   neto_mensual: 970000,
   segmentos: [{ key: '2', label: 'Netflix', valor: 30000 }],
   ingresos: [salario],
-  gastos: [gym, netflix],
+  gastos: [gym, { ...netflix, categoria_sugerida: 'Streaming' }],
   ...extra,
 })
 
@@ -104,30 +110,23 @@ describe('render', () => {
 })
 
 describe('toggle', () => {
-  it('PUTs the whole item with activo flipped and no _id', async () => {
-    const f = view(items, resumen(), { 'PUT /api/rec/2': {} })
+  it('POSTs to /pausar with no body and the backend decides the new state', async () => {
+    const f = view(items, resumen(), { 'POST /api/rec/2/pausar': { id: 2, activo: false } })
     await userEvent.click((await screen.findAllByTitle('Pausar'))[1] as HTMLElement)
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]).toMatchObject({
-      method: 'PUT',
-      url: '/api/rec/2',
-      headers: H,
-      body: { nombre: 'Netflix', tipo: 'gasto', monto: 30000, frecuencia: 'mensual', activo: false, fecha_inicio: '2026-08-20', notas: 'plan' },
-    })
-    expect(f.mutations()[0]?.body).not.toHaveProperty('_id')
-    expect(f.mutations()[0]?.body).not.toHaveProperty('mensual')
-    expect(f.mutations()[0]?.body).not.toHaveProperty('proximo_pago')
+    expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/rec/2/pausar', headers: H })
+    expect(f.mutations()[0]?.body).toBeUndefined()
   })
 
-  it('activating a paused item sends activo true', async () => {
-    const f = view(items, resumen(), { 'PUT /api/rec/3': {} })
+  it('activating a paused item hits the same endpoint', async () => {
+    const f = view(items, resumen(), { 'POST /api/rec/3/pausar': { id: 3, activo: true } })
     await userEvent.click(await screen.findByTitle('Activar'))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]?.body).toMatchObject({ activo: true })
+    expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/rec/3/pausar' })
   })
 
   it('failure shows the banner and refetches', async () => {
-    const f = view(items, resumen(), { 'PUT /api/rec/2': new Response(JSON.stringify({ detail: 'boom' }), { status: 500 }) })
+    const f = view(items, resumen(), { 'POST /api/rec/2/pausar': new Response(JSON.stringify({ detail: 'boom' }), { status: 500 }) })
     await userEvent.click((await screen.findAllByTitle('Pausar'))[1] as HTMLElement)
     await waitFor(() => expect(f.callsTo('GET', '/api/all').length).toBeGreaterThan(0))
     await waitFor(() => expect(screen.getByTestId('banner').textContent).toContain('boom'))
@@ -140,11 +139,7 @@ describe('create / edit / delete', () => {
     await userEvent.click(screen.getByText('Nuevo'))
     expect(screen.getByText('Nuevo recurrente')).toBeTruthy()
     expect(document.querySelector('.tipo-btn.sel')).toBe(document.getElementById('rt-gasto'))
-    await userEvent.click(screen.getByText('Agregar'))
-    expect(document.getElementById('m-status')?.textContent).toBe('Nombre requerido')
     await userEvent.type(screen.getByPlaceholderText('Ej. Netflix'), '  Spotify ')
-    await userEvent.click(screen.getByText('Agregar'))
-    expect(document.getElementById('m-status')?.textContent).toBe('Monto requerido')
     await userEvent.type(document.getElementById('m-monto') as HTMLElement, '25000')
     await userEvent.click(screen.getByText('Agregar'))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
@@ -152,8 +147,9 @@ describe('create / edit / delete', () => {
       method: 'POST',
       url: '/api/rec',
       headers: H,
-      body: { nombre: 'Spotify', tipo: 'gasto', monto: 25000, frecuencia: 'mensual', activo: true, fecha_inicio: '', notas: '' },
+      body: { nombre: 'Spotify', tipo: 'gasto', monto: 25000, frecuencia: 'mensual', fecha_inicio: '', notas: '' },
     })
+    expect(f.mutations()[0]?.body).not.toHaveProperty('activo')
   })
 
   it('tipo toggle switches to ingreso', async () => {
@@ -168,7 +164,7 @@ describe('create / edit / delete', () => {
     expect(f.mutations()[0]?.body).toMatchObject({ tipo: 'ingreso', monto: 5000 })
   })
 
-  it('edit keeps the current activo and PUTs without _id', async () => {
+  it('edit PUTs without _id and without activo (the backend keeps it)', async () => {
     const f = view(items, resumen(), { 'PUT /api/rec/3': {} })
     const row = (await screen.findByText('Gym')).closest('[data-rec]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
@@ -181,9 +177,25 @@ describe('create / edit / delete', () => {
       method: 'PUT',
       url: '/api/rec/3',
       headers: H,
-      body: { nombre: 'Gym', tipo: 'gasto', monto: 120000, frecuencia: 'trimestral', activo: false, fecha_inicio: '2026-01-01', notas: '' },
+      body: { nombre: 'Gym', tipo: 'gasto', monto: 120000, frecuencia: 'trimestral', fecha_inicio: '2026-01-01', notas: '' },
     })
     expect(f.mutations()[0]?.body).not.toHaveProperty('_id')
+    expect(f.mutations()[0]?.body).not.toHaveProperty('activo')
+  })
+
+  it('empty required fields reach the backend and its 422 shows inline', async () => {
+    const f = view(items, resumen(), { 'POST /api/rec': new Response(JSON.stringify({ detail: 'Nombre requerido' }), { status: 422 }) })
+    await userEvent.click(screen.getByText('Nuevo'))
+    await userEvent.click(screen.getByText('Agregar'))
+    await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('Nombre requerido'))
+    expect(f.mutations()[0]?.body).toMatchObject({ nombre: '' })
+  })
+
+  it('frequency options come from the backend', async () => {
+    view()
+    await userEvent.click(screen.getByText('Nuevo'))
+    await userEvent.click(document.getElementById('m-frecuencia') as HTMLElement)
+    expect(await screen.findByText('Trimestral', { selector: '[class*=cdd]' })).toBeTruthy()
   })
 
   it('save error shows inline', async () => {
@@ -225,8 +237,8 @@ describe('materialize', () => {
     return <button onClick={() => openRecurrenteMaterializeFormById(ctx, id, '2026-08-20')}>open</button>
   }
 
-  it('posts a tx with the prefilled values', async () => {
-    const f = mockFetch({ 'POST /api/tx': {} })
+  it('posts a tx with the prefilled values and the backend suggested category', async () => {
+    const f = mockFetch({ 'GET /api/rec/resumen': resumen() as unknown as Record<string, unknown>, 'POST /api/tx': {} })
     renderWithProviders(<Harness id={2} />, { estado: estado({ recurrentes: items }) })
     act(() => screen.getByText('open').click())
     expect(screen.getByText('Registrar · Netflix')).toBeTruthy()
@@ -238,18 +250,15 @@ describe('materialize', () => {
       method: 'POST',
       url: '/api/tx',
       headers: H,
-      body: { fecha: '2026-08-20T00:00', tipo: 'gasto', descripcion: 'Netflix', monto: 30000, notas: '' },
+      body: { fecha: '2026-08-20T00:00', tipo: 'gasto', categoria: 'Streaming', descripcion: 'Netflix', monto: 30000, notas: '' },
     })
   })
 
-  it('validates amount and shows server errors inline', async () => {
+  it('shows server validation errors inline', async () => {
     mockFetch({ 'POST /api/tx': new Response(JSON.stringify({ detail: 'x' }), { status: 422 }) })
     renderWithProviders(<Harness id={1} />, { estado: estado({ recurrentes: items }) })
     act(() => screen.getByText('open').click())
     await userEvent.clear(document.getElementById('m-monto') as HTMLElement)
-    await userEvent.click(screen.getByText('Registrar'))
-    expect(document.getElementById('m-status')?.textContent).toBe('Ingresá un monto válido')
-    await userEvent.type(document.getElementById('m-monto') as HTMLElement, '5')
     await userEvent.click(screen.getByText('Registrar'))
     await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('x'))
   })

@@ -12,7 +12,7 @@ export const cargarTasa = (valor: number, tipo: 'ea' | 'mv') => get<Tasa>(`/api/
 
 export const previewPago = (id: number, body: { total_pagado: number; nuevo_saldo: number }) =>
   post<PreviewPago>(`/api/deuda/${id}/pago/preview`, body)
-export const previewAdelanto = (id: number, body: { monto: number; nuevo_saldo: number }) =>
+export const previewAdelanto = (id: number, body: { monto: number; nuevo_saldo?: number; disponible_nuevo?: number }) =>
   post<PreviewAdelanto>(`/api/deuda/${id}/adelanto/preview`, body)
 export const previewValorInversion = (id: number, nuevo_valor: number) =>
   post<PreviewValor>(`/api/inv/${id}/valor/preview`, { nuevo_valor })

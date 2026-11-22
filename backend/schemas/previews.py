@@ -8,11 +8,6 @@ class PagoPreview(BaseModel):
     nuevo_saldo: MontoCero
 
 
-class AdelantoPreview(BaseModel):
-    monto: MontoCero
-    nuevo_saldo: MontoCero
-
-
 class NuevoValor(BaseModel):
     nuevo_valor: MontoCero
 

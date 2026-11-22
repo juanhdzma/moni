@@ -1,17 +1,18 @@
 import logging
-from typing import Literal
-
+from typing import Literal, Optional
 from fastapi import APIRouter, HTTPException
 
 from ..calculos import listados
 from ..calculos.fechas import hoy_bogota
 from ..core.db import conexion
+from ..core import estado as store
 from ..core.estado import coleccion
 from ..core.montos import pesos
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import delete_row, get_row, insert_row, update_row
 from ..core.tablas import TX_COLS
 from ..schemas.transaccion import TxIn
+from ..schemas.validadores import ColumnaTx
 
 logger = logging.getLogger("moni")
 router = APIRouter()
@@ -75,9 +76,18 @@ def delete_tx(row_id: int):
         conn.commit()
 
 
+@router.get("/api/tx/opciones")
+def opciones_tx(tx_id: Optional[int] = None):
+    with conexion() as conn:
+        tx = get_row(conn, "transacciones", tx_id) if tx_id is not None else None
+        return listados.opciones_tx(
+            store.categorias(conn), coleccion(conn, "deudas"), tx, listados.ahora_bogota()
+        )
+
+
 @router.get("/api/tx")
 def listar_tx(
-    col: Literal["fecha", "tipo", "categoria", "descripcion", "monto"] = "fecha",
+    col: ColumnaTx = "fecha",
     dir: Literal["1", "-1"] = "-1",
     tipo: str = "",
     mes: str = "",

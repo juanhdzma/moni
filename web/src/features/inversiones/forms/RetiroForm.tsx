@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { MoneyInput } from '../../../controls/MoneyInput'
-import { nowStr, numToInput, parseMoney } from '../../../lib/format'
-import { useModal } from '@/shell/providers/ModalProvider'
+import { numToInput, parseMoney } from '../../../lib/format'
+import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRetiro, Inversion } from '../../../types'
 import { FechaField, NotasField, RegistrarToggle } from '../../../controls/FormFields'
@@ -11,42 +11,30 @@ import { hintClass } from './styles'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 
 export function RetiroForm({ inv }: { inv: Inversion }) {
-  const { setModalStatus } = useModal()
+  const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()
   const [tipo, setTipo] = useState<'total' | 'parcial'>('total')
   const [montoTotal, setMontoTotal] = useState(numToInput(inv.valor_actual))
   const [montoParcial, setMontoParcial] = useState('')
   const [saldoQueda, setSaldoQueda] = useState('')
-  const [fecha, setFecha] = useState(nowStr())
+  const [fecha, setFecha] = useState(estado.hoy)
   const [notas, setNotas] = useState('')
   const [registrar, setRegistrar] = useState(true)
 
-  const buildBody = (): InvRetiro | null => {
+  const buildBody = (): InvRetiro => {
     const comun = { fecha, notas: notas.trim(), registrar_tx: registrar }
-    if (tipo === 'total') {
-      const monto = parseMoney(montoTotal)
-      if (!monto) {
-        setModalStatus('err', 'Ingresá el monto que recibís')
-        return null
-      }
-      return { tipo: 'total', monto, ...comun }
+    if (tipo === 'total') return { tipo: 'total', monto: parseMoney(montoTotal), ...comun }
+    return {
+      tipo: 'parcial',
+      monto: parseMoney(montoParcial),
+      ...(saldoQueda.trim() ? { saldo_queda: parseMoney(saldoQueda) } : {}),
+      ...comun,
     }
-    const monto = parseMoney(montoParcial)
-    if (!monto) {
-      setModalStatus('err', 'Ingresá el monto que retirás')
-      return null
-    }
-    if (!saldoQueda.trim()) {
-      setModalStatus('err', 'Ingresá el saldo que queda en el fondo')
-      return null
-    }
-    return { tipo: 'parcial', monto, saldo_queda: parseMoney(saldoQueda), ...comun }
   }
 
   const save = async () => {
     const body = buildBody()
-    if (!body) return
     await guardar(() => apiAction(`/api/inv/${inv._id}/retiro`, body))
   }
 
@@ -91,7 +79,7 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
         </div>
       </div>
 
-      <FechaField id="m-fecha-retiro" label="Fecha" value={fecha} onChange={setFecha} />
+      <FechaField id="m-fecha-retiro" type="date" label="Fecha" value={fecha} onChange={setFecha} />
       <NotasField id="m-notas-retiro" placeholder="Ej. Vencimiento CDT" value={notas} onChange={setNotas} />
       <RegistrarToggle checked={registrar} onChange={setRegistrar} />
       <FormFooter saveLabel="Confirmar retiro" onSave={() => void save()} />

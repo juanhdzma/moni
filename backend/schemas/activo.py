@@ -1,12 +1,12 @@
 from pydantic import BaseModel, Field
 
-from .validadores import Monto, MontoCero, fecha_opcional, fecha_requerida
+from .validadores import Monto, MontoCero, fecha_opcional
 
 
 class ActivoIn(BaseModel):
     nombre: str = Field(min_length=1)
-    valor_inicial: MontoCero
-    valor_actual: MontoCero
+    valor_inicial: Monto
+    valor_actual: MontoCero = 0
     fecha_adquisicion: str = ""
     valor_actualizado_en: str = ""
     crear_tx: bool = False
@@ -16,8 +16,15 @@ class ActivoIn(BaseModel):
 
 class ActivoVenta(BaseModel):
     precio: Monto
-    fecha: str
+    fecha: str = ""
     notas: str = ""
     registrar_tx: bool = True
 
-    _v_fecha = fecha_requerida("fecha")
+    _v_fecha = fecha_opcional("fecha")
+
+
+class ActivoValor(BaseModel):
+    nuevo_valor: Monto
+    fecha: str = ""
+
+    _v_fecha = fecha_opcional("fecha")

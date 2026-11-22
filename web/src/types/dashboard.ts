@@ -1,19 +1,31 @@
 import type { TipoTx } from './comun'
 
+export type TonoFrase = 'positivo' | 'negativo' | 'fuerte' | null
+
+export interface Frase {
+  texto: string
+  partes: { texto: string; tono: TonoFrase }[]
+}
+
+export interface OpcionPeriodo<T extends string> {
+  value: T
+  label: string
+}
+
+export interface PeriodosDashboard {
+  gastos: OpcionPeriodo<PeriodoGastos>[]
+  evolucion: OpcionPeriodo<PeriodoEvolucion>[]
+}
+
 export interface ParteResumen {
   id: 'activos' | 'inversiones' | 'balance' | 'deudas'
   nombre: string
   valor: number
   negativo: boolean
   detalle: string | null
-  detalle_tipo?: 'ganancia'
-  detalle_datos?: { ganancia: number; ganancia_pct: number } | { cuota_total: number; n: string }
 }
 
-export type FraseMes =
-  | { tipo: 'sin_ingresos' }
-  | { tipo: 'quedo'; pct: number }
-  | { tipo: 'excedio'; pct: number }
+export type FraseMes = Frase & { tipo: 'sin_ingresos' | 'quedo' | 'excedio'; pct?: number }
 
 export interface ResumenDashboard {
   patrimonio: number
@@ -56,6 +68,8 @@ export interface Evolucion {
   verbo: string
   sujeto: string
   mes_desde: string
+  nombre_serie: string
+  frase: Frase
 }
 
 export interface MesEntroSalio {
@@ -70,6 +84,7 @@ export interface EsteMes {
   quedo: number
   ahorro_pct: number
   frase: FraseMes
+  descripcion_grafico: string
   meses: MesEntroSalio[]
 }
 
@@ -95,6 +110,7 @@ export interface GastosPeriodo {
   total: number
   max: number
   top: { categoria: string; valor: number; pct: number } | null
+  frase: Frase | null
   categorias: CategoriaGasto[]
 }
 

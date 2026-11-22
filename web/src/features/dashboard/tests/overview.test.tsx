@@ -6,7 +6,7 @@ import { Dashboard } from '../index'
 import { CategoriasProvider } from '@/shell/providers/CategoriasProvider'
 import { DataProvider } from '@/shell/providers/DataProvider'
 import { ModalProvider } from '@/shell/providers/ModalProvider'
-import { ESTE_MES, EVOLUCION, rutas, pill, stat } from './fixtures'
+import { ESTE_MES, EVOLUCION, frase, rutas, pill, stat } from './fixtures'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -63,17 +63,20 @@ describe('Este mes en tu cartera', () => {
     expect(stat('dash-mes')).toHaveTextContent('Salió−$200.000')
     expect(stat('dash-mes')).toHaveTextContent('Te quedó$800.000')
     expect(stat('stat-ahorro')).toHaveTextContent('Te quedó el 80,0% de lo que entró.')
+    expect(stat('stat-ahorro').querySelector('.text-inversiones-text')).toHaveTextContent('80,0%')
+    expect(screen.getByLabelText('Entró y salió por mes, últimos 6 meses')).toBeInTheDocument()
   })
 
   it('avisa cuando salió más de lo que entró', async () => {
-    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 100000, gastos: 150000, quedo: -50000, frase: { tipo: 'excedio', pct: 50 } } }))
+    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 100000, gastos: 150000, quedo: -50000, frase: { tipo: 'excedio', pct: 50, ...frase('Salió ', ['50,0%', 'negativo'], ' más de lo que entró.') } } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('stat-ahorro')).toHaveTextContent('Salió 50,0% más de lo que entró.'))
+    expect(stat('stat-ahorro').querySelector('.text-deudas')).toHaveTextContent('50,0%')
     expect(stat('dash-mes')).toHaveTextContent('Te quedó−$50.000')
   })
 
   it('sin ingresos lo dice', async () => {
-    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 0, gastos: 0, quedo: 0, frase: { tipo: 'sin_ingresos' } } }))
+    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 0, gastos: 0, quedo: 0, frase: { tipo: 'sin_ingresos', ...frase('Todavía no entró plata este mes.') } } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('stat-ahorro')).toHaveTextContent('Todavía no entró plata este mes.'))
   })
@@ -93,7 +96,7 @@ describe('Cómo vas', () => {
     await waitFor(() => expect(stat('evol-resumen')).toHaveTextContent('Subiste'))
     fireEvent.click(pill('evol-period-pills', '3M'))
     await waitFor(() => expect(m.callsTo('GET', '/api/dashboard/evolucion?serie=patrimonio&periodo=3M')).toHaveLength(1))
-    m.set('GET /api/dashboard/evolucion', { ...EVOLUCION, serie: 'inversiones', periodo: '3M', cambio: 0, verbo: 'Te mantuviste', sujeto: ' en inversiones', mes_desde: 'jun', desde: 500000, hasta: 500000 })
+    m.set('GET /api/dashboard/evolucion', { ...EVOLUCION, serie: 'inversiones', periodo: '3M', cambio: 0, verbo: 'Te mantuviste', sujeto: ' en inversiones', mes_desde: 'jun', desde: 500000, hasta: 500000, nombre_serie: 'Inversiones', frase: frase('Te mantuviste en inversiones desde fin de jun: de $500k a ', ['$500k', 'fuerte'], '.') })
     fireEvent.click(pill('evol-serie', 'Inversiones'))
     await waitFor(() => expect(m.callsTo('GET', '/api/dashboard/evolucion?serie=inversiones&periodo=3M')).toHaveLength(1))
     await waitFor(() => expect(stat('evol-resumen')).toHaveTextContent('Te mantuviste en inversiones desde fin de jun: de $500k a $500k.'))

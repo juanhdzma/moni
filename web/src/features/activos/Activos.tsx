@@ -8,19 +8,17 @@ import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
-import { openActivoForm, openActivoFormById, openActivoSellFormById, openActivoUpdateFormById } from './forms'
+import { openActivoForm, openActivoSellForm, openActivoUpdateForm } from './forms'
 
 const tinta = (n: number) => (n >= 0 ? 'text-inversiones-text' : 'text-deudas')
 const chip = (n: number) => (n >= 0 ? 'bg-inversiones/15 text-inversiones-text' : 'bg-deudas/15 text-deudas')
 
 export function Activos({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado, loaded } = useData()
-  const activos = estado.activos
-
+  const { loaded } = useData()
   const { data: resumen } = useVista('activos-resumen', cargarResumenActivos)
+  const activos = resumen?.items ?? []
   const variacion = resumen?.variacion ?? 0
-  const varPct = resumen?.variacion_pct ?? 0
 
   return (
     <TabContent id="activos" active={active}>
@@ -38,12 +36,12 @@ export function Activos({ active }: TabProps) {
               {(resumen?.total_inicial ?? 0) > 0 && (
                 <span className={tinta(variacion)}>
                   {variacion >= 0 ? <ArrowUp className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" /> : <ArrowDown className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" />}
-                  {pct(Math.abs(varPct))}% sobre lo pagado
+                  {resumen?.texto_variacion}
                 </span>
               )}
               <span className="text-muted-foreground">
                 {(resumen?.total_inicial ?? 0) > 0 && ' · '}
-                {estado.conteos.activos} activo{estado.conteos.activos !== 1 ? 's' : ''}
+                {resumen?.texto_conteo}
               </span>
             </>
           }
@@ -55,7 +53,7 @@ export function Activos({ active }: TabProps) {
           }
         />
         <div id="activos-grid" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {loaded && !activos.length && (
+          {loaded && resumen && !activos.length && (
             <div className="col-span-full rounded-2xl border bg-card p-6 text-center">
               <div className="text-sm font-semibold">Sin activos</div>
               <div className="mt-1 text-sm text-muted-foreground">Registrá propiedades, vehículos u otros bienes con el botón Nuevo activo.</div>
@@ -83,9 +81,9 @@ export function Activos({ active }: TabProps) {
                 </div>
                 {a.fecha_adquisicion && <div className="mt-0.5 text-xs text-muted-foreground">Adquirido {fmtDate(a.fecha_adquisicion)}</div>}
                 <div className="card-actions mt-4 flex gap-2">
-                  <button className="btn btn-accent btn-sm flex-1" onClick={() => openActivoUpdateFormById(ctx, a._id)}>Actualizar valor</button>
-                  <button className="btn btn-dim btn-sm text-deudas" onClick={() => openActivoSellFormById(ctx, a._id)}>Vender</button>
-                  <button className="btn btn-dim btn-sm" onClick={() => openActivoFormById(ctx, a._id)}>Editar</button>
+                  <button className="btn btn-accent btn-sm flex-1" onClick={() => openActivoUpdateForm(ctx, a)}>Actualizar valor</button>
+                  <button className="btn btn-dim btn-sm text-deudas" onClick={() => openActivoSellForm(ctx, a)}>Vender</button>
+                  <button className="btn btn-dim btn-sm" onClick={() => openActivoForm(ctx, a)}>Editar</button>
                 </div>
               </article>
             )

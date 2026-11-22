@@ -4,6 +4,7 @@ from ..fechas import mes_de
 from ..constantes import tiene_saldo
 from ..numeros import porcentaje
 from .flujos import es_gasto_cartera, flujo_cartera, net_worth
+from .formato import cop, cop_corto, frase, plural, porcentaje_texto
 from .gastos import PERIODOS_GASTOS
 from .series import (
     _clave_mes,
@@ -18,14 +19,17 @@ from .series import (
 )
 
 PERIODOS_EVOLUCION = PERIODOS_GASTOS[1:]
+MESES_ESTE_MES = 6
 
 
 def frase_mes(ahorro_pct: float, ingresos: float) -> dict:
     if ingresos <= 0:
-        return {"tipo": "sin_ingresos"}
+        return {"tipo": "sin_ingresos", **frase("Todavía no entró plata este mes.")}
     if ahorro_pct >= 0:
-        return {"tipo": "quedo", "pct": ahorro_pct}
-    return {"tipo": "excedio", "pct": -ahorro_pct}
+        porcentaje = (f"{porcentaje_texto(ahorro_pct)}%", "positivo")
+        return {"tipo": "quedo", "pct": ahorro_pct, **frase("Te quedó el ", porcentaje, " de lo que entró.")}
+    porcentaje = (f"{porcentaje_texto(-ahorro_pct)}%", "negativo")
+    return {"tipo": "excedio", "pct": -ahorro_pct, **frase("Salió ", porcentaje, " más de lo que entró.")}
 
 
 def _del_mes(txs, hoy: datetime.date) -> list:
@@ -88,33 +92,32 @@ def resumen_dashboard(estado, hoy: datetime.date) -> dict:
     }
 
 
-def _plural(n: int, singular: str, plural: str) -> str:
-    return f"{n} {singular if n == 1 else plural}"
+def _detalle_ganancia(resumen: dict, simbolo: str) -> str:
+    ganancia, ganancia_pct = resumen["ganancia_inv"], resumen["ganancia_inv_pct"]
+    signo = "+" if ganancia >= 0 else ""
+    signo_pct = "+" if ganancia_pct >= 0 else "−"
+    return f"{signo}{cop_corto(ganancia, simbolo)} ({signo_pct}{porcentaje_texto(abs(ganancia_pct))}%)"
 
 
-def partes_patrimonio(resumen: dict, conteos: dict) -> list[dict]:
+def partes_patrimonio(resumen: dict, conteos: dict, simbolo: str = "$") -> list[dict]:
     inversiones = {
         "id": "inversiones",
         "nombre": "Inversiones",
         "valor": resumen["total_inv"],
         "negativo": False,
+        "detalle": (
+            _detalle_ganancia(resumen, simbolo)
+            if resumen["total_invertido"] > 0
+            else plural(conteos["inversiones"], "posición", "posiciones")
+        ),
     }
-    if resumen["total_invertido"] > 0:
-        inversiones["detalle"] = None
-        inversiones["detalle_tipo"] = "ganancia"
-        inversiones["detalle_datos"] = {
-            "ganancia": resumen["ganancia_inv"],
-            "ganancia_pct": resumen["ganancia_inv_pct"],
-        }
-    else:
-        inversiones["detalle"] = _plural(conteos["inversiones"], "posición", "posiciones")
     return [
         {
             "id": "activos",
             "nombre": "Activos",
             "valor": resumen["total_activos"],
             "negativo": False,
-            "detalle": _plural(conteos["activos"], "activo", "activos"),
+            "detalle": plural(conteos["activos"], "activo", "activos"),
         },
         inversiones,
         {
@@ -129,16 +132,23 @@ def partes_patrimonio(resumen: dict, conteos: dict) -> list[dict]:
             "nombre": "Deudas",
             "valor": resumen["total_deuda"],
             "negativo": True,
-            "detalle": None,
-            "detalle_datos": {
-                "cuota_total": resumen["cuota_total"],
-                "n": _plural(resumen["deudas_activas"], "deuda", "deudas"),
-            },
+            "detalle": f"{cop(resumen['cuota_total'], simbolo)}/mes · {plural(resumen['deudas_activas'], 'deuda', 'deudas')}",
         },
     ]
 
 
-def evolucion(estado, serie: str, periodo: str, hoy: datetime.date) -> dict:
+def _frase_evolucion(verbo: str, sujeto: str, mes_desde: str, desde: float, hasta: float, simbolo: str) -> dict:
+    cambio = hasta - desde
+    partes = [verbo]
+    if cambio != 0:
+        signo = "+" if cambio > 0 else "−"
+        tono = "negativo" if cambio < 0 else "positivo"
+        partes += [" ", (f"{signo}{cop_corto(abs(cambio), simbolo)}", tono)]
+    partes += [f"{sujeto} desde fin de {mes_desde}: de {cop_corto(desde, simbolo)} a ", (cop_corto(hasta, simbolo), "fuerte"), "."]
+    return frase(*partes)
+
+
+def evolucion(estado, serie: str, periodo: str, hoy: datetime.date, simbolo: str = "$") -> dict:
     txs = estado["transacciones"]
     inv = serie == "inversiones"
     fechas = fechas_transacciones(txs)
@@ -157,6 +167,8 @@ def evolucion(estado, serie: str, periodo: str, hoy: datetime.date) -> dict:
     desde = puntos[0]["valor"]
     hasta = puntos[-1]["valor"]
     cambio = hasta - desde
+    verbo = "Subiste" if cambio > 0 else "Bajaste" if cambio < 0 else "Te mantuviste"
+    sujeto = " en inversiones" if inv else ""
     return {
         "serie": serie,
         "periodo": periodo,
@@ -165,23 +177,26 @@ def evolucion(estado, serie: str, periodo: str, hoy: datetime.date) -> dict:
         "desde": desde,
         "hasta": hasta,
         "cambio": cambio,
-        "verbo": "Subiste" if cambio > 0 else "Bajaste" if cambio < 0 else "Te mantuviste",
-        "sujeto": " en inversiones" if inv else "",
+        "verbo": verbo,
+        "sujeto": sujeto,
         "mes_desde": puntos[0]["mes"],
+        "nombre_serie": serie.capitalize(),
+        "frase": _frase_evolucion(verbo, sujeto, puntos[0]["mes"], desde, hasta, simbolo),
     }
 
 
 def este_mes(estado, hoy: datetime.date) -> dict:
     txs = estado["transacciones"]
     mes = _balance_mes(txs, hoy)
-    entro = serie_mensual(txs, 6, lambda l: sum(t["monto"] for t in l if t["tipo"] == "ingreso"), hoy)
-    salio = serie_mensual(txs, 6, lambda l: sum(t["monto"] for t in l if es_gasto_cartera(t)), hoy)
-    etiquetas = etiquetas_meses(6, hoy)
+    entro = serie_mensual(txs, MESES_ESTE_MES, lambda l: sum(t["monto"] for t in l if t["tipo"] == "ingreso"), hoy)
+    salio = serie_mensual(txs, MESES_ESTE_MES, lambda l: sum(t["monto"] for t in l if es_gasto_cartera(t)), hoy)
+    etiquetas = etiquetas_meses(MESES_ESTE_MES, hoy)
     return {
         "ingresos": mes["ingresos"],
         "gastos": mes["gastos"],
         "quedo": mes["ingresos"] - mes["gastos"],
         "ahorro_pct": mes["ahorro_pct"],
         "frase": mes["frase"],
-        "meses": [{"mes": etiquetas[i], "entro": entro[i], "salio": salio[i]} for i in range(6)],
+        "descripcion_grafico": f"Entró y salió por mes, últimos {MESES_ESTE_MES} meses",
+        "meses": [{"mes": etiquetas[i], "entro": entro[i], "salio": salio[i]} for i in range(MESES_ESTE_MES)],
     }

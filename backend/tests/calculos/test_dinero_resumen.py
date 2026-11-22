@@ -26,7 +26,8 @@ def test_resumen_dashboard_kpis_del_mes_y_ahorro_acotado_al_mes():
     assert r["cuota_total"] == 50_000
     assert r["ganancia_inv"] == 100_000
     assert r["ganancia_inv_pct"] == pytest.approx(10)
-    assert r["frase_mes"] == {"tipo": "quedo", "pct": 75}
+    assert r["frase_mes"]["tipo"] == "quedo" and r["frase_mes"]["pct"] == 75
+    assert r["frase_mes"]["texto"] == "Te quedó el 75,0% de lo que entró."
 
 
 def test_resumen_dashboard_sin_ingresos_no_divide_por_cero():
@@ -34,7 +35,8 @@ def test_resumen_dashboard_sin_ingresos_no_divide_por_cero():
     assert r["ahorro_pct"] == 0
     assert r["ganancia_inv_pct"] == 0
     assert r["proy_delta"] == 0
-    assert r["frase_mes"] == {"tipo": "sin_ingresos"}
+    assert r["frase_mes"]["tipo"] == "sin_ingresos"
+    assert r["frase_mes"]["texto"] == "Todavía no entró plata este mes."
 
 
 def test_partes_patrimonio_textos_de_dominio():
@@ -46,9 +48,8 @@ def test_partes_patrimonio_textos_de_dominio():
     partes = partes_patrimonio(resumen_dashboard(e, HOY), {"activos": 1, "inversiones": 1})
     por_id = {p["id"]: p for p in partes}
     assert por_id["activos"]["detalle"] == "1 activo"
-    assert por_id["inversiones"]["detalle"] is None
-    assert por_id["inversiones"]["detalle_datos"]["ganancia"] == 100_000
-    assert por_id["deudas"]["detalle_datos"] == {"cuota_total": 50_000, "n": "1 deuda"}
+    assert por_id["inversiones"]["detalle"] == "+$100k (+10,0%)"
+    assert por_id["deudas"]["detalle"] == "$50.000/mes · 1 deuda"
     assert por_id["deudas"]["negativo"] is True
     sin_inv = partes_patrimonio(resumen_dashboard(estado(), HOY), {"activos": 0, "inversiones": 2})
     assert sin_inv[1]["detalle"] == "2 posiciones"

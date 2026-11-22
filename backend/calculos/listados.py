@@ -1,13 +1,14 @@
 import unicodedata
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from backend.calculos.constantes import CATEGORIAS_SISTEMA, tiene_saldo
-from backend.calculos.fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
+from backend.calculos.fechas import TZ, es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
 
 
 TIPOS = tuple(CATEGORIAS_SISTEMA)
 COLUMNAS_ORDEN = ("fecha", "tipo", "categoria", "descripcion", "monto")
 ETIQUETAS_TIPO = {"ingreso": "Ingresos", "gasto": "Gastos"}
+ETIQUETAS_TIPO_FILA = {"ingreso": "Ingreso", "gasto": "Gasto", "transfer": "Auto"}
 EFECTIVO_DEBITO = "Efectivo / Débito"
 
 
@@ -168,7 +169,12 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
         items = [t for t in items if t["categoria"] == cat]
 
     items = [
-        {**t, "mes": mes_de(t["fecha"]), "grupo": grupo_fecha(t["fecha"], hoy) if col == "fecha" else None}
+        {
+            **t,
+            "mes": mes_de(t["fecha"]),
+            "tipo_label": ETIQUETAS_TIPO_FILA[t["tipo"]],
+            "grupo": grupo_fecha(t["fecha"], hoy) if col == "fecha" else None,
+        }
         for t in items
     ]
     pills = []
@@ -184,7 +190,40 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
         "opciones": {
             "meses": [{"value": m, "label": etiqueta_mes(m)} for m in meses],
             "categorias": categorias,
+            "tipos": [{"value": k, "label": v} for k, v in ETIQUETAS_TIPO.items()],
         },
         "pills": pills,
         "resumen": resumen_tx(items),
+    }
+
+
+def ahora_bogota():
+    return datetime.now(TZ).strftime("%Y-%m-%dT%H:%M")
+
+
+def _fecha_con_hora(fecha):
+    f = normalizar_fecha(fecha)
+    if len(f) == 10:
+        return f"{f}T00:00"
+    return f if len(f) == 16 else ""
+
+
+def opciones_tx(categorias, deudas, tx, ahora):
+    tipo = "ingreso" if tx and tx["tipo"] == "ingreso" else "gasto"
+    nombres = {t: [c["nombre"] for c in categorias[t]] for t in ("ingreso", "gasto")}
+    if tx and tx["categoria"] not in nombres[tipo]:
+        nombres[tipo].append(tx["categoria"])
+    por_defecto = {t: n[0] if n else "" for t, n in nombres.items()}
+    tarjetas = [{"id": d["id"], "nombre": d["nombre"]} for d in deudas if d["es_tarjeta"]]
+    tarjeta_id = tx["tarjeta_id"] if tx and any(t["id"] == tx["tarjeta_id"] for t in tarjetas) else None
+    return {
+        "tarjetas": tarjetas,
+        "categorias": nombres,
+        "categoria_default": por_defecto,
+        "inicial": {
+            "tipo": tipo,
+            "categoria": tx["categoria"] if tx and tx["categoria"] else por_defecto[tipo],
+            "tarjeta_id": tarjeta_id,
+            "fecha": _fecha_con_hora(tx["fecha"]) if tx else ahora,
+        },
     }

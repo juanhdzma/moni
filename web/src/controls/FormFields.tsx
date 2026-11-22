@@ -1,8 +1,5 @@
-import { cn } from '@/lib/utils'
 import { AdvancedToggle } from './AdvancedToggle'
 import { DatePicker } from './DatePicker'
-
-const labelSmall = 'font-normal text-muted-foreground'
 
 type FechaProps = { id: string; label: string; value: string; onChange: (v: string) => void; type?: 'date' | 'datetime-local' }
 
@@ -17,12 +14,19 @@ export function FechaField({ id, label, value, onChange, type = 'datetime-local'
   )
 }
 
-type NotasProps = { id: string; placeholder: string; value: string; onChange: (v: string) => void; labelClassName?: string }
+type NotasProps = {
+  id: string
+  placeholder: string
+  value: string
+  onChange: (v: string) => void
+  /** @deprecated una sola variante visual; el valor se ignora */
+  labelClassName?: string
+}
 
-export function NotasField({ id, placeholder, value, onChange, labelClassName = labelSmall }: NotasProps) {
+export function NotasField({ id, placeholder, value, onChange }: NotasProps) {
   return (
     <div className="form-group">
-      <label className={cn('form-label', labelClassName)} htmlFor={id}>
+      <label className="form-label font-normal text-muted-foreground" htmlFor={id}>
         Notas (opcional)
       </label>
       <input

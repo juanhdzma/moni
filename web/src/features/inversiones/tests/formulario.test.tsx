@@ -41,16 +41,16 @@ describe('crear / editar / eliminar', () => {
         nombre: 'CDT Nuevo',
         tipo: 'fija',
         monto_invertido: 2000000,
-        valor_actual: 2000000,
         tasa_ea: 12,
         tasa_tipo: 'ea',
-        fecha_inicio: '2026-11-12',
+        fecha_inicio: '2026-08-20',
         pago: 'mensual',
         dia_pago: 15,
-        valor_actualizado_en: '2026-11-12',
         crear_tx: true,
       },
     })
+    expect(f.mutations()[0]?.body).not.toHaveProperty('valor_actual')
+    expect(f.mutations()[0]?.body).not.toHaveProperty('valor_actualizado_en')
   })
 
   it('crear variable sin tasa/pago y con crear_tx false', async () => {
@@ -72,25 +72,21 @@ describe('crear / editar / eliminar', () => {
       monto_invertido: 100000,
       valor_actual: 120000,
       tasa_ea: null,
-      fecha_inicio: '2026-11-12',
+      fecha_inicio: '2026-08-20',
       pago: null,
       dia_pago: null,
-      valor_actualizado_en: '2026-11-12',
       crear_tx: false,
     })
   })
 
-  it('validación: nombre y monto', async () => {
+  it('la validación de nombre y monto es del backend: el 422 se muestra', async () => {
     const user = userEvent.setup()
-    const f = mockInv()
+    const f = mockInv({ 'POST /api/inv': failure(422, [{ msg: 'Nombre requerido' }]) })
     await setup([])
     await user.click(screen.getByRole('button', { name: 'Nueva inversión' }))
     await user.click(modal().getByRole('button', { name: 'Agregar inversión' }))
-    expect(document.getElementById('m-status')).toHaveTextContent('Nombre requerido')
-    await user.type(document.getElementById('m-nombre') as HTMLElement, 'X')
-    await user.click(modal().getByRole('button', { name: 'Agregar inversión' }))
-    expect(document.getElementById('m-status')).toHaveTextContent('Monto invertido requerido')
-    expect(f.mutations()).toHaveLength(0)
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Nombre requerido'))
+    expect(f.mutations()[0]?.body).toMatchObject({ nombre: '', monto_invertido: 0 })
   })
 
   it('editar: PUT sin crear_tx y valor_actualizado_en conservado', async () => {
@@ -115,11 +111,10 @@ describe('crear / editar / eliminar', () => {
       fecha_inicio: '2026-01-10',
       pago: 'vencimiento',
       dia_pago: null,
-      valor_actualizado_en: '2026-11-01',
     })
   })
 
-  it('editar cambiando el valor actual usa la fecha de hoy', async () => {
+  it('editar cambiando el valor actual no manda fecha de valoración', async () => {
     const user = userEvent.setup()
     const f = mockInv({ 'PUT /api/inv/5': {} })
     await setup()
@@ -127,7 +122,16 @@ describe('crear / editar / eliminar', () => {
     await typeMoney(user, 'm-actual', '1100000')
     await user.click(modal().getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]?.body).toMatchObject({ valor_actual: 1100000, valor_actualizado_en: '2026-11-12' })
+    expect(f.mutations()[0]?.body).toMatchObject({ valor_actual: 1100000 })
+    expect(f.mutations()[0]?.body).not.toHaveProperty('valor_actualizado_en')
+  })
+
+  it('editar muestra el tipo con la etiqueta que manda el backend', async () => {
+    const user = userEvent.setup()
+    mockInv({ 'GET /api/inv/tipos': [{ valor: 'fija', label: 'Renta fija (API)' }] })
+    await setup()
+    await clickInGrid(user, 'fija', 'Editar')
+    await waitFor(() => expect(modal().getByText('Renta fija (API)')).toBeInTheDocument())
   })
 
   it('eliminar: confirm y DELETE', async () => {

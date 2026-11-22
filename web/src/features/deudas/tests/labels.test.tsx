@@ -38,7 +38,7 @@ describe('labels', () => {
     expectLabels(modalBody(), {
       'Monto total pagado (COP)': 'm-monto',
       'Saldo capital después del pago': 'm-saldo-nuevo',
-      'Fecha del pago': 'm-fecha',
+      'Fecha del pago (ahora si se omite)': 'm-fecha',
       'Notas (opcional)': 'm-notas',
     })
   })

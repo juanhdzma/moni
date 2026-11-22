@@ -44,7 +44,6 @@ function PmCell({ t }: { t: FilaTx }) {
 const CELDA = 'px-2 py-2 align-middle'
 
 function TxRow({ t, onEdit }: { t: FilaTx; onEdit: (id: number) => void }) {
-  const label = t.tipo === 'ingreso' ? 'Ingreso' : t.tipo === 'gasto' ? 'Gasto' : 'Auto'
   const prefix = t.tipo === 'ingreso' ? '+' : '−'
   const editable =
     t.tipo === 'transfer'
@@ -70,7 +69,7 @@ function TxRow({ t, onEdit }: { t: FilaTx; onEdit: (id: number) => void }) {
         {fmtDate(t.fecha)}
       </td>
       <td data-label="Tipo" className={cn(CELDA, 'hidden text-xs text-muted-foreground sm:table-cell')}>
-        {label}
+        {t.tipo_label}
       </td>
       <td data-label="Categoría" className={cn(CELDA, 'hidden sm:table-cell')}>
         {t.categoria}
@@ -78,7 +77,7 @@ function TxRow({ t, onEdit }: { t: FilaTx; onEdit: (id: number) => void }) {
       <td data-label="Descripción" className={cn(CELDA, 'min-w-0 max-w-[14rem] truncate')}>
         <span className="block truncate">{t.descripcion || '—'}</span>
         <span className="block truncate text-xs text-muted-foreground sm:hidden">
-          {t.categoria} · {label}
+          {t.categoria} · {t.tipo_label}
         </span>
         <div className="mt-0.5 text-xs text-muted-foreground md:hidden">
           <PmCell t={t} />
@@ -115,6 +114,7 @@ export function Transacciones({ active }: TabProps) {
   const list = data?.items ?? []
   const meses = data?.opciones.meses ?? []
   const cats = data?.opciones.categorias ?? []
+  const tipos = data?.opciones.tipos ?? []
   const pills = data?.pills ?? []
   const quitar = { mes: () => setMesSel(''), tipo: () => setTipoSel(''), cat: () => setCatSel('') }
   const onEdit = (id: number) => openTxFormById(ctx, id)
@@ -233,11 +233,7 @@ export function Transacciones({ active }: TabProps) {
               ariaLabel="Tipo"
               value={tipoSel ?? ''}
               onChange={(v) => setTipoSel(v === 'ingreso' || v === 'gasto' ? v : '')}
-              options={[
-                { value: '', label: 'Todos los tipos' },
-                { value: 'ingreso', label: 'Ingresos' },
-                { value: 'gasto', label: 'Gastos' },
-              ]}
+              options={[{ value: '', label: 'Todos los tipos' }, ...tipos]}
             />
             <Select
               compact

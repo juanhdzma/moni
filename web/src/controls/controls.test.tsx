@@ -6,6 +6,7 @@ import { AdvancedToggle } from './AdvancedToggle'
 import { DatePicker, formatValue, parseValue } from './DatePicker'
 import { MoneyInput } from './MoneyInput'
 import { Select } from './Select'
+import { estado } from '../test/factories'
 import { renderWithProviders } from '../test/render'
 
 const OPTS = [
@@ -140,8 +141,8 @@ describe('AdvancedToggle', () => {
 
 describe('DatePicker', () => {
   it('parse/format ida y vuelta', () => {
-    expect(formatValue(parseValue('2026-08-05', false), false)).toBe('2026-08-05')
-    expect(formatValue(parseValue('2026-08-05T07:09', true), true)).toBe('2026-08-05T07:09')
+    expect(formatValue(parseValue('2026-08-05', '2026-08-20'), false)).toBe('2026-08-05')
+    expect(formatValue(parseValue('2026-08-05T07:09', '2026-08-20'), true)).toBe('2026-08-05T07:09')
   })
 
   function H({ type = 'date' as 'date' | 'datetime-local', initial = '2026-08-05' }) {
@@ -163,6 +164,23 @@ describe('DatePicker', () => {
     await user.click(screen.getByRole('button', { name: '20' }))
     expect(screen.getByTestId('v')).toHaveTextContent('2026-08-20')
     expect(document.querySelector('.cdp-panel')).not.toHaveClass('open')
+  })
+
+  it('vacío arranca en estado.hoy, marca el día actual y Hoy lo elige', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H initial="2026-03-05" />, { estado: estado({ hoy: '2026-08-20' }) })
+    await user.click(screen.getByRole('button', { name: /05\/03\/2026/ }))
+    await user.click(screen.getByText('Hoy'))
+    expect(screen.getByTestId('v')).toHaveTextContent('2026-08-20')
+    await user.click(screen.getByRole('button', { name: /20\/08\/2026/ }))
+    expect(document.querySelector('.cdp-day.today')).toHaveTextContent('20')
+  })
+
+  it('sin valor el selector abre en el mes de estado.hoy', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H initial="" />, { estado: estado({ hoy: '2026-08-20' }) })
+    await user.click(screen.getByRole('button', { name: 'Seleccionar fecha' }))
+    expect(document.querySelector('.cdp-month')).toHaveTextContent('Agosto de 2026')
   })
 
   it('navegar de mes y Escape cancela sin confirmar', async () => {

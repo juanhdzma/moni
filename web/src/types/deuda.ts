@@ -5,6 +5,22 @@ export interface InteresesPagados {
   exacto: boolean
 }
 
+export interface FrasesDeuda {
+  detalle: string
+  meses_restantes_texto: string | null
+  progreso_texto: string
+  intereses_texto: string | null
+  intereses_ayuda: string
+  intereses_saldada_texto: string | null
+}
+
+export interface DatoResumenDeudas {
+  cuotas: string
+  cuotas_sufijo: string
+  intereses: string | null
+  intereses_sufijo: string
+}
+
 export interface ApiDeuda {
   id: number
   nombre: string
@@ -28,6 +44,7 @@ export interface ApiDeuda {
   disponible: number | null
   uso_pct: number
   nivel_uso: Nivel
+  frases?: FrasesDeuda
 }
 
 export type Deuda = ApiDeuda & WithId
@@ -49,9 +66,8 @@ export interface DeudaIn {
 export interface DeudaPago {
   nuevo_saldo: number
   total_pagado: number
-  intereses: number
-  fecha: string
-  descripcion: string
+  fecha?: string
+  descripcion?: string
   notas: string
   registrar_tx: boolean
   avanzar_cuota: boolean
@@ -60,9 +76,10 @@ export interface DeudaPago {
 
 export interface DeudaAdelanto {
   monto: number
-  nuevo_saldo: number
-  fecha: string
-  descripcion: string
+  nuevo_saldo?: number
+  disponible_nuevo?: number
+  fecha?: string
+  descripcion?: string
   notas: string
   registrar_tx: boolean
 }
@@ -73,6 +90,7 @@ export interface ResumenDeudas {
   total_intereses: number
   intereses_aproximado: boolean
   segmentos: Segmento[]
+  dato: DatoResumenDeudas
   creditos: Deuda[]
   tarjetas: Deuda[]
   terminadas: Deuda[]
@@ -85,4 +103,5 @@ export interface PreviewPago {
 
 export interface PreviewAdelanto {
   comision: number
+  nuevo_saldo: number
 }

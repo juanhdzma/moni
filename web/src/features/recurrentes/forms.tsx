@@ -4,30 +4,18 @@ import { MoneyInput } from '../../controls/MoneyInput'
 import { Select } from '../../controls/Select'
 import { errMsg, numToInput, parseMoney } from '../../lib/format'
 import { useCategorias } from '@/shell/providers/CategoriasProvider'
-import { useData } from '@/shell/providers/DataProvider'
 import { useModal } from '@/shell/providers/ModalProvider'
 import type { OpenerCtx } from '@/shell/hooks/openers'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { Frecuencia, Recurrente, TipoRec } from '../../types'
+import type { Recurrente, TipoRec } from '../../types'
+import { useResumenRecurrentes } from './useResumenRecurrentes'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { FechaField, NotasField } from '../../controls/FormFields'
-
-const frecOptions: { value: Frecuencia; label: string }[] = [
-  { value: 'semanal', label: 'Semanal' },
-  { value: 'quincenal', label: 'Quincenal' },
-  { value: 'mensual', label: 'Mensual' },
-  { value: 'bimestral', label: 'Bimestral' },
-  { value: 'trimestral', label: 'Trimestral' },
-  { value: 'semestral', label: 'Semestral' },
-  { value: 'anual', label: 'Anual' },
-]
-
 
 function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const isEdit = item !== null
   const tipoInicial = item?.tipo || 'suscripcion'
-  const { estado } = useData()
-  const { setModalStatus } = useModal()
+  const { data: resumen } = useResumenRecurrentes()
   const guardar = useGuardar()
   const { crudOp, crudOpOrBanner } = useMutations()
   const [nombre, setNombre] = useState(item?.nombre || '')
@@ -38,17 +26,11 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const [notas, setNotas] = useState(item?.notas || '')
 
   const save = async () => {
-    const nombreOk = nombre.trim()
-    const montoNum = parseMoney(monto)
-    if (!nombreOk) return setModalStatus('err', 'Nombre requerido')
-    if (!montoNum) return setModalStatus('err', 'Monto requerido')
-    const activoActual = item ? (estado.recurrentes.find((r) => r._id === item._id)?.activo ?? true) : true
     const data = {
-      nombre: nombreOk,
+      nombre: nombre.trim(),
       tipo,
-      monto: montoNum,
-      frecuencia: frecuencia as Frecuencia,
-      activo: activoActual,
+      monto: parseMoney(monto),
+      frecuencia,
       fecha_inicio: fecha,
       notas: notas.trim(),
     }
@@ -60,8 +42,7 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
 
   const remove = async () => {
     if (!item) return
-    const r = estado.recurrentes.find((x) => x._id === item._id)
-    if (!confirm(`¿Eliminar "${r?.nombre}"?`)) return
+    if (!confirm(`¿Eliminar "${item.nombre}"?`)) return
     await crudOpOrBanner('rec', 'delete', { _id: item._id })
   }
 
@@ -107,7 +88,7 @@ function RecurrenteForm({ item }: { item: Recurrente | null }) {
         </div>
         <div className="form-group">
           <label className="form-label" htmlFor="m-frecuencia">Frecuencia</label>
-          <Select id="m-frecuencia" value={frecuencia} onChange={setFrecuencia} options={frecOptions} />
+          <Select id="m-frecuencia" value={frecuencia} onChange={setFrecuencia} options={resumen?.frecuencias ?? []} />
         </div>
       </div>
       <FechaField id="m-fecha" label="Fecha inicio (opcional)" value={fecha} onChange={setFecha} type="date" />
@@ -121,24 +102,24 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
   const { categorias } = useCategorias()
   const { setModalStatus } = useModal()
   const { crudOp } = useMutations()
+  const { data: resumen } = useResumenRecurrentes()
   const cats = categorias[r.tipo === 'ingreso' ? 'ingreso' : 'gasto'] || []
-  const [categoria, setCategoria] = useState(cats.includes(r.nombre) ? r.nombre : (cats[cats.length - 1] ?? ''))
+  const [categoriaElegida, setCategoriaElegida] = useState<string | null>(null)
+  const sugerida = [...(resumen?.ingresos ?? []), ...(resumen?.gastos ?? [])].find((x) => x._id === r._id)?.categoria_sugerida
+  const categoria = categoriaElegida ?? sugerida ?? ''
   const [descripcion, setDescripcion] = useState(r.nombre)
   const [monto, setMonto] = useState(numToInput(r.monto))
   const [fecha, setFecha] = useState(dateISO)
   const [notas, setNotas] = useState('')
 
   const save = async () => {
-    const montoNum = parseMoney(monto)
-    if (!montoNum || montoNum <= 0) return setModalStatus('err', 'Ingresá un monto válido')
-    if (!fecha) return setModalStatus('err', 'Fecha requerida')
     try {
       await crudOp('tx', 'add', {
         fecha: `${fecha}T00:00`,
         tipo: r.tipo === 'ingreso' ? 'ingreso' : 'gasto',
         categoria,
         descripcion: descripcion.trim(),
-        monto: montoNum,
+        monto: parseMoney(monto),
         notas: notas.trim(),
         tarjeta_id: null,
       })
@@ -151,7 +132,7 @@ function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
     <>
       <div className="form-group">
         <label className="form-label" htmlFor="m-cat">Categoría</label>
-        <Select id="m-cat" value={categoria} onChange={setCategoria} options={cats.map((c) => ({ value: c, label: c }))} />
+        <Select id="m-cat" value={categoria} onChange={setCategoriaElegida} options={cats.map((c) => ({ value: c, label: c }))} />
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="m-desc">Descripción</label>

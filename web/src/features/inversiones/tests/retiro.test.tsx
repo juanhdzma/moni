@@ -24,7 +24,7 @@ describe('retiro', () => {
       method: 'POST',
       url: '/api/inv/5/retiro',
       headers: H,
-      body: { tipo: 'total', monto: 1010000, fecha: '2026-11-12T10:30', notas: '', registrar_tx: true },
+      body: { tipo: 'total', monto: 1010000, fecha: '2026-08-20', notas: '', registrar_tx: true },
     })
     expect(f.mutations()[0]?.body).not.toHaveProperty('saldo_queda')
   })
@@ -44,23 +44,21 @@ describe('retiro', () => {
       tipo: 'parcial',
       monto: 200000,
       saldo_queda: 810000,
-      fecha: '2026-11-12T10:30',
+      fecha: '2026-08-20',
       notas: 'parte',
       registrar_tx: true,
     })
   })
 
-  it('parcial valida monto y saldo vacío', async () => {
+  it('parcial sin saldo no manda saldo_queda y muestra el 400 del backend', async () => {
     const user = userEvent.setup()
-    const f = mockInv()
+    const f = mockInv({ 'POST /api/inv/5/retiro': failure(400, 'saldo_queda requerido para retiro parcial') })
     await abrir(user)
     await user.click(modal().getByRole('button', { name: 'Parcial' }))
-    await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
-    expect(document.getElementById('m-status')).toHaveTextContent('Ingresá el monto que retirás')
     await typeMoney(user, 'm-monto-parcial', '1000')
     await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
-    expect(document.getElementById('m-status')).toHaveTextContent('Ingresá el saldo que queda en el fondo')
-    expect(f.mutations()).toHaveLength(0)
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('saldo_queda requerido'))
+    expect(f.mutations()[0]?.body).not.toHaveProperty('saldo_queda')
   })
 
   it('error del backend', async () => {

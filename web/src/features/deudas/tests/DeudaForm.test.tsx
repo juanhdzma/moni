@@ -35,7 +35,7 @@ describe('forms', () => {
         proxima_cuota: '',
         es_tarjeta: false,
         cupo: 0,
-        franquicia: '',
+        franquicia: 'Visa',
         crear_tx: true,
       },
     })
@@ -81,23 +81,22 @@ describe('forms', () => {
         es_tarjeta: true,
         cupo: 3000000,
         franquicia: 'Visa',
-        crear_tx: false,
+        crear_tx: true,
       },
     })
   })
 
-  it('validación: nombre y saldo requeridos', async () => {
+  it('no valida reglas de negocio: manda el payload y muestra el 422 del backend', async () => {
     const user = userEvent.setup()
-    const f = mockFetch()
+    const f = mockFetch({ 'POST /api/deuda': failure(422, 'Saldo requerido') })
     renderWithProviders(<Deudas active />)
     await user.click(screen.getByText('Nueva deuda'))
-    await user.click(screen.getByText('Agregar deuda'))
-    expect(document.getElementById('m-status')).toHaveTextContent('Nombre requerido')
-    expect(document.getElementById('m-status')).toHaveClass('err')
     await user.type(document.getElementById('m-nombre') as HTMLElement, 'X')
     await user.click(screen.getByText('Agregar deuda'))
-    expect(document.getElementById('m-status')).toHaveTextContent('Saldo requerido')
-    expect(f.mutations()).toHaveLength(0)
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Saldo requerido'))
+    expect(document.getElementById('m-status')).toHaveClass('err')
+    expect(f.mutations()).toHaveLength(1)
+    expect(f.mutations()[0]?.body).toMatchObject({ nombre: 'X', saldo_actual: 0, es_tarjeta: false })
   })
 
   it('error del backend se muestra en el modal', async () => {
@@ -137,7 +136,7 @@ describe('forms', () => {
         proxima_cuota: '2026-09-05',
         es_tarjeta: false,
         cupo: 0,
-        franquicia: '',
+        franquicia: 'Visa',
       },
     })
     expect(m?.body).not.toHaveProperty('crear_tx')

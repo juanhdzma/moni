@@ -25,12 +25,12 @@ export interface InvIn {
   nombre: string
   tipo: TipoInv
   monto_invertido: number
-  valor_actual: number
+  valor_actual?: number
   tasa_ea: number | null
   fecha_inicio: string
   pago: PagoInv | null
   dia_pago: number | null
-  valor_actualizado_en: string
+  valor_actualizado_en?: string
   tasa_tipo?: 'ea' | 'mv'
   crear_tx?: boolean
 }
@@ -46,7 +46,7 @@ export interface InvRendimiento {
 
 export interface InvAporte {
   monto: number
-  nuevo_valor: number
+  nuevo_valor?: number
   fecha: string
   notas: string
   registrar_tx: boolean
@@ -67,10 +67,20 @@ export interface ResumenInversiones {
   ganancia: number
   ganancia_pct: number
   segmentos: Segmento[]
+  texto_posiciones: string
   fijas: Inversion[]
   variables: Inversion[]
 }
 
 export interface PreviewAporte {
   nuevo_valor_estimado: number
+}
+
+export interface TipoInversionOpcion {
+  valor: TipoInv
+  label: string
+}
+
+export interface RendimientoDefaults {
+  capitaliza_default: boolean
 }
