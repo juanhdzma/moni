@@ -1,21 +1,19 @@
 from .derivados import derivar_activo, derivar_deuda, derivar_inversion, derivar_recurrente
 from .finanzas import (
     cambio_valor,
+    convertir_tasa,
     comision_adelanto,
     desglose_pago,
     ea_a_mv,
     estimar_intereses_pagados,
-    fmt_intereses,
     intereses_pagados,
     mv_a_ea,
     proxima_fecha_inversion,
     rendimiento_mensual_fija,
-    tasa_ea_desde_input,
 )
 from .frecuencias import (
     FRECUENCIAS,
     frecuencia_label,
-    proxima_fecha,
     proxima_fecha_recurrente,
     to_mensual,
 )

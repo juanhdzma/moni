@@ -6,15 +6,20 @@ from ..calculos import dinero, listados, operaciones
 from ..calculos.fechas import hoy_bogota
 from ..core import estado as store
 from ..core.db import conexion
+from ..schemas.validadores import PeriodoEvolucion, PeriodoGastos
 
 router = APIRouter()
+
+
+def _estado_de_hoy(conn):
+    hoy = hoy_bogota()
+    return store.cargar_estado(conn, hoy), hoy
 
 
 @router.get("/api/all")
 def get_all():
     with conexion() as conn:
-        hoy = hoy_bogota()
-        estado = store.cargar_estado(conn, hoy)
+        estado, hoy = _estado_de_hoy(conn)
         return {
             **estado,
             "hoy": hoy.isoformat(),
@@ -29,8 +34,7 @@ def get_all():
 @router.get("/api/dashboard/resumen")
 def dashboard_resumen():
     with conexion() as conn:
-        hoy = hoy_bogota()
-        estado = store.cargar_estado(conn, hoy)
+        estado, hoy = _estado_de_hoy(conn)
         resumen = dinero.resumen_dashboard(estado, hoy)
         return {**resumen, "partes": dinero.partes_patrimonio(resumen, store.conteos(estado))}
 
@@ -38,25 +42,25 @@ def dashboard_resumen():
 @router.get("/api/dashboard/evolucion")
 def dashboard_evolucion(
     serie: Literal["patrimonio", "inversiones"] = "patrimonio",
-    periodo: Literal["1M", "3M", "6M", "1Y", "ALL"] = "6M",
+    periodo: PeriodoEvolucion = "6M",
 ):
     with conexion() as conn:
-        hoy = hoy_bogota()
-        return dinero.evolucion(store.cargar_estado(conn, hoy), serie, periodo, hoy)
+        estado, hoy = _estado_de_hoy(conn)
+        return dinero.evolucion(estado, serie, periodo, hoy)
 
 
 @router.get("/api/dashboard/este-mes")
 def dashboard_este_mes():
     with conexion() as conn:
-        hoy = hoy_bogota()
-        return dinero.este_mes(store.cargar_estado(conn, hoy), hoy)
+        estado, hoy = _estado_de_hoy(conn)
+        return dinero.este_mes(estado, hoy)
 
 
 @router.get("/api/dashboard/gastos")
-def dashboard_gastos(periodo: Literal["1W", "1M", "3M", "6M", "1Y", "ALL"] = "1M"):
+def dashboard_gastos(periodo: PeriodoGastos = "1M"):
     with conexion() as conn:
-        hoy = hoy_bogota()
-        return dinero.gastos_periodo(store.cargar_estado(conn, hoy)["transacciones"], periodo, hoy)
+        estado, hoy = _estado_de_hoy(conn)
+        return dinero.gastos_periodo(estado["transacciones"], periodo, hoy)
 
 
 @router.get("/api/dashboard/movimientos")

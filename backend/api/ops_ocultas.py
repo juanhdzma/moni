@@ -5,12 +5,10 @@ from fastapi import APIRouter, HTTPException
 from ..calculos import operaciones
 from ..calculos.fechas import hoy_bogota
 from ..core.db import conexion
-from ..core.ops_ocultas import candidatas, ocultar_op
+from ..core.ops_ocultas import FUENTES_OPS, candidatas, ocultar_op
 from ..schemas.ajustes import OpOculta
 
 router = APIRouter()
-
-OPS_FUENTES = {"deuda": "deudas", "inversion": "inversiones", "recurrente": "recurrentes"}
 
 
 @router.get("/api/proximas-operaciones")
@@ -24,12 +22,12 @@ def proximas_operaciones():
 @router.get("/api/ops-ocultas")
 def listar_ops_ocultas():
     with conexion() as conn:
-        items = []
-        for r in conn.execute("SELECT clave, tipo, fuente_id, fecha FROM ops_ocultas ORDER BY creada_en, clave").fetchall():
-            fuente = conn.execute(
-                f"SELECT nombre FROM {OPS_FUENTES[r['tipo']]} WHERE id = ?", (r["fuente_id"],)
-            ).fetchone()
-            items.append({**dict(r), "etiqueta": fuente["nombre"] if fuente else None})
+        nombres = {
+            tipo: {r["id"]: r["nombre"] for r in conn.execute(f"SELECT id, nombre FROM {tabla}")}
+            for tipo, tabla in FUENTES_OPS.items()
+        }
+        filas = conn.execute("SELECT clave, tipo, fuente_id, fecha FROM ops_ocultas ORDER BY creada_en, clave")
+        items = [{**dict(r), "etiqueta": nombres[r["tipo"]].get(r["fuente_id"])} for r in filas]
         return {"items": items}
 
 

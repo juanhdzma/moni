@@ -73,20 +73,12 @@ def restar_meses(d: datetime.datetime, n: int) -> datetime.datetime:
     return datetime.datetime.combine(f, d.time())
 
 
-def meses_entre(a: datetime.date, b: datetime.date) -> int:
-    return (b.year - a.year) * 12 + b.month - a.month
-
-
 def mes_corto(m: int) -> str:
     return MESES_CORTOS[m - 1]
 
 
 def nombre_mes(m: int) -> str:
     return MESES[m - 1]
-
-
-def etiqueta_mes_corta(d: datetime.date) -> str:
-    return mes_corto(d.month)
 
 
 def texto_dias(dias: int) -> str:
@@ -107,12 +99,9 @@ def redondear_js(x: float) -> int:
     return math.floor(x + 0.5)
 
 
-def es_desactualizado(
-    fecha: Optional[str], hoy: datetime.date, dias: int = 30, ahora: Optional[datetime.datetime] = None
-) -> bool:
+def es_desactualizado(fecha: Optional[str], hoy: datetime.date, dias: int = 30) -> bool:
     d = parse_fecha(fecha) if fecha else None
     if d is None:
         return False
-    if ahora is None:
-        ahora = datetime.datetime.now(TZ) if hoy == hoy_bogota() else datetime.datetime.combine(hoy, datetime.time(12), TZ)
+    ahora = datetime.datetime.combine(hoy, datetime.time(12), TZ)
     return ahora - datetime.datetime.combine(d, datetime.time(12), TZ) >= datetime.timedelta(days=dias)

@@ -126,9 +126,6 @@ def test_rendimiento_y_tasas():
     for v, mv, ea in EXP["tasas"]:
         assert operaciones.ea_a_mv(v) == pytest.approx(mv, rel=1e-12)
         assert operaciones.mv_a_ea(v) == pytest.approx(ea, rel=1e-12)
-    for texto, tipo, esperado in EXP["tasa_input"]:
-        obtenido = operaciones.tasa_ea_desde_input(texto, tipo)
-        assert obtenido == (pytest.approx(esperado, rel=1e-12) if esperado is not None else None), (texto, tipo)
 
 
 def test_cambio_valor_y_desglose():

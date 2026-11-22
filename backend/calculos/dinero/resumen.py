@@ -1,9 +1,10 @@
 import datetime
 
 from ..fechas import mes_de
-from ..listados import tiene_saldo
+from ..constantes import tiene_saldo
 from ..numeros import porcentaje
 from .flujos import es_gasto_cartera, flujo_cartera, net_worth
+from .gastos import PERIODOS_GASTOS
 from .series import (
     _clave_mes,
     etiquetas_meses,
@@ -16,7 +17,7 @@ from .series import (
     serie_mensual,
 )
 
-PERIODOS_EVOLUCION = ("1M", "3M", "6M", "1Y", "ALL")
+PERIODOS_EVOLUCION = PERIODOS_GASTOS[1:]
 
 
 def frase_mes(ahorro_pct: float, ingresos: float) -> dict:

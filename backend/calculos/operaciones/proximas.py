@@ -1,7 +1,7 @@
 import datetime
 
 from ..fechas import mes_corto, parse_fecha, texto_dias
-from ..listados import tiene_saldo
+from ..constantes import tiene_saldo
 from .finanzas import proxima_fecha_inversion, rendimiento_mensual_fija
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente
 

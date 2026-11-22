@@ -5,7 +5,8 @@ from ..calculos import operaciones
 from ..calculos.fechas import TZ, parse_fecha
 from .estado import filas
 
-_CLAVE_OP_RE = re.compile(r"^(deuda|inversion|recurrente):(\d+):(\d{4}-\d{2}-\d{2})$")
+FUENTES_OPS = {"deuda": "deudas", "inversion": "inversiones", "recurrente": "recurrentes"}
+_CLAVE_OP_RE = re.compile(rf"^({'|'.join(FUENTES_OPS)}):(\d+):(\d{{4}}-\d{{2}}-\d{{2}})$")
 
 
 def parse_clave(clave: str) -> tuple[str, int, str]:

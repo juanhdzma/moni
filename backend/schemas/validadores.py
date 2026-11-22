@@ -3,11 +3,15 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import Field, field_validator
 
+from ..calculos.dinero import PERIODOS_EVOLUCION, PERIODOS_GASTOS
 from ..core.ops_ocultas import parse_clave
 
 _FECHA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?$")
 
 TipoTx = Literal["ingreso", "gasto", "transfer"]
+TasaTipo = Literal["ea", "mv"]
+PeriodoGastos = Literal[PERIODOS_GASTOS]
+PeriodoEvolucion = Literal[PERIODOS_EVOLUCION]
 Monto = Annotated[float, Field(gt=0)]
 MontoCero = Annotated[float, Field(ge=0)]
 

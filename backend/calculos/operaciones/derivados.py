@@ -2,7 +2,7 @@ import datetime
 import math
 
 from ..fechas import es_desactualizado, texto_dias_corto
-from ..listados import tiene_saldo
+from ..constantes import tiene_saldo
 from ..numeros import porcentaje
 from .finanzas import ea_a_mv, intereses_pagados, proxima_fecha_inversion, rendimiento_mensual_fija
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente, to_mensual

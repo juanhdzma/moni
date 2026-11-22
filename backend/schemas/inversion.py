@@ -2,7 +2,7 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from .validadores import Monto, MontoCero, clave_opcional, fecha_opcional, fecha_requerida
+from .validadores import Monto, MontoCero, TasaTipo, clave_opcional, fecha_opcional, fecha_requerida
 
 
 class InvIn(BaseModel):
@@ -11,7 +11,7 @@ class InvIn(BaseModel):
     monto_invertido: MontoCero
     valor_actual: MontoCero
     tasa_ea: Optional[MontoCero] = None
-    tasa_tipo: Literal["ea", "mv"] = "ea"
+    tasa_tipo: TasaTipo = "ea"
     fecha_inicio: str = ""
     pago: Optional[Literal["mensual", "vencimiento"]] = None
     dia_pago: Optional[Annotated[int, Field(ge=1, le=31)]] = None

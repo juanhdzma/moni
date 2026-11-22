@@ -15,20 +15,32 @@ def ajustes(conn):
     return {"moneda_simbolo": pares.get("moneda_simbolo", "$")}
 
 
+DERIVADORES = {
+    "transacciones": lambda t, hoy, por_id: listados.derivar_tx(t, por_id),
+    "deudas": lambda d, hoy, por_id: operaciones.derivar_deuda(d),
+    "inversiones": lambda i, hoy, por_id: operaciones.derivar_inversion(i, hoy),
+    "activos": lambda a, hoy, por_id: operaciones.derivar_activo(a, hoy),
+    "recurrentes": lambda r, hoy, por_id: operaciones.derivar_recurrente(r, hoy),
+}
+
+
+def _deudas_por_id(conn):
+    return {d["id"]: d for d in filas(conn, "deudas")}
+
+
+def _derivar(conn, nombre, hoy, por_id):
+    derivar = DERIVADORES[nombre]
+    return [derivar(fila, hoy, por_id) for fila in filas(conn, nombre)]
+
+
 def cargar_estado(conn, hoy):
-    deudas = filas(conn, "deudas")
-    por_id = {d["id"]: d for d in deudas}
-    return {
-        "transacciones": [listados.derivar_tx(t, por_id) for t in filas(conn, "transacciones")],
-        "deudas": [operaciones.derivar_deuda(d) for d in deudas],
-        "inversiones": [operaciones.derivar_inversion(i, hoy) for i in filas(conn, "inversiones")],
-        "activos": [operaciones.derivar_activo(a, hoy) for a in filas(conn, "activos")],
-        "recurrentes": [operaciones.derivar_recurrente(r, hoy) for r in filas(conn, "recurrentes")],
-    }
+    por_id = _deudas_por_id(conn)
+    return {nombre: _derivar(conn, nombre, hoy, por_id) for nombre in DERIVADORES}
 
 
 def coleccion(conn, nombre):
-    return cargar_estado(conn, hoy_bogota())[nombre]
+    por_id = _deudas_por_id(conn) if nombre == "transacciones" else None
+    return _derivar(conn, nombre, hoy_bogota(), por_id)
 
 
 def conteos(estado):

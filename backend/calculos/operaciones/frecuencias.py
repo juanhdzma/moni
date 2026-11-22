@@ -41,6 +41,3 @@ def proxima_fecha_recurrente(fecha_inicio: str, frecuencia: str, hoy: datetime.d
         k += 1
         nxt = sumar_meses(start, k * meses, start.day)
     return nxt
-
-
-proxima_fecha = proxima_fecha_recurrente

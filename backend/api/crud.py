@@ -7,8 +7,8 @@ from ..calculos import operaciones
 
 def _normalizar_tasa(data):
     tipo = data.pop("tasa_tipo", "ea")
-    if tipo == "mv" and data.get("tasa_ea"):
-        data["tasa_ea"] = operaciones.mv_a_ea(data["tasa_ea"])
+    if data.get("tasa_ea"):
+        data["tasa_ea"] = operaciones.convertir_tasa(data["tasa_ea"], tipo)
     return data
 
 

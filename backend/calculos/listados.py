@@ -1,26 +1,9 @@
 import unicodedata
 from datetime import timedelta
 
+from backend.calculos.constantes import CATEGORIAS_SISTEMA, tiene_saldo
 from backend.calculos.fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
 
-SALDO_MINIMO = 1
-
-CATEGORIAS_SISTEMA = {
-    "ingreso": {
-        "credito_recibido": "Crédito recibido",
-        "avance_tarjeta": "Avance de tarjeta",
-        "intereses": "Intereses",
-        "dividendos": "Dividendos",
-        "venta_activos": "Venta activos",
-    },
-    "gasto": {
-        "inversion": "Inversión",
-        "compra_activos": "Compra activos",
-    },
-    "transfer": {
-        "pago_deuda": "Pago deuda",
-    },
-}
 
 TIPOS = tuple(CATEGORIAS_SISTEMA)
 COLUMNAS_ORDEN = ("fecha", "tipo", "categoria", "descripcion", "monto")
@@ -30,10 +13,6 @@ EFECTIVO_DEBITO = "Efectivo / Débito"
 
 class CategoriaDuplicada(ValueError):
     pass
-
-
-def tiene_saldo(deuda):
-    return deuda["saldo_actual"] >= SALDO_MINIMO
 
 
 def es_categoria_sistema(tipo, nombre):

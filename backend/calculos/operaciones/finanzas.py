@@ -1,5 +1,4 @@
 import datetime
-import math
 from typing import Optional
 
 from ..fechas import redondear_js, sumar_meses
@@ -14,14 +13,8 @@ def mv_a_ea(mv: float) -> float:
     return ((1 + mv / 100) ** 12 - 1) * 100
 
 
-def tasa_ea_desde_input(valor, tipo: str) -> Optional[float]:
-    try:
-        raw = float(valor)
-    except (TypeError, ValueError):
-        return None
-    if not raw or math.isnan(raw):
-        return None
-    return raw if tipo == "ea" else mv_a_ea(raw)
+def convertir_tasa(valor: float, tipo: str) -> float:
+    return mv_a_ea(valor) if tipo == "mv" and valor else valor
 
 
 def proxima_fecha_inversion(dia_pago: int, hoy: datetime.date) -> datetime.date:
@@ -41,7 +34,7 @@ def cambio_valor(nuevo: float, anterior: float, base: float) -> dict:
 def estimar_intereses_pagados(monto_inicial: float, saldo_actual: float, tasa_ea: float, cuota_mensual: float) -> Optional[int]:
     if not tasa_ea or not cuota_mensual or not monto_inicial or saldo_actual >= monto_inicial:
         return None
-    tasa_mv = (1 + tasa_ea / 100) ** (1 / 12) - 1
+    tasa_mv = ea_a_mv(tasa_ea) / 100
     saldo = monto_inicial
     total = 0.0
     for _ in range(600):
@@ -61,10 +54,6 @@ def intereses_pagados(d: dict) -> Optional[dict]:
         return {"valor": d["total_intereses"], "exacto": True}
     est = estimar_intereses_pagados(d["monto_inicial"], d["saldo_actual"], d.get("tasa_ea") or 0, d["cuota_mensual"])
     return None if est is None else {"valor": est, "exacto": False}
-
-
-def fmt_intereses(info: dict, texto_monto: str) -> str:
-    return ("" if info["exacto"] else "~") + texto_monto
 
 
 def desglose_pago(saldo_anterior: float, total: float, saldo_nuevo: float) -> dict:
