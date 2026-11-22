@@ -1,16 +1,15 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import {
-  addCustomCategory,
-  loadCustomCategories,
-  removeCustomCategory,
-  type Categorias,
-} from '../lib/config'
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
+import { agregarCategoria, quitarCategoria } from '../lib/api'
 import type { TipoTx } from '../types'
+import { useData } from './DataProvider'
+
+export type NombresCategorias = Record<TipoTx, string[]>
 
 export interface CategoriasApi {
-  categorias: Categorias
-  addCategoria: (tipo: TipoTx, nombre: string) => boolean
-  removeCategoria: (tipo: TipoTx, nombre: string) => void
+  categorias: NombresCategorias
+  esSistema: (tipo: TipoTx, nombre: string) => boolean
+  addCategoria: (tipo: TipoTx, nombre: string) => Promise<boolean>
+  removeCategoria: (tipo: TipoTx, nombre: string) => Promise<void>
 }
 
 const CategoriasContext = createContext<CategoriasApi | null>(null)
@@ -22,26 +21,49 @@ export function useCategorias(): CategoriasApi {
 }
 
 export function CategoriasProvider({ children }: { children: ReactNode }) {
-  const [categorias, setCategorias] = useState<Categorias>(loadCustomCategories)
+  const { estado, reload, showBanner } = useData()
+  const origen = estado.categorias
 
-  const addCategoria = useCallback(
-    (tipo: TipoTx, nombre: string) => {
-      const next = addCustomCategory(categorias, tipo, nombre)
-      if (!next) return false
-      setCategorias(next)
+  const categorias = useMemo<NombresCategorias>(
+    () => ({
+      ingreso: origen.ingreso.map((c) => c.nombre),
+      gasto: origen.gasto.map((c) => c.nombre),
+      transfer: origen.transfer.map((c) => c.nombre),
+    }),
+    [origen],
+  )
+
+  const esSistema = useCallback(
+    (tipo: TipoTx, nombre: string) => origen[tipo].some((c) => c.nombre === nombre && c.sistema),
+    [origen],
+  )
+
+  const mutar = useCallback(
+    async (fn: () => Promise<unknown>) => {
+      try {
+        await fn()
+      } catch (err) {
+        showBanner(err instanceof Error ? err.message : String(err))
+        return false
+      }
+      await reload()
       return true
     },
-    [categorias],
+    [reload, showBanner],
   )
+
+  const addCategoria = useCallback((tipo: TipoTx, nombre: string) => mutar(() => agregarCategoria(tipo, nombre)), [mutar])
 
   const removeCategoria = useCallback(
-    (tipo: TipoTx, nombre: string) => {
-      const next = removeCustomCategory(categorias, tipo, nombre)
-      if (next !== categorias) setCategorias(next)
+    async (tipo: TipoTx, nombre: string) => {
+      await mutar(() => quitarCategoria(tipo, nombre))
     },
-    [categorias],
+    [mutar],
   )
 
-  const value = useMemo(() => ({ categorias, addCategoria, removeCategoria }), [categorias, addCategoria, removeCategoria])
+  const value = useMemo(
+    () => ({ categorias, esSistema, addCategoria, removeCategoria }),
+    [categorias, esSistema, addCategoria, removeCategoria],
+  )
   return <CategoriasContext.Provider value={value}>{children}</CategoriasContext.Provider>
 }

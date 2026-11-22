@@ -1,33 +1,45 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearCurrencySymbolCache } from '../../lib/format'
 import { json, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
 import { expectLabels, modalBody } from '../../test/labels'
-import { Dashboard } from '../dashboard'
+import { estado as estadoBase } from '../../test/factories'
 import { Settings } from '.'
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) })
-  localStorage.clear()
-  clearCurrencySymbolCache()
 })
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
 })
 
+const OPS = {
+  items: [
+    { clave: 'deuda:1:2026-01-01', tipo: 'deuda', fuente_id: 1, fecha: '2026-01-01', etiqueta: 'Moto' },
+    { clave: 'recurrente:2:2026-02-01', tipo: 'recurrente', fuente_id: 2, fecha: '2026-02-01', etiqueta: null },
+  ],
+}
+
 describe('categorias', () => {
-  it('agrega y quita una categoria custom y persiste en moni_cats', async () => {
+  it('agrega con POST /api/categorias y recarga', async () => {
+    const f = mockFetch({ 'POST /api/categorias': { ingreso: [], gasto: [], transfer: [] } })
     renderWithProviders(<Settings active />)
     await userEvent.type(document.getElementById('settings-new-cat-gasto') as HTMLInputElement, 'Mascotas{Enter}')
-    expect(screen.getByText('Mascotas')).toBeTruthy()
-    expect(JSON.parse(localStorage.getItem('moni_cats') ?? '{}')).toEqual({ gasto: ['Mascotas'] })
+    await waitFor(() => expect(f.callsTo('GET', '/api/all').length).toBeGreaterThan(0))
+    expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/categorias', headers: { 'X-Moni-Request': '1' }, body: { tipo: 'gasto', nombre: 'Mascotas' } })
     expect((document.getElementById('settings-new-cat-gasto') as HTMLInputElement).value).toBe('')
+  })
+
+  it('quita una custom con DELETE y query', async () => {
+    const base = estadoBase()
+    const estado = { ...base, categorias: { ...base.categorias, gasto: [...base.categorias.gasto, { nombre: 'Mascotas', sistema: false }] } }
+    const f = mockFetch({ 'DELETE /api/categorias': {} })
+    renderWithProviders(<Settings active />, { estado })
     await userEvent.click(screen.getByRole('button', { name: 'Eliminar Mascotas' }))
-    expect(screen.queryByText('Mascotas')).toBeNull()
-    expect(JSON.parse(localStorage.getItem('moni_cats') ?? '{}')).toEqual({ gasto: [] })
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/categorias?tipo=gasto&nombre=Mascotas', headers: { 'X-Moni-Request': '1' } })
   })
 
   it('las categorias de sistema no tienen boton de eliminar', () => {
@@ -39,48 +51,46 @@ describe('categorias', () => {
 })
 
 describe('operaciones ocultas', () => {
-  it('lista y restaura una', async () => {
-    localStorage.setItem('moni_skipped_ops', JSON.stringify(['deuda:1:2026-01-01', 'rec:2:2026-02-01']))
+  it('lista lo que devuelve el backend y restaura una', async () => {
+    const f = mockFetch({ 'GET /api/ops-ocultas': OPS, 'DELETE /api/ops-ocultas': {} })
     renderWithProviders(<Settings active />)
-    expect(screen.getByText('deuda:1:2026-01-01')).toBeTruthy()
+    expect(await screen.findByText('deuda:1:2026-01-01')).toBeTruthy()
+    expect(screen.getByText(/Moto/)).toBeTruthy()
     await userEvent.click(screen.getAllByRole('button', { name: 'Restaurar' })[0] as HTMLElement)
-    expect(screen.queryByText('deuda:1:2026-01-01')).toBeNull()
-    expect(JSON.parse(localStorage.getItem('moni_skipped_ops') ?? '[]')).toEqual(['rec:2:2026-02-01'])
-    await userEvent.click(screen.getByRole('button', { name: 'Restaurar todas' }))
-    expect(screen.getByText('Ninguna operación oculta.')).toBeTruthy()
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/ops-ocultas?clave=deuda%3A1%3A2026-01-01', headers: { 'X-Moni-Request': '1' } })
+    expect(f.callsTo('GET', '/api/all').length).toBeGreaterThan(0)
   })
-})
 
-describe('operaciones ocultas y recarga', () => {
-  it('siguen listadas tras montar la app antes de la primera carga', () => {
-    const guardadas = ['deuda:1:2026-01-01', 'rec:2:2026-02-01']
-    localStorage.setItem('moni_skipped_ops', JSON.stringify(guardadas))
-    renderWithProviders(
-      <>
-        <Dashboard active />
-        <Settings active />
-      </>,
-      { loaded: false },
-    )
-    expect(screen.getByText('deuda:1:2026-01-01')).toBeTruthy()
-    expect(screen.getByText('rec:2:2026-02-01')).toBeTruthy()
-    expect(JSON.parse(localStorage.getItem('moni_skipped_ops') ?? '[]')).toEqual(guardadas)
+  it('restaurar todas manda DELETE sin clave', async () => {
+    const f = mockFetch({ 'GET /api/ops-ocultas': OPS, 'DELETE /api/ops-ocultas': {} })
+    renderWithProviders(<Settings active />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Restaurar todas' }))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/ops-ocultas', headers: { 'X-Moni-Request': '1' } })
+  })
+
+  it('sin ocultas muestra el vacio', async () => {
+    mockFetch({})
+    renderWithProviders(<Settings active />)
+    expect(await screen.findByText('Ninguna operación oculta.')).toBeTruthy()
   })
 })
 
 describe('moneda', () => {
-  it('un símbolo guardado desconocido muestra la primera opción sin escribir nada', () => {
-    localStorage.setItem('moni_currency_symbol', 'CHF')
-    renderWithProviders(<Settings active />)
+  it('un símbolo desconocido muestra la primera opción', () => {
+    const base = estadoBase()
+    renderWithProviders(<Settings active />, { estado: { ...base, ajustes: { moneda_simbolo: 'CHF' } } })
     expect(screen.getByRole('button', { name: 'Símbolo mostrado junto a los montos' })).toHaveTextContent('Peso colombiano ($)')
-    expect(localStorage.getItem('moni_currency_symbol')).toBe('CHF')
   })
 
-  it('cambia el simbolo y lo persiste', async () => {
+  it('cambia el simbolo con PUT /api/ajustes', async () => {
+    const f = mockFetch({ 'PUT /api/ajustes': { moneda_simbolo: '€' } })
     renderWithProviders(<Settings active />)
     await userEvent.click(screen.getByRole('button', { name: 'Símbolo mostrado junto a los montos' }))
     await userEvent.click(screen.getByRole('option', { name: 'Euro (€)' }))
-    expect(localStorage.getItem('moni_currency_symbol')).toBe('€')
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]).toMatchObject({ method: 'PUT', url: '/api/ajustes', headers: { 'X-Moni-Request': '1' }, body: { moneda_simbolo: '€' } })
   })
 })
 
@@ -150,8 +160,9 @@ describe('zona de peligro', () => {
 
 describe('teclado', () => {
   it('todo lo accionable es button/input alcanzable por Tab', async () => {
-    localStorage.setItem('moni_skipped_ops', JSON.stringify(['a:1:2026-01-01']))
+    mockFetch({ 'GET /api/ops-ocultas': OPS })
     renderWithProviders(<Settings active />)
+    await screen.findByText('deuda:1:2026-01-01')
     const first = document.getElementById('settings-new-cat-ingreso') as HTMLInputElement
     first.focus()
     await userEvent.tab()

@@ -1,21 +1,48 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { AdvancedToggle } from '../../controls/AdvancedToggle'
 import { DatePicker } from '../../controls/DatePicker'
 import { FormStatus } from '../../controls/FormStatus'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { cop, nowStr, numToInput, parseMoney, pct, signStr, todayStr } from '../../lib/format'
-import { eaToMv, mvToEa, rendimientoMensualFija, tasaEaDesdeInput } from '../../lib/inversiones'
+import { cargarTasa, previewAporte, previewValorInversion } from '../../lib/api'
 import { useModal } from '../../shell/ModalProvider'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useMutations } from '../../shell/useMutations'
-import type { InvAporte, InvRendimiento, InvRetiro, Inversion, PagoInv, TipoInv } from '../../types'
+import type { InvAporte, InvIn, InvRendimiento, InvRetiro, Inversion, PagoInv, TipoInv } from '../../types'
 
 const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e))
 
 const REND_HINT = {
   capitaliza: 'Sube el valor de la inversión. No entra plata a tu cartera.',
   cuenta: 'Entra como ingreso a tu cartera. El valor de la inversión no cambia.',
+}
+
+const DEBOUNCE_MS = 250
+
+function usePreview<T>(clave: string | null, cargar: () => Promise<T>): T | null {
+  const [res, setRes] = useState<{ clave: string; data: T } | null>(null)
+  const cargarRef = useRef(cargar)
+  useEffect(() => {
+    cargarRef.current = cargar
+  })
+  useEffect(() => {
+    if (clave === null) return
+    let vigente = true
+    const t = setTimeout(() => {
+      cargarRef.current().then(
+        (data) => {
+          if (vigente) setRes({ clave, data })
+        },
+        () => undefined,
+      )
+    }, DEBOUNCE_MS)
+    return () => {
+      vigente = false
+      clearTimeout(t)
+    }
+  }, [clave])
+  return res && res.clave === clave ? res.data : null
 }
 
 const labelSmall = 'font-normal text-muted-foreground'
@@ -39,16 +66,22 @@ function InvForm({ inv }: { inv: Inversion | null }) {
   const [esNueva, setEsNueva] = useState(true)
 
   const tasaVal = parseFloat(tasa) || 0
-  const equiv = !tasaVal
-    ? ''
-    : rateType === 'ea'
-      ? `Equivale a ${pct(eaToMv(tasaVal), 4)}% MV`
-      : `Equivale a ${pct(mvToEa(tasaVal), 2)}% EA`
+  const conv = usePreview(tasaVal > 0 ? `${rateType}:${tasaVal}` : null, () => cargarTasa(tasaVal, rateType))
+  const equiv =
+    !conv || !tasaVal
+      ? ''
+      : rateType === 'ea'
+        ? conv.mv === null
+          ? ''
+          : `Equivale a ${pct(conv.mv, 4)}% MV`
+        : conv.ea === null
+          ? ''
+          : `Equivale a ${pct(conv.ea, 2)}% EA`
 
   const save = async () => {
     const monto = parseMoney(invertido)
     const valorIngresado = parseMoney(actual)
-    const tasa_ea = tipo === 'fija' ? tasaEaDesdeInput(tasa, rateType) : null
+    const tasa_ea = tipo === 'fija' ? parseFloat(tasa) || null : null
     const pagoFinal = tipo === 'fija' ? pago : null
     const dia_pago = pagoFinal === 'mensual' ? parseInt(diaPago) || null : null
 
@@ -63,7 +96,7 @@ function InvForm({ inv }: { inv: Inversion | null }) {
 
     const valorActual = valorIngresado || monto
     const valorActualizadoEn = !inv ? fecha : inv.valor_actual === valorActual ? inv.valor_actualizado_en : todayStr()
-    const data = {
+    const data: InvIn = {
       nombre: nombre.trim(),
       tipo,
       monto_invertido: monto,
@@ -73,6 +106,7 @@ function InvForm({ inv }: { inv: Inversion | null }) {
       pago: pagoFinal,
       dia_pago,
       valor_actualizado_en: valorActualizadoEn,
+      ...(tasa_ea !== null ? { tasa_tipo: rateType } : {}),
     }
 
     setModalStatus('', 'Guardando...')
@@ -219,8 +253,8 @@ function YieldForm({ inv }: { inv: Inversion }) {
   const ctx = useOpenerCtx()
   const { closeModal, setModalStatus } = useModal()
   const { apiAction } = useMutations()
-  const mv = inv.tasa_ea ? eaToMv(inv.tasa_ea) : 0
-  const expected = inv.tasa_ea ? rendimientoMensualFija(inv.valor_actual, inv.tasa_ea) : 0
+  const mv = inv.tasa_mv ?? 0
+  const expected = inv.rendimiento_esperado ?? 0
   const [monto, setMonto] = useState(expected ? numToInput(expected) : '')
   const [capitaliza, setCapitaliza] = useState(inv.pago === 'vencimiento')
   const [fecha, setFecha] = useState(nowStr())
@@ -345,9 +379,10 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
   const [fecha, setFecha] = useState(nowStr())
   const nuevo = parseMoney(valor)
 
-  const delta = nuevo - inv.valor_actual
-  const totalGain = nuevo - inv.monto_invertido
-  const totalGainPct = inv.monto_invertido > 0 ? (totalGain / inv.monto_invertido) * 100 : 0
+  const cambio = usePreview(nuevo > 0 ? `v:${nuevo}` : null, () => previewValorInversion(inv._id, nuevo))
+  const delta = cambio?.delta ?? 0
+  const totalGain = cambio?.total ?? 0
+  const totalGainPct = cambio?.total_pct ?? 0
   const deltaColor = delta >= 0 ? 'text-inversiones-text' : 'text-deudas'
   const gainColor = totalGain >= 0 ? 'text-inversiones-text' : 'text-deudas'
 
@@ -358,7 +393,18 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
     }
     setModalStatus('', 'Guardando...')
     try {
-      await crudOp('inv', 'update', { ...inv, valor_actual: nuevo, valor_actualizado_en: fecha, _id: inv._id })
+      const body: InvIn = {
+        nombre: inv.nombre,
+        tipo: inv.tipo,
+        monto_invertido: inv.monto_invertido,
+        valor_actual: nuevo,
+        tasa_ea: inv.tasa_ea,
+        fecha_inicio: inv.fecha_inicio,
+        pago: inv.pago,
+        dia_pago: inv.dia_pago,
+        valor_actualizado_en: fecha,
+      }
+      await crudOp('inv', 'update', { ...body, _id: inv._id })
     } catch (err) {
       setModalStatus('err', errMsg(err))
     }
@@ -386,7 +432,7 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
         <div className="flex items-center justify-between border-b px-3.5 py-2.5">
           <span className="text-sm text-muted-foreground">Cambio desde último</span>
           <span className="text-[15px] font-semibold" id="inv-delta">
-            {nuevo ? (
+            {cambio ? (
               <span className={deltaColor}>
                 {signStr(delta)}
                 {cop(Math.abs(delta))}
@@ -399,7 +445,7 @@ function UpdateValueForm({ inv }: { inv: Inversion }) {
         <div className="flex items-center justify-between px-3.5 py-2.5">
           <span className="text-sm text-muted-foreground">Ganancia total vs invertido</span>
           <span className="text-[15px] font-semibold" id="inv-total-gain">
-            {nuevo ? (
+            {cambio ? (
               <span className={gainColor}>
                 {signStr(totalGain)}
                 {cop(Math.abs(totalGain))}{' '}
@@ -464,26 +510,22 @@ function AddMoreForm({ inv }: { inv: Inversion }) {
   const { apiAction } = useMutations()
   const [monto, setMonto] = useState('')
   const [nuevoValor, setNuevoValor] = useState('')
-  const [estimado, setEstimado] = useState<number | null>(null)
   const [fecha, setFecha] = useState(nowStr())
   const [notas, setNotas] = useState('')
   const [registrar, setRegistrar] = useState(true)
 
-  const onMonto = (v: string) => {
-    setMonto(v)
-    const aporte = parseMoney(v)
-    if (aporte) setEstimado(inv.valor_actual + aporte)
-  }
+  const aporteVal = parseMoney(monto)
+  const estimado = usePreview(aporteVal > 0 ? `a:${aporteVal}` : null, () => previewAporte(inv._id, aporteVal))?.nuevo_valor_estimado ?? null
 
   const save = async () => {
     const aporte = parseMoney(monto)
-    const nuevoVal = nuevoValor ? parseMoney(nuevoValor) : inv.valor_actual + aporte
     if (!aporte || aporte <= 0) {
       setModalStatus('err', 'Ingresá el monto que agregas')
       return
     }
     setModalStatus('', 'Guardando...')
     try {
+      const nuevoVal = nuevoValor ? parseMoney(nuevoValor) : (await previewAporte(inv._id, aporte)).nuevo_valor_estimado
       const body: InvAporte = {
         monto: aporte,
         nuevo_valor: nuevoVal,
@@ -504,7 +546,7 @@ function AddMoreForm({ inv }: { inv: Inversion }) {
         <label className="form-label" htmlFor="m-monto">
           Monto que agregas (COP)
         </label>
-        <MoneyInput id="m-monto" value={monto} onChange={onMonto} />
+        <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
       </div>
       <div className="form-group">
         <label className="form-label" htmlFor="m-nuevo-valor">

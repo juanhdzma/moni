@@ -1,5 +1,16 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { apiFetch, loadAll } from './api'
+import { apiAll } from '../test/factories'
+import {
+  agregarCategoria,
+  apiFetch,
+  cargarListadoTx,
+  cargarResumenDeudas,
+  guardarAjustes,
+  loadAll,
+  previewPago,
+  quitarCategoria,
+  restaurarOp,
+} from './api'
 
 function mockFetch(res: Partial<Response> & { json?: () => Promise<unknown> }) {
   const fn = vi.fn().mockResolvedValue({ ok: true, status: 200, ...res })
@@ -48,18 +59,22 @@ test('sin cuerpo JSON el error es "Error <status>"', async () => {
   await expect(apiFetch('/x')).rejects.toThrow('Error 502')
 })
 
-test('loadAll agrega _id y convierte activo a booleano', async () => {
+test('loadAll agrega _id a cada fila y conserva lo demás tal cual llega', async () => {
+  const base = apiAll()
   mockFetch({
     json: () =>
       Promise.resolve({
+        ...base,
         transacciones: [{ id: 4 }],
         deudas: [{ id: 5 }],
         inversiones: [{ id: 6 }],
         activos: [{ id: 7 }],
         recurrentes: [
-          { id: 8, activo: 1 },
-          { id: 9, activo: 0 },
+          { id: 8, activo: true },
+          { id: 9, activo: false },
         ],
+        hoy: '2026-11-22',
+        ajustes: { moneda_simbolo: 'US$' },
       }),
   })
   const e = await loadAll()
@@ -69,4 +84,53 @@ test('loadAll agrega _id y convierte activo a booleano', async () => {
   expect(e.activos[0]?._id).toBe(7)
   expect(e.recurrentes.map((r) => r.activo)).toEqual([true, false])
   expect(e.recurrentes[0]?._id).toBe(8)
+  expect(e.hoy).toBe('2026-11-22')
+  expect(e.ajustes).toEqual({ moneda_simbolo: 'US$' })
+  expect(e.categorias).toEqual(base.categorias)
+})
+
+test('cargarListadoTx arma el query solo con lo definido', async () => {
+  const fn = mockFetch({ json: () => Promise.resolve({}) })
+  await cargarListadoTx({ col: 'monto', dir: 1, mes: '2026-11' })
+  expect(fn).toHaveBeenCalledWith('/api/tx?col=monto&dir=1&mes=2026-11', expect.objectContaining({ method: 'GET' }))
+  await cargarListadoTx()
+  expect(fn).toHaveBeenLastCalledWith('/api/tx', expect.objectContaining({ method: 'GET' }))
+})
+
+test('los resúmenes agregan _id a las filas', async () => {
+  mockFetch({
+    json: () => Promise.resolve({ total: 1, creditos: [{ id: 2 }], tarjetas: [{ id: 3 }], terminadas: [{ id: 4 }] }),
+  })
+  const r = await cargarResumenDeudas()
+  expect([r.creditos[0]?._id, r.tarjetas[0]?._id, r.terminadas[0]?._id]).toEqual([2, 3, 4])
+  expect(r.total).toBe(1)
+})
+
+test('previews y mutaciones nuevas mandan método, ruta, header y body', async () => {
+  const fn = mockFetch({ json: () => Promise.resolve({}) })
+  const mut = { 'X-Moni-Request': '1', 'Content-Type': 'application/json' }
+  await previewPago(3, { total_pagado: 10, nuevo_saldo: 5 })
+  expect(fn).toHaveBeenLastCalledWith('/api/deuda/3/pago/preview', {
+    method: 'POST',
+    headers: mut,
+    body: '{"total_pagado":10,"nuevo_saldo":5}',
+  })
+  await agregarCategoria('gasto', 'Mascotas')
+  expect(fn).toHaveBeenLastCalledWith('/api/categorias', { method: 'POST', headers: mut, body: '{"tipo":"gasto","nombre":"Mascotas"}' })
+  await quitarCategoria('gasto', 'Mascotas')
+  expect(fn).toHaveBeenLastCalledWith('/api/categorias?tipo=gasto&nombre=Mascotas', {
+    method: 'DELETE',
+    headers: { 'X-Moni-Request': '1' },
+    body: undefined,
+  })
+  await guardarAjustes({ moneda_simbolo: '€' })
+  expect(fn).toHaveBeenLastCalledWith('/api/ajustes', { method: 'PUT', headers: mut, body: '{"moneda_simbolo":"€"}' })
+  await restaurarOp('deuda:1:2026-01-01')
+  expect(fn).toHaveBeenLastCalledWith('/api/ops-ocultas?clave=deuda%3A1%3A2026-01-01', {
+    method: 'DELETE',
+    headers: { 'X-Moni-Request': '1' },
+    body: undefined,
+  })
+  await restaurarOp()
+  expect(fn).toHaveBeenLastCalledWith('/api/ops-ocultas', { method: 'DELETE', headers: { 'X-Moni-Request': '1' }, body: undefined })
 })

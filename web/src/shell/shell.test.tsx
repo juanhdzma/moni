@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { activo, estado, inversion } from '../test/factories'
+import { estado } from '../test/factories'
 import { failure, mockFetch } from '../test/mockFetch'
 import { renderWithProviders } from '../test/render'
 import { CategoriasProvider } from './CategoriasProvider'
@@ -85,13 +85,8 @@ describe('Shell', () => {
     await waitFor(() => expect(sheet()).toBeNull())
   })
 
-  it('has-warning en activos e inversiones variables sin actualizar', () => {
-    renderWithProviders(<Shell />, {
-      estado: estado({
-        activos: [activo({ valor_actualizado_en: '2020-01-01' })],
-        inversiones: [inversion({ tipo: 'fija', valor_actualizado_en: '2020-01-01' })],
-      }),
-    })
+  it('has-warning sale de estado.alertas', () => {
+    renderWithProviders(<Shell />, { estado: estado({ alertas: { activos: true, inversiones: false } }) })
     expect(within(nav()).getByText('Activos')).toHaveClass('has-warning')
     expect(within(nav()).getByText('Inversiones')).not.toHaveClass('has-warning')
   })

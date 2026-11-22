@@ -1,27 +1,11 @@
-let currencySymbol: string | null = null
+let currencySymbol = '$'
 
 export function getCurrencySymbol(): string {
-  if (currencySymbol !== null) return currencySymbol
-  try {
-    currencySymbol = localStorage.getItem('moni_currency_symbol') || '$'
-  } catch {
-    currencySymbol = '$'
-  }
   return currencySymbol
 }
 
-export function clearCurrencySymbolCache(): void {
-  currencySymbol = null
-}
-
 export function setCurrencySymbol(symbol: string): void {
-  try {
-    localStorage.setItem('moni_currency_symbol', symbol)
-  } catch {
-    return
-  } finally {
-    clearCurrencySymbolCache()
-  }
+  currencySymbol = symbol || '$'
 }
 
 export function cop(n: number | null | undefined): string {
@@ -80,32 +64,12 @@ export function fmtDateShort(s: string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
 }
 
-export function isoMonth(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-}
-
-export function txMonth(t: { fecha: string }): string {
-  return (normDate(t.fecha).split('T')[0] ?? '').slice(0, 7)
-}
-
 export function isoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export function todayStr(now: Date = new Date()): string {
   return isoDate(now)
-}
-
-export function fechaLocal(fecha: string): Date | null {
-  const m = normDate(fecha).match(/^(\d{4})-(\d{2})-(\d{2})/)
-  return m ? new Date(+(m[1] ?? 0), +(m[2] ?? 0) - 1, +(m[3] ?? 0)) : null
-}
-
-export function isStale(dateStr: string | null | undefined, days = 30): boolean {
-  if (!dateStr) return false
-  const d = mediodia(dateStr)
-  if (Number.isNaN(d.getTime())) return false
-  return (Date.now() - d.getTime()) / 86400000 >= days
 }
 
 export function nowStr(now: Date = new Date()): string {

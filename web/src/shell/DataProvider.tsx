@@ -1,14 +1,29 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { loadAll } from '../lib/api'
+import { setCurrencySymbol } from '../lib/format'
+import { migrarLocalStorage } from '../lib/migracion'
 import type { Estado } from '../types'
 
-export const ESTADO_VACIO: Estado = { transacciones: [], deudas: [], inversiones: [], activos: [], recurrentes: [] }
+export const ESTADO_VACIO: Estado = {
+  transacciones: [],
+  deudas: [],
+  inversiones: [],
+  activos: [],
+  recurrentes: [],
+  hoy: '',
+  mes_actual: '',
+  ajustes: { moneda_simbolo: '$' },
+  categorias: { ingreso: [], gasto: [], transfer: [] },
+  alertas: { activos: false, inversiones: false },
+  conteos: { activos: 0, inversiones: 0 },
+}
 
 export interface DataApi {
   estado: Estado
   loaded: boolean
   loadOk: boolean
   version: number
+  generacion: number
   reload: () => Promise<void>
   refresh: () => void
   banner: string | null
@@ -36,6 +51,7 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
   const [loadOk, setLoadOk] = useState(loaded)
   const [estado, setEstado] = useState<Estado>(initialEstado ?? ESTADO_VACIO)
   const [version, setVersion] = useState(0)
+  const [generacion, setGeneracion] = useState(0)
   const [banner, setBanner] = useState<string | null>(null)
   const failed = useRef(new Set<string>())
   const lastRequest = useRef(0)
@@ -46,6 +62,7 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
   const applyData = useCallback((data: Estado) => {
     failed.current.clear()
     setEstado(data)
+    setGeneracion((g) => g + 1)
     setLoaded(true)
     setLoadOk(true)
     setBanner(null)
@@ -86,12 +103,15 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
   )
 
   useEffect(() => {
-    if (!initialEstado) void reload()
+    if (initialEstado) return
+    void migrarLocalStorage().then(reload)
   }, [initialEstado, reload])
 
+  setCurrencySymbol(estado.ajustes.moneda_simbolo)
+
   const value = useMemo(
-    () => ({ estado, loaded, loadOk, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure }),
-    [estado, loaded, loadOk, version, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure],
+    () => ({ estado, loaded, loadOk, version, generacion, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure }),
+    [estado, loaded, loadOk, version, generacion, reload, refresh, banner, showBanner, hideBanner, reportRenderFailure],
   )
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

@@ -8,7 +8,8 @@ import { Select } from '../controls/Select'
 import { Shell } from './Shell'
 import { useModal } from './ModalProvider'
 import { useMutations } from './useMutations'
-import { loadSkippedOps } from '../lib/proximasOps'
+
+const TX = { fecha: '2026-08-01', tipo: 'gasto', categoria: 'c', descripcion: '', monto: 1, notas: '', tarjeta_id: null } as const
 
 function Harness() {
   const { openModal, setPendingProxOp, setModalStatus } = useModal()
@@ -31,11 +32,12 @@ function Harness() {
         abrir
       </button>
       <button onClick={() => setPendingProxOp('deuda:1:2026-08-01')}>pend</button>
+      <button onClick={() => void crudOp('tx', 'add', TX)}>enviar</button>
       <button
         onClick={() => {
           openModal('Pago', <div />)
           setPendingProxOp('deuda:1:2026-08-01')
-          crudOp('deuda', 'delete', { _id: 1 }).catch(() => undefined)
+          crudOp('tx', 'add', TX).catch(() => undefined)
         }}
       >
         guardar
@@ -85,7 +87,6 @@ describe('modal', () => {
     delete (abrir as { focus?: unknown }).focus
     await user.click(screen.getByLabelText('Cerrar'))
     expect(abrir).toHaveFocus()
-    expect(loadSkippedOps().size).toBe(0)
   })
 
   it('markup, foco al abrir y restauración al cerrar', async () => {
@@ -130,35 +131,40 @@ describe('modal', () => {
 
   it('cerrar limpia la clave pendiente de próximas operaciones', async () => {
     const user = userEvent.setup()
-    mockFetch({ 'DELETE /api/deuda/1': null })
+    const f = mockFetch({ 'POST /api/tx': {} })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('abrir'))
     await user.click(screen.getByText('pend'))
     await user.click(screen.getByLabelText('Cerrar'))
     await user.click(screen.getByText('abrir'))
     await user.click(screen.getByLabelText('Cerrar'))
-    expect(loadSkippedOps().size).toBe(0)
+    await user.click(screen.getByText('enviar'))
+    await vi.waitFor(() => expect(f.callsTo('POST', '/api/tx')).toHaveLength(1))
+    expect(f.callsTo('POST', '/api/tx')[0]?.body).toEqual(TX)
   })
 
-  it('la clave pendiente se marca como oculta cuando la mutación sale bien', async () => {
+  it('la clave pendiente viaja como op_clave en el body de la mutación', async () => {
     const user = userEvent.setup()
-    mockFetch({ 'DELETE /api/deuda/1': null })
+    const f = mockFetch({ 'POST /api/tx': {} })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('guardar'))
-    await vi.waitFor(() => expect(loadSkippedOps().has('deuda:1:2026-08-01')).toBe(true))
+    await vi.waitFor(() => expect(f.callsTo('POST', '/api/tx')).toHaveLength(1))
+    expect(f.callsTo('POST', '/api/tx')[0]).toMatchObject({
+      headers: { 'X-Moni-Request': '1' },
+      body: { ...TX, op_clave: 'deuda:1:2026-08-01' },
+    })
     expect(document.getElementById('modal-overlay')).not.toHaveClass('open')
   })
 
-  it('si la mutación falla la clave no se marca y el modal sigue abierto', async () => {
+  it('si la mutación falla el modal sigue abierto', async () => {
     const user = userEvent.setup()
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    mockFetch({ 'DELETE /api/deuda/1': new Response('{"detail":"no"}', { status: 400 }) })
+    mockFetch({ 'POST /api/tx': new Response('{"detail":"no"}', { status: 400 }) })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('guardar'))
     await act(async () => {
       await Promise.resolve()
     })
-    expect(loadSkippedOps().size).toBe(0)
     expect(document.getElementById('modal-overlay')).toHaveClass('open')
     spy.mockRestore()
   })

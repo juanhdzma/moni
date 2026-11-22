@@ -1,4 +1,4 @@
-import type { Activo, Deuda, Estado, Inversion, Recurrente, Transaccion } from '../types'
+import type { Activo, ApiAll, Categorias, Deuda, Estado, Inversion, Recurrente, Transaccion } from '../types'
 
 export const tx = (
   tipo: Transaccion['tipo'],
@@ -15,6 +15,11 @@ export const tx = (
   descripcion: '',
   notas: '',
   tarjeta_id: null,
+  mes: '2026-08',
+  es_gasto_cartera: tipo === 'gasto',
+  tarjeta_nombre: null,
+  tarjeta_franquicia: null,
+  metodo_pago: 'Efectivo / Débito',
   ...extra,
 })
 
@@ -32,6 +37,16 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
   cupo: 0,
   franquicia: '',
   total_intereses: 0,
+  activa: false,
+  vigente: false,
+  progreso_pct: 0,
+  capital_pagado: 0,
+  meses_restantes: null,
+  nivel_progreso: 'bajo',
+  intereses_pagados: null,
+  disponible: null,
+  uso_pct: 0,
+  nivel_uso: 'bajo',
   ...extra,
 })
 
@@ -47,6 +62,12 @@ export const inversion = (extra: Partial<Inversion> = {}): Inversion => ({
   pago: null,
   dia_pago: null,
   valor_actualizado_en: '',
+  ganancia: 0,
+  ganancia_pct: 0,
+  tasa_mv: null,
+  proximo_pago: null,
+  rendimiento_esperado: null,
+  desactualizada: false,
   ...extra,
 })
 
@@ -58,6 +79,9 @@ export const activo = (extra: Partial<Activo> = {}): Activo => ({
   valor_actual: 0,
   fecha_adquisicion: '',
   valor_actualizado_en: '',
+  cambio: 0,
+  cambio_pct: 0,
+  desactualizado: false,
   ...extra,
 })
 
@@ -71,7 +95,18 @@ export const recurrente = (extra: Partial<Recurrente> = {}): Recurrente => ({
   activo: true,
   fecha_inicio: '',
   notas: '',
+  frecuencia_label: 'Mensual',
+  mensual: 0,
+  proximo_pago: null,
   ...extra,
+})
+
+const sistema = (nombre: string) => ({ nombre, sistema: true })
+
+export const categoriasBase = (): Categorias => ({
+  ingreso: ['Crédito recibido', 'Avance de tarjeta', 'Intereses', 'Dividendos', 'Venta activos'].map(sistema),
+  gasto: ['Inversión', 'Compra activos'].map(sistema),
+  transfer: ['Pago deuda'].map(sistema),
 })
 
 export const estado = (extra: Partial<Estado> = {}): Estado => ({
@@ -80,5 +115,13 @@ export const estado = (extra: Partial<Estado> = {}): Estado => ({
   inversiones: [],
   activos: [],
   recurrentes: [],
+  hoy: '2026-08-20',
+  mes_actual: '2026-08',
+  ajustes: { moneda_simbolo: '$' },
+  categorias: categoriasBase(),
+  alertas: { activos: false, inversiones: false },
+  conteos: { activos: 0, inversiones: 0 },
   ...extra,
 })
+
+export const apiAll = (extra: Partial<ApiAll> = {}): ApiAll => ({ ...estado(), ...extra })

@@ -1,22 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import {
-  fechasInversiones,
-  fechasTransacciones,
-  monthLabels,
-  monthlyInvDelta,
-  monthlyPatrimonio,
-  periodMonths,
-  serieHaciaAtras,
-  type PeriodoEvolucion,
-} from '@/lib/dinero'
+import { cargarEvolucion } from '@/lib/api'
 import { cop, copShort, signStr } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { Estado } from '@/types'
+import { useVista } from '@/shell/useVista'
+import type { PeriodoEvolucion, SerieEvolucion } from '@/types'
 import { Panel, Periodos } from '@/components/panel'
 
-type Serie = 'patrimonio' | 'inversiones'
+type Serie = SerieEvolucion
 
 const SERIES: readonly { value: Serie; label: string }[] = [
   { value: 'patrimonio', label: 'Patrimonio' },
@@ -29,28 +21,15 @@ const PERIODOS: readonly { value: PeriodoEvolucion; label: string }[] = [
   { value: 'ALL', label: 'Todo' },
 ]
 
-export function Evolucion({ estado, patrimonio, totalInv, loading }: { estado: Estado; patrimonio: number; totalInv: number; loading: boolean }) {
+export function Evolucion() {
   const [serie, setSerie] = useState<Serie>('patrimonio')
   const [period, setPeriod] = useState<PeriodoEvolucion>('6M')
-
-  const datos = useMemo(() => {
-    const inv = serie === 'inversiones'
-    const fechas = inv ? [...fechasTransacciones(estado.transacciones), ...fechasInversiones(estado.inversiones)] : fechasTransacciones(estado.transacciones)
-    const count = periodMonths(period, fechas)
-    const deltas = inv ? monthlyInvDelta(estado.transacciones, count) : monthlyPatrimonio(estado.transacciones, count)
-    const niveles = serieHaciaAtras(inv ? totalInv : patrimonio, deltas)
-    const labels = monthLabels(count)
-    return niveles.map((valor, i) => ({ mes: labels[i] ?? '', valor }))
-  }, [estado, serie, period, patrimonio, totalInv])
-
-  const desde = datos[0]?.valor ?? 0
-  const hasta = datos[datos.length - 1]?.valor ?? 0
-  const cambio = hasta - desde
+  const { data: ev } = useVista(`${serie}:${period}`, () => cargarEvolucion(serie, period))
+  const loading = ev === null
+  const datos = ev?.puntos ?? []
+  const cambio = ev?.cambio ?? 0
   const color = serie === 'patrimonio' ? 'var(--cartera)' : 'var(--inversiones)'
   const config = { valor: { label: serie === 'patrimonio' ? 'Patrimonio' : 'Inversiones', color } } satisfies ChartConfig
-  const verbo = cambio > 0 ? 'Subiste' : cambio < 0 ? 'Bajaste' : 'Te mantuviste'
-  const sujeto = serie === 'patrimonio' ? '' : ' en inversiones'
-
   return (
     <Panel
       id="dash-evolucion"
@@ -66,7 +45,7 @@ export function Evolucion({ estado, patrimonio, totalInv, loading }: { estado: E
           ' '
         ) : (
           <span id="evol-resumen">
-            {verbo}
+            {ev?.verbo}
             {cambio !== 0 && (
               <>
                 {' '}
@@ -76,7 +55,7 @@ export function Evolucion({ estado, patrimonio, totalInv, loading }: { estado: E
                 </span>
               </>
             )}
-            {sujeto} desde fin de {datos[0]?.mes}: de {copShort(desde)} a <span className="font-semibold">{copShort(hasta)}</span>.
+            {ev?.sujeto} desde fin de {ev?.mes_desde}: de {copShort(ev?.desde ?? 0)} a <span className="font-semibold">{copShort(ev?.hasta ?? 0)}</span>.
           </span>
         )
       }

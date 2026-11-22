@@ -12,7 +12,6 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react'
-import { skipOp } from '../lib/proximasOps'
 import { useData } from './DataProvider'
 import { closeAnyOpenPopup, usePopupOutsideClick } from './popups'
 
@@ -24,7 +23,7 @@ export interface ModalApi {
   closeModal: () => void
   setModalStatus: (cls: string, msg: string) => void
   setPendingProxOp: (key: string | null) => void
-  resolvePendingProxOp: () => void
+  pendingOpClave: () => string | null
 }
 
 interface ModalState {
@@ -121,11 +120,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const setPendingProxOp = useCallback((key: string | null) => {
     pending.current = key
   }, [])
-  const resolvePendingProxOp = useCallback(() => {
-    if (!pending.current) return
-    skipOp(pending.current)
-    pending.current = null
-  }, [])
+  const pendingOpClave = useCallback(() => pending.current, [])
 
   useEffect(() => {
     if (modal) focusables()[0]?.focus()
@@ -151,8 +146,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   }
 
   const api = useMemo(
-    () => ({ openModal, closeModal, setModalStatus, setPendingProxOp, resolvePendingProxOp }),
-    [openModal, closeModal, setModalStatus, setPendingProxOp, resolvePendingProxOp],
+    () => ({ openModal, closeModal, setModalStatus, setPendingProxOp, pendingOpClave }),
+    [openModal, closeModal, setModalStatus, setPendingProxOp, pendingOpClave],
   )
 
   return (

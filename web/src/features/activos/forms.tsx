@@ -4,10 +4,11 @@ import { DatePicker } from '../../controls/DatePicker'
 import { FormStatus } from '../../controls/FormStatus'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { cop, nowStr, numToInput, parseMoney, pct, signStr, todayStr } from '../../lib/format'
-import { cambioValor } from '../../lib/inversiones'
+import { previewValorActivo, previewVenta } from '../../lib/api'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useModal } from '../../shell/ModalProvider'
 import { useMutations } from '../../shell/useMutations'
+import { useVista } from '../../shell/useVista'
 import type { Activo, ActivoVenta } from '../../types'
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
@@ -103,10 +104,10 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
   const { crudOp } = useMutations()
   const [nuevoTxt, setNuevoTxt] = useState('')
   const [fecha, setFecha] = useState(nowStr())
-  const cambio = a.valor_actual - a.valor_inicial
-  const cambioPct = a.valor_inicial > 0 ? (cambio / a.valor_inicial) * 100 : 0
+  const { cambio, cambio_pct: cambioPct } = a
   const nuevo = parseMoney(nuevoTxt)
-  const { delta, total, totalPct } = cambioValor(nuevo, a.valor_actual, a.valor_inicial)
+  const { data: prev } = useVista(nuevo > 0 ? `activo-valor:${a._id}:${nuevo}` : null, () => previewValorActivo(a._id, nuevo))
+  const { delta, total, total_pct: totalPct } = prev ?? { delta: 0, total: 0, total_pct: 0 }
 
   const save = async () => {
     if (!nuevo || nuevo <= 0) { setModalStatus('err', 'Valor inválido'); return }
@@ -134,7 +135,7 @@ function ActivoUpdateForm({ activo: a }: { activo: Activo }): ReactNode {
         <label className="form-label" htmlFor="m-nuevo-valor">Nuevo valor (COP)</label>
         <MoneyInput id="m-nuevo-valor" value={nuevoTxt} onChange={setNuevoTxt} />
       </div>
-      <div id="activo-update-preview" className={'breakdown' + (nuevo ? ' visible' : '')}>
+      <div id="activo-update-preview" className={'breakdown' + (nuevo && prev ? ' visible' : '')}>
         <div className="breakdown-row">
           <span className="breakdown-label">Cambio desde último</span>
           <span className="breakdown-value" id="activo-delta">
@@ -170,8 +171,9 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
   const [notas, setNotas] = useState('')
   const [registrarTx, setRegistrarTx] = useState(true)
   const precio = parseMoney(precioTxt)
-  const vsIni = precio - a.valor_inicial
-  const vsAct = precio - a.valor_actual
+  const { data: prev } = useVista(precio > 0 ? `activo-venta:${a._id}:${precio}` : null, () => previewVenta(a._id, precio))
+  const vsIni = prev?.vs_inicial ?? 0
+  const vsAct = prev?.vs_actual ?? 0
 
   const save = async () => {
     if (!precio || precio <= 0) { setModalStatus('err', 'Precio de venta inválido'); return }
@@ -198,7 +200,7 @@ function ActivoSellForm({ activo: a }: { activo: Activo }): ReactNode {
         <label className="form-label" htmlFor="m-precio">Precio de venta (COP)</label>
         <MoneyInput id="m-precio" value={precioTxt} onChange={setPrecioTxt} />
       </div>
-      <div id="activo-sell-preview" className={'breakdown' + (precio ? ' visible' : '')}>
+      <div id="activo-sell-preview" className={'breakdown' + (precio && prev ? ' visible' : '')}>
         <div className="breakdown-row">
           <span className="breakdown-label">Ganancia vs precio inicial</span>
           <span className="breakdown-value" id="sell-gain-ini">

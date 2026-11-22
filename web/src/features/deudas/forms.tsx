@@ -1,19 +1,43 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AdvancedToggle } from '../../controls/AdvancedToggle'
 import { DatePicker } from '../../controls/DatePicker'
 import { FormStatus } from '../../controls/FormStatus'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { Select } from '../../controls/Select'
-import { comisionAdelanto, desglosePago } from '../../lib/deudas'
+import { previewAdelanto, previewPago } from '../../lib/api'
 import { cop, nowStr, numToInput, parseMoney } from '../../lib/format'
 import { useModal } from '../../shell/ModalProvider'
 import { useOpenerCtx, type OpenerCtx } from '../../shell/openers'
 import { useMutations } from '../../shell/useMutations'
-import type { Deuda, DeudaAdelanto, DeudaPago } from '../../types'
+import type { Deuda, DeudaAdelanto, DeudaPago, PreviewAdelanto, PreviewPago } from '../../types'
 
 const FRANQUICIAS = ['Visa', 'Mastercard', 'Amex', 'Otra'].map((f) => ({ value: f, label: f }))
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
+
+function usePreview<T>(activo: boolean, clave: string, pedir: () => Promise<T>): T | null {
+  const [res, setRes] = useState<{ clave: string; data: T } | null>(null)
+  const pedirRef = useRef(pedir)
+  useEffect(() => {
+    pedirRef.current = pedir
+  })
+  useEffect(() => {
+    if (!activo) return
+    let vigente = true
+    pedirRef.current().then(
+      (data) => {
+        if (vigente) setRes({ clave, data })
+      },
+      () => {
+        if (vigente) setRes(null)
+      },
+    )
+    return () => {
+      vigente = false
+    }
+  }, [activo, clave])
+  return activo && res?.clave === clave ? res.data : null
+}
 
 function DeudaForm({ d }: { d: Deuda | null }) {
   const { closeModal, setModalStatus } = useModal()
@@ -197,10 +221,12 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
     ? 'Ajustá si el banco cobra intereses adicionales al cancelar.'
     : 'Pre-llenado con la cuota mensual — ajustá si aplica.'
 
-  const saldoAnterior = d.saldo_actual
   const total = parseMoney(monto)
   const showBreakdown = Boolean(total) && saldoNuevo.trim() !== ''
-  const { capital, intereses } = desglosePago(saldoAnterior, total, parseMoney(saldoNuevo))
+  const saldoNuevoN = parseMoney(saldoNuevo)
+  const preview = usePreview<PreviewPago>(showBreakdown, `${total}:${saldoNuevoN}`, () =>
+    previewPago(d._id, { total_pagado: total, nuevo_saldo: saldoNuevoN }),
+  )
 
   const save = async () => {
     const saldoNuevoV = parseMoney(saldoNuevo)
@@ -212,13 +238,10 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
       setModalStatus('err', 'Ingresá el saldo capital después del pago')
       return
     }
-    if (saldoNuevoV > saldoAnterior) {
-      setModalStatus('err', 'El saldo nuevo no puede superar el saldo anterior')
-      return
-    }
-    const desc = `Cuota · ${d.nombre} (capital ${cop(capital)}, intereses ${cop(intereses)})`
     setModalStatus('', 'Guardando...')
     try {
+      const { capital, intereses } = await previewPago(d._id, { total_pagado: total, nuevo_saldo: saldoNuevoV })
+      const desc = `Cuota · ${d.nombre} (capital ${cop(capital)}, intereses ${cop(intereses)})`
       const body: DeudaPago = {
         nuevo_saldo: saldoNuevoV,
         total_pagado: total,
@@ -260,13 +283,13 @@ function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         <div className="breakdown-row">
           <span className="breakdown-label">A capital</span>
           <span className="breakdown-value text-cartera" id="pay-capital">
-            {showBreakdown ? cop(capital) : '—'}
+            {preview ? cop(preview.capital) : '—'}
           </span>
         </div>
         <div className="breakdown-row">
           <span className="breakdown-label">A intereses</span>
           <span className="breakdown-value text-deudas" id="pay-intereses">
-            {showBreakdown ? cop(intereses) : '—'}
+            {preview ? cop(preview.intereses) : '—'}
           </span>
         </div>
       </div>
@@ -327,7 +350,6 @@ function AdelantoForm({ d }: { d: Deuda }) {
   const [notas, setNotas] = useState('')
   const [registrarTx, setRegistrarTx] = useState(true)
 
-  const saldoAnterior = d.saldo_actual
   const montoV = parseMoney(monto)
   const saldoNuevo: number | null = tieneCupo
     ? disponible.trim()
@@ -337,7 +359,10 @@ function AdelantoForm({ d }: { d: Deuda }) {
       ? parseMoney(saldoNuevoIn)
       : null
   const showBreakdown = Boolean(montoV) && saldoNuevo !== null
-  const comision = saldoNuevo === null ? 0 : comisionAdelanto(saldoAnterior, montoV, saldoNuevo)
+  const preview = usePreview<PreviewAdelanto>(showBreakdown, `${montoV}:${saldoNuevo}`, () =>
+    previewAdelanto(d._id, { monto: montoV, nuevo_saldo: saldoNuevo ?? 0 }),
+  )
+  const comision = preview?.comision ?? 0
 
   const save = async () => {
     if (!montoV || montoV <= 0) {
@@ -346,10 +371,6 @@ function AdelantoForm({ d }: { d: Deuda }) {
     }
     if (saldoNuevo === null) {
       setModalStatus('err', tieneCupo ? 'Ingresá el cupo disponible después del adelanto' : 'Ingresá el saldo después del adelanto')
-      return
-    }
-    if (saldoNuevo < saldoAnterior) {
-      setModalStatus('err', 'El saldo nuevo no puede ser menor al saldo actual')
       return
     }
     setModalStatus('', 'Guardando...')
@@ -378,7 +399,7 @@ function AdelantoForm({ d }: { d: Deuda }) {
         {tieneCupo && (
           <div className="modal-panel-col right">
             <div className="modal-panel-label">Disponible</div>
-            <div className="text-base font-semibold">{cop(Math.max(0, d.cupo - d.saldo_actual))}</div>
+            <div className="text-base font-semibold">{cop(d.disponible)}</div>
           </div>
         )}
       </div>
@@ -418,7 +439,7 @@ function AdelantoForm({ d }: { d: Deuda }) {
         <div className="breakdown-row" style={{ display: comision > 0 ? 'flex' : 'none' }} id="adelanto-comision-row">
           <span className="breakdown-label">Comisión / cargos</span>
           <span className="breakdown-value text-deudas" id="adelanto-comision">
-            {showBreakdown ? cop(comision) : '—'}
+            {preview ? cop(comision) : '—'}
           </span>
         </div>
       </div>

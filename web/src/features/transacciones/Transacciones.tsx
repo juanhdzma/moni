@@ -4,25 +4,17 @@ import { Button } from '@/components/ui/button'
 import { Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
 import { Select } from '../../controls/Select'
-import { FRANQUICIA_ICONS } from '../../lib/config'
+import { FRANQUICIA_ICONS } from '../../lib/ui'
+import { cargarListadoTx } from '../../lib/api'
 import { cop, fmtDate, signStr } from '../../lib/format'
-import {
-  categoriasDisponibles,
-  listarTransacciones,
-  mesesDisponibles,
-  nextSort,
-  txDateBucket,
-  type TxSort,
-  type TxSortCol,
-} from '../../lib/transacciones'
 import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
 import { TabContent, type TabProps } from '../../shell/TabContent'
-import type { Transaccion } from '../../types'
+import { useVista } from '../../shell/useVista'
+import type { ColTx, FilaTx, FiltrosTx } from '../../types'
 import { openTxForm, openTxFormById } from './forms'
-import { resumenTx } from './resumen'
 
-const COLUMNAS: { col: TxSortCol; label: string }[] = [
+const COLUMNAS: { col: ColTx; label: string }[] = [
   { col: 'fecha', label: 'Fecha' },
   { col: 'tipo', label: 'Tipo' },
   { col: 'categoria', label: 'Categoría' },
@@ -30,40 +22,40 @@ const COLUMNAS: { col: TxSortCol; label: string }[] = [
   { col: 'monto', label: 'Monto' },
 ]
 
-const TIPO_LABELS: Record<string, string> = { ingreso: 'Ingresos', gasto: 'Gastos' }
-
-const mesLabel = (m: string): string => {
-  const [y = '0', mo = '1'] = m.split('-')
-  return new Date(+y, +mo - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
+interface Orden {
+  col: ColTx
+  dir: 1 | -1
 }
 
-function PmCell({ t }: { t: Transaccion }) {
-  const { estado } = useData()
-  const tarjeta = t.tipo === 'gasto' && t.tarjeta_id ? estado.deudas.find((d) => d._id === t.tarjeta_id) : null
-  const icon = tarjeta ? FRANQUICIA_ICONS[tarjeta.franquicia] || FRANQUICIA_ICONS.Otra : 'assets/icons/efectivo.svg'
-  const nombre = tarjeta ? (tarjeta.nombre.length > 20 ? tarjeta.nombre.slice(0, 20) + '…' : tarjeta.nombre) : 'Efectivo / Débito'
+const siguienteOrden = (actual: Orden, col: ColTx): Orden => {
+  if (actual.col === col) return { col, dir: actual.dir === 1 ? -1 : 1 }
+  return { col, dir: col === 'fecha' || col === 'monto' ? -1 : 1 }
+}
+
+function PmCell({ t }: { t: FilaTx }) {
+  const icon = t.tipo === 'gasto' && t.tarjeta_id ? FRANQUICIA_ICONS[t.tarjeta_franquicia ?? ''] || FRANQUICIA_ICONS.Otra : 'assets/icons/efectivo.svg'
   return (
     <div className="flex items-center gap-2">
       <img src={icon} width="18" height="18" alt="" className="shrink-0" />
-      <span title={tarjeta?.nombre}>{nombre}</span>
+      <span title={t.tarjeta_nombre ?? undefined}>{t.metodo_pago}</span>
     </div>
   )
 }
 
 const CELDA = 'px-2 py-2 align-middle'
 
-function TxRow({ t, onEdit }: { t: Transaccion; onEdit: (id: number) => void }) {
+function TxRow({ t, onEdit }: { t: FilaTx; onEdit: (id: number) => void }) {
   const label = t.tipo === 'ingreso' ? 'Ingreso' : t.tipo === 'gasto' ? 'Gasto' : 'Auto'
   const prefix = t.tipo === 'ingreso' ? '+' : '−'
   const editable =
     t.tipo === 'transfer'
       ? {}
       : {
-          onClick: () => onEdit(t._id),
+          onClick: () => onEdit(t.id),
           onKeyDown: (e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
-              onEdit(t._id)
+              onEdit(t.id)
             }
           },
           tabIndex: 0,
@@ -106,29 +98,27 @@ function TxRow({ t, onEdit }: { t: Transaccion; onEdit: (id: number) => void }) 
 
 export function Transacciones({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado, loaded } = useData()
-  const [sort, setSort] = useState<TxSort>({ col: 'fecha', dir: -1 })
+  const { loaded } = useData()
+  const [sort, setSort] = useState<Orden>({ col: 'fecha', dir: -1 })
   const [panelOpen, setPanelOpen] = useState(false)
   const [mesSel, setMesSel] = useState('')
-  const [tipoSel, setTipoSel] = useState('')
+  const [tipoSel, setTipoSel] = useState<FiltrosTx['tipo']>('')
   const [catSel, setCatSel] = useState('')
 
-  const meses = mesesDisponibles(estado.transacciones)
-  const cats = categoriasDisponibles(estado.transacciones)
-  const mes = meses.includes(mesSel) ? mesSel : ''
-  const cat = cats.includes(catSel) ? catSel : ''
-  if (mes !== mesSel) setMesSel(mes)
-  if (cat !== catSel) setCatSel(cat)
-  const tipo = tipoSel
+  const params: FiltrosTx = { col: sort.col, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel }
+  const { data, loading } = useVista(loaded ? JSON.stringify(params) : null, () => cargarListadoTx(params))
 
-  const list = listarTransacciones(estado.transacciones, sort, { tipo, mes, cat })
+  if (data && !loading) {
+    if (data.filtros.mes !== mesSel) setMesSel(data.filtros.mes)
+    if (data.filtros.cat !== catSel) setCatSel(data.filtros.cat)
+  }
+
+  const list = data?.items ?? []
+  const meses = data?.opciones.meses ?? []
+  const cats = data?.opciones.categorias ?? []
+  const pills = data?.pills ?? []
+  const quitar = { mes: () => setMesSel(''), tipo: () => setTipoSel(''), cat: () => setCatSel('') }
   const onEdit = (id: number) => openTxFormById(ctx, id)
-
-  const pills = [
-    { value: mes, label: mes ? mesLabel(mes) : '', clear: () => setMesSel('') },
-    { value: tipo, label: TIPO_LABELS[tipo] ?? '', clear: () => setTipoSel('') },
-    { value: cat, label: cat, clear: () => setCatSel('') },
-  ].filter((p) => p.value)
 
   const COLS = 6
   const mensaje = (key: string, children: React.ReactNode) => (
@@ -140,7 +130,7 @@ export function Transacciones({ active }: TabProps) {
   )
 
   const rows: React.ReactNode[] = []
-  if (!loaded) {
+  if (!data) {
     rows.push(mensaje('loading', 'Cargando...'))
   } else if (!list.length) {
     rows.push(
@@ -153,15 +143,14 @@ export function Transacciones({ active }: TabProps) {
       ),
     )
   } else if (sort.col !== 'fecha') {
-    list.forEach((t) => rows.push(<TxRow key={t._id} t={t} onEdit={onEdit} />))
+    list.forEach((t) => rows.push(<TxRow key={t.id} t={t} onEdit={onEdit} />))
   } else {
-    const now = new Date()
     let lastBucket: string | null = null
     list.forEach((t) => {
-      const bucket = txDateBucket(t.fecha, now)
+      const bucket = t.grupo
       if (bucket !== lastBucket) {
         rows.push(
-          <tr key={`g-${bucket}-${t._id}`} className="tx-group-row bg-muted">
+          <tr key={`g-${bucket}-${t.id}`} className="tx-group-row bg-muted">
             <td className="tx-group-label px-2 py-1.5 text-xs font-semibold text-muted-foreground" colSpan={COLS}>
               {bucket}
             </td>
@@ -169,11 +158,11 @@ export function Transacciones({ active }: TabProps) {
         )
         lastBucket = bucket
       }
-      rows.push(<TxRow key={t._id} t={t} onEdit={onEdit} />)
+      rows.push(<TxRow key={t.id} t={t} onEdit={onEdit} />)
     })
   }
 
-  const r = resumenTx(list)
+  const r = data?.resumen ?? { ingresos: 0, gastos: 0, neto: 0, segmentos: [] }
 
   return (
     <TabContent id="transacciones" active={active}>
@@ -181,7 +170,7 @@ export function Transacciones({ active }: TabProps) {
       <Resumen
         id="tx-resumen"
         titulo={pills.length ? 'Te quedó con estos filtros' : 'Te quedó'}
-        loaded={loaded}
+        loaded={!!data}
         valor={
           <>
             {signStr(r.neto)}
@@ -190,7 +179,7 @@ export function Transacciones({ active }: TabProps) {
         }
         valorClassName={r.neto < 0 ? 'text-deudas' : undefined}
         color="bg-muted-foreground"
-        segmentos={r.categorias}
+        segmentos={r.segmentos}
         dato={
           <span className="text-muted-foreground">
             entró <strong className="font-semibold text-cartera">{cop(r.ingresos)}</strong> · salió <strong className="font-semibold text-foreground">{cop(r.gastos)}</strong>
@@ -222,9 +211,9 @@ export function Transacciones({ active }: TabProps) {
           </button>
           <div id="tx-filter-pills" className="flex flex-wrap items-center gap-2">
             {pills.map((p) => (
-              <span key={p.label} className="filter-pill inline-flex items-center gap-1 rounded-full bg-muted py-0.5 pl-2.5 pr-1 text-xs">
+              <span key={p.campo} className="filter-pill inline-flex items-center gap-1 rounded-full bg-muted py-0.5 pl-2.5 pr-1 text-xs">
                 {p.label}
-                <button type="button" className="filter-pill-remove inline-flex size-5 items-center justify-center rounded-full hover:bg-border" aria-label="Quitar filtro" onClick={p.clear}>
+                <button type="button" className="filter-pill-remove inline-flex size-5 items-center justify-center rounded-full hover:bg-border" aria-label="Quitar filtro" onClick={quitar[p.campo]}>
                   <X className="size-3" aria-hidden="true" />
                 </button>
               </span>
@@ -235,16 +224,16 @@ export function Transacciones({ active }: TabProps) {
               compact
               id="f-mes-filter"
               ariaLabel="Mes"
-              value={mes}
+              value={mesSel}
               onChange={setMesSel}
-              options={[{ value: '', label: 'Todos los meses' }, ...meses.map((m) => ({ value: m, label: mesLabel(m) }))]}
+              options={[{ value: '', label: 'Todos los meses' }, ...meses]}
             />
             <Select
               compact
               id="f-tipo-filter"
               ariaLabel="Tipo"
-              value={tipo}
-              onChange={setTipoSel}
+              value={tipoSel ?? ''}
+              onChange={(v) => setTipoSel(v === 'ingreso' || v === 'gasto' ? v : '')}
               options={[
                 { value: '', label: 'Todos los tipos' },
                 { value: 'ingreso', label: 'Ingresos' },
@@ -255,7 +244,7 @@ export function Transacciones({ active }: TabProps) {
               compact
               id="f-cat-filter"
               ariaLabel="Categoría"
-              value={cat}
+              value={catSel}
               onChange={setCatSel}
               options={[{ value: '', label: 'Todas las categorías' }, ...cats.map((c) => ({ value: c, label: c }))]}
             />
@@ -267,7 +256,7 @@ export function Transacciones({ active }: TabProps) {
               <tr className="border-b">
                 {COLUMNAS.map(({ col, label }) => {
                   const activo = sort.col === col
-                  const go = () => setSort((s) => nextSort(s, col))
+                  const go = () => setSort((s) => siguienteOrden(s, col))
                   const oculta = col === 'tipo' || col === 'categoria' ? 'hidden sm:table-cell' : ''
                   return (
                     <th

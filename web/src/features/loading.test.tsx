@@ -1,10 +1,19 @@
-import { screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockFetch } from '../test/mockFetch'
 import { renderWithProviders } from '../test/render'
 import { Activos } from './activos'
 import { Deudas } from './deudas'
 import { Inversiones } from './inversiones'
 import { Recurrentes } from './recurrentes'
+
+beforeEach(() => {
+  mockFetch()
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 const casos = [
   ['deudas-total', Deudas],
@@ -14,12 +23,12 @@ const casos = [
 ] as const
 
 describe('placeholders antes de la primera carga', () => {
-  it.each(casos)('%s muestra skeleton hasta que carga', (id, Tab) => {
+  it.each(casos)('%s muestra skeleton hasta que carga', async (id, Tab) => {
     const { unmount } = renderWithProviders(<Tab active />, { loaded: false })
     expect(document.getElementById(id)?.querySelector('.skeleton')).toBeInTheDocument()
     unmount()
     renderWithProviders(<Tab active />)
-    expect(document.getElementById(id)?.querySelector('.skeleton')).toBeNull()
+    await waitFor(() => expect(document.getElementById(id)?.querySelector('.skeleton')).toBeNull())
   })
 })
 
@@ -30,16 +39,15 @@ const contenedores = [
 ] as const
 
 describe('contenedores vacíos antes de la primera carga', () => {
-  it.each(contenedores)('%s no muestra vacíos hasta que carga', (_nombre, Tab, ids) => {
+  it.each(contenedores)('%s no muestra vacíos hasta que carga', async (_nombre, Tab, ids) => {
     const { unmount } = renderWithProviders(<Tab active />, { loaded: false })
     for (const id of ids) expect(document.getElementById(id)).toBeEmptyDOMElement()
     unmount()
     renderWithProviders(<Tab active />, { loaded: true })
-    const algunoConContenido = ids.some((id) => document.getElementById(id)?.childElementCount)
-    expect(algunoConContenido).toBe(true)
+    await waitFor(() => expect(ids.some((id) => document.getElementById(id)?.childElementCount)).toBe(true))
   })
 
-  it('recurrentes conserva los títulos de sección y no muestra vacíos hasta que carga', () => {
+  it('recurrentes conserva los títulos de sección y no muestra vacíos hasta que carga', async () => {
     const { unmount } = renderWithProviders(<Recurrentes active />, { loaded: false })
     expect(screen.getByText('Ingresos recurrentes')).toBeInTheDocument()
     expect(screen.getByText('Gastos fijos')).toBeInTheDocument()
@@ -47,6 +55,6 @@ describe('contenedores vacíos antes de la primera carga', () => {
     expect(screen.queryByText('Sin gastos recurrentes.')).toBeNull()
     unmount()
     renderWithProviders(<Recurrentes active />, { loaded: true })
-    expect(screen.getByText('Sin ingresos recurrentes.')).toBeInTheDocument()
+    expect(await screen.findByText('Sin ingresos recurrentes.')).toBeInTheDocument()
   })
 })

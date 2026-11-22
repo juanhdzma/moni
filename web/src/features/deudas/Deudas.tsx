@@ -2,18 +2,24 @@ import type { ReactNode } from 'react'
 import { PartyPopper, Plus, CreditCard } from 'lucide-react'
 import { Barra, Panel, Resumen } from '@/components/panel'
 import { Button } from '@/components/ui/button'
-import { FRANQUICIA_ICONS, tieneSaldo } from '../../lib/config'
-import { fmtIntereses, interesesPagados } from '../../lib/deudas'
+import { cargarResumenDeudas } from '../../lib/api'
+import { FRANQUICIA_ICONS } from '../../lib/ui'
 import { cop, fmtDate, pct } from '../../lib/format'
 import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
 import { TabContent, type TabProps } from '../../shell/TabContent'
-import type { Deuda } from '../../types'
+import { useVista } from '../../shell/useVista'
+import type { Deuda, InteresesPagados, Nivel } from '../../types'
 import { openDeudaAdelantoFormById, openDeudaForm, openDeudaFormById, openDeudaPayFormById } from './forms'
 
 const itemCls = 'rounded-xl border p-4'
 const miniLabel = 'text-xs text-muted-foreground'
 const miniValue = 'text-sm font-semibold'
+
+const COLOR_PROGRESO: Record<Nivel, string> = { alto: 'bg-inversiones', medio: 'bg-activos', bajo: 'bg-deudas' }
+const COLOR_USO: Record<Nivel, string> = { alto: 'bg-deudas', medio: 'bg-alerta', bajo: 'bg-inversiones' }
+
+const fmtIntereses = (i: InteresesPagados) => (i.exacto ? '' : '~') + cop(i.valor)
 
 function Item({ nombre, badge, sub, children, actions, className }: { nombre: string; badge?: ReactNode; sub: ReactNode; children: ReactNode; actions: ReactNode; className?: string }) {
   return (
@@ -31,15 +37,11 @@ function Item({ nombre, badge, sub, children, actions, className }: { nombre: st
 
 function PrestamoCard({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
-  const progress = d.monto_inicial > 0 ? (1 - d.saldo_actual / d.monto_inicial) * 100 : 0
-  const pagado = d.monto_inicial - d.saldo_actual
-  const mesesLeft = d.cuota_mensual > 0 ? Math.ceil(d.saldo_actual / d.cuota_mensual) : null
-  const intereses = interesesPagados(d)
-  const barColor = progress >= 75 ? 'bg-inversiones' : progress >= 40 ? 'bg-activos' : 'bg-deudas'
+  const intereses = d.intereses_pagados
   return (
     <Item
       nombre={d.nombre}
-      badge={mesesLeft ? <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">~{mesesLeft}m</span> : undefined}
+      badge={d.meses_restantes ? <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">~{d.meses_restantes}m</span> : undefined}
       sub={
         <>
           {pct(d.tasa_ea)}% EA · {cop(d.cuota_mensual)}/mes
@@ -61,15 +63,15 @@ function PrestamoCard({ d }: { d: Deuda }) {
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="text-2xl font-semibold leading-none tracking-tight text-deudas">{cop(d.saldo_actual)}</div>
-        <div className="text-sm font-medium text-muted-foreground">{pct(progress)}% pagado</div>
+        <div className="text-sm font-medium text-muted-foreground">{pct(d.progreso_pct)}% pagado</div>
       </div>
       <div className="mt-3">
-        <Barra valor={Math.min(100, progress)} max={100} className={barColor} />
+        <Barra valor={Math.min(100, d.progreso_pct)} max={100} className={COLOR_PROGRESO[d.nivel_progreso]} />
       </div>
       <div className="mt-2 flex justify-between gap-1">
         <div>
           <div className={miniLabel}>Capital</div>
-          <div className={miniValue}>{cop(pagado)}</div>
+          <div className={miniValue}>{cop(d.capital_pagado)}</div>
         </div>
         {intereses !== null && (
           <div className="text-center">
@@ -98,9 +100,6 @@ function PrestamoCard({ d }: { d: Deuda }) {
 
 function TarjetaCard({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
-  const disponible = d.cupo > 0 ? Math.max(0, d.cupo - d.saldo_actual) : null
-  const usoPct = d.cupo > 0 ? Math.min(100, (d.saldo_actual / d.cupo) * 100) : 0
-  const barColor = usoPct >= 90 ? 'bg-deudas' : usoPct >= 60 ? 'bg-alerta' : 'bg-inversiones'
   return (
     <Item
       nombre={d.nombre}
@@ -128,10 +127,10 @@ function TarjetaCard({ d }: { d: Deuda }) {
       {d.cupo > 0 && (
         <>
           <div className="mt-3">
-            <Barra valor={usoPct} max={100} className={barColor} />
+            <Barra valor={d.uso_pct} max={100} className={COLOR_USO[d.nivel_uso]} />
           </div>
           <div className="mt-2 text-sm text-muted-foreground">
-            Disponible: <strong className="text-foreground">{cop(disponible)}</strong>
+            Disponible: <strong className="text-foreground">{cop(d.disponible)}</strong>
           </div>
         </>
       )}
@@ -156,7 +155,7 @@ function Empty({ icon, titulo, texto }: { icon: ReactNode; titulo: string; texto
 
 function Terminada({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
-  const intereses = interesesPagados(d)
+  const intereses = d.intereses_pagados
   return (
     <Item
       className="opacity-80"
@@ -178,17 +177,13 @@ function Terminada({ d }: { d: Deuda }) {
 
 export function Deudas({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado, loaded } = useData()
-  const deudas = estado.deudas
-  const activas = deudas.filter((d) => d.es_tarjeta || tieneSaldo(d))
-  const terminadas = deudas.filter((d) => !d.es_tarjeta && !tieneSaldo(d))
-  const total = activas.reduce((s, d) => s + d.saldo_actual, 0)
-  const totalCuotas = activas.reduce((s, d) => s + d.cuota_mensual, 0)
-  const infoIntereses = deudas.map(interesesPagados).filter((i) => i !== null)
-  const totalIntereses = infoIntereses.reduce((s, i) => s + i.valor, 0)
-  const totalExacto = infoIntereses.every((i) => i.exacto)
-  const creditos = activas.filter((d) => !d.es_tarjeta)
-  const tarjetas = activas.filter((d) => d.es_tarjeta)
+  const { loaded: cargado } = useData()
+  const { data } = useVista('deudas', cargarResumenDeudas)
+  const loaded = cargado && data !== null
+  const total = data?.total ?? 0
+  const creditos = data?.creditos ?? []
+  const tarjetas = data?.tarjetas ?? []
+  const terminadas = data?.terminadas ?? []
 
   return (
     <TabContent id="deudas" active={active}>
@@ -200,16 +195,16 @@ export function Deudas({ active }: TabProps) {
           valor={cop(total)}
           valorClassName="text-deudas"
           color="bg-deudas"
-          segmentos={activas.map((d) => ({ key: String(d._id), label: d.nombre, valor: d.saldo_actual }))}
+          segmentos={data?.segmentos ?? []}
           dato={
             <span className="text-muted-foreground">
-              <strong className="font-semibold text-foreground">{cop(totalCuotas)}</strong>/mes en cuotas
-              {infoIntereses.length > 0 && (
+              <strong className="font-semibold text-foreground">{cop(data?.total_cuotas ?? 0)}</strong>/mes en cuotas
+              {(data?.total_intereses ?? 0) > 0 && (
                 <>
                   {' · '}
                   <strong className="font-semibold text-deudas">
-                    {totalExacto ? '' : '~'}
-                    {cop(totalIntereses)}
+                    {data?.intereses_aproximado ? '~' : ''}
+                    {cop(data?.total_intereses ?? 0)}
                   </strong>{' '}
                   pagados en intereses
                 </>

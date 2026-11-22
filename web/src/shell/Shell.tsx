@@ -2,7 +2,6 @@ import { useEffect, useState, type ComponentType } from 'react'
 import { Menu, Plus, TriangleAlert } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
-import { isStale } from '../lib/format'
 import { Dashboard } from '../features/dashboard'
 import { Transacciones, openTxForm } from '../features/transacciones'
 import { Deudas, openDeudaForm } from '../features/deudas'
@@ -66,8 +65,8 @@ export function Shell() {
   }
 
   const warn: Partial<Record<TabId, boolean>> = {
-    activos: estado.activos.some((a) => isStale(a.valor_actualizado_en)),
-    inversiones: estado.inversiones.some((i) => i.tipo === 'variable' && isStale(i.valor_actualizado_en)),
+    activos: estado.alertas.activos,
+    inversiones: estado.alertas.inversiones,
   }
   const fab = FAB_ACTIONS[tab]
 

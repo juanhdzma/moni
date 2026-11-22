@@ -90,13 +90,6 @@ export interface Segmento {
   valor: number
 }
 
-export function topSegmentos(items: Segmento[], n = 4): Segmento[] {
-  const orden = items.filter((s) => s.valor > 0).sort((a, b) => b.valor - a.valor)
-  if (orden.length <= n + 1) return orden
-  const otros = orden.slice(n).reduce((s, x) => s + x.valor, 0)
-  return [...orden.slice(0, n), { key: '__otros', label: 'Otros', valor: otros }]
-}
-
 const TONOS = [1, 0.65, 0.45, 0.3, 0.2]
 
 export function Resumen({
@@ -120,7 +113,7 @@ export function Resumen({
   extra?: ReactNode
   loaded: boolean
 }) {
-  const segs = topSegmentos(segmentos)
+  const segs = segmentos
   return (
     <section id={id} aria-labelledby={`${id}-titulo`} className="rounded-2xl border bg-card p-5 text-card-foreground sm:p-6">
       <div className="flex items-start justify-between gap-4">

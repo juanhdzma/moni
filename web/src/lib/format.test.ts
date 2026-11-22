@@ -1,14 +1,11 @@
-import { describe, expect, test, beforeEach, vi } from 'vitest'
+import { describe, expect, test, beforeEach } from 'vitest'
 import {
-  clearCurrencySymbolCache,
   cop,
   copShort,
-  fechaLocal,
   fmtDate,
   fmtDateShort,
   fmtDateTime,
   fmtMoneyInput,
-  isStale,
   isoDate,
   mediodia,
   nowStr,
@@ -18,7 +15,6 @@ import {
   pct,
   setCurrencySymbol,
   todayStr,
-  txMonth,
 } from './format'
 
 function input(value: string, caret = value.length) {
@@ -73,8 +69,7 @@ test('normDate lleva los formatos sueltos a ISO', () => {
 
 describe('formato', () => {
   beforeEach(() => {
-    localStorage.clear()
-    clearCurrencySymbolCache()
+    setCurrencySymbol('$')
   })
 
   test('parseMoney entiende coma decimal y puntos de miles', () => {
@@ -88,7 +83,7 @@ describe('formato', () => {
     expect(numToInput(null)).toBe('0')
   })
 
-  test('cop y copShort usan el símbolo guardado', () => {
+  test('cop y copShort usan el símbolo configurado', () => {
     expect(cop(1500000)).toBe('$1.500.000')
     expect(copShort(1500000)).toBe('$1,5M')
     expect(copShort(-2500)).toBe('−$3k')
@@ -96,7 +91,6 @@ describe('formato', () => {
     expect(copShort(-500)).toBe('−$500')
     setCurrencySymbol('€')
     expect(cop(1000)).toBe('€1.000')
-    expect(localStorage.getItem('moni_currency_symbol')).toBe('€')
   })
 
   test('pct respeta los decimales', () => {
@@ -110,14 +104,6 @@ describe('formato', () => {
     expect(fmtDate('')).toBe('—')
     expect(fmtDateShort('2026-08-01')).toMatch(/^0?1 (de )?ago/)
     expect(fmtDateTime('2026-08-01T09:05')).toBe('01/08/2026 09:05')
-    expect(txMonth({ fecha: '15/08/2026' })).toBe('2026-08')
-  })
-
-  test('fechaLocal arma medianoche local, no UTC', () => {
-    const d = fechaLocal('2026-08-01')
-    expect(d?.getHours()).toBe(0)
-    expect(d?.getDate()).toBe(1)
-    expect(fechaLocal('basura')).toBeNull()
   })
 
   test('mediodia desborda el día como el parseo viejo (2026-02-31 -> 3 mar) y rechaza mes o día fuera de rango', () => {
@@ -140,15 +126,5 @@ describe('formato', () => {
     expect(todayStr(tarde)).toBe('2026-08-15')
     expect(nowStr(tarde)).toBe('2026-08-15T21:30')
     expect(isoDate(new Date(2026, 0, 5))).toBe('2026-01-05')
-  })
-
-  test('isStale compara contra 30 días', () => {
-    vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) })
-    expect(isStale('2026-05-15')).toBe(true)
-    expect(isStale('2026-05-16')).toBe(false)
-    expect(isStale('2026-06-10')).toBe(false)
-    vi.useRealTimers()
-    expect(isStale('')).toBe(false)
-    expect(isStale('basura')).toBe(false)
   })
 })

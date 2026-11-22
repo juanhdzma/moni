@@ -2,10 +2,11 @@ import { ArrowDown, ArrowUp, Plus, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Desactualizado, Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
-import { cop, copShort, fmtDate, isStale, pct, signStr } from '../../lib/format'
-import { eaToMv, nextInvPaymentStr } from '../../lib/inversiones'
+import { cargarResumenInversiones } from '../../lib/api'
+import { cop, copShort, fmtDate, pct, signStr } from '../../lib/format'
 import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
+import { useVista } from '../../shell/useVista'
 import { TabContent, type TabProps } from '../../shell/TabContent'
 import type { Inversion } from '../../types'
 import {
@@ -31,17 +32,17 @@ function EmptyCard({ label }: { label: string }) {
 
 function InvCard({ inv }: { inv: Inversion }) {
   const ctx = useOpenerCtx()
-  const gan = inv.valor_actual - inv.monto_invertido
-  const ganP = inv.monto_invertido > 0 ? (gan / inv.monto_invertido) * 100 : 0
-  const mv = inv.tipo === 'fija' && inv.tasa_ea ? eaToMv(inv.tasa_ea) : null
-  const nextPago = inv.pago === 'mensual' && inv.dia_pago ? nextInvPaymentStr(inv.dia_pago) : null
+  const gan = inv.ganancia
+  const ganP = inv.ganancia_pct
+  const mv = inv.tasa_mv
+  const nextPago = inv.proximo_pago?.texto ?? null
 
   return (
     <li className="inv-card py-4 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
         <div className="inv-name min-w-0 truncate text-[15px] font-semibold">{inv.nombre}</div>
         <div className="flex shrink-0 items-center gap-1">
-          {inv.tipo === 'variable' && isStale(inv.valor_actualizado_en) && <Desactualizado />}
+          {inv.desactualizada && <Desactualizado />}
           <span className={cn('text-sm font-semibold', gainColor(gan))}>
             {signStr(ganP)}
             {pct(Math.abs(ganP))}%
@@ -94,14 +95,16 @@ function InvCard({ inv }: { inv: Inversion }) {
 
 export function Inversiones({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado, loaded } = useData()
-  const lista = estado.inversiones
-  const totalInv = lista.reduce((s, i) => s + i.monto_invertido, 0)
-  const totalActual = lista.reduce((s, i) => s + i.valor_actual, 0)
-  const ganancia = totalActual - totalInv
-  const ganPct = totalInv > 0 ? (ganancia / totalInv) * 100 : 0
-  const fijas = lista.filter((i) => i.tipo === 'fija')
-  const variables = lista.filter((i) => i.tipo === 'variable')
+  const { estado, loaded: cargado } = useData()
+  const { data } = useVista('inv-resumen', cargarResumenInversiones)
+  const loaded = cargado && data !== null
+  const totalInv = data?.total_invertido ?? 0
+  const totalActual = data?.total_actual ?? 0
+  const ganancia = data?.ganancia ?? 0
+  const ganPct = data?.ganancia_pct ?? 0
+  const fijas = data?.fijas ?? []
+  const variables = data?.variables ?? []
+  const posiciones = estado.conteos.inversiones
 
   return (
     <TabContent id="inversiones" active={active}>
@@ -113,7 +116,7 @@ export function Inversiones({ active }: TabProps) {
           valor={cop(totalActual)}
           valorClassName="text-inversiones-text"
           color="bg-inversiones"
-          segmentos={lista.map((i) => ({ key: String(i._id), label: i.nombre, valor: i.valor_actual }))}
+          segmentos={data?.segmentos ?? []}
           dato={
             <>
               {totalInv > 0 && (
@@ -124,7 +127,7 @@ export function Inversiones({ active }: TabProps) {
               )}
               <span className="text-muted-foreground">
                 {totalInv > 0 && ' · '}
-                {lista.length} {lista.length === 1 ? 'posición' : 'posiciones'}
+                {posiciones} {posiciones === 1 ? 'posición' : 'posiciones'}
               </span>
             </>
           }

@@ -57,7 +57,9 @@ function TxForm({ tx }: { tx: Transaccion | null }) {
   const saveNewCat = () => {
     const nombre = newCat.trim()
     if (!nombre) return
-    if (addCategoria(tipo, nombre)) setCategoria(nombre)
+    void addCategoria(tipo, nombre).then((ok) => {
+      if (ok) setCategoria(nombre)
+    })
     setNewCatOpen(false)
     setNewCat('')
   }

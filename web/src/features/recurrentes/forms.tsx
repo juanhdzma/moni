@@ -4,7 +4,6 @@ import { FormStatus } from '../../controls/FormStatus'
 import { MoneyInput } from '../../controls/MoneyInput'
 import { Select } from '../../controls/Select'
 import { numToInput, parseMoney } from '../../lib/format'
-import { FRECUENCIAS } from '../../lib/recurrentes'
 import { useCategorias } from '../../shell/CategoriasProvider'
 import { useData } from '../../shell/DataProvider'
 import { useModal } from '../../shell/ModalProvider'
@@ -12,9 +11,15 @@ import type { OpenerCtx } from '../../shell/openers'
 import { useMutations } from '../../shell/useMutations'
 import type { Frecuencia, Recurrente, TipoRec } from '../../types'
 
-const frecOptions = (Object.entries(FRECUENCIAS) as [Frecuencia, (typeof FRECUENCIAS)[Frecuencia]][]).map(
-  ([value, v]) => ({ value, label: v.label }),
-)
+const frecOptions: { value: Frecuencia; label: string }[] = [
+  { value: 'semanal', label: 'Semanal' },
+  { value: 'quincenal', label: 'Quincenal' },
+  { value: 'mensual', label: 'Mensual' },
+  { value: 'bimestral', label: 'Bimestral' },
+  { value: 'trimestral', label: 'Trimestral' },
+  { value: 'semestral', label: 'Semestral' },
+  { value: 'anual', label: 'Anual' },
+]
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
 

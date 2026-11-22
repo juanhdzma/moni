@@ -3,14 +3,13 @@ import { TriangleAlert, X } from 'lucide-react'
 import { Panel } from '@/components/panel'
 import { FormStatus } from '../../controls/FormStatus'
 import { Select } from '../../controls/Select'
-import { apiFetch } from '../../lib/api'
-import { isSystemCategory } from '../../lib/config'
-import { getCurrencySymbol, setCurrencySymbol, todayStr } from '../../lib/format'
-import { loadSkippedOps, restoreAllOps, restoreOp } from '../../lib/proximasOps'
+import { apiFetch, cargarOpsOcultas, guardarAjustes, restaurarOp } from '../../lib/api'
+import { todayStr } from '../../lib/format'
 import { useCategorias } from '../../shell/CategoriasProvider'
 import { useData } from '../../shell/DataProvider'
 import { useModal } from '../../shell/ModalProvider'
 import { TabContent, type TabProps } from '../../shell/TabContent'
+import { useVista } from '../../shell/useVista'
 import type { TipoTx } from '../../types'
 
 const CURRENCY_OPTIONS = [
@@ -34,14 +33,14 @@ const HINT = 'mt-2 text-xs text-muted-foreground'
 const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e))
 
 function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
-  const { categorias, addCategoria, removeCategoria } = useCategorias()
+  const { categorias, esSistema, addCategoria, removeCategoria } = useCategorias()
   const [nuevo, setNuevo] = useState('')
   const cats = categorias[tipo] || []
 
   const agregar = () => {
     const nombre = nuevo.trim()
     if (!nombre) return
-    addCategoria(tipo, nombre)
+    void addCategoria(tipo, nombre)
     setNuevo('')
   }
 
@@ -55,8 +54,8 @@ function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
         {cats.map((c) => (
           <span className="inline-flex items-center gap-1 rounded-full border bg-muted px-2.5 py-0.5 text-xs" key={c}>
             {c}
-            {isSystemCategory(tipo, c) ? null : (
-              <button type="button" className="rounded-full p-0.5 text-muted-foreground hover:text-foreground" onClick={() => removeCategoria(tipo, c)} aria-label={`Eliminar ${c}`}>
+            {esSistema(tipo, c) ? null : (
+              <button type="button" className="rounded-full p-0.5 text-muted-foreground hover:text-foreground" onClick={() => void removeCategoria(tipo, c)} aria-label={`Eliminar ${c}`}>
                 <X className="size-3" aria-hidden="true" />
               </button>
             )}
@@ -86,36 +85,36 @@ function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
 }
 
 function Skipped() {
-  const { refresh } = useData()
-  const set = loadSkippedOps()
-  if (!set.size) return <p className="text-sm text-muted-foreground">Ninguna operación oculta.</p>
+  const { reload, showBanner } = useData()
+  const { data } = useVista('ops-ocultas', cargarOpsOcultas)
+
+  const restaurar = async (clave?: string) => {
+    try {
+      await restaurarOp(clave)
+    } catch (err) {
+      showBanner(errMsg(err))
+    }
+    await reload()
+  }
+
+  if (!data) return <p className="text-sm text-muted-foreground">Cargando...</p>
+  if (!data.items.length) return <p className="text-sm text-muted-foreground">Ninguna operación oculta.</p>
   return (
     <>
       <ul className="divide-y">
-        {[...set].map((key) => (
-          <li className="flex items-center justify-between gap-3 py-2" key={key}>
-            <span className="break-all font-mono text-xs text-muted-foreground">{key}</span>
-            <button
-              type="button"
-              className="btn btn-dim btn-sm"
-              onClick={() => {
-                restoreOp(key)
-                refresh()
-              }}
-            >
+        {data.items.map((op) => (
+          <li className="flex items-center justify-between gap-3 py-2" key={op.clave}>
+            <span className="break-all text-xs text-muted-foreground">
+              {op.etiqueta ? `${op.etiqueta} · ` : ''}
+              <span className="font-mono">{op.clave}</span>
+            </span>
+            <button type="button" className="btn btn-dim btn-sm" onClick={() => void restaurar(op.clave)}>
               Restaurar
             </button>
           </li>
         ))}
       </ul>
-      <button
-        type="button"
-        className="btn btn-dim btn-sm mt-3"
-        onClick={() => {
-          restoreAllOps()
-          refresh()
-        }}
-      >
+      <button type="button" className="btn btn-dim btn-sm mt-3" onClick={() => void restaurar()}>
         Restaurar todas
       </button>
     </>
@@ -123,19 +122,20 @@ function Skipped() {
 }
 
 function Currency() {
-  const { refresh } = useData()
+  const { estado, reload, showBanner } = useData()
   return (
     <div>
       <label className="form-label" htmlFor="settings-currency-select">Símbolo mostrado junto a los montos</label>
       <Select
         compact
         id="settings-currency-select"
-        value={getCurrencySymbol()}
+        value={estado.ajustes.moneda_simbolo}
         options={CURRENCY_OPTIONS}
         ariaLabel="Símbolo mostrado junto a los montos"
         onChange={(symbol) => {
-          setCurrencySymbol(symbol)
-          refresh()
+          guardarAjustes({ moneda_simbolo: symbol })
+            .then(() => reload())
+            .catch((err: unknown) => showBanner(errMsg(err)))
         }}
       />
       <div className={HINT}>Solo cambia el símbolo mostrado. Los montos se guardan y calculan igual, en COP.</div>

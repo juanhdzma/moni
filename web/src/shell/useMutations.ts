@@ -18,34 +18,35 @@ export interface Mutations {
 
 export function useMutations(): Mutations {
   const { reload, showBanner } = useData()
-  const { closeModal, resolvePendingProxOp } = useModal()
+  const { closeModal, pendingOpClave } = useModal()
 
   const crudOp = useCallback(
     async (entity: CrudEntity, action: 'add' | 'update' | 'delete', payload: object) => {
       const base = `/api/${entity}`
       if (action === 'add') {
-        await apiFetch(base, { method: 'POST', body: payload })
+        const op_clave = entity === 'tx' ? pendingOpClave() : null
+        await apiFetch(base, { method: 'POST', body: op_clave ? { ...payload, op_clave } : payload })
       } else if (action === 'update') {
         const { _id, ...body } = payload as WithId
         await apiFetch(`${base}/${_id}`, { method: 'PUT', body })
       } else {
         await apiFetch(`${base}/${(payload as WithId)._id}`, { method: 'DELETE' })
       }
-      resolvePendingProxOp()
       closeModal()
       await reload()
     },
-    [reload, closeModal, resolvePendingProxOp],
+    [reload, closeModal, pendingOpClave],
   )
 
   const apiAction = useCallback(
     async (path: string, payload?: unknown) => {
-      await apiFetch(path, { method: 'POST', body: payload })
-      resolvePendingProxOp()
+      const op_clave = /\/(pago|rendimiento)$/.test(path) ? pendingOpClave() : null
+      const body = op_clave && typeof payload === 'object' && payload !== null ? { ...payload, op_clave } : payload
+      await apiFetch(path, { method: 'POST', body })
       closeModal()
       await reload()
     },
-    [reload, closeModal, resolvePendingProxOp],
+    [reload, closeModal, pendingOpClave],
   )
 
   const crudOpOrBanner = useCallback(

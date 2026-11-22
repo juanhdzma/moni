@@ -1,21 +1,21 @@
-import { transaccionesRecientes } from '@/lib/dinero'
+import { cargarMovimientos } from '@/lib/api'
 import { cop, fmtDateShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { Transaccion } from '@/types'
+import { useVista } from '@/shell/useVista'
+import type { Movimiento } from '@/types'
 import { Panel } from '@/components/panel'
 
-const N = 5
+const tinta = (t: Movimiento) => (t.tipo === 'ingreso' ? 'text-cartera' : t.tipo === 'gasto' ? 'text-foreground' : 'text-muted-foreground')
 
-const tinta = (t: Transaccion) => (t.tipo === 'ingreso' ? 'text-cartera' : t.tipo === 'gasto' ? 'text-foreground' : 'text-muted-foreground')
-
-export function Movimientos({ transacciones, loading }: { transacciones: Transaccion[]; loading: boolean }) {
-  const recent = transaccionesRecientes(transacciones, N)
+export function Movimientos() {
+  const { data } = useVista('movimientos', () => cargarMovimientos())
+  const recent = data?.items ?? []
   return (
     <Panel id="dash-movimientos" titulo="Últimos movimientos">
-      {loading ? null : recent.length ? (
+      {data === null ? null : recent.length ? (
         <ul id="recent-list" className="divide-y">
-          {recent.map((t, i) => (
-            <li key={`${t._id}-${i}`} className="recent-item flex items-baseline gap-3 py-2 text-sm">
+          {recent.map((t) => (
+            <li key={t.id} className="recent-item flex items-baseline gap-3 py-2 text-sm">
               <span className="w-[4.5rem] shrink-0 whitespace-nowrap text-xs text-muted-foreground">{fmtDateShort(t.fecha)}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{t.descripcion || t.categoria}</span>

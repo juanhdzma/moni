@@ -2,9 +2,11 @@ import { Button } from '@/components/ui/button'
 import { ArrowDown, ArrowUp, Plus } from 'lucide-react'
 import { Desactualizado, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
-import { cop, fmtDate, isStale, pct, signStr } from '../../lib/format'
+import { cargarResumenActivos } from '../../lib/api'
+import { cop, fmtDate, pct, signStr } from '../../lib/format'
 import { useData } from '../../shell/DataProvider'
 import { useOpenerCtx } from '../../shell/openers'
+import { useVista } from '../../shell/useVista'
 import { TabContent, type TabProps } from '../../shell/TabContent'
 import { openActivoForm, openActivoFormById, openActivoSellFormById, openActivoUpdateFormById } from './forms'
 
@@ -16,10 +18,9 @@ export function Activos({ active }: TabProps) {
   const { estado, loaded } = useData()
   const activos = estado.activos
 
-  const totalIni = activos.reduce((s, a) => s + a.valor_inicial, 0)
-  const totalAct = activos.reduce((s, a) => s + a.valor_actual, 0)
-  const variacion = totalAct - totalIni
-  const varPct = totalIni > 0 ? (variacion / totalIni) * 100 : 0
+  const { data: resumen } = useVista('activos-resumen', cargarResumenActivos)
+  const variacion = resumen?.variacion ?? 0
+  const varPct = resumen?.variacion_pct ?? 0
 
   return (
     <TabContent id="activos" active={active}>
@@ -28,21 +29,21 @@ export function Activos({ active }: TabProps) {
           id="activos-total"
           titulo="Tus activos"
           loaded={loaded}
-          valor={cop(totalAct)}
+          valor={cop(resumen?.total_actual ?? 0)}
           valorClassName="text-activos-text"
           color="bg-activos"
-          segmentos={activos.map((a) => ({ key: String(a._id), label: a.nombre, valor: a.valor_actual }))}
+          segmentos={resumen?.segmentos ?? []}
           dato={
             <>
-              {totalIni > 0 && (
+              {(resumen?.total_inicial ?? 0) > 0 && (
                 <span className={tinta(variacion)}>
                   {variacion >= 0 ? <ArrowUp className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" /> : <ArrowDown className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" />}
                   {pct(Math.abs(varPct))}% sobre lo pagado
                 </span>
               )}
               <span className="text-muted-foreground">
-                {totalIni > 0 && ' · '}
-                {activos.length} activo{activos.length !== 1 ? 's' : ''}
+                {(resumen?.total_inicial ?? 0) > 0 && ' · '}
+                {estado.conteos.activos} activo{estado.conteos.activos !== 1 ? 's' : ''}
               </span>
             </>
           }
@@ -61,14 +62,13 @@ export function Activos({ active }: TabProps) {
             </div>
           )}
           {activos.map((a) => {
-            const cambio = a.valor_actual - a.valor_inicial
-            const cambioPct = a.valor_inicial > 0 ? (cambio / a.valor_inicial) * 100 : 0
+            const { cambio, cambio_pct: cambioPct } = a
             return (
               <article className="asset-card flex flex-col rounded-2xl border bg-card p-5 text-card-foreground" key={a._id}>
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="inv-name min-w-0 truncate text-[15px] font-semibold">{a.nombre}</h3>
                   <div className="flex shrink-0 items-center gap-1">
-                    {isStale(a.valor_actualizado_en) && <Desactualizado />}
+                    {a.desactualizado && <Desactualizado />}
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', chip(cambio))}>
                       {signStr(cambioPct)}{pct(Math.abs(cambioPct))}%
                     </span>

@@ -3,23 +3,29 @@ import { Pause, Play, Plus } from 'lucide-react'
 import { Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
 import { cop, signStr } from '../../lib/format'
-import { FRECUENCIAS, nextPaymentStr, toMensual } from '../../lib/recurrentes'
-import { useData } from '../../shell/DataProvider'
+import { cargarResumenRecurrentes } from '../../lib/api'
 import { useOpenerCtx } from '../../shell/openers'
 import { TabContent, type TabProps } from '../../shell/TabContent'
 import { useMutations } from '../../shell/useMutations'
+import { useVista } from '../../shell/useVista'
 import type { Recurrente } from '../../types'
 import { openRecurrenteForm, openRecurrenteFormById } from './forms'
 
 function RecCard({ r }: { r: Recurrente }) {
   const ctx = useOpenerCtx()
   const { crudOpOrBanner } = useMutations()
-  const mensual = toMensual(r.monto, r.frecuencia)
-  const frecLabel = Object.hasOwn(FRECUENCIAS, r.frecuencia) ? FRECUENCIAS[r.frecuencia].label : r.frecuencia
-  const nextStr = r.activo ? nextPaymentStr(r.fecha_inicio, r.frecuencia) : null
+  const nextStr = r.proximo_pago?.texto ?? null
   const toggle = () => {
-    const { _id, ...rest } = r
-    void crudOpOrBanner('rec', 'update', { ...rest, activo: !r.activo, _id })
+    void crudOpOrBanner('rec', 'update', {
+      _id: r._id,
+      nombre: r.nombre,
+      tipo: r.tipo,
+      monto: r.monto,
+      frecuencia: r.frecuencia,
+      activo: !r.activo,
+      fecha_inicio: r.fecha_inicio,
+      notas: r.notas,
+    })
   }
   const Icono = r.activo ? Pause : Play
   return (
@@ -29,7 +35,7 @@ function RecCard({ r }: { r: Recurrente }) {
           {r.nombre}
         </div>
         <div className="text-xs text-muted-foreground">
-          {frecLabel} · {cop(r.monto)}
+          {r.frecuencia_label} · {cop(r.monto)}
           {nextStr && (
             <>
               {' · '}
@@ -43,7 +49,7 @@ function RecCard({ r }: { r: Recurrente }) {
       </div>
       <div className="text-right leading-tight">
         <div data-rec-amount className={cn('text-sm font-semibold', r.tipo === 'ingreso' && 'text-cartera')}>
-          {cop(mensual)}
+          {cop(r.mensual)}
         </div>
         <div className="text-[11px] text-muted-foreground">por mes</div>
       </div>
@@ -76,11 +82,9 @@ function Lista({ id, titulo, frase, items, emptyMsg, loaded }: { id: string; tit
         <p className="py-2 text-sm text-muted-foreground">{emptyMsg}</p>
       ) : (
         <ul className="divide-y">
-          {[...items]
-            .sort((a, b) => toMensual(b.monto, b.frecuencia) - toMensual(a.monto, a.frecuencia))
-            .map((r) => (
-              <RecCard key={r._id} r={r} />
-            ))}
+          {items.map((r) => (
+            <RecCard key={r._id} r={r} />
+          ))}
         </ul>
       )}
     </Panel>
@@ -89,11 +93,11 @@ function Lista({ id, titulo, frase, items, emptyMsg, loaded }: { id: string; tit
 
 export function Recurrentes({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { estado, loaded } = useData()
-  const activos = estado.recurrentes.filter((r) => r.activo)
-  const totalGas = activos.filter((r) => r.tipo !== 'ingreso').reduce((s, r) => s + toMensual(r.monto, r.frecuencia), 0)
-  const totalIng = activos.filter((r) => r.tipo === 'ingreso').reduce((s, r) => s + toMensual(r.monto, r.frecuencia), 0)
-  const neto = totalIng - totalGas
+  const { data } = useVista('rec', cargarResumenRecurrentes)
+  const loaded = data !== null
+  const neto = data?.neto_mensual ?? 0
+  const totalIng = data?.total_ingresos_mensual ?? 0
+  const totalGas = data?.total_gastos_mensual ?? 0
   return (
     <TabContent id="recurrentes" active={active}>
       <div className="space-y-4">
@@ -109,7 +113,7 @@ export function Recurrentes({ active }: TabProps) {
           }
           valorClassName={neto < 0 ? 'text-deudas' : undefined}
           color="bg-muted-foreground"
-          segmentos={activos.filter((r) => r.tipo !== 'ingreso').map((r) => ({ key: String(r._id), label: r.nombre, valor: toMensual(r.monto, r.frecuencia) }))}
+          segmentos={data?.segmentos ?? []}
           dato={
             <span className="text-muted-foreground">
               entran <strong className="font-semibold text-cartera">{cop(totalIng)}</strong> · salen <strong className="font-semibold text-foreground">{cop(totalGas)}</strong> en fijos
@@ -123,8 +127,8 @@ export function Recurrentes({ active }: TabProps) {
           }
         />
         <div className="grid items-start gap-4 lg:grid-cols-2">
-          <Lista id="rec-ingresos" titulo="Ingresos recurrentes" items={estado.recurrentes.filter((r) => r.tipo === 'ingreso')} emptyMsg="Sin ingresos recurrentes." loaded={loaded} />
-          <Lista id="rec-gastos" titulo="Gastos fijos" items={estado.recurrentes.filter((r) => r.tipo !== 'ingreso')} emptyMsg="Sin gastos recurrentes." loaded={loaded} />
+          <Lista id="rec-ingresos" titulo="Ingresos recurrentes" items={data?.ingresos ?? []} emptyMsg="Sin ingresos recurrentes." loaded={loaded} />
+          <Lista id="rec-gastos" titulo="Gastos fijos" items={data?.gastos ?? []} emptyMsg="Sin gastos recurrentes." loaded={loaded} />
         </div>
       </div>
     </TabContent>

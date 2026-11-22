@@ -18,25 +18,40 @@ afterEach(() => {
   cleanup()
 })
 
-const a1 = activo({ _id: 4, id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', valor_actualizado_en: '2026-06-01T10:00' })
+const a1 = activo({ _id: 4, id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', valor_actualizado_en: '2026-06-01T10:00', cambio: 50000, cambio_pct: 50 })
+
+const resumenDe = (activos: typeof a1[]) => ({
+  total_inicial: activos.reduce((s, a) => s + a.valor_inicial, 0),
+  total_actual: activos.reduce((s, a) => s + a.valor_actual, 0),
+  variacion: activos.length ? 50000 : 0,
+  variacion_pct: activos.length ? 50 : 0,
+  segmentos: activos.map((a) => ({ key: String(a._id), label: a.nombre, valor: a.valor_actual })),
+  items: activos,
+})
 
 function setup(activos = [a1]) {
-  const f = mockFetch({ 'GET /api/all': { transacciones: [], deudas: [], inversiones: [], activos: [], recurrentes: [] } })
-  renderWithProviders(<Activos active />, { estado: estado({ activos }) })
-  return { f, user: userEvent.setup({ advanceTimers: vi.advanceTimersByTime }) }
+  const f = mockFetch({
+    'GET /api/activos/resumen': resumenDe(activos),
+    'POST /api/activo/4/valor/preview': { delta: 30000, total: 80000, total_pct: 80 },
+    'POST /api/activo/4/venta/preview': { vs_inicial: 50000, vs_actual: 0 },
+  })
+  renderWithProviders(<Activos active />, { estado: estado({ activos, conteos: { activos: activos.length, inversiones: 0 } }) })
+  const guardados = () => f.mutations().filter((c) => !c.url.endsWith('/preview'))
+  return { f, guardados, user: userEvent.setup({ advanceTimers: vi.advanceTimersByTime }) }
 }
 
 describe('Activos render', () => {
-  it('shows empty state and totals', () => {
-    setup([])
+  it('shows empty state and totals', async () => {
+    const { f } = setup([])
+    await waitFor(() => expect(f.calls.some((c) => c.url === '/api/activos/resumen')).toBe(true))
     expect(screen.getByText('Sin activos')).toBeInTheDocument()
     expect(document.getElementById('activos-total')).toHaveTextContent('0 activos')
   })
 
-  it('renders card figures', () => {
+  it('renders card figures from backend data', async () => {
     setup()
+    await waitFor(() => expect(document.getElementById('activos-total')).toHaveTextContent(/150\.000.*50,0% sobre lo pagado/))
     expect(document.getElementById('activos-total')).toHaveTextContent('1 activo')
-    expect(document.getElementById('activos-total')).toHaveTextContent(/150\.000.*50,0% sobre lo pagado/)
     expect(screen.getByText('Casa', { selector: 'h3' })).toBeInTheDocument()
     expect(screen.getAllByText('+50,0%').length).toBeGreaterThan(0)
     expect(screen.getByText(/Adquirido/)).toBeInTheDocument()
@@ -44,7 +59,7 @@ describe('Activos render', () => {
   })
 
   it('shows stale warning', () => {
-    setup([{ ...a1, valor_actualizado_en: '2026-01-01T10:00' }])
+    setup([{ ...a1, desactualizado: true }])
     expect(screen.getByText('Valor sin actualizar hace más de 1 mes')).toBeInTheDocument()
   })
 
@@ -62,65 +77,65 @@ describe('Activos render', () => {
 
 describe('Activos forms', () => {
   it('creates with crear_tx true', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Nuevo activo' }))
     await user.type(await screen.findByPlaceholderText('Ej. Apartamento Bogotá'), '  Moto ')
     await user.type(document.getElementById('m-val-ini') as HTMLInputElement, '5000000')
     await user.click(screen.getByRole('button', { name: 'Agregar activo' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]).toMatchObject({
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]).toMatchObject({
       method: 'POST', url: '/api/activo', headers: H,
       body: { nombre: 'Moto', valor_inicial: 5000000, valor_actual: 5000000, fecha_adquisicion: '2026-06-15', valor_actualizado_en: '2026-06-15', crear_tx: true },
     })
   })
 
   it('creates with crear_tx false', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Nuevo activo' }))
     await user.type(await screen.findByPlaceholderText('Ej. Apartamento Bogotá'), 'Moto')
     await user.type(document.getElementById('m-val-ini') as HTMLInputElement, '1000')
     await user.type(document.getElementById('m-val-act') as HTMLInputElement, '2000')
     await user.click(document.getElementById('m-es-nueva') as HTMLInputElement)
     await user.click(screen.getByRole('button', { name: 'Agregar activo' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]?.body).toMatchObject({ valor_inicial: 1000, valor_actual: 2000, crear_tx: false })
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]?.body).toMatchObject({ valor_inicial: 1000, valor_actual: 2000, crear_tx: false })
   })
 
   it('validates required fields', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Nuevo activo' }))
     await user.click(await screen.findByRole('button', { name: 'Agregar activo' }))
     expect(document.getElementById('m-status')).toHaveTextContent('Nombre requerido')
     await user.type(screen.getByPlaceholderText('Ej. Apartamento Bogotá'), 'X')
     await user.click(screen.getByRole('button', { name: 'Agregar activo' }))
     expect(document.getElementById('m-status')).toHaveTextContent('Precio de compra requerido')
-    expect(f.mutations()).toHaveLength(0)
+    expect(guardados()).toHaveLength(0)
   })
 
   it('edit keeps valor_actualizado_en when value unchanged, no crear_tx', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     expect(await screen.findByText('Valor inicial (COP)')).toBeInTheDocument()
     expect(document.getElementById('m-es-nueva')).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]).toMatchObject({
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]).toMatchObject({
       method: 'PUT', url: '/api/activo/4', headers: H,
       body: { nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', valor_actualizado_en: '2026-06-01T10:00' },
     })
-    expect(f.mutations()[0]?.body).not.toHaveProperty('crear_tx')
-    expect(f.mutations()[0]?.body).not.toHaveProperty('_id')
+    expect(guardados()[0]?.body).not.toHaveProperty('crear_tx')
+    expect(guardados()[0]?.body).not.toHaveProperty('_id')
   })
 
   it('edit with changed value stamps today', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     const el = await screen.findByDisplayValue<HTMLInputElement>('150.000')
     await user.clear(el)
     await user.type(el, '160000')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]?.body).toMatchObject({ valor_actual: 160000, valor_actualizado_en: '2026-06-15' })
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]?.body).toMatchObject({ valor_actual: 160000, valor_actualizado_en: '2026-06-15' })
   })
 
   it('shows server error in modal', async () => {
@@ -133,47 +148,49 @@ describe('Activos forms', () => {
   })
 
   it('delete confirms then DELETEs', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     const confirmFn = vi.fn(() => true)
     vi.stubGlobal('confirm', confirmFn)
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
     expect(confirmFn).toHaveBeenCalledWith('¿Eliminar "Casa"?')
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/activo/4', headers: H })
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]).toMatchObject({ method: 'DELETE', url: '/api/activo/4', headers: H })
   })
 
   it('delete cancelled does nothing', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     vi.stubGlobal('confirm', () => false)
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
-    expect(f.mutations()).toHaveLength(0)
+    expect(guardados()).toHaveLength(0)
   })
 
   it('update value sends full activo spread', async () => {
-    const { f, user } = setup()
+    const { f, guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Actualizar valor' }))
     const dialog = await screen.findByText('Actualizar valor · Casa')
     expect(dialog).toBeInTheDocument()
     expect(document.getElementById('activo-update-preview')).not.toHaveClass('visible')
     await user.type(document.getElementById('m-nuevo-valor') as HTMLInputElement, '180000')
-    expect(document.getElementById('activo-update-preview')).toHaveClass('visible')
-    expect(document.getElementById('activo-delta')).toHaveTextContent('+')
+    await waitFor(() => expect(document.getElementById('activo-update-preview')).toHaveClass('visible'))
+    expect(f.calls.filter((c) => c.url === '/api/activo/4/valor/preview').at(-1)).toMatchObject({ method: 'POST', headers: H, body: { nuevo_valor: 180000 } })
+    expect(document.getElementById('activo-delta')).toHaveTextContent(/\+.*30\.000/)
+    expect(document.getElementById('activo-total')).toHaveTextContent('80,0%')
     await user.click(screen.getByRole('button', { name: 'Actualizar' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]).toMatchObject({
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]).toMatchObject({
       method: 'PUT', url: '/api/activo/4', headers: H,
       body: { id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 180000, valor_actualizado_en: '2026-06-15T10:30', fecha_adquisicion: '2026-01-02' },
     })
   })
 
   it('update value rejects empty', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Actualizar valor' }))
     await user.click(await screen.findByRole('button', { name: 'Actualizar' }))
     expect(document.getElementById('m-status')).toHaveTextContent('Valor inválido')
-    expect(f.mutations()).toHaveLength(0)
+    expect(guardados()).toHaveLength(0)
   })
 
   it('update form can jump to edit form', async () => {
@@ -185,22 +202,24 @@ describe('Activos forms', () => {
   })
 
   it('sell posts to venta endpoint', async () => {
-    const { f, user } = setup()
+    const { f, guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Vender' }))
     await screen.findByText('Vender · Casa')
     expect(document.getElementById('m-precio')).toHaveValue('150.000')
-    expect(document.getElementById('activo-sell-preview')).toHaveClass('visible')
+    await waitFor(() => expect(document.getElementById('activo-sell-preview')).toHaveClass('visible'))
+    expect(f.calls.find((c) => c.url === '/api/activo/4/venta/preview')).toMatchObject({ method: 'POST', headers: H, body: { precio: 150000 } })
+    expect(document.getElementById('sell-gain-ini')).toHaveTextContent(/\+.*50\.000/)
     await user.type(document.getElementById('m-notas') as HTMLInputElement, ' Amigo ')
     await user.click(screen.getByRole('button', { name: 'Confirmar venta' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]).toMatchObject({
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]).toMatchObject({
       method: 'POST', url: '/api/activo/4/venta', headers: H,
       body: { precio: 150000, fecha: '2026-06-15T10:30', notas: 'Amigo', registrar_tx: true },
     })
   })
 
   it('sell with registrar_tx off and invalid price', async () => {
-    const { f, user } = setup()
+    const { guardados, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Vender' }))
     await screen.findByText('Vender · Casa')
     const precio = document.getElementById('m-precio') as HTMLInputElement
@@ -210,8 +229,8 @@ describe('Activos forms', () => {
     await user.type(precio, '90000')
     await user.click(document.getElementById('m-es-nueva') as HTMLInputElement)
     await user.click(screen.getByRole('button', { name: 'Confirmar venta' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]?.body).toMatchObject({ precio: 90000, notas: '', registrar_tx: false })
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]?.body).toMatchObject({ precio: 90000, notas: '', registrar_tx: false })
   })
 })
 

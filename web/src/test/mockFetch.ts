@@ -1,5 +1,16 @@
 import { vi } from 'vitest'
-import type { ApiAll } from '../types'
+import type {
+  ApiAll,
+  EsteMes,
+  Evolucion,
+  GastosPeriodo,
+  ListadoTx,
+  Movimientos,
+  OpsOcultas,
+  ProximasOperaciones,
+  ResumenDashboard,
+} from '../types'
+import { apiAll, categoriasBase } from './factories'
 
 export interface RecordedCall {
   method: string
@@ -10,7 +21,107 @@ export interface RecordedCall {
 
 export type Handler = unknown
 
-export const EMPTY_ALL: ApiAll = { transacciones: [], deudas: [], inversiones: [], activos: [], recurrentes: [] }
+export const EMPTY_ALL: ApiAll = apiAll()
+
+const RESUMEN_DASHBOARD: ResumenDashboard = {
+  patrimonio: 0,
+  efectivo: 0,
+  total_deuda: 0,
+  total_inv: 0,
+  total_activos: 0,
+  ingresos_mes: 0,
+  gastos_mes: 0,
+  quedo_mes: 0,
+  ahorro_pct: 0,
+  proy_delta: 0,
+  cuota_total: 0,
+  deudas_activas: 0,
+  total_invertido: 0,
+  ganancia_inv: 0,
+  ganancia_inv_pct: 0,
+  partes: [],
+  total_barra: 0,
+  frase_mes: { tipo: 'sin_ingresos' },
+}
+
+const EVOLUCION: Evolucion = {
+  serie: 'patrimonio',
+  periodo: '6M',
+  meses: 6,
+  puntos: [],
+  desde: 0,
+  hasta: 0,
+  cambio: 0,
+  verbo: 'Te mantuviste',
+  sujeto: '',
+  mes_desde: '',
+}
+
+const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, quedo: 0, ahorro_pct: 0, frase: { tipo: 'sin_ingresos' }, meses: [] }
+
+const GASTOS: GastosPeriodo = {
+  periodo: '1M',
+  nombre_periodo: 'el último mes',
+  total: 0,
+  max: 0,
+  top: null,
+  categorias: [],
+}
+
+const MOVIMIENTOS: Movimientos = { items: [] }
+
+const PROXIMAS: ProximasOperaciones = { hoy: EMPTY_ALL.hoy, items: [], vencidas: 0, salen_total: 0 }
+
+const LISTADO_TX: ListadoTx = {
+  items: [],
+  filtros: { tipo: '', mes: '', cat: '' },
+  opciones: { meses: [], categorias: [] },
+  pills: [],
+  resumen: { ingresos: 0, gastos: 0, neto: 0, segmentos: [] },
+}
+
+const OPS_OCULTAS: OpsOcultas = { items: [] }
+
+const VISTAS_VACIAS: Record<string, Handler> = {
+  'GET /api/dashboard/resumen': RESUMEN_DASHBOARD,
+  'GET /api/dashboard/evolucion': EVOLUCION,
+  'GET /api/dashboard/este-mes': ESTE_MES,
+  'GET /api/dashboard/gastos': GASTOS,
+  'GET /api/dashboard/movimientos': MOVIMIENTOS,
+  'GET /api/proximas-operaciones': PROXIMAS,
+  'GET /api/tx': LISTADO_TX,
+  'GET /api/deudas/resumen': {
+    total: 0,
+    total_cuotas: 0,
+    total_intereses: 0,
+    intereses_aproximado: false,
+    segmentos: [],
+    creditos: [],
+    tarjetas: [],
+    terminadas: [],
+  },
+  'GET /api/inv/resumen': {
+    total_invertido: 0,
+    total_actual: 0,
+    ganancia: 0,
+    ganancia_pct: 0,
+    segmentos: [],
+    fijas: [],
+    variables: [],
+  },
+  'GET /api/activos/resumen': { total_inicial: 0, total_actual: 0, variacion: 0, variacion_pct: 0, segmentos: [], items: [] },
+  'GET /api/rec/resumen': {
+    total_gastos_mensual: 0,
+    total_ingresos_mensual: 0,
+    neto_mensual: 0,
+    segmentos: [],
+    ingresos: [],
+    gastos: [],
+  },
+  'GET /api/categorias': categoriasBase(),
+  'GET /api/ajustes': EMPTY_ALL.ajustes,
+  'GET /api/ops-ocultas': OPS_OCULTAS,
+}
 
 export const json = (body: unknown, status = 200): Response =>
   new Response(status === 204 ? null : JSON.stringify(body), {
@@ -22,7 +133,7 @@ export const failure = (status: number, detail: unknown): Response => json({ det
 
 export function mockFetch(routes: Record<string, Handler> = {}) {
   const calls: RecordedCall[] = []
-  const table: Record<string, Handler> = { 'GET /api/all': EMPTY_ALL, ...routes }
+  const table: Record<string, Handler> = { 'GET /api/all': EMPTY_ALL, ...VISTAS_VACIAS, ...routes }
 
   const fn = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const method = init?.method ?? 'GET'
@@ -34,7 +145,8 @@ export function mockFetch(routes: Record<string, Handler> = {}) {
       body: typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined,
     }
     calls.push(call)
-    const h = table[`${method} ${url}`]
+    const exacta = `${method} ${url}`
+    const h = exacta in table ? table[exacta] : table[`${method} ${url.split('?')[0] ?? url}`]
     if (h === undefined) return Promise.resolve(failure(404, `sin mock: ${method} ${url}`))
     const out = typeof h === 'function' ? (h as (c: RecordedCall) => unknown)(call) : h
     return Promise.resolve(out instanceof Response ? out : json(out))
