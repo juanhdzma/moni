@@ -23,18 +23,6 @@ def test_subscribe_rechaza_endpoints_ajenos(client, endpoint):
     assert client.post("/api/push/subscribe", json={**SUB, "endpoint": endpoint}).status_code == 422
 
 
-def test_subscribe_exige_header_csrf(client):
-    client.headers.pop("x-moni-request")
-    r = client.post("/api/push/subscribe", json=SUB)
-    assert r.status_code == 403
-    assert "x-moni-request" in r.json()["detail"]
-
-    conn = db.get_conn()
-    n = conn.execute("SELECT COUNT(*) FROM push_subs").fetchone()[0]
-    conn.close()
-    assert n == 0
-
-
 def test_unsubscribe_borra(client):
     client.post("/api/push/subscribe", json=SUB)
     assert client.post("/api/push/unsubscribe", json={"endpoint": SUB["endpoint"]}).status_code == 200

@@ -1,4 +1,6 @@
-export function normDate(s: string | null | undefined): string {
+export const soloFecha = (valor: string | null | undefined): string => (valor ?? '').split('T')[0] ?? ''
+
+function normDate(s: string | null | undefined): string {
   if (!s) return ''
   s = String(s).trim()
   if (/^\d{4}-\d{2}-\d{2}[T ]/.test(s)) return s.slice(0, 10) + 'T' + s.slice(11, 16)
@@ -11,8 +13,8 @@ export function normDate(s: string | null | undefined): string {
   return s
 }
 
-export function mediodia(s: string): Date {
-  const m = (normDate(s).split('T')[0] ?? '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+function mediodia(s: string): Date {
+  const m = soloFecha(normDate(s)).match(/^(\d{4})-(\d{2})-(\d{2})$/)
   if (!m) return new Date(NaN)
   const month = +(m[2] ?? 0)
   const day = +(m[3] ?? 0)

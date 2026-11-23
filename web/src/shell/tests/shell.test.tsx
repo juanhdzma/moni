@@ -5,7 +5,6 @@ import { estado } from '../../test/factories'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { ESTADO_AUTENTICADO, renderWithProviders } from '../../test/render'
 import { AuthProvider } from '@/shell/providers/AuthProvider'
-import { CategoriasProvider } from '@/shell/providers/CategoriasProvider'
 import { DataProvider } from '@/shell/providers/DataProvider'
 import { ModalProvider } from '@/shell/providers/ModalProvider'
 import { Shell } from '../layout/Shell'
@@ -97,11 +96,9 @@ describe('Shell', () => {
     render(
       <AuthProvider initialEstado={ESTADO_AUTENTICADO}>
         <DataProvider>
-          <CategoriasProvider>
-            <ModalProvider>
-              <Shell />
-            </ModalProvider>
-          </CategoriasProvider>
+          <ModalProvider>
+            <Shell />
+          </ModalProvider>
         </DataProvider>
       </AuthProvider>,
     )

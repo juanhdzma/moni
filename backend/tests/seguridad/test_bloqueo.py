@@ -15,7 +15,7 @@ def test_tres_fallos_bloquean_aun_con_clave_correcta(anon_client, reloj):
     assert r.json()["detail"] == "IP bloqueada" and r.json()["reintentar_en_s"] == 24 * 3600
     assert r.headers["retry-after"] == str(24 * 3600)
     assert anon_client.get("/api/auth/estado").status_code == 403
-    assert anon_client.get("/api/all").status_code == 403
+    assert anon_client.get("/api/backup").status_code == 403
     otra = cliente(("198.51.100.99", 1))
     assert login(otra).status_code == 200
 

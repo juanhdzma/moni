@@ -11,13 +11,14 @@ import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { useVista } from '@/shell/hooks/useVista'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import type { OpcionesTx, Transaccion } from '../../../types'
 import { NuevaCategoria } from './NuevaCategoria'
 
 const SIN_CATEGORIAS = 'Sin categorías — agregá una con +'
 
 export function TxForm({ tx }: { tx: Transaccion | null }) {
-  const { data: opciones } = useVista(`tx-opciones:${tx?.id ?? 'nuevo'}`, () => cargarOpcionesTx(tx?.id))
+  const { data: opciones } = useVista(`tx-opciones:${tx?.id ?? 'nuevo'}`, () => cargarOpcionesTx(tx?.id), DEPENDENCIAS_DE_VISTA.opcionesTransaccion)
   if (!opciones) return <p className="py-6 text-center text-sm text-muted-foreground">Cargando...</p>
   return <TxFormCampos tx={tx} opciones={opciones} />
 }
@@ -53,7 +54,7 @@ function TxFormCampos({ tx, opciones }: { tx: Transaccion | null; opciones: Opci
       descripcion: descripcion.trim(),
       monto: parseMoney(monto),
       notas: notas.trim(),
-      tarjeta_id: tipo === 'gasto' && tarjeta ? Number(tarjeta) : null,
+      tarjeta_id: tarjeta ? Number(tarjeta) : null,
     }
     await guardar(async () => {
       if (tx) await crudOp('tx', 'update', { ...data, id: tx.id })
@@ -63,7 +64,7 @@ function TxFormCampos({ tx, opciones }: { tx: Transaccion | null; opciones: Opci
 
   return (
     <>
-      <TipoToggle value={tipo} opciones={meta?.tipos_transaccion.filter((t) => t.value !== 'transfer') ?? []} onChange={cambiarTipo} />
+      <TipoToggle value={tipo} opciones={meta?.tipos_manuales ?? []} onChange={cambiarTipo} />
       <div className="form-group">
         <label className="form-label" htmlFor="m-cat">Categoría</label>
         <NuevaCategoria key={tipo} tipo={tipo} onCreada={setCategoria}>

@@ -23,8 +23,8 @@ afterEach(() => vi.unstubAllGlobals())
 
 test('un GET no manda el header de mutación ni content-type', async () => {
   const fn = mockFetch({ json: () => Promise.resolve({ a: 1 }) })
-  expect(await apiFetch('/api/all')).toEqual({ a: 1 })
-  expect(fn).toHaveBeenCalledWith('/api/all', { method: 'GET', headers: {}, body: undefined })
+  expect(await apiFetch('/api/backup')).toEqual({ a: 1 })
+  expect(fn).toHaveBeenCalledWith('/api/backup', { method: 'GET', headers: {}, body: undefined })
 })
 
 test('un POST manda X-Moni-Request y el JSON', async () => {
@@ -124,12 +124,12 @@ test('un 403 con reintentar_en_s lanza ApiError y avisa del bloqueo', async () =
   const bloqueada = vi.fn()
   const noAutenticado = vi.fn()
   setAuthEvents({ bloqueada, noAutenticado })
-  mockFetch({ ok: false, status: 403, json: () => Promise.resolve({ detail: 'IP bloqueada', reintentar_en_s: 90 }) })
-  const err = await apiFetch('/api/all').catch((e: unknown) => e)
+  mockFetch({ ok: false, status: 403, json: () => Promise.resolve({ detail: 'IP bloqueada', reintentar_en_s: 90, texto: 'Demasiados intentos. Probá de nuevo en 2 min.' }) })
+  const err = await apiFetch('/api/backup').catch((e: unknown) => e)
   setAuthEvents(null)
   expect(err).toBeInstanceOf(ApiError)
-  expect(err).toMatchObject({ status: 403, reintentarEnS: 90, message: 'IP bloqueada' })
-  expect(bloqueada).toHaveBeenCalledWith(90)
+  expect(err).toMatchObject({ status: 403, reintentarEnS: 90, textoBloqueo: 'Demasiados intentos. Probá de nuevo en 2 min.', message: 'IP bloqueada' })
+  expect(bloqueada).toHaveBeenCalledWith('Demasiados intentos. Probá de nuevo en 2 min.')
   expect(noAutenticado).not.toHaveBeenCalled()
 })
 
@@ -139,7 +139,7 @@ test('un 401 avisa una vez salvo en las rutas de login', async () => {
   const noAutenticado = vi.fn()
   setAuthEvents({ bloqueada, noAutenticado })
   mockFetch({ ok: false, status: 401, json: () => Promise.resolve({ detail: 'x' }) })
-  await expect(apiFetch('/api/all')).rejects.toThrow('x')
+  await expect(apiFetch('/api/backup')).rejects.toThrow('x')
   expect(noAutenticado).toHaveBeenCalledTimes(1)
   await expect(apiFetch('/api/auth/login', { method: 'POST', body: { clave: 'a' } })).rejects.toThrow('x')
   await expect(apiFetch('/api/auth/passkey/login/verificar', { method: 'POST', body: {} })).rejects.toThrow('x')

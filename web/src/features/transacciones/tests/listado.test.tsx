@@ -80,7 +80,7 @@ describe('Transacciones tab', () => {
               items: [mercado],
               filtros: { tipo: 'gasto', mes: '', cat: '' },
               pills: [{ campo: 'tipo', label: 'Gastos' }],
-              resumen: { ingresos: 0, gastos: 5000, neto: -5000, segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000 }] },
+              resumen: { ingresos: 0, gastos: 5000, neto: -5000, dato: { texto: 'entró $0 · salió $5.000', partes: [] }, segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000 }] },
             })
           : listado(),
     })

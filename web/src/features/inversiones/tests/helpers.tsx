@@ -21,7 +21,9 @@ export const CDT = inversion({
   ganancia: 10_000,
   ganancia_pct: 1,
   tasa_mv: 0.9489,
+  texto_tasa: '12,00% EA · 0,9489% MV',
   rendimiento_esperado: 9584,
+  capitaliza_default: true,
 })
 export const FONDO = inversion({
   id: 6,
@@ -33,7 +35,7 @@ export const FONDO = inversion({
   valor_actualizado_en: '2026-08-01',
   ganancia: -50_000,
   ganancia_pct: -10,
-  desactualizada: true,
+  desactualizado: true,
 })
 
 export function installFakeClock() {
@@ -51,6 +53,8 @@ const RESUMEN: ResumenInversiones = {
   total_actual: 1_460_000,
   ganancia: -40_000,
   ganancia_pct: -2.67,
+  mostrar_ganancia: true,
+  texto_ganancia: '$40k (2,7%) perdido',
   texto_posiciones: '2 posiciones',
   segmentos: [
     { key: '5', label: 'CDT Uno', valor: 1_010_000 },
@@ -71,14 +75,13 @@ let actual: Inversion[] = DEFAULT
 export const mockInv = (routes: Record<string, unknown> = {}) =>
   mockFetch({
     'GET /api/inv/resumen': () => resumenDe(actual),
-    'GET /api/inv/5/rendimiento/defaults': { capitaliza_default: true },
     ...routes,
   })
 
 export async function setup(invs = DEFAULT) {
   actual = invs
   if (!vi.isMockFunction(globalThis.fetch)) mockInv()
-  const r = renderWithProviders(<Inversiones active />, { estado: estado({ inversiones: invs, conteos: { activos: 0, inversiones: invs.length } }) })
+  const r = renderWithProviders(<Inversiones active />, { estado: estado({ inversiones: invs }) })
   await waitFor(() => expect(document.querySelectorAll('.inv-card, .empty')).not.toHaveLength(0))
   return r
 }

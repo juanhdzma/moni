@@ -1,4 +1,5 @@
-import { cop, copShort, signStr } from '@/lib/format'
+import { Monto } from '@/components/monto'
+import { cop, copShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { ParteResumen, ResumenDashboard } from '@/types'
 
@@ -12,15 +13,10 @@ const ESTILO: Record<ParteResumen['id'], { fondo: string; texto: string }> = {
 const fondo = (p: ParteResumen) => (p.id === 'balance' && p.negativo ? 'bg-deudas' : ESTILO[p.id].fondo)
 const texto = (p: ParteResumen) => (p.id === 'balance' && p.negativo ? 'text-deudas' : ESTILO[p.id].texto)
 
-const PARTES_VACIAS: ParteResumen[] = [
-  { id: 'activos', nombre: 'Activos', valor: 0, negativo: false, detalle: null },
-  { id: 'inversiones', nombre: 'Inversiones', valor: 0, negativo: false, detalle: null },
-  { id: 'balance', nombre: 'Cartera', valor: 0, negativo: false, detalle: null },
-  { id: 'deudas', nombre: 'Deudas', valor: 0, negativo: false, detalle: null },
-]
+const ESQUELETO = [0, 1, 2, 3]
 
 export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading: boolean }) {
-  const partes = r?.partes ?? PARTES_VACIAS
+  const partes = r?.partes ?? []
   const totalBarra = r?.total_barra ?? 0
   const proy = r?.proy_delta ?? 0
 
@@ -33,16 +29,13 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
         {loading || !r ? (
           <span className="h-9 w-40 animate-pulse rounded-md bg-muted" aria-label="Cargando" />
         ) : (
-          <span id="stat-networth" title={cop(r.patrimonio)} className={cn('text-3xl font-semibold tracking-tight sm:text-4xl', r.patrimonio < 0 && 'text-deudas')}>
-            {copShort(r.patrimonio)}
+          <span id="stat-networth" title={cop(r.patrimonio)} className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            <Monto valor={r.patrimonio} formato={copShort} signo="negativo" color="negativo" />
           </span>
         )}
         {!loading && (
           <span className="text-sm text-muted-foreground">
-            <span className={cn('font-semibold', proy >= 0 ? 'text-inversiones-text' : 'text-deudas')}>
-              {signStr(proy)}
-              {copShort(Math.abs(proy))}
-            </span>{' '}
+            <Monto valor={proy} formato={copShort} className="font-semibold" />{' '}
             proyectados en 12 meses
           </span>
         )}
@@ -55,6 +48,10 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
       </div>
 
       <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4" aria-label="De qué está hecho">
+        {!r &&
+          ESQUELETO.map((i) => (
+            <li key={i} className="h-14 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+          ))}
         {partes.map((p) => (
           <li key={p.id} id={`stat-${p.id}`} className="min-w-0">
             <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
@@ -62,9 +59,9 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
               {p.nombre}
             </div>
             <div className={cn('mt-0.5 text-lg font-semibold', texto(p))}>
-              {loading ? '—' : `${p.negativo ? '−' : ''}${copShort(Math.abs(p.valor))}`}
+              {loading ? '—' : <Monto valor={p.negativo ? -Math.abs(p.valor) : Math.abs(p.valor)} formato={copShort} signo="negativo" color="ninguno" />}
             </div>
-            <div className="truncate text-xs text-muted-foreground">{loading ? '' : p.detalle}</div>
+            <div className="truncate text-xs text-muted-foreground">{p.detalle}</div>
           </li>
         ))}
       </ul>

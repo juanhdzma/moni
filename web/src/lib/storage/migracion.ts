@@ -15,7 +15,7 @@ function parsear(raw: string | null): unknown {
 
 const textos = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
 
-export function leerLocal(): MigrarLocalIn | null {
+function leerLocal(): MigrarLocalIn | null {
   if (CLAVES.every((c) => leerStorage(c) === null)) return null
   const cats = parsear(leerStorage('moni_cats'))
   const registro = typeof cats === 'object' && cats !== null && !Array.isArray(cats) ? (cats as Record<string, unknown>) : {}

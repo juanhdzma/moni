@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { AdvancedToggle } from './AdvancedToggle'
-import { DatePicker, formatValue, parseValue } from './DatePicker'
+import { DatePicker } from './DatePicker'
 import { MoneyInput } from './MoneyInput'
 import { Select } from './Select'
 import { estado } from '../test/factories'
@@ -140,14 +140,6 @@ describe('AdvancedToggle', () => {
 })
 
 describe('DatePicker', () => {
-  it('parse/format ida y vuelta', () => {
-    const fecha = parseValue('2026-08-05', '2026-08-20')
-    const fechaHora = parseValue('2026-08-05T07:09', '2026-08-20T10:30')
-    expect(fecha && formatValue(fecha, false)).toBe('2026-08-05')
-    expect(fechaHora && formatValue(fechaHora, true)).toBe('2026-08-05T07:09')
-    expect(parseValue('', '')).toBeNull()
-  })
-
   function H({ type = 'date' as 'date' | 'datetime-local', initial = '2026-08-05' }) {
     const [v, setV] = useState(initial)
     return (

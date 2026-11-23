@@ -2,7 +2,7 @@ import pytest
 
 from backend.calculos.dinero import este_mes, evolucion, partes_patrimonio, resumen_dashboard
 
-from .builders import HOY, activo, deuda, estado, inversion, tx
+from .builders_calculos import HOY, activo, deuda, estado, inversion, tx
 
 
 def test_resumen_dashboard_kpis_del_mes_y_ahorro_acotado_al_mes():

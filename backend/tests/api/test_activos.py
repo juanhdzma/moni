@@ -1,4 +1,4 @@
-from .builders import HOY_ISO
+from .builders_api import HOY_ISO
 
 
 def _crear(client, **kw):
@@ -19,7 +19,7 @@ def test_crear_respeta_lo_enviado(client):
 
 def test_crear_con_tx_usa_la_fecha_resuelta(client):
     _crear(client, crear_tx=True)
-    tx = client.get("/api/all").json()["transacciones"][0]
+    tx = client.get("/api/backup").json()["transacciones"][0]
     assert (tx["fecha"], tx["monto"], tx["categoria"]) == (HOY_ISO, 5000, "Compra activos")
 
 
@@ -56,8 +56,8 @@ def test_editar_y_borrar_inexistente_dan_404(client):
 def test_venta_sin_fecha_usa_ahora_y_borra_activo(client):
     a = _crear(client)
     assert client.post(f"/api/activo/{a['id']}/venta", json={"precio": 4200}).status_code == 200
-    assert client.get("/api/all").json()["activos"] == []
-    tx = client.get("/api/all").json()["transacciones"][0]
+    assert client.get("/api/backup").json()["activos"] == []
+    tx = client.get("/api/backup").json()["transacciones"][0]
     assert tx["fecha"].startswith(HOY_ISO) and "T" in tx["fecha"]
     assert client.post(f"/api/activo/{a['id']}/venta", json={"precio": 1}).status_code == 404
 

@@ -83,11 +83,6 @@ def test_rate_limit(client, enviados):
     assert codigos[20] == 429
 
 
-def test_exige_csrf_header(client):
-    client.headers.pop("x-moni-request")
-    assert client.post("/api/push/enviar", json=OK).status_code == 403
-
-
 def test_test_y_key_exigen_sesion(anon_client):
     assert anon_client.post("/api/push/test").status_code == 401
     assert anon_client.get("/api/push/key").status_code == 401

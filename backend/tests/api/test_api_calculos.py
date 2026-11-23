@@ -2,19 +2,7 @@ import datetime
 
 import pytest
 
-from .builders import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, HOY_ISO, INV_DERIVADOS, REC_DERIVADOS, TX_DERIVADOS, TX_KEYS, sembrar, tx
-
-
-def test_all_exporta_solo_colecciones_con_derivados_sin_perder_los_crudos(client):
-    s = sembrar(client)
-    body = client.get("/api/all").json()
-    assert set(body) == {"transacciones", "deudas", "inversiones", "activos", "recurrentes"}
-    assert set(body["transacciones"][0]) == TX_KEYS | TX_DERIVADOS
-    assert set(body["deudas"][0]) >= set(s["deuda"]) | DEUDA_DERIVADOS
-    assert set(body["inversiones"][0]) >= set(s["inv"]) | INV_DERIVADOS
-    assert set(body["activos"][0]) >= set(s["activo"]) | ACTIVO_DERIVADOS
-    assert set(body["recurrentes"][0]) >= set(s["rec"]) | REC_DERIVADOS
-    assert body["recurrentes"][0]["activo"] is True
+from .builders_api import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, HOY_ISO, INV_DERIVADOS, REC_DERIVADOS, TX_DERIVADOS, TX_KEYS, sembrar, tx
 
 
 def test_bootstrap_lleva_contexto_de_la_sesion(client):
@@ -29,14 +17,16 @@ def test_bootstrap_lleva_contexto_de_la_sesion(client):
 
 def test_put_ignora_campos_derivados(client):
     sembrar(client)
-    fila = client.get("/api/all").json()["activos"][0]
+    activo_id = client.get("/api/backup").json()["activos"][0]["id"]
+    fila = client.get(f"/api/activo/{activo_id}").json()
+    assert ACTIVO_DERIVADOS <= set(fila)
     r = client.put(f"/api/activo/{fila['id']}", json={**fila, "valor_actual": 4_000_000})
     assert r.status_code == 200 and r.json()["valor_actual"] == 4_000_000
 
 
-def test_backup_roundtrip_con_all_derivado(client):
+def test_backup_roundtrip(client):
     sembrar(client)
-    exportado = client.get("/api/all").json()
+    exportado = client.get("/api/backup").json()
     client.post("/api/truncate")
     r = client.post("/api/import", json={k: exportado[k] for k in ("transacciones", "deudas", "inversiones", "activos", "recurrentes")})
     assert r.status_code == 200, r.text

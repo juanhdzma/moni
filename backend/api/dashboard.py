@@ -17,12 +17,6 @@ def _estado_de_hoy(conn):
     return store.cargar_estado(conn, hoy), hoy
 
 
-@router.get("/api/all")
-def exportar_todo():
-    with conexion() as conn:
-        return store.cargar_estado(conn, hoy_bogota())
-
-
 @router.get("/api/dashboard/resumen")
 def dashboard_resumen():
     with conexion() as conn:

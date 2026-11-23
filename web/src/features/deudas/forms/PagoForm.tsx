@@ -3,7 +3,7 @@ import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
 import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
 import { previewPago } from '../../../lib/api'
 import { cop, numToInput, parseMoney } from '../../../lib/format'
 import { useModal } from '@/shell/providers/ModalProvider'
@@ -63,15 +63,8 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         izquierda={{ label: 'Saldo pendiente', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
         derecha={{ label: 'Cuota mensual', valor: cop(d.cuota_mensual) }}
       />
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-monto">Monto total pagado (COP)</label>
-        <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
-        <div className="mt-1.5 text-xs text-muted-foreground">{hint}</div>
-      </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-saldo-nuevo">Saldo capital después del pago</label>
-        <MoneyInput id="m-saldo-nuevo" value={saldoNuevo} onChange={setSaldoNuevo} placeholder="Lo que muestra tu banco después" />
-      </div>
+      <MoneyField id="m-monto" label="Monto total pagado (COP)" value={monto} onChange={setMonto} hint={hint} />
+      <MoneyField id="m-saldo-nuevo" label="Saldo capital después del pago" value={saldoNuevo} onChange={setSaldoNuevo} placeholder="Lo que muestra tu banco después" />
       <Breakdown id="pay-breakdown" visible={showBreakdown}>
         <BreakdownRow id="pay-capital" label="A capital">
           <span className="text-cartera">{preview ? cop(preview.capital) : '—'}</span>

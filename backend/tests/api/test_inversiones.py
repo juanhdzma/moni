@@ -9,7 +9,7 @@ def _crear(client, **extra):
 
 
 def _inv(client, inv_id):
-    return next(i for i in client.get("/api/all").json()["inversiones"] if i["id"] == inv_id)
+    return next(i for i in client.get("/api/backup").json()["inversiones"] if i["id"] == inv_id)
 
 
 def test_crear_sin_valor_actual_usa_monto_y_fecha_inicio(client):
@@ -26,7 +26,7 @@ def test_crear_sin_fechas_usa_hoy(client):
 
 def test_crear_con_crear_tx_registra_el_gasto(client):
     inv = _crear(client, fecha_inicio="2026-03-01", crear_tx=True)
-    tx = client.get("/api/all").json()["transacciones"][0]
+    tx = client.get("/api/backup").json()["transacciones"][0]
     assert (tx["tipo"], tx["monto"], tx["fecha"], tx["descripcion"]) == ("gasto", 1000, "2026-03-01", f"Nueva inversión · {inv['nombre']}")
 
 
@@ -71,7 +71,7 @@ def test_rendimiento_que_capitaliza_ignora_registrar_tx(client):
     client.post(f"/api/inv/{inv['id']}/rendimiento", json={
         "monto": 50, "fecha": "2026-05-01", "capitaliza": True, "registrar_tx": True,
     })
-    estado = client.get("/api/all").json()
+    estado = client.get("/api/backup").json()
     assert estado["transacciones"] == []
     assert _inv(client, inv["id"])["valor_actual"] == 1050
 
@@ -89,7 +89,7 @@ def test_retiro_total_borra_y_parcial_prorratea(client):
     i = _inv(client, inv["id"])
     assert (i["valor_actual"], i["monto_invertido"]) == (750, 750)
     assert client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "total", "monto": 750, "fecha": "2026-05-01"}).status_code == 200
-    assert client.get("/api/all").json()["inversiones"] == []
+    assert client.get("/api/backup").json()["inversiones"] == []
 
 
 def test_retiro_parcial_sin_saldo_o_con_saldo_mayor_da_400(client):

@@ -6,7 +6,7 @@ import { Transacciones } from '..'
 
 export const datos = () =>
   estado({
-    deudas: [deuda({ id: 5, nombre: 'Visa Oro', es_tarjeta: 1, franquicia: 'Visa' })],
+    deudas: [deuda({ id: 5, nombre: 'Visa Oro', es_tarjeta: true, franquicia: 'Visa' })],
     transacciones: [
       tx('gasto', 'Comida', 5000, { id: 1, fecha: '2026-03-10T10:00', descripcion: 'Mercado', tarjeta_id: 5 }),
       tx('ingreso', 'Salario', 900000, { id: 2, fecha: '2026-04-02T08:00' }),
@@ -23,8 +23,6 @@ export const mercado: ListadoTx['items'][number] = {
   monto: 5000,
   notas: '',
   tarjeta_id: 5,
-  mes: '2026-03',
-  es_gasto_cartera: false,
   metodo_pago: 'Visa Oro',
   tarjeta_nombre: 'Visa Oro',
   tarjeta_franquicia: 'Visa',
@@ -40,8 +38,6 @@ export const salario: ListadoTx['items'][number] = {
   monto: 900000,
   notas: '',
   tarjeta_id: null,
-  mes: '2026-04',
-  es_gasto_cartera: false,
   metodo_pago: 'Efectivo / Débito',
   tarjeta_nombre: null,
   tarjeta_franquicia: null,
@@ -68,6 +64,7 @@ export const listado = (extra: Partial<ListadoTx> = {}): ListadoTx => ({
     ingresos: 900000,
     gastos: 5000,
     neto: 895000,
+    dato: { texto: 'entró $900.000 · salió $5.000', partes: [] },
     segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000 }],
   },
   ...extra,

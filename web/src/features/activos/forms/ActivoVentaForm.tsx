@@ -3,7 +3,7 @@ import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
 import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
 import { Variacion } from '../../../controls/Variacion'
 import { previewVenta } from '../../../lib/api'
 import { cop, numToInput, parseMoney } from '../../../lib/format'
@@ -32,10 +32,7 @@ export function ActivoVentaForm({ activo: a }: { activo: Activo }) {
   return (
     <>
       <ModalPanel izquierda={{ label: 'Valor actual', valor: cop(a.valor_actual) }} derecha={{ label: 'Precio inicial', valor: cop(a.valor_inicial) }} />
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-precio">Precio de venta (COP)</label>
-        <MoneyInput id="m-precio" value={precioTxt} onChange={setPrecioTxt} />
-      </div>
+      <MoneyField id="m-precio" label="Precio de venta (COP)" value={precioTxt} onChange={setPrecioTxt} />
       <Breakdown id="activo-sell-preview" visible={precio > 0 && prev !== null}>
         <BreakdownRow id="sell-gain-ini" label="Ganancia vs precio inicial">
           <Variacion valor={prev?.vs_inicial ?? 0} />

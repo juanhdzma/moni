@@ -15,8 +15,6 @@ export const tx = (
   descripcion: '',
   notas: '',
   tarjeta_id: null,
-  mes: '2026-08',
-  es_gasto_cartera: tipo === 'gasto',
   tarjeta_nombre: null,
   tarjeta_franquicia: null,
   metodo_pago: 'Efectivo / Débito',
@@ -32,7 +30,7 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
   cuota_mensual: 0,
   fecha_inicio: '',
   proxima_cuota: '',
-  es_tarjeta: 0,
+  es_tarjeta: false,
   cupo: 0,
   franquicia: '',
   total_intereses: 0,
@@ -42,10 +40,17 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
   capital_pagado: 0,
   meses_restantes: null,
   nivel_progreso: 'bajo',
-  intereses_pagados: null,
   disponible: null,
   uso_pct: 0,
   nivel_uso: 'bajo',
+  frases: {
+    detalle: '',
+    meses_restantes_texto: null,
+    progreso_texto: '',
+    intereses_texto: null,
+    intereses_ayuda: '',
+    intereses_saldada_texto: null,
+  },
   ...extra,
 })
 
@@ -65,7 +70,9 @@ export const inversion = (extra: Partial<Inversion> = {}): Inversion => ({
   tasa_mv: null,
   proximo_pago: null,
   rendimiento_esperado: null,
-  desactualizada: false,
+  desactualizado: false,
+  texto_tasa: null,
+  capitaliza_default: false,
   ...extra,
 })
 
@@ -91,6 +98,7 @@ export const recurrente = (extra: Partial<Recurrente> = {}): Recurrente => ({
   activo: true,
   fecha_inicio: '',
   notas: '',
+  categoria_sugerida: 'Servicios',
   frecuencia_label: 'Mensual',
   mensual: 0,
   proximo_pago: null,
@@ -114,7 +122,6 @@ export const estado = (extra: Partial<Estado> & Filas = {}): Estado => {
     ajustes: { moneda_simbolo: '$' },
     categorias: categoriasBase(),
     alertas: { activos: false, inversiones: false },
-    conteos: { activos: 0, inversiones: 0 },
     desactualizado: { dias: 30, texto: 'Valor sin actualizar hace más de 1 mes' },
     ...bootstrap,
   }

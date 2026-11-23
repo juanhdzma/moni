@@ -1,5 +1,5 @@
-import { cop, pct, signStr } from '@/lib/format'
-import { cn } from '@/lib/utils'
+import { Monto } from '@/components/monto'
+import { pct } from '@/lib/format'
 
 interface Props {
   valor: number
@@ -8,15 +8,13 @@ interface Props {
 
 export function Variacion({ valor, porcentaje }: Props) {
   return (
-    <span className={cn(valor >= 0 ? 'text-inversiones-text' : 'text-deudas')}>
-      {signStr(valor)}
-      {cop(Math.abs(valor))}
+    <span>
+      <Monto valor={valor} />
       {porcentaje !== undefined && (
         <>
           {' '}
           <span className="text-xs font-medium">
-            ({signStr(porcentaje)}
-            {pct(Math.abs(porcentaje))}%)
+            (<Monto valor={porcentaje} formato={pct} sufijo="%" />)
           </span>
         </>
       )}

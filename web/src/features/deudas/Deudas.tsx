@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { PartyPopper, Plus, CreditCard } from 'lucide-react'
+import { EmptyCard } from '@/components/EmptyCard'
 import { Barra, Panel, Resumen } from '@/components/panel'
 import { Button } from '@/components/ui/button'
 import { cargarResumenDeudas } from '../../lib/api'
@@ -8,6 +9,7 @@ import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useVista } from '@/shell/hooks/useVista'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import type { Deuda, Nivel } from '../../types'
 import { openDeudaAdelantoFormById, openDeudaForm, openDeudaFormById, openDeudaPayFormById } from './forms/openers'
 
@@ -59,7 +61,7 @@ function PrestamoCard({ d }: { d: Deuda }) {
         <div className="text-sm font-medium text-muted-foreground">{frases?.progreso_texto}</div>
       </div>
       <div className="mt-3">
-        <Barra valor={Math.min(100, d.progreso_pct)} max={100} className={COLOR_PROGRESO[d.nivel_progreso]} />
+        <Barra valor={d.progreso_pct} max={100} className={COLOR_PROGRESO[d.nivel_progreso]} />
       </div>
       <div className="mt-2 flex justify-between gap-1">
         <div>
@@ -133,16 +135,6 @@ function TarjetaCard({ d }: { d: Deuda }) {
   )
 }
 
-function Empty({ icon, titulo, texto }: { icon: ReactNode; titulo: string; texto: string }) {
-  return (
-    <div className="flex flex-col items-center gap-1 py-6 text-center">
-      <div className="text-muted-foreground">{icon}</div>
-      <div className="text-sm font-semibold">{titulo}</div>
-      <div className="text-sm text-muted-foreground">{texto}</div>
-    </div>
-  )
-}
-
 function Terminada({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
   const frases = d.frases
@@ -168,7 +160,7 @@ function Terminada({ d }: { d: Deuda }) {
 export function Deudas({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { loaded: cargado } = useData()
-  const { data } = useVista('deudas', cargarResumenDeudas, ['deudas'])
+  const { data } = useVista('deudas', cargarResumenDeudas, DEPENDENCIAS_DE_VISTA.resumenDeudas)
   const loaded = cargado && data !== null
   const total = data?.total ?? 0
   const creditos = data?.creditos ?? []
@@ -214,8 +206,8 @@ export function Deudas({ active }: TabProps) {
                 (creditos.length ? (
                   creditos.map((d) => <PrestamoCard key={d.id} d={d} />)
                 ) : (
-                  <Empty
-                    icon={<PartyPopper aria-hidden="true" className="size-6" />}
+                  <EmptyCard
+                    icono={<PartyPopper aria-hidden="true" className="size-6" />}
                     titulo={terminadas.length ? 'Sin créditos activos' : 'Sin créditos'}
                     texto={terminadas.length ? '¡Todos los créditos están saldados!' : 'Agregá uno con el botón + de arriba.'}
                   />
@@ -228,7 +220,7 @@ export function Deudas({ active }: TabProps) {
                 (tarjetas.length ? (
                   tarjetas.map((d) => <TarjetaCard key={d.id} d={d} />)
                 ) : (
-                  <Empty icon={<CreditCard aria-hidden="true" className="size-6" />} titulo="Sin tarjetas" texto="Agregá una para cargarle gastos y seguir su cupo." />
+                  <EmptyCard icono={<CreditCard aria-hidden="true" className="size-6" />} titulo="Sin tarjetas" texto="Agregá una para cargarle gastos y seguir su cupo." />
                 ))}
             </div>
           </Panel>

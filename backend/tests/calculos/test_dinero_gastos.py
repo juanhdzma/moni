@@ -2,7 +2,7 @@ import datetime
 
 from backend.calculos.dinero import agrupar_gastos, gastos_en_periodo, gastos_periodo, movimientos_recientes
 
-from .builders import HOY, tx
+from .builders_calculos import HOY, tx
 
 
 def test_movimientos_recientes_ordena_por_fecha_desc_y_corta_en_n():

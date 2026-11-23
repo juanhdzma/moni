@@ -15,21 +15,28 @@ function mensajeDeError(j: unknown, status: number): string {
   return typeof detail === 'string' && detail ? detail : msg
 }
 
+interface Bloqueo {
+  reintentarEnS: number
+  texto: string
+}
+
 export class ApiError extends Error {
   readonly status: number
   readonly reintentarEnS: number | null
+  readonly textoBloqueo: string | null
 
-  constructor(message: string, status: number, reintentarEnS: number | null = null) {
+  constructor(message: string, status: number, bloqueo: Bloqueo | null = null) {
     super(message)
     this.name = 'ApiError'
     this.status = status
-    this.reintentarEnS = reintentarEnS
+    this.reintentarEnS = bloqueo?.reintentarEnS ?? null
+    this.textoBloqueo = bloqueo?.texto ?? null
   }
 }
 
 export interface AuthEvents {
   noAutenticado: () => void
-  bloqueada: (reintentarEnS: number) => void
+  bloqueada: (texto: string) => void
 }
 
 let authEvents: AuthEvents | null = null
@@ -42,10 +49,12 @@ const RUTAS_DE_LOGIN = ['/api/auth/login', '/api/auth/passkey/login/', '/api/aut
 
 const esRutaDeLogin = (path: string): boolean => RUTAS_DE_LOGIN.some((r) => path.startsWith(r))
 
-function segundosDeBloqueo(j: unknown): number | null {
+function datosDeBloqueo(j: unknown, mensaje: string): Bloqueo | null {
   if (typeof j !== 'object' || j === null || !('reintentar_en_s' in j)) return null
-  const n = Number(j.reintentar_en_s)
-  return Number.isFinite(n) && n > 0 ? Math.ceil(n) : null
+  const reintentarEnS = Number(j.reintentar_en_s)
+  if (!Number.isFinite(reintentarEnS) || reintentarEnS <= 0) return null
+  const texto = 'texto' in j && typeof j.texto === 'string' && j.texto ? j.texto : mensaje
+  return { reintentarEnS: Math.ceil(reintentarEnS), texto }
 }
 
 export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions = {}): Promise<T> {
@@ -61,15 +70,15 @@ export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions 
   })
   if (!res.ok) {
     let msg: string
-    let bloqueo: number | null = null
+    let bloqueo: Bloqueo | null = null
     try {
       const j: unknown = await res.json()
       msg = mensajeDeError(j, res.status)
-      bloqueo = res.status === 403 ? segundosDeBloqueo(j) : null
+      bloqueo = res.status === 403 ? datosDeBloqueo(j, msg) : null
     } catch {
       msg = `Error ${res.status}`
     }
-    if (bloqueo !== null) authEvents?.bloqueada(bloqueo)
+    if (bloqueo !== null) authEvents?.bloqueada(bloqueo.texto)
     else if (res.status === 401 && !esRutaDeLogin(path)) authEvents?.noAutenticado()
     throw new ApiError(msg, res.status, bloqueo)
   }

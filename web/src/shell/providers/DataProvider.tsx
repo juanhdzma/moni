@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { cargarBootstrap } from '@/lib/api'
 import { errMsg, setCurrencySymbol } from '@/lib/format'
 import { migrarLocalStorage } from '@/lib/storage/migracion'
-import { subirVersiones, TODAS_LAS_ENTIDADES, VERSIONES_INICIALES, type Entidad, type Versiones } from '@/shell/invalidacion'
+import { afectaAlBootstrap, subirVersiones, TODAS_LAS_ENTIDADES, VERSIONES_INICIALES, type Entidad, type Versiones } from '@/shell/invalidacion'
 import type { Estado } from '@/types'
 
 export const ESTADO_VACIO: Estado = {
@@ -11,7 +11,6 @@ export const ESTADO_VACIO: Estado = {
   ajustes: { moneda_simbolo: '$' },
   categorias: { ingreso: [], gasto: [], transfer: [] },
   alertas: { activos: false, inversiones: false },
-  conteos: { activos: 0, inversiones: 0 },
   desactualizado: { dias: 0, texto: '' },
 }
 
@@ -70,7 +69,7 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
   const reload = useCallback(
     (afectadas: Entidad[] = TODAS_LAS_ENTIDADES) => {
       setVersiones((v) => subirVersiones(v, afectadas))
-      return cargarEstado()
+      return afectaAlBootstrap(afectadas) ? cargarEstado() : Promise.resolve()
     },
     [cargarEstado],
   )

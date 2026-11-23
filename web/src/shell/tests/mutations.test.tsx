@@ -9,11 +9,12 @@ import { deuda } from '../../test/factories'
 
 function Harness() {
   const { crudOp, crudOpOrBanner, apiAction, apiActionOrBanner } = useMutations()
-  const { banner } = useData()
+  const { banner, versiones } = useData()
   const err = (e: unknown) => document.body.setAttribute('data-err', e instanceof Error ? e.message : '')
   return (
     <>
       <div data-testid="banner">{banner}</div>
+      <output data-testid="deudas">{versiones.deudas}</output>
       <button onClick={() => void crudOp('deuda', 'update', { ...deuda({ id: 7, nombre: 'X' }), es_tarjeta: false, crear_tx: false } as never)}>upd</button>
       <button onClick={() => void apiAction('/api/deuda/3/pago', { monto: 5 }).catch(err)}>act</button>
       <button onClick={() => void apiActionOrBanner('/api/rec/2/pausar')}>actb</button>
@@ -38,7 +39,8 @@ describe('mutaciones', () => {
     const f = mockFetch({ 'POST /api/tx': {} })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('add'))
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     const [post] = f.mutations()
     expect(post?.method).toBe('POST')
     expect(post?.url).toBe('/api/tx')
@@ -51,7 +53,8 @@ describe('mutaciones', () => {
     const f = mockFetch({ 'PUT /api/deuda/7': {} })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('upd'))
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     const [put] = f.mutations()
     expect(put?.method).toBe('PUT')
     expect(put?.url).toBe('/api/deuda/7')
@@ -64,7 +67,8 @@ describe('mutaciones', () => {
     const f = mockFetch({ 'DELETE /api/tx/9': null })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('del'))
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     const [del] = f.mutations()
     expect(del?.headers).toEqual({ 'X-Moni-Request': '1' })
     expect(del?.body).toBeUndefined()
@@ -75,7 +79,8 @@ describe('mutaciones', () => {
     const f = mockFetch({ 'POST /api/deuda/3/pago': {} })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('act'))
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     expect(f.mutations()[0]?.body).toEqual({ monto: 5 })
   })
 

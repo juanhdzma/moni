@@ -1,4 +1,5 @@
-import type { Segmento, TipoTx } from './comun'
+import type { Opcion, Segmento, TipoTx } from './comun'
+import type { Frase } from './dashboard'
 
 export interface Transaccion {
   id: number
@@ -9,8 +10,6 @@ export interface Transaccion {
   monto: number
   notas: string
   tarjeta_id: number | null
-  mes: string
-  es_gasto_cartera: boolean
   tarjeta_nombre: string | null
   tarjeta_franquicia: string | null
   metodo_pago: string
@@ -39,9 +38,9 @@ export interface FilaTx extends Transaccion {
 export interface ListadoTx {
   items: FilaTx[]
   filtros: { tipo: string; mes: string; cat: string }
-  opciones: { meses: { value: string; label: string }[]; categorias: string[]; tipos: { value: string; label: string }[] }
+  opciones: { meses: Opcion[]; categorias: string[]; tipos: Opcion[] }
   pills: { campo: 'mes' | 'tipo' | 'cat'; label: string }[]
-  resumen: { ingresos: number; gastos: number; neto: number; segmentos: Segmento[] }
+  resumen: { ingresos: number; gastos: number; neto: number; dato: Frase; segmentos: Segmento[] }
 }
 
 export interface OpcionesTx {

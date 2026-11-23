@@ -1,25 +1,21 @@
+import re
+
 import pytest
 
 from backend.core.csrf import CSRF_HEADER
-
-MUTANTES = [
-    ("POST", "/api/truncate"),
-    ("POST", "/api/import"),
-    ("POST", "/api/tx"),
-    ("DELETE", "/api/deuda/1"),
-    ("POST", "/api/deuda/1/pago/preview"),
-    ("POST", "/api/auth/logout"),
-    ("POST", "/api/push/subscribe"),
-    ("POST", "/api/push/enviar"),
-    ("PUT", "/api/ajustes"),
-    ("POST", "/api/categorias"),
-    ("DELETE", "/api/categorias"),
-    ("POST", "/api/ops-ocultas"),
-    ("DELETE", "/api/ops-ocultas"),
-]
+from backend.main import app
 
 
-@pytest.mark.parametrize("metodo,path", MUTANTES)
+def _mutantes():
+    for path, metodos in app.openapi()["paths"].items():
+        if not path.startswith("/api"):
+            continue
+        for metodo in metodos:
+            if metodo.upper() in {"POST", "PUT", "DELETE"}:
+                yield metodo.upper(), re.sub(r"\{[^}]+\}", "1", path)
+
+
+@pytest.mark.parametrize("metodo,path", sorted(_mutantes()))
 def test_mutacion_sin_header_es_rechazada(client, metodo, path):
     del client.headers[CSRF_HEADER]
     r = client.request(metodo, path, json={})

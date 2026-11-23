@@ -11,7 +11,7 @@ function Backup() {
 
   const exportar = async () => {
     try {
-      const data = await apiFetch('/api/all')
+      const data = await apiFetch('/api/backup')
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

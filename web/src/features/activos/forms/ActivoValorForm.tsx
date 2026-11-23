@@ -3,7 +3,7 @@ import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
 import { FechaField } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
 import { Variacion } from '../../../controls/Variacion'
 import { previewValorActivo } from '../../../lib/api'
 import { cop, parseMoney } from '../../../lib/format'
@@ -38,10 +38,7 @@ export function ActivoValorForm({ activo: a }: { activo: Activo }) {
         izquierda={{ label: 'Valor actual', valor: cop(a.valor_actual) }}
         derecha={{ label: 'Vs. precio inicial', valor: <Variacion valor={a.cambio} porcentaje={a.cambio_pct} /> }}
       />
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-nuevo-valor">Nuevo valor (COP)</label>
-        <MoneyInput id="m-nuevo-valor" value={nuevoTxt} onChange={setNuevoTxt} />
-      </div>
+      <MoneyField id="m-nuevo-valor" label="Nuevo valor (COP)" value={nuevoTxt} onChange={setNuevoTxt} />
       <Breakdown id="activo-update-preview" visible={nuevo > 0 && prev !== null}>
         <BreakdownRow id="activo-delta" label="Cambio desde último">
           <Variacion valor={prev?.delta ?? 0} />

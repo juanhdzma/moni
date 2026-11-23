@@ -90,8 +90,8 @@ export const GASTOS: GastosPeriodo = {
   top: { categoria: 'Comida', valor: 200000, pct: 80 },
   frase: frase(['Comida', 'fuerte'], ' se lleva el ', ['80%', 'fuerte'], ' de lo que gastaste en el último mes.'),
   categorias: [
-    { categoria: 'Comida', valor: 200000, n: 8, detalle: [{ id: 2, fecha: '2026-08-05', descripcion: 'Almuerzo', categoria: 'Comida', monto: 200000 }], restantes: 2 },
-    { categoria: 'Mercado', valor: 50000, n: 1, detalle: [{ id: 3, fecha: '2026-08-06', descripcion: '', categoria: 'Mercado', monto: 50000 }], restantes: 0 },
+    { categoria: 'Comida', valor: 200000, n: 8, detalle: [{ id: 2, fecha: '2026-08-05', descripcion: 'Almuerzo', categoria: 'Comida', monto: 200000 }], restantes: 2, restantes_texto: 'y 2 más en Transacciones' },
+    { categoria: 'Mercado', valor: 50000, n: 1, detalle: [{ id: 3, fecha: '2026-08-06', descripcion: '', categoria: 'Mercado', monto: 50000 }], restantes: 0, restantes_texto: null },
   ],
 }
 
@@ -106,8 +106,8 @@ export const MOVIMIENTOS: Movimientos = {
 export const PROXIMAS: ProximasOperaciones = {
   hoy: '2026-08-15',
   vencidas: 0,
-  salen_total: 70000,
-  dias_ventana: 45,
+  extra: [],
+  texto_ver_todas: null,
   visibles: 5,
   frase: frase(['$70.000', 'fuerte'], ' por pagar en los próximos 45 días.'),
   texto_vacio: 'Sin operaciones en los próximos 45 días.',

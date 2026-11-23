@@ -3,7 +3,7 @@ import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
 import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
 import { previewAdelanto } from '../../../lib/api'
 import { cop, parseMoney } from '../../../lib/format'
 import { useModal } from '@/shell/providers/ModalProvider'
@@ -61,31 +61,23 @@ export function AdelantoForm({ d }: { d: Deuda }) {
         izquierda={{ label: 'Debes', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
         derecha={tieneCupo ? { label: 'Disponible', valor: cop(d.disponible) } : undefined}
       />
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-monto">Monto del adelanto (COP)</label>
-        <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
-        <div className="mt-1.5 text-xs text-muted-foreground">La plata que vas a recibir en tu cuenta.</div>
-      </div>
+      <MoneyField id="m-monto" label="Monto del adelanto (COP)" value={monto} onChange={setMonto} hint="La plata que vas a recibir en tu cuenta." />
       {tieneCupo ? (
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-disponible-nuevo">Cupo disponible después del adelanto (COP)</label>
-          <MoneyInput
-            id="m-disponible-nuevo"
-            value={disponible}
-            onChange={setDisponible}
-            placeholder="Lo que te muestra el banco como disponible"
-          />
-        </div>
+        <MoneyField
+          id="m-disponible-nuevo"
+          label="Cupo disponible después del adelanto (COP)"
+          value={disponible}
+          onChange={setDisponible}
+          placeholder="Lo que te muestra el banco como disponible"
+        />
       ) : (
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-saldo-nuevo">Saldo en la tarjeta después del adelanto (COP)</label>
-          <MoneyInput
-            id="m-saldo-nuevo"
-            value={saldoNuevoIn}
-            onChange={setSaldoNuevoIn}
-            placeholder="Lo que muestra tu banco después"
-          />
-        </div>
+        <MoneyField
+          id="m-saldo-nuevo"
+          label="Saldo en la tarjeta después del adelanto (COP)"
+          value={saldoNuevoIn}
+          onChange={setSaldoNuevoIn}
+          placeholder="Lo que muestra tu banco después"
+        />
       )}
       <Breakdown id="adelanto-breakdown" visible={showBreakdown}>
         <BreakdownRow id="adelanto-deuda" label="Deuda total después">

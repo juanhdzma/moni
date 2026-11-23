@@ -8,11 +8,10 @@ import type {
   Movimientos,
   OpcionesTx,
   OpsOcultas,
-  PeriodosDashboard,
   ProximasOperaciones,
   ResumenDashboard,
 } from '../types'
-import { categoriasBase, estado } from './factories'
+import { estado } from './factories'
 import { filaRegistrada } from './filas'
 import { META } from './meta'
 
@@ -81,18 +80,16 @@ const GASTOS: GastosPeriodo = {
   categorias: [],
 }
 
-const PERIODOS: PeriodosDashboard = { gastos: [], evolucion: [] }
-
 const MOVIMIENTOS: Movimientos = { items: [] }
 
-const PROXIMAS: ProximasOperaciones = { hoy: ESTADO_INICIAL.hoy, items: [], vencidas: 0, salen_total: 0, dias_ventana: 45, visibles: 5, frase: null, texto_vacio: 'Sin operaciones en los próximos 45 días.' }
+const PROXIMAS: ProximasOperaciones = { hoy: ESTADO_INICIAL.hoy, items: [], extra: [], texto_ver_todas: null, vencidas: 0, visibles: 5, frase: null, texto_vacio: 'Sin operaciones en los próximos 45 días.' }
 
 const LISTADO_TX: ListadoTx = {
   items: [],
   filtros: { tipo: '', mes: '', cat: '' },
   opciones: { meses: [], categorias: [], tipos: [] },
   pills: [],
-  resumen: { ingresos: 0, gastos: 0, neto: 0, segmentos: [] },
+  resumen: { ingresos: 0, gastos: 0, neto: 0, dato: { texto: '', partes: [] }, segmentos: [] },
 }
 
 const OPCIONES_TX: OpcionesTx = {
@@ -109,7 +106,6 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/dashboard/evolucion': EVOLUCION,
   'GET /api/dashboard/este-mes': ESTE_MES,
   'GET /api/dashboard/gastos': GASTOS,
-  'GET /api/dashboard/periodos': PERIODOS,
   'GET /api/meta': META,
   'GET /api/dashboard/movimientos': MOVIMIENTOS,
   'GET /api/proximas-operaciones': PROXIMAS,
@@ -119,7 +115,6 @@ const VISTAS_VACIAS: Record<string, Handler> = {
     total: 0,
     total_cuotas: 0,
     total_intereses: 0,
-    intereses_aproximado: false,
     dato: { cuotas: '$0', cuotas_sufijo: '/mes en cuotas', intereses: null, intereses_sufijo: 'pagados en intereses' },
     segmentos: [],
     creditos: [],
@@ -131,6 +126,8 @@ const VISTAS_VACIAS: Record<string, Handler> = {
     total_actual: 0,
     ganancia: 0,
     ganancia_pct: 0,
+    mostrar_ganancia: false,
+    texto_ganancia: '',
     texto_posiciones: '0 posiciones',
     segmentos: [],
     fijas: [],
@@ -138,18 +135,16 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   },
   'GET /api/activos/resumen': { total_inicial: 0, total_actual: 0, variacion: 0, variacion_pct: 0, segmentos: [], items: [] },
   'GET /api/rec/resumen': {
-    frecuencias: [],
     total_gastos_mensual: 0,
     total_ingresos_mensual: 0,
     neto_mensual: 0,
+    dato: { texto: '', partes: [] },
     segmentos: [],
     ingresos: [],
     gastos: [],
   },
-  'GET /api/categorias': categoriasBase(),
-  'GET /api/ajustes': ESTADO_INICIAL.ajustes,
   'GET /api/ops-ocultas': OPS_OCULTAS,
-  'GET /api/auth/estado': { configurado: true, autenticado: true, passkeys: 0, bloqueada: false },
+  'GET /api/auth/estado': { configurado: true, autenticado: true, passkeys: 0 },
   'GET /api/auth/sesiones': [],
   'GET /api/auth/passkeys': [],
 }

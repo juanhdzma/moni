@@ -9,7 +9,7 @@ import { DataProvider, ESTADO_VACIO, useData } from '@/shell/providers/DataProvi
 import { useVista } from '@/shell/hooks/useVista'
 
 function Harness({ clave }: { clave: string | null }) {
-  const { data, loading, error } = useVista(clave, cargarMovimientos.bind(null, 3))
+  const { data, loading, error } = useVista(clave, cargarMovimientos.bind(null, 3), ['transacciones'])
   const { reload, banner } = useData()
   return (
     <>
@@ -17,7 +17,7 @@ function Harness({ clave }: { clave: string | null }) {
       <output data-testid="loading">{String(loading)}</output>
       <output data-testid="error">{error}</output>
       <output data-testid="banner">{banner}</output>
-      <button onClick={() => void reload()}>recargar</button>
+      <button onClick={() => void reload(['transacciones'])}>recargar</button>
     </>
   )
 }
@@ -103,6 +103,27 @@ describe('useVista', () => {
     await user.click(screen.getByText('mutar deuda'))
     await waitFor(() => expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(2))
     expect(f.callsTo('GET', '/api/rec/resumen')).toHaveLength(1)
+  })
+
+  it('una mutación de deuda no refetchea vistas de transacciones ni de otras entidades', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch()
+    function Vistas() {
+      const { reload } = useData()
+      useVista('mov', cargarMovimientos.bind(null, 3), ['transacciones'])
+      useVista('rec', cargarResumenRecurrentes, ['recurrentes'])
+      return <button onClick={() => void reload(['deudas'])}>mutar deuda</button>
+    }
+    render(
+      <DataProvider initialEstado={ESTADO_VACIO}>
+        <Vistas />
+      </DataProvider>,
+    )
+    await waitFor(() => expect(f.callsTo('GET', '/api/rec/resumen')).toHaveLength(1))
+    await user.click(screen.getByText('mutar deuda'))
+    await new Promise((r) => setTimeout(r, 20))
+    expect(f.callsTo('GET', '/api/rec/resumen')).toHaveLength(1)
+    expect(f.callsTo('GET', '/api/dashboard/movimientos?n=3')).toHaveLength(1)
   })
 
   it('una vista de pestaña inactiva no pide nada hasta que se activa, y solo si cambió algo', async () => {

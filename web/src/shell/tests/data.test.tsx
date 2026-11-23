@@ -10,7 +10,7 @@ function Harness() {
   const { estado, reload, banner } = useData()
   return (
     <>
-      <output data-testid="n">{estado.conteos.activos}</output>
+      <output data-testid="n">{estado.ahora}</output>
       <output data-testid="banner">{banner}</output>
       <button onClick={() => void reload()}>recargar</button>
     </>
@@ -33,7 +33,7 @@ async function entregar(fn: () => void) {
   })
 }
 
-const conActivos = (n: number) => json({ ...ESTADO_INICIAL, conteos: { activos: n, inversiones: 0 } })
+const conAhora = (n: number) => json({ ...ESTADO_INICIAL, ahora: String(n) })
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -51,9 +51,9 @@ describe('DataProvider recargas superpuestas', () => {
     montar()
     await user.click(screen.getByText('recargar'))
     await user.click(screen.getByText('recargar'))
-    await entregar(() => res[1]?.(conActivos(2)))
+    await entregar(() => res[1]?.(conAhora(2)))
     expect(screen.getByTestId('n')).toHaveTextContent('2')
-    await entregar(() => res[0]?.(conActivos(1)))
+    await entregar(() => res[0]?.(conAhora(1)))
     expect(screen.getByTestId('n')).toHaveTextContent('2')
   })
 
@@ -63,7 +63,7 @@ describe('DataProvider recargas superpuestas', () => {
     montar()
     await user.click(screen.getByText('recargar'))
     await user.click(screen.getByText('recargar'))
-    await entregar(() => res[1]?.(conActivos(1)))
+    await entregar(() => res[1]?.(conAhora(1)))
     await entregar(() => res[0]?.(failure(500, 'viejo')))
     expect(screen.getByTestId('banner')).toBeEmptyDOMElement()
     expect(screen.getByTestId('n')).toHaveTextContent('1')
@@ -154,13 +154,14 @@ describe('DataProvider estado del backend', () => {
     expect(localStorage.getItem('moni_skipped_ops')).not.toBeNull()
   })
 
-  it('reload sube la versión solo de las entidades afectadas, y la de todas si no se indica', async () => {
+  it('reload sube la versión de las entidades afectadas y pide /api/bootstrap solo si alguna lo afecta', async () => {
     const f = mockFetch()
     function Recargar() {
       const { reload } = useData()
       return (
         <>
           <button onClick={() => void reload(['deudas'])}>deudas</button>
+          <button onClick={() => void reload(['activos'])}>activos</button>
           <button onClick={() => void reload()}>todas</button>
         </>
       )
@@ -176,6 +177,9 @@ describe('DataProvider estado del backend', () => {
     expect(screen.getByTestId('gen')).toHaveTextContent('0')
     await user.click(screen.getByText('deudas'))
     await waitFor(() => expect(screen.getByTestId('gen')).toHaveTextContent('1'))
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1)
+    await user.click(screen.getByText('activos'))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(2))
     await user.click(screen.getByText('todas'))
     await waitFor(() => expect(screen.getByTestId('gen')).toHaveTextContent('2'))
     expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(3)

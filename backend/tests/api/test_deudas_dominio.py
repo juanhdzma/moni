@@ -1,9 +1,9 @@
 def _tx(client):
-    return client.get("/api/all").json()["transacciones"]
+    return client.get("/api/backup").json()["transacciones"]
 
 
 def _deuda(client, id_):
-    return next(d for d in client.get("/api/all").json()["deudas"] if d["id"] == id_)
+    return next(d for d in client.get("/api/backup").json()["deudas"] if d["id"] == id_)
 
 
 def test_pago_deriva_intereses_y_arma_la_descripcion(client, prestamo):

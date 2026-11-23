@@ -6,12 +6,6 @@ import { useAuth } from '@/shell/providers/AuthProvider'
 
 const MSG_GENERICO = 'Credenciales inválidas'
 
-export function tiempoRestante(segundos: number): string {
-  if (segundos >= 3600) return `${Math.ceil(segundos / 3600)} h`
-  if (segundos >= 60) return `${Math.ceil(segundos / 60)} min`
-  return `${Math.max(1, segundos)} s`
-}
-
 function mensajeDeLogin(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.status === 401) return MSG_GENERICO
@@ -21,24 +15,8 @@ function mensajeDeLogin(err: unknown): string {
   return 'No se pudo iniciar sesión. Probá de nuevo.'
 }
 
-function useSegundosRestantes(hasta: number | null, alTerminar: () => void): number | null {
-  const [ahora, setAhora] = useState(() => Date.now())
-
-  useEffect(() => {
-    if (hasta === null) return
-    const id = setInterval(() => setAhora(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [hasta])
-
-  const restantes = hasta === null ? null : Math.max(0, Math.ceil((hasta - ahora) / 1000))
-  useEffect(() => {
-    if (restantes === 0) alTerminar()
-  }, [restantes, alTerminar])
-  return restantes
-}
-
 export function Login() {
-  const { fase, bloqueadaHasta, recargar } = useAuth()
+  const { fase, recargar } = useAuth()
 
   if (fase === 'cargando') {
     return (
@@ -71,17 +49,15 @@ export function Login() {
     )
   }
 
-  return <Formulario key={bloqueadaHasta ?? 'libre'} />
+  return <Formulario />
 }
 
 function Formulario() {
-  const { passkeys, bloqueadaHasta, entrar, entrarConPasskey, desbloquear } = useAuth()
+  const { passkeys, textoBloqueo, entrar, entrarConPasskey } = useAuth()
   const [clave, setClave] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [faceId, setFaceId] = useState(false)
-  const restantes = useSegundosRestantes(bloqueadaHasta, desbloquear)
-  const bloqueada = restantes !== null && restantes > 0
 
   useEffect(() => {
     if (passkeys === 0) return
@@ -96,7 +72,7 @@ function Formulario() {
 
   const enviar = async (e: FormEvent) => {
     e.preventDefault()
-    if (!clave || enviando || bloqueada) return
+    if (!clave || enviando) return
     setEnviando(true)
     setError('')
     try {
@@ -110,7 +86,7 @@ function Formulario() {
   }
 
   const conFaceId = async () => {
-    if (enviando || bloqueada) return
+    if (enviando) return
     setEnviando(true)
     setError('')
     try {
@@ -126,9 +102,9 @@ function Formulario() {
     <main className="grid min-h-dvh place-items-center bg-background p-4">
       <form className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6 text-card-foreground" onSubmit={(e) => void enviar(e)}>
         <h1 className="text-lg font-semibold">Moni</h1>
-        {bloqueada && (
+        {textoBloqueo && (
           <p className="text-sm text-deudas" role="alert">
-            Acceso bloqueado temporalmente. Intentá de nuevo en {tiempoRestante(restantes)}.
+            {textoBloqueo}
           </p>
         )}
         <div className="form-group">
@@ -140,21 +116,20 @@ function Formulario() {
             autoComplete="current-password"
             maxLength={256}
             autoFocus
-            disabled={bloqueada}
             value={clave}
             onChange={(e) => setClave(e.target.value)}
           />
         </div>
-        {error && !bloqueada && (
+        {error && !textoBloqueo && (
           <p className="text-sm text-deudas" role="alert">
             {error}
           </p>
         )}
-        <button type="submit" className="btn btn-accent w-full" disabled={!clave || enviando || bloqueada}>
+        <button type="submit" className="btn btn-accent w-full" disabled={!clave || enviando}>
           Entrar
         </button>
         {faceId && (
-          <button type="button" className="btn btn-dim flex w-full items-center justify-center gap-2" disabled={enviando || bloqueada} onClick={() => void conFaceId()}>
+          <button type="button" className="btn btn-dim flex w-full items-center justify-center gap-2" disabled={enviando} onClick={() => void conFaceId()}>
             <ScanFace className="size-4" aria-hidden="true" />
             Entrar con Face ID
           </button>

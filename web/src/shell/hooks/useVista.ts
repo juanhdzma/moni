@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { errMsg } from '@/lib/format'
-import { firmaDeVersiones, TODAS_LAS_ENTIDADES, type Entidad } from '@/shell/invalidacion'
+import { firmaDeVersiones, type Entidad } from '@/shell/invalidacion'
 import { useTabActiva } from '@/shell/layout/TabActiva'
 import { useData } from '@/shell/providers/DataProvider'
 
@@ -16,7 +16,7 @@ interface Resultado<T> {
   error: string | null
 }
 
-export function useVista<T>(clave: string | null, cargar: () => Promise<T>, dependeDe: Entidad[] = TODAS_LAS_ENTIDADES): Vista<T> {
+export function useVista<T>(clave: string | null, cargar: () => Promise<T>, dependeDe: Entidad[]): Vista<T> {
   const { versiones, showBanner } = useData()
   const tabActiva = useTabActiva()
   const cargarRef = useRef(cargar)

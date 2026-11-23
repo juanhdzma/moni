@@ -1,9 +1,10 @@
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { cargarEsteMes } from '@/lib/api'
-import { cop, copShort } from '@/lib/format'
-import { cn } from '@/lib/utils'
+import { copShort } from '@/lib/format'
 import { useVista } from '@/shell/hooks/useVista'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
+import { Monto } from '@/components/monto'
 import { FraseTexto, Panel, Total } from '@/components/panel'
 
 const config = {
@@ -12,7 +13,7 @@ const config = {
 } satisfies ChartConfig
 
 export function EsteMes() {
-  const { data: r } = useVista('este-mes', cargarEsteMes)
+  const { data: r } = useVista('este-mes', cargarEsteMes, DEPENDENCIAS_DE_VISTA.esteMes)
   const loading = r === null
   const quedo = r?.quedo ?? 0
   return (
@@ -20,14 +21,14 @@ export function EsteMes() {
       <dl className="space-y-1 text-[15px]">
         <div className="flex items-baseline justify-between">
           <dt>Entró</dt>
-          <dd className="font-medium text-cartera">{r ? `+${cop(r.ingresos)}` : '—'}</dd>
+          <dd className="font-medium">{r ? <Monto valor={r.ingresos} /> : '—'}</dd>
         </div>
         <div className="flex items-baseline justify-between">
           <dt>Salió</dt>
-          <dd className="font-medium text-deudas">{r ? `−${cop(r.gastos)}` : '—'}</dd>
+          <dd className="font-medium">{r ? <Monto valor={-r.gastos} color="ninguno" className="text-deudas" /> : '—'}</dd>
         </div>
       </dl>
-      <Total label="Te quedó" valor={loading ? '—' : <span className={cn(quedo < 0 && 'text-deudas')}>{`${quedo < 0 ? '−' : ''}${cop(Math.abs(quedo))}`}</span>} />
+      <Total label="Te quedó" valor={loading ? '—' : <Monto valor={quedo} signo="negativo" color="negativo" />} />
       <p className="mt-1 text-xs text-muted-foreground">Lo pagado con tarjeta no sale de la cartera.</p>
       {r && (
         <ChartContainer config={config} className="mt-4 aspect-auto h-[120px] w-full" aria-label={r.descripcion_grafico}>

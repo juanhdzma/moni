@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { AdvancedToggle } from '../../../controls/AdvancedToggle'
 import { FechaField } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
 import { NombreField } from '../../../controls/NombreField'
-import { numToInput, parseMoney } from '../../../lib/format'
+import { numToInput, parseMoney, soloFecha } from '../../../lib/format'
 import { useConfirmDelete } from '@/shell/hooks/useConfirmDelete'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
@@ -20,7 +20,7 @@ export function ActivoForm({ activo }: { activo: Activo | null }) {
   const [nombre, setNombre] = useState(activo?.nombre ?? '')
   const [valIni, setValIni] = useState(activo ? numToInput(activo.valor_inicial) : '')
   const [valAct, setValAct] = useState(activo ? numToInput(activo.valor_actual) : '')
-  const [fechaAdq, setFechaAdq] = useState(activo?.fecha_adquisicion?.split('T')[0] || hoy)
+  const [fechaAdq, setFechaAdq] = useState(soloFecha(activo?.fecha_adquisicion) || hoy)
   const [esNueva, setEsNueva] = useState(true)
 
   const save = async () => {
@@ -41,14 +41,8 @@ export function ActivoForm({ activo }: { activo: Activo | null }) {
     <>
       <NombreField value={nombre} onChange={setNombre} placeholder="Ej. Apartamento Bogotá" />
       <div className="form-row-2">
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-val-ini">{isEdit ? 'Valor inicial' : 'Precio de compra'} (COP)</label>
-          <MoneyInput id="m-val-ini" value={valIni} onChange={setValIni} />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-val-act">Valor actual (COP)</label>
-          <MoneyInput id="m-val-act" value={valAct} onChange={setValAct} placeholder="Igual al inicial si no cambia" />
-        </div>
+        <MoneyField id="m-val-ini" label={`${isEdit ? 'Valor inicial' : 'Precio de compra'} (COP)`} value={valIni} onChange={setValIni} />
+        <MoneyField id="m-val-act" label="Valor actual (COP)" value={valAct} onChange={setValAct} placeholder="Igual al inicial si no cambia" />
       </div>
       <FechaField id="m-fecha-adq" label="Fecha de adquisición" value={fechaAdq} onChange={setFechaAdq} type="date" />
       {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}

@@ -7,7 +7,7 @@ Personal finance tracker for a single household: spending, credit cards, loans, 
 ![Dashboard](docs/img/dashboard.png)
 
 > ## Single-owner login
-> Every `/api/*` route requires a session; with no `MONI_PASSWORD_HASH` set nothing can sign in and the API answers 401 (fail closed). There is no user registration. Face ID is an optional WebAuthn passkey registered from Ajustes after signing in with the password. Three failures from one IP within an hour block that IP for `MONI_BLOCK_HOURS` (default 24).
+> Every `/api/*` route requires a session; with no `MONI_PASSWORD_HASH` set nothing can sign in and the API answers 401 (fail closed). There is no user registration. Face ID is an optional WebAuthn passkey registered from Ajustes after signing in with the password. Three failures from one IP within an hour block that IP for `MONI_BLOCK_HOURS` (default 24); a blocked client gets a `403` with a ready-to-show Spanish `texto` and a `Retry-After` header.
 
 ## Contents
 
@@ -64,7 +64,7 @@ Below 1024px the header nav collapses into a menu button and a slide-out drawer.
 
 FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/core/db.py`) and, at the same time, serves the built frontend (`web/dist`) as static files: one process, one port in production.
 
-All business logic lives in the backend: the money definitions (cash flow vs. net worth), date handling in the `America/Bogota` time zone, derived fields and the upcoming-operations projection are pure functions in `backend/calculos/`, exposed through read endpoints that return data ready to render (`/api/bootstrap`, `/api/meta`, `/api/dashboard/*`, `/api/tx`, `/api/*/resumen`, `/api/proximas-operaciones`, and `GET /api/<resource>/<id>` for edit forms). Validation errors are returned as `422` with Spanish messages. `/api/all` exists only to export a backup. Custom categories, hidden operations and the currency symbol are stored in SQLite too, not in the browser.
+All business logic lives in the backend: the money definitions (cash flow vs. net worth), date handling in the `America/Bogota` time zone, derived fields and the upcoming-operations projection are pure functions in `backend/calculos/`, exposed through read endpoints that return data ready to render (`/api/bootstrap`, `/api/meta`, `/api/dashboard/*`, `/api/tx`, `/api/*/resumen`, `/api/proximas-operaciones`, and `GET /api/<resource>/<id>` for edit forms). `/api/meta` serves every option list the forms use (frequencies, card networks, investment and debt types, currencies, sortable columns, periods), so the frontend hard-codes none. Validation errors are returned as `422` with Spanish messages. `GET /api/backup` exports the raw rows (the format `POST /api/import` takes back). Domain errors raised from the calculation layer (`ErrorDeDominio`) are answered by one global handler with their status and a Spanish message. Custom categories, hidden operations and the currency symbol are stored in SQLite too, not in the browser.
 
 The frontend (`web/`) is React + TypeScript built with Vite, and only fetches and paints. Every tab is one folder under `web/src/features/` that owns its own component and modal forms; the shared session context (today, categories, currency symbol, alerts) comes from `GET /api/bootstrap` through a `DataProvider`, static form options from `GET /api/meta`, and each view refetches its own calculated endpoint when its filters change or when a mutation touches an entity it depends on. Each feature keeps its modal forms in a `forms/` folder. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes.
 
@@ -114,7 +114,7 @@ Manage blocked IPs with `python -m backend.seguridad blocked` and `python -m bac
 
 ## Notifications
 
-Moni can send a push notification at 8:00 (America/Bogota) with the operations due today and tomorrow (debt installments, investment yields, recurring charges). The job runs inside the backend process, so run a single instance.
+Moni can send a push notification at 8:00 (America/Bogota) with the operations due today and tomorrow (debt installments, investment yields, recurring charges), minus the ones you already skipped or confirmed in the dashboard. The job runs inside the backend process, so run a single instance.
 
 To enable them, open Ajustes, go to Notificaciones, tap activate and accept the browser permission. "Probar" sends a test notification. Each browser or device subscribes on its own.
 
@@ -149,7 +149,7 @@ volumes:
 
 ## Testing
 
-The backend has a pytest suite covering the money-moving paths (card balance adjustments, the composite actions: payment, contribution, withdrawal, sale), the `calculos` modules and the calculated endpoints, push, input validation, the export/import round-trip and the static docroot. `test_parity.py` checks the Python money and date math against fixtures captured from the original TypeScript implementation. `test_static.py` reads `web/dist`, so build the frontend first.
+The backend has a pytest suite covering the money-moving paths (card balance adjustments, the composite actions: payment, contribution, withdrawal, sale), the `calculos` modules and the calculated endpoints, push, input validation, the export/import round-trip and the static docroot. `test_parity.py` checks the Python money and date math against fixtures captured from the original TypeScript implementation. `seguridad/test_csrf.py` derives the list of mutating routes from the OpenAPI schema, so every new `POST`/`PUT`/`DELETE` is checked for the `X-Moni-Request` header automatically. `test_static.py` reads `web/dist`, so build the frontend first.
 
 ```bash
 cd web && npm ci && npm run build && cd ..
@@ -157,7 +157,7 @@ pip install -r backend/requirements-dev.txt
 python -m pytest backend/tests -q
 ```
 
-The frontend runs on Vitest + Testing Library. It covers formatting helpers, the data and view providers and each tab's key flows, asserting the exact request sent to a mocked `fetch`; the calculations themselves are tested in the backend. The test script pins the timezone to `America/Bogota`, so date bugs don't depend on where you run it.
+The frontend runs on Vitest + Testing Library. It covers formatting helpers, the shared components and controls, the data and view providers and each tab's key flows, asserting the exact request sent to a mocked `fetch`; the calculations themselves are tested in the backend. The test script pins the timezone to `America/Bogota`, so date bugs don't depend on where you run it.
 
 ```bash
 cd web

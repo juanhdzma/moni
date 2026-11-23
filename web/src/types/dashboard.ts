@@ -7,16 +7,6 @@ export interface Frase {
   partes: { texto: string; tono: TonoFrase }[]
 }
 
-export interface OpcionPeriodo<T extends string> {
-  value: T
-  label: string
-}
-
-export interface PeriodosDashboard {
-  gastos: OpcionPeriodo<PeriodoGastos>[]
-  evolucion: OpcionPeriodo<PeriodoEvolucion>[]
-}
-
 export interface ParteResumen {
   id: 'activos' | 'inversiones' | 'balance' | 'deudas'
   nombre: string
@@ -102,6 +92,7 @@ export interface CategoriaGasto {
   n: number
   detalle: DetalleGasto[]
   restantes: number
+  restantes_texto: string | null
 }
 
 export interface GastosPeriodo {

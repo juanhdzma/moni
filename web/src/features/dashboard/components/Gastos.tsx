@@ -5,13 +5,14 @@ import { cop, copShort, fmtDateShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import type { PeriodoGastos } from '@/types'
 import { Barra, FraseTexto, Panel, Periodos, Total } from '@/components/panel'
 
 export function Gastos() {
   const [period, setPeriod] = useState<PeriodoGastos>('1M')
   const [abierta, setAbierta] = useState<string | null>(null)
-  const { data: g } = useVista(period, () => cargarGastos(period))
+  const { data: g } = useVista(period, () => cargarGastos(period), DEPENDENCIAS_DE_VISTA.gastos)
   const meta = useMeta()
   const entries = g?.categorias ?? []
   const sel = abierta && entries.some((c) => c.categoria === abierta) ? abierta : null
@@ -24,7 +25,7 @@ export function Gastos() {
         <Periodos
           id="gastos-period-pills"
           label="Período de gastos"
-          options={(meta?.periodos.gastos ?? []) as { value: PeriodoGastos; label: string }[]}
+          options={(meta?.periodos.gastos ?? [])}
           value={period}
           onChange={(p) => {
             setPeriod(p)
@@ -80,7 +81,7 @@ export function Gastos() {
                           <span className="font-medium">{cop(t.monto)}</span>
                         </li>
                       ))}
-                      {c.restantes > 0 && <li className="px-3 py-1.5 text-muted-foreground">y {c.restantes} más en Transacciones</li>}
+                      {c.restantes_texto && <li className="px-3 py-1.5 text-muted-foreground">{c.restantes_texto}</li>}
                     </ul>
                   )}
                 </li>

@@ -72,7 +72,7 @@ describe('Próximas operaciones', () => {
   })
 
   it('muestra el mensaje vacío', async () => {
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items: [], vencidas: 0, salen_total: 0, frase: null } }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items: [], vencidas: 0, frase: null } }))
     renderWithProviders(<Dashboard active />)
     expect(await screen.findByText('Sin operaciones en los próximos 45 días.')).toBeInTheDocument()
   })
@@ -88,32 +88,27 @@ describe('Próximas operaciones', () => {
     expect(buttons[1]).toHaveAccessibleName('Registrar: Gym')
   })
 
-  it('el corte de visibles sale del backend', async () => {
-    const items = Array.from({ length: 4 }, (_, i) => ({ ...(PROXIMAS.items[0] as OperacionProxima), clave: `recurrente:${i + 1}:2026-08-17`, fuente_id: i + 1, etiqueta: `R${i + 1}` }))
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items, visibles: 2 } }))
-    renderWithProviders(<Dashboard active />)
-    await screen.findByText('Ver las 4')
-    expect(list().querySelectorAll('.prox-op-row')).toHaveLength(2)
-  })
-
   it('resume por pagar y vencidos con los totales del backend', async () => {
     mockFetch(rutas())
     const { unmount } = renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('dash-proximas')).toHaveTextContent('$70.000 por pagar en los próximos 45 días.'))
     unmount()
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, vencidas: 1, salen_total: 20000, frase: frase('Tenés ', ['1 pago vencido', 'negativo'], ' y ', ['$20.000', 'fuerte'], ' por pagar en 45 días.') } }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, vencidas: 1, frase: frase('Tenés ', ['1 pago vencido', 'negativo'], ' y ', ['$20.000', 'fuerte'], ' por pagar en 45 días.') } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('dash-proximas')).toHaveTextContent('Tenés 1 pago vencido y $20.000 por pagar en 45 días.'))
   })
 
-  it('muestra 5 y despliega el resto', async () => {
-    const items = Array.from({ length: 7 }, (_, i) => ({ ...(PROXIMAS.items[0] as OperacionProxima), clave: `recurrente:${i + 1}:2026-08-17`, fuente_id: i + 1, etiqueta: `R${i + 1}` }))
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items } }))
+  it('muestra items y despliega extra con el texto del backend', async () => {
+    const op = (i: number) => ({ ...(PROXIMAS.items[0] as OperacionProxima), clave: `recurrente:${i}:2026-08-17`, fuente_id: i, etiqueta: `R${i}` })
+    const items = [1, 2, 3, 4, 5].map(op)
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items, extra: [op(6), op(7)], texto_ver_todas: 'Ver las 7' } }))
     renderWithProviders(<Dashboard active />)
     await screen.findByText('Ver las 7')
     expect(list().querySelectorAll('.prox-op-row')).toHaveLength(5)
     fireEvent.click(screen.getByText('Ver las 7'))
     expect(list().querySelectorAll('.prox-op-row')).toHaveLength(7)
+    fireEvent.click(screen.getByText('Ver menos'))
+    expect(list().querySelectorAll('.prox-op-row')).toHaveLength(5)
   })
 
   it('una cuota en cero no lleva signo', async () => {

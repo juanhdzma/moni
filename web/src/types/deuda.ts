@@ -1,10 +1,5 @@
 import type { Nivel, Segmento } from './comun'
 
-export interface InteresesPagados {
-  valor: number
-  exacto: boolean
-}
-
 export interface FrasesDeuda {
   detalle: string
   meses_restantes_texto: string | null
@@ -30,7 +25,7 @@ export interface Deuda {
   cuota_mensual: number
   fecha_inicio: string
   proxima_cuota: string
-  es_tarjeta: number
+  es_tarjeta: boolean
   cupo: number
   franquicia: string
   total_intereses: number
@@ -40,11 +35,10 @@ export interface Deuda {
   capital_pagado: number
   meses_restantes: number | null
   nivel_progreso: Nivel
-  intereses_pagados: InteresesPagados | null
   disponible: number | null
   uso_pct: number
   nivel_uso: Nivel
-  frases?: FrasesDeuda
+  frases: FrasesDeuda
 }
 
 export type DeudaIn = Pick<
@@ -77,7 +71,6 @@ export interface ResumenDeudas {
   total: number
   total_cuotas: number
   total_intereses: number
-  intereses_aproximado: boolean
   segmentos: Segmento[]
   dato: DatoResumenDeudas
   creditos: Deuda[]

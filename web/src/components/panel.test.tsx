@@ -5,7 +5,7 @@ import { Desactualizado } from './panel'
 
 describe('Desactualizado', () => {
   it('shows the explanation on tap and hides it on blur', async () => {
-    render(<Desactualizado />)
+    render(<Desactualizado texto="Valor sin actualizar hace más de 1 mes" />)
     const tip = screen.getByRole('tooltip', { hidden: true })
     expect(tip).toHaveClass('sr-only')
     await userEvent.click(screen.getByRole('button'))

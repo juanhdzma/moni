@@ -7,7 +7,7 @@ def _gasto(client, tarjeta_id, monto, **kw):
 
 
 def _saldo(client, deuda_id):
-    deudas = client.get("/api/all").json()["deudas"]
+    deudas = client.get("/api/backup").json()["deudas"]
     return next(d["saldo_actual"] for d in deudas if d["id"] == deuda_id)
 
 
@@ -61,7 +61,7 @@ def test_gasto_contra_un_prestamo_es_rechazado(client, prestamo):
 def test_borrar_tarjeta_desvincula_sus_transacciones(client, tarjeta):
     tx = _gasto(client, tarjeta["id"], 500).json()
     client.delete(f"/api/deuda/{tarjeta['id']}")
-    quedan = client.get("/api/all").json()["transacciones"]
+    quedan = client.get("/api/backup").json()["transacciones"]
     assert [t["tarjeta_id"] for t in quedan if t["id"] == tx["id"]] == [None]
 
 

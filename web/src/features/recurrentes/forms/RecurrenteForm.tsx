@@ -5,7 +5,7 @@ import { MoneyInput } from '../../../controls/MoneyInput'
 import { NombreField } from '../../../controls/NombreField'
 import { Select } from '../../../controls/Select'
 import { TipoToggle } from '../../../controls/TipoToggle'
-import { numToInput, parseMoney } from '../../../lib/format'
+import { numToInput, parseMoney, soloFecha } from '../../../lib/format'
 import { useConfirmDelete } from '@/shell/hooks/useConfirmDelete'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMeta } from '@/shell/hooks/useMeta'
@@ -22,7 +22,7 @@ export function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const [tipo, setTipo] = useState<TipoRec>(item?.tipo === 'ingreso' ? 'ingreso' : 'gasto')
   const [monto, setMonto] = useState(item ? numToInput(item.monto) : '')
   const [frecuencia, setFrecuencia] = useState<string>(item?.frecuencia || 'mensual')
-  const [fecha, setFecha] = useState(item?.fecha_inicio?.split('T')[0] || '')
+  const [fecha, setFecha] = useState(soloFecha(item?.fecha_inicio))
   const [notas, setNotas] = useState(item?.notas || '')
 
   const save = async () => {
@@ -45,7 +45,7 @@ export function RecurrenteForm({ item }: { item: Recurrente | null }) {
       <NombreField value={nombre} onChange={setNombre} placeholder="Ej. Netflix" />
       <TipoToggle
         value={tipo}
-        opciones={meta?.tipos_transaccion.filter((t) => t.value !== 'transfer') ?? []}
+        opciones={meta?.tipos_manuales ?? []}
         idPrefix="rt"
         onChange={setTipo}
       />

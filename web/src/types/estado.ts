@@ -14,11 +14,6 @@ export interface Alertas {
   inversiones: boolean
 }
 
-export interface Conteos {
-  activos: number
-  inversiones: number
-}
-
 export interface UmbralDesactualizado {
   dias: number
   texto: string
@@ -30,7 +25,6 @@ export interface Estado {
   categorias: Categorias
   ajustes: Ajustes
   alertas: Alertas
-  conteos: Conteos
   desactualizado: UmbralDesactualizado
 }
 

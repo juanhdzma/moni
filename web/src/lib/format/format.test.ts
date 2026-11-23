@@ -6,9 +6,8 @@ import {
   fmtDateShort,
   fmtDateTime,
   fmtMoneyInput,
-  mediodia,
   numToInput,
-  normDate,
+  soloFecha,
   parseMoney,
   pct,
   setCurrencySymbol,
@@ -57,11 +56,18 @@ test('se ignora todo lo que no sea dígito', () => {
   expect(parseMoney(el.value)).toBe(1234)
 })
 
-test('normDate lleva los formatos sueltos a ISO', () => {
-  expect(normDate('2026-08-15')).toBe('2026-08-15')
-  expect(normDate('15/08/2026')).toBe('2026-08-15')
-  expect(normDate('2026-08-15T10:30:00')).toBe('2026-08-15T10:30')
-  expect(normDate('')).toBe('')
+test('las fechas sueltas se normalizan al formatearlas', () => {
+  expect(fmtDate('2026-08-15')).toBe('15/08/2026')
+  expect(fmtDate('15/08/2026')).toBe('15/08/2026')
+  expect(fmtDateTime('2026-08-15T10:30:00')).toBe('15/08/2026 10:30')
+  expect(fmtDateTime('15/08/2026 9:05')).toBe('15/08/2026 09:05')
+})
+
+test('soloFecha corta la hora y tolera vacíos', () => {
+  expect(soloFecha('2026-08-15T10:30')).toBe('2026-08-15')
+  expect(soloFecha('2026-08-15')).toBe('2026-08-15')
+  expect(soloFecha(null)).toBe('')
+  expect(soloFecha(undefined)).toBe('')
 })
 
 describe('formato', () => {
@@ -103,18 +109,11 @@ describe('formato', () => {
     expect(fmtDateTime('2026-08-01T09:05')).toBe('01/08/2026 09:05')
   })
 
-  test('mediodia desborda el día como el parseo viejo (2026-02-31 -> 3 mar) y rechaza mes o día fuera de rango', () => {
-    expect(mediodia('2026-02-31').getMonth()).toBe(2)
-    expect(mediodia('2026-02-31').getDate()).toBe(3)
-    expect(Number.isNaN(mediodia('2026-13-01').getTime())).toBe(true)
-    expect(Number.isNaN(mediodia('2026-01-32').getTime())).toBe(true)
-    expect(Number.isNaN(mediodia('2026-01-00').getTime())).toBe(true)
-  })
-
-  test('mediodia arma las 12:00 locales y rechaza basura', () => {
-    const d = mediodia('2026-08-01T09:05')
-    expect([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()]).toEqual([2026, 7, 1, 12])
-    expect(mediodia('15/08/2026').getDate()).toBe(15)
-    expect(Number.isNaN(mediodia('basura').getTime())).toBe(true)
+  test('una fecha inexistente desborda como el parseo viejo (2026-02-31 es 03/03) y fuera de rango se rechaza', () => {
+    expect(fmtDate('2026-02-31')).toBe('03/03/2026')
+    expect(fmtDateShort('2026-13-01')).toBe('—')
+    expect(fmtDateShort('2026-01-32')).toBe('—')
+    expect(fmtDateShort('2026-01-00')).toBe('—')
+    expect(fmtDateShort('basura')).toBe('—')
   })
 })

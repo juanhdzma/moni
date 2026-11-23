@@ -18,7 +18,6 @@ export const credito = deuda({
   capital_pagado: 4000000,
   meses_restantes: 12,
   nivel_progreso: 'medio',
-  intereses_pagados: { valor: 800000, exacto: true },
   frases: {
     detalle: '20,0% EA · $500.000/mes',
     meses_restantes_texto: '~12m',
@@ -31,7 +30,7 @@ export const credito = deuda({
 export const tarjeta = deuda({
   id: 2,
   nombre: 'Visa Oro',
-  es_tarjeta: 1,
+  es_tarjeta: true,
   cupo: 5000000,
   saldo_actual: 1000000,
   franquicia: 'Visa',
@@ -41,7 +40,6 @@ export const tarjeta = deuda({
   disponible: 4000000,
   uso_pct: 20,
   nivel_uso: 'bajo',
-  intereses_pagados: { valor: 12000, exacto: true },
   frases: {
     detalle: 'Cupo $5.000.000',
     meses_restantes_texto: null,
@@ -62,7 +60,6 @@ export const saldado = deuda({
   progreso_pct: 100,
   capital_pagado: 3000000,
   nivel_progreso: 'alto',
-  intereses_pagados: { valor: 150000, exacto: true },
   frases: {
     detalle: '18,0% EA',
     meses_restantes_texto: null,
@@ -79,7 +76,6 @@ export const resumenCompleto = {
   total: 7000000,
   total_cuotas: 500000,
   total_intereses: 962000,
-  intereses_aproximado: false,
   dato: { cuotas: '$500.000', cuotas_sufijo: '/mes en cuotas', intereses: '$962.000', intereses_sufijo: 'pagados en intereses' },
   segmentos: [
     { key: '1', label: 'Crédito carro', valor: 6000000 },

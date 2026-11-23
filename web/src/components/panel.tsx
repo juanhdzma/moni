@@ -3,7 +3,7 @@ import { TriangleAlert } from 'lucide-react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { copShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { Frase, TonoFrase } from '@/types'
+import type { Frase, Segmento, TonoFrase } from '@/types'
 
 const CLASE_TONO: Record<Exclude<TonoFrase, null>, string> = {
   positivo: 'font-semibold text-inversiones-text',
@@ -99,12 +99,6 @@ export function Total({ label, valor, className }: { label: ReactNode; valor: Re
   )
 }
 
-export interface Segmento {
-  key: string
-  label: string
-  valor: number
-}
-
 const TONOS = [1, 0.65, 0.45, 0.3, 0.2]
 
 export function Resumen({
@@ -169,9 +163,7 @@ export function Resumen({
   )
 }
 
-export const TEXTO_DESACTUALIZADO = 'Valor sin actualizar hace más de 1 mes'
-
-export function Desactualizado({ texto = TEXTO_DESACTUALIZADO }: { texto?: string }) {
+export function Desactualizado({ texto }: { texto: string }) {
   const [open, setOpen] = useState(false)
   const id = useId()
   return (

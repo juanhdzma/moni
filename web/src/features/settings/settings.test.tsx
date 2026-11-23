@@ -26,6 +26,7 @@ describe('categorias', () => {
   it('agrega con POST /api/categorias y recarga', async () => {
     const f = mockFetch({ 'POST /api/categorias': { ingreso: [], gasto: [], transfer: [] } })
     renderWithProviders(<Settings active />)
+    await waitFor(() => expect(document.getElementById('settings-new-cat-gasto')).not.toBeNull())
     await userEvent.type(document.getElementById('settings-new-cat-gasto') as HTMLInputElement, 'Mascotas{Enter}')
     await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap').length).toBeGreaterThan(0))
     expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/categorias', headers: { 'X-Moni-Request': '1' }, body: { tipo: 'gasto', nombre: 'Mascotas' } })
@@ -59,7 +60,7 @@ describe('operaciones ocultas', () => {
     await userEvent.click(screen.getAllByRole('button', { name: 'Restaurar' })[0] as HTMLElement)
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/ops-ocultas?clave=deuda%3A1%3A2026-01-01', headers: { 'X-Moni-Request': '1' } })
-    expect(f.callsTo('GET', '/api/bootstrap').length).toBeGreaterThan(0)
+    await waitFor(() => expect(f.callsTo('GET', '/api/ops-ocultas').length).toBeGreaterThan(1))
   })
 
   it('restaurar todas manda DELETE sin clave', async () => {
@@ -88,16 +89,16 @@ describe('moneda', () => {
     const f = mockFetch({ 'PUT /api/ajustes': { moneda_simbolo: '€' } })
     renderWithProviders(<Settings active />)
     await userEvent.click(screen.getByRole('button', { name: 'Símbolo mostrado junto a los montos' }))
-    await userEvent.click(screen.getByRole('option', { name: 'Euro (€)' }))
+    await userEvent.click(await screen.findByRole('option', { name: 'Euro (€)' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'PUT', url: '/api/ajustes', headers: { 'X-Moni-Request': '1' }, body: { moneda_simbolo: '€' } })
   })
 })
 
 describe('backup', () => {
-  it('exporta el JSON de /api/all con el nombre esperado', async () => {
+  it('exporta el JSON de /api/backup con el nombre esperado', async () => {
     const data = { transacciones: [{ id: 1 }], deudas: [], inversiones: [], activos: [], recurrentes: [] }
-    mockFetch({ 'GET /api/all': data })
+    mockFetch({ 'GET /api/backup': data })
     const create = vi.fn(() => 'blob:x')
     const revoke = vi.fn()
     Object.assign(URL, { createObjectURL: create, revokeObjectURL: revoke })

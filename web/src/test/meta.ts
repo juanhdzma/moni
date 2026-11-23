@@ -22,6 +22,15 @@ export const META: Meta = {
     { value: 'gasto', label: 'Gasto' },
     { value: 'transfer', label: 'Auto' },
   ],
+  tipos_manuales: [
+    { value: 'ingreso', label: 'Ingreso' },
+    { value: 'gasto', label: 'Gasto' },
+  ],
+  tipos_categoria: [
+    { value: 'ingreso', label: 'Ingresos' },
+    { value: 'gasto', label: 'Gastos' },
+    { value: 'transfer', label: 'Transferencias' },
+  ],
   tipos_inversion: [
     { value: 'fija', label: 'Fija' },
     { value: 'variable', label: 'Variable' },
@@ -29,6 +38,36 @@ export const META: Meta = {
   pagos_inversion: [
     { value: 'mensual', label: 'Mensual' },
     { value: 'vencimiento', label: 'Al vencimiento' },
+  ],
+  clases_deuda: [
+    { value: 'prestamo', label: 'Préstamo' },
+    { value: 'tarjeta', label: 'Tarjeta' },
+  ],
+  tipos_retiro: [
+    { value: 'total', label: 'Total' },
+    { value: 'parcial', label: 'Parcial' },
+  ],
+  destinos_rendimiento: [
+    { value: 'cuenta', label: 'Me lo pagan', hint: 'Entra como ingreso a tu cartera. El valor de la inversión no cambia.' },
+    { value: 'capitaliza', label: 'Capitaliza', hint: 'Sube el valor de la inversión. No entra plata a tu cartera.' },
+  ],
+  monedas: [
+    { value: '$', label: 'Peso colombiano ($)' },
+    { value: 'US$', label: 'Dólar (US$)' },
+    { value: '€', label: 'Euro (€)' },
+    { value: 'MX$', label: 'Peso mexicano (MX$)' },
+    { value: '£', label: 'Libra esterlina (£)' },
+  ],
+  series_evolucion: [
+    { value: 'patrimonio', label: 'Patrimonio' },
+    { value: 'inversiones', label: 'Inversiones' },
+  ],
+  columnas_transaccion: [
+    { col: 'fecha', label: 'Fecha', dir_defecto: -1 },
+    { col: 'tipo', label: 'Tipo', dir_defecto: 1 },
+    { col: 'categoria', label: 'Categoría', dir_defecto: 1 },
+    { col: 'descripcion', label: 'Descripción', dir_defecto: 1 },
+    { col: 'monto', label: 'Monto', dir_defecto: -1 },
   ],
   periodos: {
     gastos: [

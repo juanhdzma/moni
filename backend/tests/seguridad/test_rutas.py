@@ -13,7 +13,7 @@ def test_login_ok_y_cookie(anon_client):
     sc = r.headers["set-cookie"].lower()
     assert "moni_session=" in sc and "httponly" in sc and "samesite=strict" in sc
     assert "path=/" in sc and f"max-age={30 * 86400}" in sc and "secure" not in sc
-    assert anon_client.get("/api/all").status_code == 200
+    assert anon_client.get("/api/backup").status_code == 200
     token = anon_client.cookies.get(sesiones.COOKIE)
     conn = db.get_conn()
     try:
@@ -56,7 +56,7 @@ def test_logout(anon_client):
     assert "moni_session=" in r.headers["set-cookie"]
     assert "max-age=0" in r.headers["set-cookie"].lower()
     anon_client.cookies.set(sesiones.COOKIE, token)
-    assert anon_client.get("/api/all").status_code == 401
+    assert anon_client.get("/api/backup").status_code == 401
 
 
 def test_logout_sin_sesion(anon_client):
@@ -77,8 +77,8 @@ def test_listar_y_revocar_sesiones(anon_client):
     assert anon_client.delete(f"/api/auth/sesiones/{actual[0]['id']}").status_code == 400
     assert anon_client.delete(f"/api/auth/sesiones/{ajena['id']}").status_code == 200
     assert anon_client.delete(f"/api/auth/sesiones/{ajena['id']}").status_code == 404
-    assert otra.get("/api/all").status_code == 401
-    assert anon_client.get("/api/all").status_code == 200
+    assert otra.get("/api/backup").status_code == 401
+    assert anon_client.get("/api/backup").status_code == 200
 
 
 def test_sesiones_exigen_sesion(anon_client):

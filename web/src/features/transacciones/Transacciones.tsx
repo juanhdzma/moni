@@ -1,35 +1,28 @@
 import { ArrowDown, ArrowUp, Filter, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Panel, Resumen } from '@/components/panel'
+import { Monto } from '@/components/monto'
+import { FraseTexto, Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
 import { Select } from '../../controls/Select'
 import { cargarListadoTx } from '../../lib/api'
-import { FRANQUICIA_ICONS, cop, fmtDate, signStr } from '../../lib/format'
+import { FRANQUICIA_ICONS, cop, fmtDate } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
-import type { ColTx, FilaTx, FiltrosTx } from '../../types'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
+import type { ColTx, ColumnaTransaccion, FilaTx, FiltrosTx } from '../../types'
 import { openTxForm, openTxFormById } from './forms'
 
-const COLUMNAS: { col: ColTx; label: string }[] = [
-  { col: 'fecha', label: 'Fecha' },
-  { col: 'tipo', label: 'Tipo' },
-  { col: 'categoria', label: 'Categoría' },
-  { col: 'descripcion', label: 'Descripción' },
-  { col: 'monto', label: 'Monto' },
-]
-
 interface Orden {
-  col: ColTx
+  col: string
   dir: 1 | -1
 }
 
-const siguienteOrden = (actual: Orden, col: ColTx): Orden => {
-  if (actual.col === col) return { col, dir: actual.dir === 1 ? -1 : 1 }
-  return { col, dir: col === 'fecha' || col === 'monto' ? -1 : 1 }
-}
+const siguienteOrden = (actual: Orden, { col, dir_defecto }: ColumnaTransaccion): Orden =>
+  actual.col === col ? { col, dir: actual.dir === 1 ? -1 : 1 } : { col, dir: dir_defecto }
 
 function PmCell({ t }: { t: FilaTx }) {
   const icon = t.tipo === 'gasto' && t.tarjeta_id ? FRANQUICIA_ICONS[t.tarjeta_franquicia ?? ''] || FRANQUICIA_ICONS.Otra : 'assets/icons/efectivo.svg'
@@ -97,14 +90,15 @@ function TxRow({ t, onEdit }: { t: FilaTx; onEdit: (id: number) => void }) {
 export function Transacciones({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { loaded } = useData()
+  const columnas = useMeta()?.columnas_transaccion ?? []
   const [sort, setSort] = useState<Orden>({ col: 'fecha', dir: -1 })
   const [panelOpen, setPanelOpen] = useState(false)
   const [mesSel, setMesSel] = useState('')
   const [tipoSel, setTipoSel] = useState<FiltrosTx['tipo']>('')
   const [catSel, setCatSel] = useState('')
 
-  const params: FiltrosTx = { col: sort.col, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel }
-  const { data, loading } = useVista(loaded ? JSON.stringify(params) : null, () => cargarListadoTx(params), ['transacciones'])
+  const params: FiltrosTx = { col: sort.col as ColTx, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel }
+  const { data, loading } = useVista(loaded ? JSON.stringify(params) : null, () => cargarListadoTx(params), DEPENDENCIAS_DE_VISTA.listadoTransacciones)
 
   if (data && !loading) {
     if (data.filtros.mes !== mesSel) setMesSel(data.filtros.mes)
@@ -161,7 +155,7 @@ export function Transacciones({ active }: TabProps) {
     })
   }
 
-  const r = data?.resumen ?? { ingresos: 0, gastos: 0, neto: 0, segmentos: [] }
+  const r = data?.resumen ?? { neto: 0, dato: null, segmentos: [] }
 
   return (
     <TabContent id="transacciones" active={active}>
@@ -170,20 +164,10 @@ export function Transacciones({ active }: TabProps) {
         id="tx-resumen"
         titulo={pills.length ? 'Te quedó con estos filtros' : 'Te quedó'}
         loaded={!!data}
-        valor={
-          <>
-            {signStr(r.neto)}
-            {cop(Math.abs(r.neto))}
-          </>
-        }
-        valorClassName={r.neto < 0 ? 'text-deudas' : undefined}
+        valor={<Monto valor={r.neto} color="negativo" />}
         color="bg-muted-foreground"
         segmentos={r.segmentos}
-        dato={
-          <span className="text-muted-foreground">
-            entró <strong className="font-semibold text-cartera">{cop(r.ingresos)}</strong> · salió <strong className="font-semibold text-foreground">{cop(r.gastos)}</strong>
-          </span>
-        }
+        dato={r.dato && <span className="text-muted-foreground"><FraseTexto frase={r.dato} /></span>}
         extra={
           <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openTxForm(ctx)}>
             <Plus aria-hidden="true" />
@@ -249,9 +233,10 @@ export function Transacciones({ active }: TabProps) {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b">
-                {COLUMNAS.map(({ col, label }) => {
+                {columnas.map((columna) => {
+                  const { col, label } = columna
                   const activo = sort.col === col
-                  const go = () => setSort((s) => siguienteOrden(s, col))
+                  const go = () => setSort((s) => siguienteOrden(s, columna))
                   const oculta = col === 'tipo' || col === 'categoria' ? 'hidden sm:table-cell' : ''
                   return (
                     <th

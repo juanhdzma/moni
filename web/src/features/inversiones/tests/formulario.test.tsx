@@ -16,7 +16,7 @@ describe('crear / editar / eliminar', () => {
     const f = mockInv({
       'POST /api/inv': {},
       'GET /api/calc/tasa': (c: { url: string }) =>
-        c.url.includes('tipo=mv') ? { ea: 289.6, mv: 12 } : { ea: 12, mv: 0.9489 },
+        c.url.includes('tipo=mv') ? { ea: 289.6, mv: 12, texto: 'Equivale a 289,60% EA' } : { ea: 12, mv: 0.9489, texto: 'Equivale a 0,9489% MV' },
     })
     await setup([])
     await user.click(screen.getByRole('button', { name: 'Nueva inversión' }))
@@ -53,7 +53,7 @@ describe('crear / editar / eliminar', () => {
     expect(f.mutations()[0]?.body).not.toHaveProperty('valor_actualizado_en')
   })
 
-  it('crear variable sin tasa/pago y con crear_tx false', async () => {
+  it('crear variable manda lo crudo (el backend anula tasa y pago) y crear_tx false', async () => {
     const user = userEvent.setup()
     const f = mockInv({ 'POST /api/inv': {} })
     await setup([])
@@ -73,7 +73,7 @@ describe('crear / editar / eliminar', () => {
       valor_actual: 120000,
       tasa_ea: null,
       fecha_inicio: '2026-08-20',
-      pago: null,
+      pago: 'vencimiento',
       dia_pago: null,
       crear_tx: false,
     })

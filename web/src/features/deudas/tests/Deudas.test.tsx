@@ -56,14 +56,12 @@ describe('Deudas render', () => {
     conResumen({
       ...resumenCompleto,
       total_intereses: 420000,
-      intereses_aproximado: true,
       dato: { ...resumenCompleto.dato, intereses: '~$420.000' },
       creditos: [
         {
           ...credito,
           total_intereses: 0,
-          intereses_pagados: { valor: 420000, exacto: false },
-          frases: { ...credito.frases!, intereses_texto: '~$420.000', intereses_ayuda: 'Estimado por amortización — todavía no hay pagos registrados' },
+          frases: { ...credito.frases, intereses_texto: '~$420.000', intereses_ayuda: 'Estimado por amortización — todavía no hay pagos registrados' },
         },
       ],
       tarjetas: [],
@@ -97,7 +95,7 @@ describe('Deudas render', () => {
   it('tarjeta sin cupo', async () => {
     conResumen({
       ...resumenCompleto,
-      tarjetas: [{ ...tarjeta, saldo_actual: 0, cupo: 0, total_intereses: 0, disponible: null, uso_pct: 0, intereses_pagados: null, frases: { ...tarjeta.frases!, detalle: 'Sin cupo definido' } }],
+      tarjetas: [{ ...tarjeta, saldo_actual: 0, cupo: 0, total_intereses: 0, disponible: null, uso_pct: 0, frases: { ...tarjeta.frases, detalle: 'Sin cupo definido' } }],
     })
     renderWithProviders(<Deudas active />, { estado: full() })
     expect(await screen.findByText('Sin cupo definido')).toBeInTheDocument()

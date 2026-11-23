@@ -25,12 +25,12 @@ function parseDateTime(value: string): Pending {
   return { y, m: mo - 1, d, hh: hh || 0, mm: mm || 0 }
 }
 
-export function parseValue(value: string, referencia: string): Pending | null {
+function parseValue(value: string, referencia: string): Pending | null {
   const origen = value || referencia
   return origen ? parseDateTime(origen) : null
 }
 
-export function formatValue(s: Pending, isDateTime: boolean): string {
+function formatValue(s: Pending, isDateTime: boolean): string {
   const dateStr = `${s.y}-${pad(s.m + 1)}-${pad(s.d)}`
   return isDateTime ? `${dateStr}T${pad(s.hh)}:${pad(s.mm)}` : dateStr
 }

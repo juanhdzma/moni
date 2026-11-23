@@ -1,9 +1,9 @@
 def _tx(client):
-    return client.get("/api/all").json()["transacciones"]
+    return client.get("/api/backup").json()["transacciones"]
 
 
 def _uno(client, entidad, id_):
-    return next(x for x in client.get("/api/all").json()[entidad] if x["id"] == id_)
+    return next(x for x in client.get("/api/backup").json()[entidad] if x["id"] == id_)
 
 
 def test_pago_baja_saldo_acumula_intereses_y_deja_rastro(client, prestamo):
@@ -133,7 +133,7 @@ def test_retiro_total_borra_la_inversion(client):
         json={"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 1100},
     ).json()
     client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "total", "monto": 1100, "fecha": "2026-07-01"})
-    assert client.get("/api/all").json()["inversiones"] == []
+    assert client.get("/api/backup").json()["inversiones"] == []
     assert _tx(client)[0]["monto"] == 1100
 
 
@@ -142,7 +142,7 @@ def test_venta_borra_el_activo_y_registra_ingreso(client):
         "/api/activo", json={"nombre": "Moto", "valor_inicial": 5000, "valor_actual": 4000}
     ).json()
     client.post(f"/api/activo/{a['id']}/venta", json={"precio": 4200, "fecha": "2026-07-01"})
-    assert client.get("/api/all").json()["activos"] == []
+    assert client.get("/api/backup").json()["activos"] == []
     tx = _tx(client)[0]
     assert (tx["tipo"], tx["monto"], tx["categoria"]) == ("ingreso", 4200, "Venta activos")
 

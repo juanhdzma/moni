@@ -1,10 +1,13 @@
 import { Button } from '@/components/ui/button'
 import { Pause, Play, Plus } from 'lucide-react'
-import { Panel, Resumen } from '@/components/panel'
+import { Monto } from '@/components/monto'
+import { FraseTexto, Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
-import { cop, signStr } from '../../lib/format'
-import { useResumenRecurrentes } from './useResumenRecurrentes'
+import { cop } from '../../lib/format'
+import { cargarResumenRecurrentes } from '../../lib/api'
 import { useOpenerCtx } from '@/shell/hooks/openers'
+import { useVista } from '@/shell/hooks/useVista'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { Recurrente } from '../../types'
@@ -81,11 +84,9 @@ function Lista({ id, titulo, frase, items, emptyMsg, loaded }: { id: string; tit
 
 export function Recurrentes({ active }: TabProps) {
   const ctx = useOpenerCtx()
-  const { data } = useResumenRecurrentes()
+  const { data } = useVista('rec', cargarResumenRecurrentes, DEPENDENCIAS_DE_VISTA.resumenRecurrentes)
   const loaded = data !== null
   const neto = data?.neto_mensual ?? 0
-  const totalIng = data?.total_ingresos_mensual ?? 0
-  const totalGas = data?.total_gastos_mensual ?? 0
   return (
     <TabContent id="recurrentes" active={active}>
       <div className="space-y-4">
@@ -93,20 +94,10 @@ export function Recurrentes({ active }: TabProps) {
           id="rec-total"
           titulo="Neto mensual"
           loaded={loaded}
-          valor={
-            <>
-              {signStr(neto)}
-              {cop(Math.abs(neto))}
-            </>
-          }
-          valorClassName={neto < 0 ? 'text-deudas' : undefined}
+          valor={<Monto valor={neto} color="negativo" />}
           color="bg-muted-foreground"
           segmentos={data?.segmentos ?? []}
-          dato={
-            <span className="text-muted-foreground">
-              entran <strong className="font-semibold text-cartera">{cop(totalIng)}</strong> · salen <strong className="font-semibold text-foreground">{cop(totalGas)}</strong> en fijos
-            </span>
-          }
+          dato={data && <span className="text-muted-foreground"><FraseTexto frase={data.dato} /></span>}
           extra={
             <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openRecurrenteForm(ctx)}>
               <Plus aria-hidden="true" />

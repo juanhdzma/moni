@@ -4,17 +4,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { categoriasBase, estado } from '../../test/factories'
 import { failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
-import { useCategorias } from '@/shell/providers/CategoriasProvider'
+import { useCategorias } from '@/shell/hooks/useCategorias'
 import { useData } from '@/shell/providers/DataProvider'
 
 function Harness() {
-  const { categorias, esSistema, addCategoria, removeCategoria } = useCategorias()
+  const { categorias, addCategoria, removeCategoria } = useCategorias()
   const { banner } = useData()
   return (
     <>
-      <output data-testid="gasto">{categorias.gasto.join('|')}</output>
-      <output data-testid="sistema">{String(esSistema('gasto', 'Inversión'))}</output>
-      <output data-testid="custom">{String(esSistema('gasto', 'Mascotas'))}</output>
+      <output data-testid="gasto">{categorias.gasto.map((c) => `${c.nombre}:${c.sistema}`).join('|')}</output>
       <output data-testid="banner">{banner}</output>
       <button onClick={() => void addCategoria('gasto', 'Mascotas')}>add</button>
       <button onClick={() => void removeCategoria('gasto', 'Mascotas')}>del</button>
@@ -30,12 +28,10 @@ const conMascotas = () => {
 
 afterEach(() => vi.unstubAllGlobals())
 
-describe('CategoriasProvider', () => {
-  it('expone nombres y sistema desde estado.categorias', () => {
+describe('useCategorias', () => {
+  it('expone estado.categorias tal cual', () => {
     renderWithProviders(<Harness />, { estado: conMascotas() })
-    expect(screen.getByTestId('gasto')).toHaveTextContent('Inversión|Compra activos|Mascotas')
-    expect(screen.getByTestId('sistema')).toHaveTextContent('true')
-    expect(screen.getByTestId('custom')).toHaveTextContent('false')
+    expect(screen.getByTestId('gasto')).toHaveTextContent('Inversión:true|Compra activos:true|Mascotas:false')
   })
 
   it('agregar hace POST /api/categorias y recarga /api/bootstrap', async () => {

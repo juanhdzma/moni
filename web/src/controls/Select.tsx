@@ -1,16 +1,12 @@
 import { ChevronDown } from 'lucide-react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import type { Opcion } from '@/types'
 import { clearActivePopup, openPopup, repositionPopup } from './popups'
-
-export interface SelectOption {
-  value: string
-  label: string
-}
 
 interface Props {
   value: string
   onChange: (value: string) => void
-  options: SelectOption[]
+  options: Opcion[]
   compact?: boolean
   id?: string
   style?: CSSProperties

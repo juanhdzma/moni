@@ -44,11 +44,8 @@ describe('rendimiento', () => {
 
   it('me lo pagan sin registrar en transacciones', async () => {
     const user = userEvent.setup()
-    const f = mockInv({
-      'POST /api/inv/5/rendimiento': {},
-      'GET /api/inv/5/rendimiento/defaults': { capitaliza_default: false },
-    })
-    await abrir(user, { ...CDT, pago: 'mensual', dia_pago: 15 })
+    const f = mockInv({ 'POST /api/inv/5/rendimiento': {} })
+    await abrir(user, { ...CDT, pago: 'mensual', dia_pago: 15, capitaliza_default: false })
     await waitFor(() => expect(document.getElementById('rend-hint')).toHaveTextContent('Entra como ingreso'))
     await user.click(modal().getByText('Opciones de registro'))
     await user.click(modal().getByLabelText('Registrar en transacciones'))

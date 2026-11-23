@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '../../../test/render'
 import { mockFetch } from '../../../test/mockFetch'
 import { Dashboard } from '../index'
-import { CategoriasProvider } from '@/shell/providers/CategoriasProvider'
 import { DataProvider } from '@/shell/providers/DataProvider'
 import { ModalProvider } from '@/shell/providers/ModalProvider'
 import { ESTE_MES, EVOLUCION, frase, rutas, pill, stat } from './fixtures'
@@ -51,7 +50,7 @@ describe('Patrimonio', () => {
     renderWithProviders(<Dashboard active />, { loaded: false })
     expect(document.getElementById('stat-networth')).toBeNull()
     expect(screen.getByLabelText('Cargando')).toBeInTheDocument()
-    for (const nombre of ['Activos', 'Inversiones', 'Cartera', 'Deudas']) expect(screen.getAllByText(nombre).length).toBeGreaterThan(0)
+    expect(document.getElementById('stat-activos')).toBeNull()
   })
 })
 
@@ -127,11 +126,9 @@ describe('antes de la primera carga y errores', () => {
   const live = () =>
     render(
       <DataProvider>
-        <CategoriasProvider>
-          <ModalProvider>
-            <Dashboard active />
-          </ModalProvider>
-        </CategoriasProvider>
+        <ModalProvider>
+          <Dashboard active />
+        </ModalProvider>
       </DataProvider>,
     )
 

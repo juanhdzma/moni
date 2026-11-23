@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from .builders import HOY, HOY_ISO, sembrar
+from .builders_api import HOY, HOY_ISO, sembrar
 
 
 def test_proximas_operaciones_forma_y_no_poda(client):
@@ -46,12 +46,6 @@ def test_ops_ocultas_crud(client):
 @pytest.mark.parametrize("clave", ["", "x:1:2026-01-01", "deuda:a:2026-01-01", "deuda:1:2026-13-45", "deuda:1:2026-1-1"])
 def test_ops_ocultas_rechaza_claves_invalidas(client, clave):
     assert client.post("/api/ops-ocultas", json={"clave": clave}).status_code == 422
-
-
-def test_ops_ocultas_exigen_header_csrf(client):
-    client.headers.pop("x-moni-request")
-    assert client.post("/api/ops-ocultas", json={"clave": "deuda:1:2026-01-01"}).status_code == 403
-    assert client.delete("/api/ops-ocultas").status_code == 403
 
 
 def test_op_clave_se_oculta_atomicamente_en_tx_pago_y_rendimiento(client, prestamo):

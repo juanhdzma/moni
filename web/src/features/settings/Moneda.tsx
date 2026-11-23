@@ -2,19 +2,13 @@ import { Panel } from '@/components/panel'
 import { Select } from '../../controls/Select'
 import { guardarAjustes } from '../../lib/api'
 import { errMsg } from '../../lib/format'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useData } from '@/shell/providers/DataProvider'
 import { HINT } from './estilos'
 
-const CURRENCY_OPTIONS = [
-  { value: '$', label: 'Peso colombiano ($)' },
-  { value: 'US$', label: 'Dólar (US$)' },
-  { value: '€', label: 'Euro (€)' },
-  { value: 'MX$', label: 'Peso mexicano (MX$)' },
-  { value: '£', label: 'Libra esterlina (£)' },
-]
-
 function Currency() {
   const { estado, reload, showBanner } = useData()
+  const meta = useMeta()
   return (
     <div>
       <label className="form-label" htmlFor="settings-currency-select">Símbolo mostrado junto a los montos</label>
@@ -22,11 +16,11 @@ function Currency() {
         compact
         id="settings-currency-select"
         value={estado.ajustes.moneda_simbolo}
-        options={CURRENCY_OPTIONS}
+        options={meta?.monedas ?? []}
         ariaLabel="Símbolo mostrado junto a los montos"
         onChange={(symbol) => {
           guardarAjustes({ moneda_simbolo: symbol })
-            .then(() => reload())
+            .then(() => reload(['ajustes']))
             .catch((err: unknown) => showBanner(errMsg(err)))
         }}
       />

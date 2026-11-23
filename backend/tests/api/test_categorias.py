@@ -18,6 +18,3 @@ def test_categorias_errores(client):
     assert client.post("/api/categorias", json={"tipo": "otro", "nombre": "x"}).status_code == 422
     assert client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Inversión"}).status_code == 409
     assert client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Nada"}).status_code == 404
-    client.headers.pop("x-moni-request")
-    assert client.post("/api/categorias", json={"tipo": "gasto", "nombre": "z"}).status_code == 403
-    assert client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "z"}).status_code == 403

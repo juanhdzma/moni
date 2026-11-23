@@ -1,3 +1,4 @@
+import type { Frase } from './dashboard'
 import type { ProximoPago, Segmento, TipoRec } from './comun'
 
 export interface Recurrente {
@@ -9,7 +10,7 @@ export interface Recurrente {
   activo: boolean
   fecha_inicio: string
   notas: string
-  categoria_sugerida?: string
+  categoria_sugerida: string
   frecuencia_label: string
   mensual: number
   proximo_pago: ProximoPago | null
@@ -17,16 +18,11 @@ export interface Recurrente {
 
 export type RecIn = Pick<Recurrente, 'nombre' | 'tipo' | 'monto' | 'frecuencia' | 'fecha_inicio' | 'notas'> & Partial<Pick<Recurrente, 'activo'>>
 
-export interface OpcionFrecuencia {
-  value: string
-  label: string
-}
-
 export interface ResumenRecurrentes {
-  frecuencias: OpcionFrecuencia[]
   total_gastos_mensual: number
   total_ingresos_mensual: number
   neto_mensual: number
+  dato: Frase
   segmentos: Segmento[]
   ingresos: Recurrente[]
   gastos: Recurrente[]

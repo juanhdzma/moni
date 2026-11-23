@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { AdvancedToggle } from '../../../controls/AdvancedToggle'
 import { DatePicker } from '../../../controls/DatePicker'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
 import { NombreField } from '../../../controls/NombreField'
 import { TipoToggle } from '../../../controls/TipoToggle'
 import { cargarTasa } from '../../../lib/api'
 import { useData } from '@/shell/providers/DataProvider'
-import { numToInput, parseMoney, pct } from '../../../lib/format'
+import { numToInput, parseMoney, soloFecha } from '../../../lib/format'
 import { useConfirmDelete } from '@/shell/hooks/useConfirmDelete'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMeta } from '@/shell/hooks/useMeta'
@@ -34,27 +34,16 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
   const [rateType, setRateType] = useState<'ea' | 'mv'>('ea')
   const [pago, setPago] = useState<PagoInv>(inv?.pago || 'vencimiento')
   const [diaPago, setDiaPago] = useState(inv?.dia_pago ? String(inv.dia_pago) : '')
-  const [fecha, setFecha] = useState(inv?.fecha_inicio?.split('T')[0] || estado.hoy)
+  const [fecha, setFecha] = useState(soloFecha(inv?.fecha_inicio) || estado.hoy)
   const [esNueva, setEsNueva] = useState(true)
 
   const tasaVal = parseFloat(tasa) || 0
   const conv = usePreview(tasaVal > 0 ? `${rateType}:${tasaVal}` : null, () => cargarTasa(tasaVal, rateType))
-  const equiv =
-    !conv || !tasaVal
-      ? ''
-      : rateType === 'ea'
-        ? conv.mv === null
-          ? ''
-          : `Equivale a ${pct(conv.mv, 4)}% MV`
-        : conv.ea === null
-          ? ''
-          : `Equivale a ${pct(conv.ea, 2)}% EA`
+  const equiv = conv?.texto ?? ''
 
   const save = async () => {
     const valorIngresado = parseMoney(actual)
-    const tasa_ea = tipo === 'fija' ? parseFloat(tasa) || null : null
-    const pagoFinal = tipo === 'fija' ? pago : null
-    const dia_pago = pagoFinal === 'mensual' ? parseInt(diaPago) || null : null
+    const tasa_ea = parseFloat(tasa) || null
 
     const data: InvIn = {
       nombre: nombre.trim(),
@@ -63,8 +52,8 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
       ...(valorIngresado ? { valor_actual: valorIngresado } : {}),
       tasa_ea,
       fecha_inicio: fecha,
-      pago: pagoFinal,
-      dia_pago,
+      pago,
+      dia_pago: parseInt(diaPago) || null,
       ...(tasa_ea !== null ? { tasa_tipo: rateType } : {}),
     }
 
@@ -85,18 +74,8 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
         <TipoToggle value={tipo} opciones={meta?.tipos_inversion ?? []} tonos={TONOS_TIPO} onChange={setTipo} />
       )}
       <div className="form-row-2">
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-invertido">
-            Monto invertido
-          </label>
-          <MoneyInput id="m-invertido" value={invertido} onChange={setInvertido} />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-actual">
-            Valor actual
-          </label>
-          <MoneyInput id="m-actual" value={actual} onChange={setActual} />
-        </div>
+        <MoneyField id="m-invertido" label="Monto invertido" value={invertido} onChange={setInvertido} />
+        <MoneyField id="m-actual" label="Valor actual" value={actual} onChange={setActual} />
       </div>
       <div id="m-tasa-wrap" className="form-group" style={tipo === 'fija' ? undefined : { display: 'none' }}>
         <label className="form-label" htmlFor="m-tasa">

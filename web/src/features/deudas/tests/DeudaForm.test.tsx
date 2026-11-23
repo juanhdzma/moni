@@ -39,7 +39,7 @@ describe('forms', () => {
         crear_tx: true,
       },
     })
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(f.callsTo('GET', '/api/deudas/resumen').length).toBeGreaterThan(1))
   })
 
   it('crear crédito con crear_tx desactivado', async () => {
@@ -168,7 +168,7 @@ describe('forms', () => {
     conf.mockReturnValue(true)
     await user.click(screen.getByText('Eliminar'))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(f.callsTo('GET', '/api/deudas/resumen').length).toBeGreaterThan(1))
     conf.mockRestore()
   })
 })

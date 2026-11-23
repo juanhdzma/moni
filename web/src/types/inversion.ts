@@ -16,7 +16,9 @@ export interface Inversion {
   tasa_mv: number | null
   proximo_pago: ProximoPago | null
   rendimiento_esperado: number | null
-  desactualizada: boolean
+  desactualizado: boolean
+  texto_tasa: string | null
+  capitaliza_default: boolean
 }
 
 export type InvIn = Pick<Inversion, 'nombre' | 'tipo' | 'monto_invertido' | 'tasa_ea' | 'fecha_inicio' | 'pago' | 'dia_pago'> &
@@ -53,6 +55,8 @@ export interface ResumenInversiones {
   total_actual: number
   ganancia: number
   ganancia_pct: number
+  mostrar_ganancia: boolean
+  texto_ganancia: string
   segmentos: Segmento[]
   texto_posiciones: string
   fijas: Inversion[]
@@ -61,13 +65,4 @@ export interface ResumenInversiones {
 
 export interface PreviewAporte {
   nuevo_valor_estimado: number
-}
-
-export interface TipoInversionOpcion {
-  valor: TipoInv
-  label: string
-}
-
-export interface RendimientoDefaults {
-  capitaliza_default: boolean
 }

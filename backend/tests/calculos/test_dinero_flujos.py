@@ -12,7 +12,7 @@ from backend.calculos.dinero import (
 )
 from backend.calculos.listados import tiene_saldo
 
-from .builders import HOY, activo, deuda, estado, inversion, tx
+from .builders_calculos import HOY, activo, deuda, estado, inversion, tx
 
 
 def test_la_cartera_ignora_los_gastos_con_tarjeta_y_descuenta_los_transfers():

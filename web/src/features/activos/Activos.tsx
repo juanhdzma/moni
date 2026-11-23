@@ -1,22 +1,21 @@
 import { Button } from '@/components/ui/button'
-import { ArrowDown, ArrowUp, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { EmptyCard } from '@/components/EmptyCard'
+import { Monto, Tendencia } from '@/components/monto'
 import { Desactualizado, Resumen } from '@/components/panel'
-import { cn } from '@/lib/utils'
 import { cargarResumenActivos } from '../../lib/api'
-import { cop, fmtDate, pct, signStr } from '../../lib/format'
+import { cop, fmtDate, pct } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { openActivoForm, openActivoSellForm, openActivoUpdateForm } from './forms'
-
-const tinta = (n: number) => (n >= 0 ? 'text-inversiones-text' : 'text-deudas')
-const chip = (n: number) => (n >= 0 ? 'bg-inversiones/15 text-inversiones-text' : 'bg-deudas/15 text-deudas')
 
 export function Activos({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { loaded, estado } = useData()
-  const { data: resumen } = useVista('activos-resumen', cargarResumenActivos, ['activos'])
+  const { data: resumen } = useVista('activos-resumen', cargarResumenActivos, DEPENDENCIAS_DE_VISTA.resumenActivos)
   const activos = resumen?.items ?? []
   const variacion = resumen?.variacion ?? 0
 
@@ -34,10 +33,7 @@ export function Activos({ active }: TabProps) {
           dato={
             <>
               {(resumen?.total_inicial ?? 0) > 0 && (
-                <span className={tinta(variacion)}>
-                  {variacion >= 0 ? <ArrowUp className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" /> : <ArrowDown className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" />}
-                  {resumen?.texto_variacion}
-                </span>
+                <Tendencia valor={variacion}>{resumen?.texto_variacion}</Tendencia>
               )}
               <span className="text-muted-foreground">
                 {(resumen?.total_inicial ?? 0) > 0 && ' · '}
@@ -54,10 +50,7 @@ export function Activos({ active }: TabProps) {
         />
         <div id="activos-grid" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {loaded && resumen && !activos.length && (
-            <div className="col-span-full rounded-2xl border bg-card p-6 text-center">
-              <div className="text-sm font-semibold">Sin activos</div>
-              <div className="mt-1 text-sm text-muted-foreground">Registrá propiedades, vehículos u otros bienes con el botón Nuevo activo.</div>
-            </div>
+            <EmptyCard className="col-span-full rounded-2xl border bg-card p-6" titulo="Sin activos" texto="Registrá propiedades, vehículos u otros bienes con el botón Nuevo activo." />
           )}
           {activos.map((a) => {
             const { cambio, cambio_pct: cambioPct } = a
@@ -67,17 +60,13 @@ export function Activos({ active }: TabProps) {
                   <h3 className="inv-name min-w-0 truncate text-[15px] font-semibold">{a.nombre}</h3>
                   <div className="flex shrink-0 items-center gap-1">
                     {a.desactualizado && <Desactualizado texto={estado.desactualizado.texto} />}
-                    <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', chip(cambio))}>
-                      {signStr(cambioPct)}{pct(Math.abs(cambioPct))}%
-                    </span>
+                    <Monto valor={cambioPct} formato={pct} sufijo="%" chip className="rounded-full px-2 py-0.5 text-xs font-medium" />
                   </div>
                 </div>
                 <div className="mt-2.5 text-[28px] leading-tight font-semibold tracking-tight text-activos-text">{cop(a.valor_actual)}</div>
                 <div className="mt-2 flex items-baseline justify-between text-sm">
                   <span className="text-muted-foreground">Compra {cop(a.valor_inicial)}</span>
-                  <span className={cn('font-semibold', tinta(cambio))}>
-                    {signStr(cambio)}{cop(Math.abs(cambio))}
-                  </span>
+                  <Monto valor={cambio} className="font-semibold" />
                 </div>
                 {a.fecha_adquisicion && <div className="mt-0.5 text-xs text-muted-foreground">Adquirido {fmtDate(a.fecha_adquisicion)}</div>}
                 <div className="card-actions mt-4 flex gap-2">

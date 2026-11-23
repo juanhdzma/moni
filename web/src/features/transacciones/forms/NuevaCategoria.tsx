@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { useCategorias } from '@/shell/providers/CategoriasProvider'
+import { useCategorias } from '@/shell/hooks/useCategorias'
 
 interface Props {
   tipo: 'ingreso' | 'gasto'

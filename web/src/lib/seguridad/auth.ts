@@ -4,7 +4,6 @@ export interface EstadoAuth {
   configurado: boolean
   autenticado: boolean
   passkeys: number
-  bloqueada: boolean
 }
 
 export interface Sesion {

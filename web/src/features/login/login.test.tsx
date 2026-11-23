@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as webauthn from '@simplewebauthn/browser'
@@ -12,8 +12,8 @@ vi.mock('@simplewebauthn/browser', () => ({
   startRegistration: vi.fn(),
 }))
 
-const ESTADO_LOGIN = { configurado: true, autenticado: false, passkeys: 0, bloqueada: false }
-const ESTADO_OK = { configurado: true, autenticado: true, passkeys: 0, bloqueada: false }
+const ESTADO_LOGIN = { configurado: true, autenticado: false, passkeys: 0 }
+const ESTADO_OK = { configurado: true, autenticado: true, passkeys: 0 }
 
 beforeEach(() => {
   localStorage.clear()
@@ -24,6 +24,8 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
 })
+
+const bloqueo = (texto: string, reintentarEnS: number) => json({ detail: 'IP bloqueada', reintentar_en_s: reintentarEnS, texto }, 403)
 
 const apiAllCalls = (m: ReturnType<typeof mockFetch>) => m.calls.filter((c) => c.url !== '/api/auth/estado' && c.url.startsWith('/api/') && !c.url.startsWith('/api/auth/'))
 
@@ -59,11 +61,10 @@ describe('gating', () => {
     expect(apiAllCalls(m)).toEqual([])
   })
 
-  it('una IP bloqueada al arrancar muestra el tiempo restante', async () => {
-    mockFetch({ 'GET /api/auth/estado': json({ detail: 'IP bloqueada', reintentar_en_s: 3000 }, 403) })
+  it('una IP bloqueada al arrancar muestra el texto del backend', async () => {
+    mockFetch({ 'GET /api/auth/estado': bloqueo('Demasiados intentos. Probá de nuevo en 50 min.', 3000) })
     render(<App />)
-    expect(await screen.findByText(/Intentá de nuevo en 50 min/)).toBeInTheDocument()
-    expect(screen.getByLabelText('Clave')).toBeDisabled()
+    expect(await screen.findByText('Demasiados intentos. Probá de nuevo en 50 min.')).toBeInTheDocument()
   })
 })
 
@@ -92,34 +93,33 @@ describe('login con clave', () => {
     expect(apiAllCalls(m)).toEqual([])
   })
 
-  it('403 de bloqueo deshabilita el formulario y muestra minutos', async () => {
+  it('403 de bloqueo muestra el texto del backend sin reloj propio', async () => {
     mockFetch({
       'GET /api/auth/estado': ESTADO_LOGIN,
-      'POST /api/auth/login': json({ detail: 'IP bloqueada', reintentar_en_s: 7200 }, 403),
+      'POST /api/auth/login': bloqueo('Demasiados intentos. Probá de nuevo en 2 h.', 7200),
     })
     const user = userEvent.setup()
     render(<App />)
     await user.type(await screen.findByLabelText('Clave'), 'x')
     await user.click(screen.getByRole('button', { name: 'Entrar' }))
-    expect(await screen.findByText(/Intentá de nuevo en 2 h/)).toBeInTheDocument()
-    expect(screen.getByLabelText('Clave')).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Entrar' })).toBeDisabled()
+    expect(await screen.findByText('Demasiados intentos. Probá de nuevo en 2 h.')).toBeInTheDocument()
   })
 
-  it('al vencer el bloqueo vuelve a consultar el estado', async () => {
-    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
-    const m = mockFetch({ 'GET /api/auth/estado': json({ detail: 'IP bloqueada', reintentar_en_s: 2 }, 403) })
+  it('tras un bloqueo, un nuevo intento exitoso entra y limpia el texto', async () => {
+    const m = mockFetch({
+      'GET /api/auth/estado': ESTADO_LOGIN,
+      'POST /api/auth/login': bloqueo('Demasiados intentos. Probá de nuevo en 1 min.', 60),
+    })
+    const user = userEvent.setup()
     render(<App />)
-    await act(async () => {
-      await Promise.resolve()
-    })
-    expect(m.callsTo('GET', '/api/auth/estado')).toHaveLength(1)
-    m.set('GET /api/auth/estado', ESTADO_LOGIN)
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(2100)
-    })
-    expect(m.callsTo('GET', '/api/auth/estado')).toHaveLength(2)
-    expect(screen.getByLabelText('Clave')).toBeEnabled()
+    await user.type(await screen.findByLabelText('Clave'), 'x')
+    await user.click(screen.getByRole('button', { name: 'Entrar' }))
+    await screen.findByText('Demasiados intentos. Probá de nuevo en 1 min.')
+    m.set('POST /api/auth/login', { ok: true })
+    await user.type(screen.getByLabelText('Clave'), 'x')
+    await user.click(screen.getByRole('button', { name: 'Entrar' }))
+    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    expect(screen.queryByText(/Demasiados intentos/)).toBeNull()
   })
 })
 
@@ -134,9 +134,9 @@ describe('sesion vencida', () => {
   })
 
   it('un 403 de bloqueo en un fetch de datos vuelve al login bloqueado', async () => {
-    mockFetch({ 'GET /api/auth/estado': ESTADO_OK, 'GET /api/bootstrap': json({ detail: 'IP bloqueada', reintentar_en_s: 600 }, 403) })
+    mockFetch({ 'GET /api/auth/estado': ESTADO_OK, 'GET /api/bootstrap': bloqueo('Demasiados intentos. Probá de nuevo en 10 min.', 600) })
     render(<App />)
-    expect(await screen.findByText(/Intentá de nuevo en 10 min/)).toBeInTheDocument()
+    expect(await screen.findByText('Demasiados intentos. Probá de nuevo en 10 min.')).toBeInTheDocument()
   })
 })
 

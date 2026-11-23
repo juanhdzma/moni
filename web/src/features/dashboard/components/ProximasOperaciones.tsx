@@ -1,32 +1,26 @@
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
-import { cargarProximasOperaciones, ocultarOp } from '@/lib/api'
-import { cop, errMsg } from '@/lib/format'
+import { cargarProximasOperaciones } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useModal } from '@/shell/providers/ModalProvider'
-import { useData } from '@/shell/providers/DataProvider'
+import { useMutations } from '@/shell/hooks/useMutations'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
-import type { OperacionProxima } from '@/types'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { openDeudaPayFormById } from '../../deudas'
 import { openInvYieldFormById } from '../../inversiones'
 import { openRecurrenteMaterializeFormById } from '../../recurrentes'
+import { Monto } from '@/components/monto'
 import { FraseTexto, Panel } from '@/components/panel'
 
-function tinta(e: OperacionProxima): string {
-  if (e.tipo === 'deuda') return 'text-deudas'
-  if (e.tipo === 'inversion') return 'text-inversiones-text'
-  return e.monto >= 0 ? 'text-cartera' : 'text-foreground'
-}
-
 export function ProximasOperaciones() {
-  const { reload, showBanner } = useData()
+  const { apiActionOrBanner } = useMutations()
   const { setPendingProxOp } = useModal()
   const ctx = useOpenerCtx()
   const [todas, setTodas] = useState(false)
-  const { data } = useVista('proximas', cargarProximasOperaciones)
+  const { data } = useVista('proximas', cargarProximasOperaciones, DEPENDENCIAS_DE_VISTA.proximasOperaciones)
   const loaded = data !== null
-  const events = data?.items ?? []
+  const events = data ? (todas ? [...data.items, ...data.extra] : data.items) : []
 
   const materialize = (clave: string) => {
     const op = events.find((e) => e.clave === clave)
@@ -37,19 +31,7 @@ export function ProximasOperaciones() {
     else openRecurrenteMaterializeFormById(ctx, op.fuente_id, op.fecha)
   }
 
-  const skip = async (clave: string) => {
-    try {
-      await ocultarOp(clave)
-    } catch (err) {
-      await reload()
-      showBanner(errMsg(err))
-      return
-    }
-    await reload()
-  }
-
-  const visibles = data?.visibles ?? 0
-  const shown = todas ? events : events.slice(0, visibles)
+  const skip = (clave: string) => apiActionOrBanner('/api/ops-ocultas', { clave })
 
   return (
     <Panel id="dash-proximas" titulo="Lo que viene" frase={data?.frase ? <FraseTexto frase={data.frase} /> : undefined}>
@@ -64,7 +46,7 @@ export function ProximasOperaciones() {
       ) : (
         <>
           <ul id="dash-upcoming" className="divide-y">
-            {shown.map((e) => {
+            {events.map((e) => {
               const vencida = e.vencida
               return (
                 <li key={e.clave} data-op={e.clave} className="prox-op-row flex items-center gap-3 py-2">
@@ -80,9 +62,8 @@ export function ProximasOperaciones() {
                       {e.sub} · <span className={cn(vencida && 'font-medium text-deudas')}>{e.texto_dias}</span>
                     </div>
                   </div>
-                  <div className={cn('shrink-0 text-right text-sm font-semibold', tinta(e))}>
-                    {e.monto > 0 ? '+' : e.monto < 0 ? '−' : ''}
-                    {cop(Math.abs(e.monto))}
+                  <div className="shrink-0 text-right text-sm font-semibold">
+                    <Monto valor={e.monto} signo={e.monto === 0 ? 'ninguno' : 'siempre'} color={e.monto === 0 ? 'ninguno' : 'siempre'} />
                   </div>
                   <div className="flex shrink-0 gap-1">
                     <button
@@ -108,14 +89,14 @@ export function ProximasOperaciones() {
               )
             })}
           </ul>
-          {events.length > visibles && (
+          {data?.texto_ver_todas && (
             <button
               type="button"
               onClick={() => setTodas((v) => !v)}
               aria-expanded={todas}
               className="mt-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground"
             >
-              {todas ? 'Ver menos' : `Ver las ${events.length}`}
+              {todas ? 'Ver menos' : data.texto_ver_todas}
             </button>
           )}
         </>

@@ -10,11 +10,11 @@ def test_registro_y_login_ok(client):
     assert [p["nombre"] for p in lista] == ["iPhone"]
     assert client.get("/api/auth/estado").json()["passkeys"] == 1
     client.cookies.clear()
-    assert client.get("/api/all").status_code == 401
+    assert client.get("/api/backup").status_code == 401
     r = intento_login(client, auten, 1)
     assert r.status_code == 200
     assert "moni_session" in r.cookies
-    assert client.get("/api/all").status_code == 200
+    assert client.get("/api/backup").status_code == 200
 
 
 def test_login_sin_passkeys_404(anon_client):

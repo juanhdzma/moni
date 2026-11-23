@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { numToInput, parseMoney } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
@@ -8,18 +9,13 @@ import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { TipoToggle } from '../../../controls/TipoToggle'
 import { InversionPanel } from './InversionPanel'
-import { hintClass } from './styles'
 import { useGuardar } from '@/shell/hooks/useGuardar'
-
-const TIPOS_RETIRO = [
-  { value: 'total', label: 'Total' },
-  { value: 'parcial', label: 'Parcial' },
-]
 
 export function RetiroForm({ inv }: { inv: Inversion }) {
   const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()
+  const meta = useMeta()
   const [tipo, setTipo] = useState<'total' | 'parcial'>('total')
   const [montoTotal, setMontoTotal] = useState(numToInput(inv.valor_actual))
   const [montoParcial, setMontoParcial] = useState('')
@@ -47,32 +43,27 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
   return (
     <>
       <InversionPanel inv={inv} />
-      <TipoToggle label="Tipo de retiro" value={tipo} opciones={TIPOS_RETIRO} tonos={{ total: 'ingreso' }} onChange={setTipo} />
+      <TipoToggle label="Tipo de retiro" value={tipo} opciones={meta?.tipos_retiro ?? []} tonos={{ total: 'ingreso' }} onChange={setTipo} />
 
       <div id="retiro-total-fields" style={tipo === 'total' ? undefined : { display: 'none' }}>
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-monto-total">
-            Monto que recibís
-          </label>
-          <MoneyInput id="m-monto-total" value={montoTotal} onChange={setMontoTotal} />
-          <div className={hintClass}>Pre-llenado con el valor actual — ajustá si difiere al momento del retiro.</div>
-        </div>
+        <MoneyField
+          id="m-monto-total"
+          label="Monto que recibís"
+          value={montoTotal}
+          onChange={setMontoTotal}
+          hint="Pre-llenado con el valor actual — ajustá si difiere al momento del retiro."
+        />
       </div>
 
       <div id="retiro-parcial-fields" style={tipo === 'parcial' ? undefined : { display: 'none' }}>
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-monto-parcial">
-            Monto que retirás
-          </label>
-          <MoneyInput id="m-monto-parcial" value={montoParcial} onChange={setMontoParcial} />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-saldo-queda">
-            Saldo que queda en el fondo
-          </label>
-          <MoneyInput id="m-saldo-queda" value={saldoQueda} onChange={setSaldoQueda} />
-          <div className={hintClass}>Valor total de la inversión después del retiro.</div>
-        </div>
+        <MoneyField id="m-monto-parcial" label="Monto que retirás" value={montoParcial} onChange={setMontoParcial} />
+        <MoneyField
+          id="m-saldo-queda"
+          label="Saldo que queda en el fondo"
+          value={saldoQueda}
+          onChange={setSaldoQueda}
+          hint="Valor total de la inversión después del retiro."
+        />
       </div>
 
       <FechaNotas

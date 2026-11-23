@@ -6,20 +6,17 @@ import { Select } from '../../../controls/Select'
 import { numToInput, parseMoney } from '../../../lib/format'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
-import { useCategorias } from '@/shell/providers/CategoriasProvider'
+import { useCategorias } from '@/shell/hooks/useCategorias'
 import type { Recurrente } from '../../../types'
-import { useResumenRecurrentes } from '../useResumenRecurrentes'
 
 export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
   const { categorias } = useCategorias()
   const guardar = useGuardar()
   const { crudOp } = useMutations()
-  const { data: resumen } = useResumenRecurrentes()
   const tipo = r.tipo === 'ingreso' ? 'ingreso' : 'gasto'
-  const cats = categorias[tipo] || []
+  const cats = categorias[tipo].map((c) => c.nombre)
   const [categoriaElegida, setCategoriaElegida] = useState<string | null>(null)
-  const sugerida = [...(resumen?.ingresos ?? []), ...(resumen?.gastos ?? [])].find((x) => x.id === r.id)?.categoria_sugerida
-  const categoria = categoriaElegida ?? sugerida ?? ''
+  const categoria = categoriaElegida ?? r.categoria_sugerida
   const [descripcion, setDescripcion] = useState(r.nombre)
   const [monto, setMonto] = useState(numToInput(r.monto))
   const [fecha, setFecha] = useState(dateISO)
@@ -28,7 +25,7 @@ export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string
   const save = () =>
     guardar(() =>
       crudOp('tx', 'add', {
-        fecha: `${fecha}T00:00`,
+        fecha,
         tipo,
         categoria,
         descripcion: descripcion.trim(),

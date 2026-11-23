@@ -4,7 +4,7 @@ import pytest
 
 from backend.calculos.constantes import DIAS_DESACTUALIZADO, TEXTO_DESACTUALIZADO
 
-from .builders import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, INV_DERIVADOS, REC_DERIVADOS, TX_DERIVADOS, sembrar
+from .builders_api import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, INV_DERIVADOS, REC_DERIVADOS, TX_DERIVADOS, sembrar
 
 
 def test_bootstrap_sin_filas_y_con_umbral(client):
@@ -27,7 +27,7 @@ def _crear_uno_de_cada(client):
     sembrar(client)
     ids = {}
     for ruta, nombre in (("tx", "transacciones"), ("deuda", "deudas"), ("inv", "inversiones"), ("activo", "activos"), ("rec", "recurrentes")):
-        ids[ruta] = [r["id"] for r in client.get("/api/all").json()[nombre]]
+        ids[ruta] = [r["id"] for r in client.get("/api/backup").json()[nombre]]
     return ids
 
 

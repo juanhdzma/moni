@@ -1,14 +1,13 @@
 import { cargarMovimientos } from '@/lib/api'
-import { cop, fmtDateShort } from '@/lib/format'
+import { fmtDateShort } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useVista } from '@/shell/hooks/useVista'
-import type { Movimiento } from '@/types'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
+import { Monto } from '@/components/monto'
 import { Panel } from '@/components/panel'
 
-const tinta = (t: Movimiento) => (t.tipo === 'ingreso' ? 'text-cartera' : t.tipo === 'gasto' ? 'text-foreground' : 'text-muted-foreground')
-
 export function Movimientos() {
-  const { data } = useVista('movimientos', () => cargarMovimientos())
+  const { data } = useVista('movimientos', () => cargarMovimientos(), DEPENDENCIAS_DE_VISTA.movimientos)
   const recent = data?.items ?? []
   return (
     <Panel id="dash-movimientos" titulo="Últimos movimientos">
@@ -21,9 +20,11 @@ export function Movimientos() {
                 <span className="block truncate">{t.descripcion || t.categoria}</span>
                 <span className="block truncate text-xs text-muted-foreground">{t.categoria}</span>
               </span>
-              <span className={cn('recent-amount shrink-0 font-semibold', tinta(t))} data-tipo={t.tipo}>
-                {t.tipo === 'ingreso' ? '+' : '−'}
-                {cop(t.monto)}
+              <span
+                className={cn('recent-amount shrink-0 font-semibold', t.tipo === 'gasto' && 'text-foreground', t.tipo === 'transfer' && 'text-muted-foreground')}
+                data-tipo={t.tipo}
+              >
+                <Monto valor={t.tipo === 'ingreso' ? t.monto : -t.monto} color={t.tipo === 'ingreso' ? 'siempre' : 'ninguno'} />
               </span>
             </li>
           ))}

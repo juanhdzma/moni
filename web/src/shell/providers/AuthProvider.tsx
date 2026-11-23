@@ -8,13 +8,12 @@ export type Fase = 'cargando' | 'login' | 'autenticado' | 'sin_configurar' | 'er
 export interface AuthApi {
   fase: Fase
   passkeys: number
-  bloqueadaHasta: number | null
+  textoBloqueo: string | null
   loginReciente: boolean
   entrar: (clave: string) => Promise<void>
   entrarConPasskey: () => Promise<void>
   salir: () => Promise<void>
   recargar: () => Promise<void>
-  desbloquear: () => void
 }
 
 const AuthContext = createContext<AuthApi | null>(null)
@@ -32,14 +31,16 @@ interface Props {
 
 const faseDe = (e: EstadoAuth): Fase => (!e.configurado ? 'sin_configurar' : e.autenticado ? 'autenticado' : 'login')
 
+const esBloqueo = (err: unknown): err is ApiError => err instanceof ApiError && err.reintentarEnS !== null
+
 export function AuthProvider({ children, initialEstado }: Props) {
   const [fase, setFase] = useState<Fase>(initialEstado ? faseDe(initialEstado) : 'cargando')
   const [passkeys, setPasskeys] = useState(initialEstado?.passkeys ?? 0)
-  const [bloqueadaHasta, setBloqueadaHasta] = useState<number | null>(null)
+  const [textoBloqueo, setTextoBloqueo] = useState<string | null>(null)
   const [loginReciente, setLoginReciente] = useState(false)
 
-  const bloquear = useCallback((segundos: number) => {
-    setBloqueadaHasta(Date.now() + segundos * 1000)
+  const bloquear = useCallback((texto: string) => {
+    setTextoBloqueo(texto)
     setFase((f) => (f === 'autenticado' ? 'login' : f))
   }, [])
 
@@ -49,8 +50,8 @@ export function AuthProvider({ children, initialEstado }: Props) {
       setPasskeys(e.passkeys)
       setFase(faseDe(e))
     } catch (err) {
-      if (err instanceof ApiError && err.reintentarEnS !== null) {
-        bloquear(err.reintentarEnS)
+      if (esBloqueo(err)) {
+        bloquear(err.textoBloqueo ?? err.message)
         setFase('login')
       } else {
         setFase('error')
@@ -74,16 +75,29 @@ export function AuthProvider({ children, initialEstado }: Props) {
     void Promise.resolve().then(recargar)
   }, [initialEstado, recargar])
 
-  const entrar = useCallback(async (clave: string) => {
-    await entrarConClave(clave)
-    setLoginReciente(true)
-    setFase('autenticado')
+  const intentar = useCallback(async (intento: () => Promise<unknown>) => {
+    try {
+      await intento()
+    } catch (err) {
+      if (!esBloqueo(err)) setTextoBloqueo(null)
+      throw err
+    }
+    setTextoBloqueo(null)
   }, [])
 
+  const entrar = useCallback(
+    async (clave: string) => {
+      await intentar(() => entrarConClave(clave))
+      setLoginReciente(true)
+      setFase('autenticado')
+    },
+    [intentar],
+  )
+
   const entrarConPasskey = useCallback(async () => {
-    await loginConPasskey()
+    await intentar(loginConPasskey)
     setFase('autenticado')
-  }, [])
+  }, [intentar])
 
   const salir = useCallback(async () => {
     await cerrarSesion()
@@ -91,14 +105,9 @@ export function AuthProvider({ children, initialEstado }: Props) {
     setFase('login')
   }, [])
 
-  const desbloquear = useCallback(() => {
-    setBloqueadaHasta(null)
-    void recargar()
-  }, [recargar])
-
   const value = useMemo(
-    () => ({ fase, passkeys, bloqueadaHasta, loginReciente, entrar, entrarConPasskey, salir, recargar, desbloquear }),
-    [fase, passkeys, bloqueadaHasta, loginReciente, entrar, entrarConPasskey, salir, recargar, desbloquear],
+    () => ({ fase, passkeys, textoBloqueo, loginReciente, entrar, entrarConPasskey, salir, recargar }),
+    [fase, passkeys, textoBloqueo, loginReciente, entrar, entrarConPasskey, salir, recargar],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

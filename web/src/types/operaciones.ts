@@ -18,9 +18,9 @@ export interface OperacionProxima {
 export interface ProximasOperaciones {
   hoy: string
   items: OperacionProxima[]
+  extra: OperacionProxima[]
+  texto_ver_todas: string | null
   vencidas: number
-  salen_total: number
-  dias_ventana: number
   visibles: number
   frase: Frase | null
   texto_vacio: string

@@ -13,23 +13,27 @@ import { Recurrentes, openRecurrenteMaterializeFormById } from '.'
 const H = { 'X-Moni-Request': '1' }
 
 const salario = recurrente({ id: 1, nombre: 'Salario', tipo: 'ingreso', monto: 1000000, frecuencia: 'mensual', fecha_inicio: '2026-08-15', mensual: 1000000, proximo_pago: { fecha: '2026-08-15', dias: 0, texto: 'hoy' } })
-const netflix = recurrente({ id: 2, nombre: 'Netflix', tipo: 'gasto', monto: 30000, frecuencia: 'mensual', fecha_inicio: '2026-08-20', notas: 'plan', mensual: 30000, proximo_pago: { fecha: '2026-08-20', dias: 5, texto: 'en 5d' } })
+const netflix = recurrente({ id: 2, nombre: 'Netflix', tipo: 'gasto', monto: 30000, frecuencia: 'mensual', fecha_inicio: '2026-08-20', notas: 'plan', categoria_sugerida: 'Streaming', mensual: 30000, proximo_pago: { fecha: '2026-08-20', dias: 5, texto: 'en 5d' } })
 const gym = recurrente({ id: 3, nombre: 'Gym', tipo: 'gasto', monto: 120000, frecuencia: 'trimestral', frecuencia_label: 'Trimestral', activo: false, fecha_inicio: '2026-01-01', mensual: 40000, proximo_pago: null })
 const items = [salario, netflix, gym]
 
-const frecuencias = [
-  { value: 'mensual', label: 'Mensual' },
-  { value: 'trimestral', label: 'Trimestral' },
-]
-
 const resumen = (extra: Partial<ResumenRecurrentes> = {}): ResumenRecurrentes => ({
-  frecuencias,
+  dato: {
+    texto: 'entran $1.000.000 · salen $30.000 en fijos',
+    partes: [
+      { texto: 'entran ', tono: null },
+      { texto: '$1.000.000', tono: 'positivo' },
+      { texto: ' · salen ', tono: null },
+      { texto: '$30.000', tono: 'fuerte' },
+      { texto: ' en fijos', tono: null },
+    ],
+  },
   total_gastos_mensual: 30000,
   total_ingresos_mensual: 1000000,
   neto_mensual: 970000,
   segmentos: [{ key: '2', label: 'Netflix', valor: 30000 }],
   ingresos: [salario],
-  gastos: [gym, { ...netflix, categoria_sugerida: 'Streaming' }],
+  gastos: [gym, netflix],
   ...extra,
 })
 
@@ -238,7 +242,7 @@ describe('materialize', () => {
   }
 
   it('posts a tx with the prefilled values and the backend suggested category', async () => {
-    const f = mockFetch({ 'GET /api/rec/resumen': resumen() as unknown as Record<string, unknown>, 'POST /api/tx': {} })
+    const f = mockFetch({ 'POST /api/tx': {} })
     renderWithProviders(<Harness id={2} />, { estado: estado({ recurrentes: items }) })
     act(() => screen.getByText('open').click())
     expect(await screen.findByText('Registrar · Netflix')).toBeTruthy()
@@ -250,7 +254,7 @@ describe('materialize', () => {
       method: 'POST',
       url: '/api/tx',
       headers: H,
-      body: { fecha: '2026-08-20T00:00', tipo: 'gasto', categoria: 'Streaming', descripcion: 'Netflix', monto: 30000, notas: '' },
+      body: { fecha: '2026-08-20', tipo: 'gasto', categoria: 'Streaming', descripcion: 'Netflix', monto: 30000, notas: '' },
     })
   })
 

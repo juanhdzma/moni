@@ -2,6 +2,7 @@ import { cargarResumenDashboard } from '@/lib/api'
 import { useData } from '@/shell/providers/DataProvider'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useVista } from '@/shell/hooks/useVista'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { EsteMes } from './components/EsteMes'
 import { Evolucion } from './components/Evolucion'
 import { Gastos } from './components/Gastos'
@@ -11,7 +12,7 @@ import { ProximasOperaciones } from './components/ProximasOperaciones'
 
 export function Dashboard({ active }: TabProps) {
   const { loaded } = useData()
-  const { data: r } = useVista('resumen', cargarResumenDashboard)
+  const { data: r } = useVista('resumen', cargarResumenDashboard, DEPENDENCIAS_DE_VISTA.resumenDashboard)
   const loading = !loaded || r === null
 
   return (

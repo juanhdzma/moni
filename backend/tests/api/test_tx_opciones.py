@@ -1,6 +1,6 @@
 import re
 
-from .builders import tx
+from .builders_api import tx
 
 
 def _tarjeta(client, nombre="Visa Oro"):

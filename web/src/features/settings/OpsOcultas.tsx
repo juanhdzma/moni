@@ -3,10 +3,11 @@ import { cargarOpsOcultas, restaurarOp } from '../../lib/api'
 import { errMsg } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useVista } from '@/shell/hooks/useVista'
+import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 
 function Skipped() {
   const { reload, showBanner } = useData()
-  const { data } = useVista('ops-ocultas', cargarOpsOcultas)
+  const { data } = useVista('ops-ocultas', cargarOpsOcultas, DEPENDENCIAS_DE_VISTA.opsOcultas)
 
   const restaurar = async (clave?: string) => {
     try {
@@ -14,7 +15,7 @@ function Skipped() {
     } catch (err) {
       showBanner(errMsg(err))
     }
-    await reload()
+    await reload(['opsOcultas'])
   }
 
   if (!data) return <p className="text-sm text-muted-foreground">Cargando...</p>
