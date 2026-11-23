@@ -118,13 +118,13 @@ describe('backup', () => {
   })
 
   it('importa con POST /api/import y muestra el resultado', async () => {
-    const f = mockFetch({ 'POST /api/import': { transacciones: 2, deudas: 1 } })
+    const f = mockFetch({ 'POST /api/import': { counts: { transacciones: 2, deudas: 1 }, texto: 'Importado: 2 transacciones, 1 deuda' } })
     renderWithProviders(<Settings active />)
     const payload = { transacciones: [{ id: 1 }, { id: 2 }], deudas: [{ id: 1 }] }
     const file = new File([JSON.stringify(payload)], 'b.json', { type: 'application/json' })
     const input = document.querySelector('input[type=file]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [file] } })
-    await waitFor(() => expect(document.getElementById('settings-backup-status')?.textContent).toBe('Importado: 2 transacciones, 1 deudas'))
+    await waitFor(() => expect(document.getElementById('settings-backup-status')?.textContent).toBe('Importado: 2 transacciones, 1 deuda'))
     expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/import', headers: { 'X-Moni-Request': '1' }, body: payload })
     expect(document.getElementById('settings-backup-status')?.className).toBe('form-status ok')
   })

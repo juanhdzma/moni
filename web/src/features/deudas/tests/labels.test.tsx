@@ -19,8 +19,6 @@ describe('labels', () => {
     expectLabels(modalBody(), {
       Nombre: 'm-nombre',
       'Monto del crédito (COP)': 'm-monto-ini',
-      'Cupo (COP)': 'm-cupo',
-      Franquicia: 'm-franquicia',
       'Saldo actual (COP)': 'm-saldo',
       'Tasa EA (%)': 'm-tasa',
       'Cuota mensual': 'm-cuota',
@@ -28,6 +26,8 @@ describe('labels', () => {
       'Próxima cuota': 'm-proxima',
     })
     expect(within(modalBody()).getByRole('group', { name: 'Tipo' })).toBeInTheDocument()
+    await user.click(within(modalBody()).getByRole('button', { name: 'Tarjeta' }))
+    expectLabels(modalBody(), { 'Cupo (COP)': 'm-cupo', Franquicia: 'm-franquicia' })
   })
 
   it('el form de pago se encuentra por sus labels', async () => {

@@ -36,6 +36,17 @@ def claves_ocultas(conn) -> set[str]:
 
 
 def podar_ocultas(conn, hoy):
-    vigentes = operaciones.claves_vigentes(candidatas(conn, hoy))
-    if vigentes:
-        conn.execute(f"DELETE FROM ops_ocultas WHERE clave NOT IN ({', '.join('?' * len(vigentes))})", list(vigentes))
+    vigentes = list(operaciones.claves_vigentes(candidatas(conn, hoy)))
+    if not vigentes:
+        conn.execute("DELETE FROM ops_ocultas")
+        return
+    conn.execute(f"DELETE FROM ops_ocultas WHERE clave NOT IN ({', '.join('?' * len(vigentes))})", vigentes)
+
+
+def ocultas_con_etiqueta(conn) -> list[dict]:
+    nombres = {
+        tipo: {r["id"]: r["nombre"] for r in conn.execute(f"SELECT id, nombre FROM {tabla}")}
+        for tipo, tabla in FUENTES_OPS.items()
+    }
+    ocultas = conn.execute("SELECT clave, tipo, fuente_id, fecha FROM ops_ocultas ORDER BY creada_en, clave")
+    return [{**dict(r), "etiqueta": nombres[r["tipo"]].get(r["fuente_id"])} for r in ocultas]

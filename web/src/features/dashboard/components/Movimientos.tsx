@@ -24,7 +24,7 @@ export function Movimientos() {
                 className={cn('recent-amount shrink-0 font-semibold', t.tipo === 'gasto' && 'text-foreground', t.tipo === 'transfer' && 'text-muted-foreground')}
                 data-tipo={t.tipo}
               >
-                <Monto valor={t.tipo === 'ingreso' ? t.monto : -t.monto} color={t.tipo === 'ingreso' ? 'siempre' : 'ninguno'} />
+                <Monto valor={t.monto_firmado} color={t.tipo === 'ingreso' ? 'siempre' : 'ninguno'} />
               </span>
             </li>
           ))}

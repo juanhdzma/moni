@@ -10,6 +10,8 @@ export interface Sesion {
   id: number
   creada: string
   ultimo_uso: string
+  creada_texto: string
+  ultimo_uso_texto: string
   ip: string
   user_agent: string
   metodo: string
@@ -21,6 +23,8 @@ export interface Passkey {
   nombre: string
   creada: string
   ultimo_uso: string | null
+  creada_texto: string
+  ultimo_uso_texto: string
 }
 
 export const cargarEstadoAuth = () => apiFetch<EstadoAuth>('/api/auth/estado')

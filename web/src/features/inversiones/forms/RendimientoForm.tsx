@@ -71,9 +71,11 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
         onChange={(v) => setCapitaliza(v === 'capitaliza')}
       />
       <FechaNotas fechaType="date" fechaLabel="Fecha" fecha={fecha} onFecha={setFecha} notas={notas} onNotas={setNotas} notasPlaceholder="Ej. Intereses mes de junio" />
-      <div id="wrap-rend-advanced" style={capitaliza ? { display: 'none' } : undefined}>
-        <RegistrarToggle checked={registrar} onChange={setRegistrar} />
-      </div>
+      {!capitaliza && (
+        <div id="wrap-rend-advanced">
+          <RegistrarToggle checked={registrar} onChange={setRegistrar} />
+        </div>
+      )}
       <FormFooter saveLabel="Registrar" onSave={() => void save()} onEdit={editar} editLabel="Editar inversión" />
     </>
   )

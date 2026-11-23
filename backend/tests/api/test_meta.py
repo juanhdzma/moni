@@ -4,7 +4,7 @@ def test_meta_listas_de_dominio(client):
     body = r.json()
     assert {"value": "mensual", "label": "Mensual"} in body["frecuencias"]
     assert {"value": "", "label": "Ninguna"} in body["franquicias"]
-    assert [t["value"] for t in body["tipos_transaccion"]] == ["ingreso", "gasto", "transfer"]
+    assert "tipos_transaccion" not in body
     assert [t["value"] for t in body["tipos_inversion"]] == ["fija", "variable"]
     assert [t["value"] for t in body["pagos_inversion"]] == ["mensual", "vencimiento"]
     assert [p["label"] for p in body["periodos"]["gastos"]] == ["1S", "1M", "3M", "6M", "1A", "Todo"]

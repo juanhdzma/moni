@@ -83,7 +83,7 @@ describe('login con clave', () => {
   })
 
   it('401 muestra un mensaje generico, vacia el campo y no carga datos', async () => {
-    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_LOGIN, 'POST /api/auth/login': failure(401, 'Credenciales invalidas') })
+    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_LOGIN, 'POST /api/auth/login': failure(401, 'Credenciales inválidas') })
     const user = userEvent.setup()
     render(<App />)
     await user.type(await screen.findByLabelText('Clave'), 'mala')
@@ -203,7 +203,7 @@ describe('login con Face ID', () => {
     mockFetch({
       'GET /api/auth/estado': { ...ESTADO_LOGIN, passkeys: 1 },
       'POST /api/auth/passkey/login/opciones': { challenge: 'ch' },
-      'POST /api/auth/passkey/login/verificar': failure(401, 'Credenciales invalidas'),
+      'POST /api/auth/passkey/login/verificar': failure(401, 'Credenciales inválidas'),
     })
     const user = userEvent.setup()
     render(<App />)

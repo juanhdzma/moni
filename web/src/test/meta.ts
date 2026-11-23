@@ -17,11 +17,6 @@ export const META: Meta = {
     { value: 'Otra', label: 'Otra' },
     { value: '', label: 'Ninguna' },
   ],
-  tipos_transaccion: [
-    { value: 'ingreso', label: 'Ingreso' },
-    { value: 'gasto', label: 'Gasto' },
-    { value: 'transfer', label: 'Auto' },
-  ],
   tipos_manuales: [
     { value: 'ingreso', label: 'Ingreso' },
     { value: 'gasto', label: 'Gasto' },

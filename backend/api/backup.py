@@ -1,36 +1,53 @@
 import sqlite3
 
 from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
 
-from ..calculos.fechas import hoy_bogota
+from ..calculos import operaciones
+from ..calculos.formato import plural
+from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..core.db import conexion
-from ..core.estado import filas
+from ..core.ops_ocultas import parse_clave
 from ..core.tablas import ACTIVO_COLS, DEUDA_COLS, INV_COLS, REC_COLS, TX_COLS
 from ..schemas.activo import ActivoIn
+from ..schemas.ajustes import CategoriaIn, OpOcultaBackup
 from ..schemas.backup import ImportPayload
 from ..schemas.deuda import DeudaIn
 from ..schemas.inversion import InvIn
 from ..schemas.recurrente import RecIn
 from ..schemas.transaccion import TxIn
+from .errores import mensaje_en_espanol
 
 router = APIRouter()
 
 IMPORT_TABLES = [
-    ("deudas", ["id"] + DEUDA_COLS + ["total_intereses"], DeudaIn),
-    ("inversiones", ["id"] + INV_COLS, InvIn),
-    ("activos", ["id"] + ACTIVO_COLS, ActivoIn),
-    ("recurrentes", ["id"] + REC_COLS, RecIn),
-    ("transacciones", ["id"] + TX_COLS, TxIn),
+    ("deudas", ["id"] + DEUDA_COLS + ["total_intereses"], DeudaIn, ("deuda", "deudas")),
+    ("inversiones", ["id"] + INV_COLS, InvIn, ("inversión", "inversiones")),
+    ("activos", ["id"] + ACTIVO_COLS, ActivoIn, ("activo", "activos")),
+    ("recurrentes", ["id"] + REC_COLS, RecIn, ("recurrente", "recurrentes")),
+    ("transacciones", ["id"] + TX_COLS, TxIn, ("transacción", "transacciones")),
+    ("categorias", ["tipo", "nombre"], CategoriaIn, ("categoría", "categorías")),
+    ("ops_ocultas", ["clave", "tipo", "fuente_id", "fecha", "creada_en"], OpOcultaBackup, ("operación oculta", "operaciones ocultas")),
 ]
 
 
 def _normalizar_inversion(fila):
-    fila["valor_actual"] = fila["valor_actual"] if fila["valor_actual"] is not None else fila["monto_invertido"]
-    fila["fecha_inicio"] = fila["fecha_inicio"] or hoy_bogota().isoformat()
-    fila["valor_actualizado_en"] = fila["valor_actualizado_en"] or fila["fecha_inicio"]
+    operaciones.completar_inversion(fila, None, hoy_bogota())
 
 
-NORMALIZADORES = {"inversiones": _normalizar_inversion}
+def _normalizar_op_oculta(fila):
+    try:
+        fila["tipo"], fila["fuente_id"], fila["fecha"] = parse_clave(fila["clave"])
+    except ValueError as e:
+        raise HTTPException(400, f"ops_ocultas inválida: {e}")
+    fila["creada_en"] = fila["creada_en"] or ahora_bogota_iso()
+
+
+NORMALIZADORES = {"inversiones": _normalizar_inversion, "ops_ocultas": _normalizar_op_oculta}
+
+
+def _errores_en_espanol(error):
+    return "; ".join(f"{'.'.join(map(str, e['loc']))}: {mensaje_en_espanol(e)}" for e in error.errors())
 
 
 def _validar_fila_import(table, model, row, idx):
@@ -38,8 +55,8 @@ def _validar_fila_import(table, model, row, idx):
         raise HTTPException(400, f"{table}[{idx}]: se esperaba un objeto")
     try:
         limpia = model.model_validate(row).model_dump()
-    except Exception as e:
-        raise HTTPException(400, f"{table}[{idx}] inválido: {e}")
+    except ValidationError as e:
+        raise HTTPException(400, f"{table}[{idx}] inválido: {_errores_en_espanol(e)}")
     for extra in ("id", "total_intereses"):
         if extra in row and row[extra] is not None:
             if not isinstance(row[extra], (int, float)) or isinstance(row[extra], bool):
@@ -57,10 +74,18 @@ def _mensaje_integridad(error):
     return f"Import falló: fila inválida ({detalle})"
 
 
+def _texto_importado(counts):
+    partes = [plural(counts[table], *nombres) for table, _c, _m, nombres in IMPORT_TABLES]
+    return "Importado: " + ", ".join(partes)
+
+
 @router.get("/api/backup")
 def exportar():
     with conexion() as conn:
-        return {table: filas(conn, table) for table, _cols, _model in IMPORT_TABLES}
+        return {
+            table: [dict(r) for r in conn.execute(f"SELECT * FROM {table} ORDER BY rowid")]
+            for table, *_ in IMPORT_TABLES
+        }
 
 
 @router.post("/api/import")
@@ -68,12 +93,12 @@ def import_data(body: ImportPayload):
     payload = body.model_dump()
     validadas = {
         table: [_validar_fila_import(table, model, r, i) for i, r in enumerate(payload.get(table) or [])]
-        for table, _cols, model in IMPORT_TABLES
+        for table, _cols, model, _nombres in IMPORT_TABLES
     }
     with conexion() as conn:
         counts = {}
         try:
-            for table, cols, _model in IMPORT_TABLES:
+            for table, cols, _model, _nombres in IMPORT_TABLES:
                 rows = validadas[table]
                 col_list = ", ".join(cols)
                 placeholders = ", ".join("?" * len(cols))
@@ -84,7 +109,7 @@ def import_data(body: ImportPayload):
                     )
                 counts[table] = len(rows)
             conn.commit()
-            return counts
+            return {"counts": counts, "texto": _texto_importado(counts)}
         except sqlite3.IntegrityError as e:
             conn.rollback()
             raise HTTPException(400, _mensaje_integridad(e))
@@ -93,10 +118,8 @@ def import_data(body: ImportPayload):
 @router.post("/api/truncate")
 def truncate_all():
     with conexion() as conn:
-        for table, _cols, _model in IMPORT_TABLES:
+        for table, *_ in IMPORT_TABLES:
             conn.execute(f"DELETE FROM {table}")
             conn.execute("DELETE FROM sqlite_sequence WHERE name = ?", (table,))
-        conn.execute("DELETE FROM categorias")
-        conn.execute("DELETE FROM ops_ocultas")
         conn.commit()
         return {"ok": True}

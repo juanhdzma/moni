@@ -2,14 +2,16 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 
-from ..calculos import dinero, operaciones
+from ..calculos import dinero
 from ..calculos.fechas import hoy_bogota
-from ..calculos.formato import porcentaje_texto
+from ..calculos.operaciones.tasas import equivalencia_tasa
 from ..core import estado as store
 from ..core.db import conexion
 from ..schemas.validadores import PeriodoEvolucion, PeriodoGastos, SerieEvolucion
 
 router = APIRouter()
+
+CAMPOS_RESUMEN = ("patrimonio", "proy_delta", "texto_proyeccion", "total_barra")
 
 
 def _estado_de_hoy(conn):
@@ -23,7 +25,7 @@ def dashboard_resumen():
         estado, hoy = _estado_de_hoy(conn)
         resumen = dinero.resumen_dashboard(estado, hoy)
         partes = dinero.partes_patrimonio(resumen, store.conteos(conn), store.simbolo(conn))
-        return {**resumen, "partes": partes}
+        return {**{k: resumen[k] for k in CAMPOS_RESUMEN}, "partes": partes}
 
 
 @router.get("/api/dashboard/evolucion")
@@ -59,9 +61,4 @@ def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
 
 @router.get("/api/calc/tasa")
 def calc_tasa(valor: float, tipo: Literal["ea", "mv"] = "ea"):
-    if valor <= 0:
-        return {"ea": None, "mv": None, "texto": None}
-    ea = operaciones.convertir_tasa(valor, tipo)
-    mv = valor if tipo == "mv" else operaciones.ea_a_mv(ea)
-    equivalente = f"{porcentaje_texto(mv, 4)}% MV" if tipo == "ea" else f"{porcentaje_texto(ea, 2)}% EA"
-    return {"ea": ea, "mv": mv, "texto": f"Equivale a {equivalente}"}
+    return equivalencia_tasa(valor, tipo)

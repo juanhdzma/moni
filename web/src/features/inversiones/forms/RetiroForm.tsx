@@ -45,26 +45,30 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
       <InversionPanel inv={inv} />
       <TipoToggle label="Tipo de retiro" value={tipo} opciones={meta?.tipos_retiro ?? []} tonos={{ total: 'ingreso' }} onChange={setTipo} />
 
-      <div id="retiro-total-fields" style={tipo === 'total' ? undefined : { display: 'none' }}>
-        <MoneyField
-          id="m-monto-total"
-          label="Monto que recibís"
-          value={montoTotal}
-          onChange={setMontoTotal}
-          hint="Pre-llenado con el valor actual — ajustá si difiere al momento del retiro."
-        />
-      </div>
+      {tipo === 'total' && (
+        <div id="retiro-total-fields">
+          <MoneyField
+            id="m-monto-total"
+            label="Monto que recibís"
+            value={montoTotal}
+            onChange={setMontoTotal}
+            hint="Pre-llenado con el valor actual — ajustá si difiere al momento del retiro."
+          />
+        </div>
+      )}
 
-      <div id="retiro-parcial-fields" style={tipo === 'parcial' ? undefined : { display: 'none' }}>
-        <MoneyField id="m-monto-parcial" label="Monto que retirás" value={montoParcial} onChange={setMontoParcial} />
-        <MoneyField
-          id="m-saldo-queda"
-          label="Saldo que queda en el fondo"
-          value={saldoQueda}
-          onChange={setSaldoQueda}
-          hint="Valor total de la inversión después del retiro."
-        />
-      </div>
+      {tipo === 'parcial' && (
+        <div id="retiro-parcial-fields">
+          <MoneyField id="m-monto-parcial" label="Monto que retirás" value={montoParcial} onChange={setMontoParcial} />
+          <MoneyField
+            id="m-saldo-queda"
+            label="Saldo que queda en el fondo"
+            value={saldoQueda}
+            onChange={setSaldoQueda}
+            hint="Valor total de la inversión después del retiro."
+          />
+        </div>
+      )}
 
       <FechaNotas
         fechaType="date"

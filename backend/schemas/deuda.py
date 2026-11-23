@@ -19,7 +19,6 @@ class DeudaIn(BaseModel):
     es_tarjeta: bool = False
     cupo: MontoCero = 0
     franquicia: Franquicia = ""
-    crear_tx: bool = False
 
     _v_fecha = fecha_opcional("fecha_inicio", "proxima_cuota")
 
@@ -28,7 +27,6 @@ class DeudaIn(BaseModel):
         if self.es_tarjeta:
             self.monto_inicial = self.tasa_ea = self.cuota_mensual = 0
             self.fecha_inicio = self.proxima_cuota = ""
-            self.crear_tx = False
         else:
             self.cupo = 0
             self.franquicia = ""
@@ -36,6 +34,14 @@ class DeudaIn(BaseModel):
 
 
 class DeudaCrear(DeudaIn):
+    crear_tx: bool = False
+
+    @model_validator(mode="after")
+    def tarjeta_no_registra_credito(self):
+        if self.es_tarjeta:
+            self.crear_tx = False
+        return self
+
     @model_validator(mode="after")
     def exigir_saldo_en_creditos(self):
         if not self.es_tarjeta and not self.saldo_actual:

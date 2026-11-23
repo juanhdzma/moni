@@ -22,3 +22,7 @@ class OpOculta(BaseModel):
     clave: str
 
     _v_clave = clave_opcional("clave")
+
+
+class OpOcultaBackup(OpOculta):
+    creada_en: str = ""

@@ -27,20 +27,8 @@ export const PERIODOS = {
 
 export const RESUMEN: ResumenDashboard = {
   patrimonio: 1320000,
-  efectivo: 670000,
-  total_deuda: 150000,
-  total_inv: 500000,
-  total_activos: 300000,
-  ingresos_mes: 1000000,
-  gastos_mes: 200000,
-  quedo_mes: 800000,
-  ahorro_pct: 80,
   proy_delta: 720000,
-  cuota_total: 20000,
-  deudas_activas: 1,
-  total_invertido: 400000,
-  ganancia_inv: 100000,
-  ganancia_inv_pct: 25,
+  texto_proyeccion: 'proyectados en 12 meses',
   partes: [
     { id: 'activos', nombre: 'Activos', valor: 300000, negativo: false, detalle: '1 activo' },
     { id: 'inversiones', nombre: 'Inversiones', valor: 500000, negativo: false, detalle: '+$100k (+25,0%)' },
@@ -48,7 +36,6 @@ export const RESUMEN: ResumenDashboard = {
     { id: 'deudas', nombre: 'Deudas', valor: 150000, negativo: true, detalle: '$20.000/mes · 1 deuda' },
   ],
   total_barra: 1620000,
-  frase_mes: FRASE_QUEDO,
 }
 
 export const EVOLUCION: Evolucion = {
@@ -97,9 +84,9 @@ export const GASTOS: GastosPeriodo = {
 
 export const MOVIMIENTOS: Movimientos = {
   items: [
-    { id: 4, fecha: '2026-08-07', tipo: 'transfer', categoria: 'Pago deuda', descripcion: '', monto: 100000 },
-    { id: 3, fecha: '2026-08-06', tipo: 'gasto', categoria: 'Mercado', descripcion: '', monto: 50000 },
-    { id: 1, fecha: '2026-08-01', tipo: 'ingreso', categoria: 'Salario', descripcion: '', monto: 1000000 },
+    { id: 4, fecha: '2026-08-07', tipo: 'transfer', categoria: 'Pago deuda', descripcion: '', monto: 100000, monto_firmado: -100000 },
+    { id: 3, fecha: '2026-08-06', tipo: 'gasto', categoria: 'Mercado', descripcion: '', monto: 50000, monto_firmado: -50000 },
+    { id: 1, fecha: '2026-08-01', tipo: 'ingreso', categoria: 'Salario', descripcion: '', monto: 1000000, monto_firmado: 1000000 },
   ],
 }
 

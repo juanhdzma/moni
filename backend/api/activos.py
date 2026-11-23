@@ -1,36 +1,22 @@
 from fastapi import APIRouter
 
 from ..calculos import operaciones
-from ..calculos.fechas import ahora_bogota, hoy_bogota
-from ..calculos.formato import plural, porcentaje_texto
-from ..calculos.numeros import porcentaje
+from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..core.db import conexion
 from ..core.estado import coleccion
 from ..core.sql import delete_row, get_row, insert_row, insert_tx, update_row
 from ..core.tablas import ACTIVO_COLS, CAT_GASTO, CAT_INGRESO
 from ..schemas.activo import ActivoIn, ActivoValor, ActivoVenta
 from ..schemas.previews import NuevoValor, PrecioPreview
-from .lecturas import register_borrado, register_lectura
+from .lecturas import register_borrado
 
 router = APIRouter()
-register_lectura(router, "activo", "activos")
 register_borrado(router, "activo", "activos")
 
 
 def _datos_activo(body: ActivoIn, anterior: dict | None) -> dict:
     datos = body.model_dump(exclude={"crear_tx"})
-    datos["valor_actual"] = body.valor_actual or body.valor_inicial
-    datos["fecha_adquisicion"] = (
-        body.fecha_adquisicion or (anterior or {}).get("fecha_adquisicion") or hoy_bogota().isoformat()
-    )
-    if not body.valor_actualizado_en:
-        if anterior is None:
-            datos["valor_actualizado_en"] = datos["fecha_adquisicion"]
-        elif anterior["valor_actual"] == datos["valor_actual"]:
-            datos["valor_actualizado_en"] = anterior["valor_actualizado_en"]
-        else:
-            datos["valor_actualizado_en"] = ahora_bogota()
-    return datos
+    return operaciones.completar_activo(datos, anterior, hoy_bogota(), ahora_bogota_iso())
 
 
 @router.post("/api/activo", name="create_activo")
@@ -62,7 +48,7 @@ def actualizar_valor(activo_id: int, body: ActivoValor):
         get_row(conn, "activos", activo_id)
         conn.execute(
             "UPDATE activos SET valor_actual = ?, valor_actualizado_en = ? WHERE id = ?",
-            (body.nuevo_valor, body.fecha or ahora_bogota(), activo_id),
+            (body.nuevo_valor, body.fecha or ahora_bogota_iso(), activo_id),
         )
         conn.commit()
         return get_row(conn, "activos", activo_id)
@@ -75,7 +61,7 @@ def vender_activo(activo_id: int, body: ActivoVenta):
         delete_row(conn, "activos", activo_id)
         if body.registrar_tx:
             insert_tx(
-                conn, fecha=body.fecha or ahora_bogota(), tipo="ingreso", categoria=CAT_INGRESO["venta_activos"],
+                conn, fecha=body.fecha or ahora_bogota_iso(), tipo="ingreso", categoria=CAT_INGRESO["venta_activos"],
                 descripcion=f"Venta · {activo['nombre']}", monto=body.precio, notas=body.notas,
             )
         conn.commit()
@@ -100,8 +86,4 @@ def activos_resumen():
     with conexion() as conn:
         activos = coleccion(conn, "activos")
     resumen = operaciones.resumen_activos(activos)
-    return {
-        **resumen,
-        "texto_variacion": f"{porcentaje_texto(abs(resumen['variacion_pct']))}% sobre lo pagado" if resumen["total_inicial"] > 0 else "",
-        "texto_conteo": plural(len(activos), "activo", "activos"),
-    }
+    return {**resumen, **operaciones.texto_activos(resumen, len(activos))}

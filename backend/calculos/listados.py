@@ -1,9 +1,11 @@
 import unicodedata
 from datetime import timedelta
 
-from backend.calculos.constantes import CATEGORIAS_SISTEMA, tiene_saldo
-from backend.calculos.formato import cop, frase
-from backend.calculos.fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
+from .constantes import CATEGORIAS_SISTEMA, tiene_saldo
+from .fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
+from .formato import cop, frase
+from .numeros import monto_firmado
+from .operaciones.movimientos import ErrorDeDominio
 
 
 TIPOS = tuple(CATEGORIAS_SISTEMA)
@@ -21,8 +23,12 @@ ETIQUETAS_TIPO_FILA = {"ingreso": "Ingreso", "gasto": "Gasto", "transfer": "Auto
 EFECTIVO_DEBITO = "Efectivo / Débito"
 
 
-class CategoriaDuplicada(ValueError):
-    pass
+class CategoriaDuplicada(ErrorDeDominio):
+    status = 409
+
+
+class CategoriaInvalida(ErrorDeDominio):
+    status = 422
 
 
 def es_categoria_sistema(tipo, nombre):
@@ -43,12 +49,12 @@ def categorias_con_custom(custom_rows):
 
 def validar_categoria(tipo, nombre, existentes):
     if tipo not in TIPOS:
-        raise ValueError("tipo inválido")
+        raise CategoriaInvalida("Tipo inválido")
     limpio = (nombre or "").strip()
     if not limpio:
-        raise ValueError("nombre vacío")
+        raise CategoriaInvalida("Nombre vacío")
     if es_categoria_sistema(tipo, limpio) or limpio in existentes:
-        raise CategoriaDuplicada("categoría repetida")
+        raise CategoriaDuplicada("Categoría repetida")
     return limpio
 
 
@@ -80,6 +86,7 @@ def top_segmentos(items, n=4):
 def derivar_tx(fila, deudas_por_id):
     tx = dict(fila)
     tx["fecha"] = normalizar_fecha(fila["fecha"])
+    tx["monto_firmado"] = monto_firmado(fila["tipo"], fila["monto"])
     tarjeta_id = fila.get("tarjeta_id")
     tarjeta = deudas_por_id.get(tarjeta_id) if fila["tipo"] == "gasto" and tarjeta_id else None
     tx["tarjeta_nombre"] = tarjeta["nombre"] if tarjeta else None

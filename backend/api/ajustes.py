@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from ..calculos import listados
+from ..calculos.operaciones.movimientos import ErrorDeDominio
 from ..core import estado as store
 from ..core.db import conexion
 from ..schemas.ajustes import AjustesIn, CategoriaIn
@@ -13,12 +14,7 @@ router = APIRouter()
 def crear_categoria(body: CategoriaIn):
     with conexion() as conn:
         existentes = {r["nombre"] for r in conn.execute("SELECT nombre FROM categorias WHERE tipo = ?", (body.tipo,))}
-        try:
-            nombre = listados.validar_categoria(body.tipo, body.nombre, existentes)
-        except listados.CategoriaDuplicada as e:
-            raise HTTPException(409, str(e))
-        except ValueError as e:
-            raise HTTPException(422, str(e))
+        nombre = listados.validar_categoria(body.tipo, body.nombre, existentes)
         conn.execute("INSERT INTO categorias (tipo, nombre) VALUES (?, ?)", (body.tipo, nombre))
         conn.commit()
         return store.categorias(conn)
@@ -28,9 +24,9 @@ def crear_categoria(body: CategoriaIn):
 def borrar_categoria(tipo: TipoTx, nombre: str):
     with conexion() as conn:
         if listados.es_categoria_sistema(tipo, nombre):
-            raise HTTPException(409, "las categorías de sistema no se pueden borrar")
+            raise ErrorDeDominio("Las categorías de sistema no se pueden borrar", 409)
         if conn.execute("DELETE FROM categorias WHERE tipo = ? AND nombre = ?", (tipo, nombre)).rowcount == 0:
-            raise HTTPException(404, "categoría no encontrada")
+            raise ErrorDeDominio("Categoría no encontrada", 404)
         conn.commit()
         return store.categorias(conn)
 
@@ -45,4 +41,3 @@ def put_ajustes(body: AjustesIn):
         )
         conn.commit()
         return store.ajustes(conn)
-

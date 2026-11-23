@@ -75,7 +75,7 @@ async def fallo_generico(request: Request, motivo: str) -> JSONResponse:
     registrar_fallo(request, motivo)
     if RETRASO_FALLO:
         await asyncio.sleep(RETRASO_FALLO)
-    return JSONResponse({"detail": "Credenciales invalidas"}, status_code=401)
+    return JSONResponse({"detail": "Credenciales inválidas"}, status_code=401)
 
 
 def _duracion(segundos: int) -> str:

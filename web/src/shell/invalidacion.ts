@@ -49,6 +49,7 @@ const AFECTADAS_POR_RECURSO: Record<CrudEntity, Entidad[]> = {
 export const entidadesAfectadasPor = (recurso: CrudEntity): Entidad[] => AFECTADAS_POR_RECURSO[recurso]
 
 export function entidadesAfectadasPorRuta(path: string): Entidad[] {
+  if (/^\/api\/ops-ocultas(?:[/?]|$)/.test(path)) return ['opsOcultas']
   const recurso = /^\/api\/([a-z]+)(?:\/|$)/.exec(path)?.[1]
   return recurso && recurso in AFECTADAS_POR_RECURSO ? AFECTADAS_POR_RECURSO[recurso as CrudEntity] : TODAS_LAS_ENTIDADES
 }
@@ -69,8 +70,8 @@ export const DEPENDENCIAS_DE_VISTA = {
   gastos: ['transacciones'],
   movimientos: ['transacciones'],
   proximasOperaciones: ['transacciones', 'deudas', 'inversiones', 'recurrentes', 'opsOcultas', 'ajustes'],
-  opsOcultas: ['opsOcultas', 'deudas', 'inversiones', 'recurrentes'],
-  listadoTransacciones: ['transacciones', 'ajustes'],
+  opsOcultas: ['opsOcultas', 'transacciones', 'deudas', 'inversiones', 'recurrentes'],
+  listadoTransacciones: ['transacciones', 'categorias', 'ajustes'],
   opcionesTransaccion: ['transacciones', 'deudas', 'categorias'],
   resumenDeudas: ['deudas', 'ajustes'],
   resumenInversiones: ['inversiones', 'ajustes'],

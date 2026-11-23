@@ -92,3 +92,13 @@ def test_404_en_entidad_inexistente(client):
     assert client.post(
         "/api/inv/9999/rendimiento", json={"monto": 100, "fecha": "2026-07-01"}
     ).status_code == 404
+
+
+def test_no_encontrado_usa_nombre_legible_de_la_entidad(client):
+    assert client.get("/api/tx/999").json() == {"detail": "Movimiento 999 no encontrado"}
+    assert client.get("/api/deuda/999").json() == {"detail": "Deuda 999 no encontrado"}
+
+
+def test_listar_tx_rechaza_tipo_invalido(client):
+    assert client.get("/api/tx", params={"tipo": "otro"}).status_code == 422
+    assert client.get("/api/tx", params={"tipo": "gasto"}).status_code == 200

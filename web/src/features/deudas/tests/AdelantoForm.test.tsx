@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { estado } from '../../../test/factories'
+import { failure } from '../../../test/mockFetch'
 import { renderWithProviders } from '../../../test/render'
 import { Deudas } from '../index'
 import { acc, conResumen, dialog, full, hdr, resumenCompleto, tarjeta, installFakeDate } from './fixtures'
@@ -46,8 +47,6 @@ describe('adelanto', () => {
     await abrir(user)
     expect(document.getElementById('m-disponible-nuevo')).toBeNull()
     const status = () => document.getElementById('m-status') as HTMLElement
-    await user.click(screen.getByText('Pedir adelanto'))
-    expect(status()).toHaveTextContent('Ingresá el monto del adelanto')
     await user.type(document.getElementById('m-monto') as HTMLElement, '100')
     await user.click(screen.getByText('Pedir adelanto'))
     expect(status()).toHaveTextContent('Ingresá el saldo después del adelanto')
@@ -66,5 +65,18 @@ describe('adelanto', () => {
     await user.type(document.getElementById('m-monto') as HTMLElement, '100')
     await user.click(screen.getByText('Pedir adelanto'))
     expect(document.getElementById('m-status')).toHaveTextContent('Ingresá el cupo disponible después del adelanto')
+  })
+
+  it('muestra el 422 en español del backend cuando el monto va vacío', async () => {
+    const user = userEvent.setup()
+    const f = conResumen(resumenCompleto, {
+      'POST /api/deuda/2/adelanto': failure(422, [{ loc: ['body', 'monto'], msg: 'Debe ser mayor que 0', type: 'greater_than' }]),
+    })
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await abrir(user)
+    await user.type(document.getElementById('m-disponible-nuevo') as HTMLElement, '3450000')
+    await user.click(screen.getByText('Pedir adelanto'))
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Debe ser mayor que 0'))
+    expect(f.mutations().filter((c) => c.url === '/api/deuda/2/adelanto')).toHaveLength(1)
   })
 })

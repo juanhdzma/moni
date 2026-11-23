@@ -77,58 +77,64 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
         <MoneyField id="m-invertido" label="Monto invertido" value={invertido} onChange={setInvertido} />
         <MoneyField id="m-actual" label="Valor actual" value={actual} onChange={setActual} />
       </div>
-      <div id="m-tasa-wrap" className="form-group" style={tipo === 'fija' ? undefined : { display: 'none' }}>
-        <label className="form-label" htmlFor="m-tasa">
-          Tasa de rendimiento
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            className="form-input flex-1"
-            type="number"
-            step="0.0001"
-            id="m-tasa"
-            value={tasa}
-            placeholder="0"
-            onChange={(e) => setTasa(e.target.value)}
-          />
-          <div className="flex shrink-0 overflow-hidden rounded-md border">
-            <button type="button" className={rateBtn(rateType === 'ea')} data-rate="ea" aria-pressed={rateType === 'ea'} onClick={() => setRateType('ea')}>
-              EA
-            </button>
-            <button type="button" className={rateBtn(rateType === 'mv')} data-rate="mv" aria-pressed={rateType === 'mv'} onClick={() => setRateType('mv')}>
-              MV
-            </button>
+      {tipo === 'fija' && (
+        <div id="m-tasa-wrap" className="form-group">
+          <label className="form-label" htmlFor="m-tasa">
+            Tasa de rendimiento
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              className="form-input flex-1"
+              type="number"
+              step="0.0001"
+              id="m-tasa"
+              value={tasa}
+              placeholder="0"
+              onChange={(e) => setTasa(e.target.value)}
+            />
+            <div className="flex shrink-0 overflow-hidden rounded-md border">
+              <button type="button" className={rateBtn(rateType === 'ea')} data-rate="ea" aria-pressed={rateType === 'ea'} onClick={() => setRateType('ea')}>
+                EA
+              </button>
+              <button type="button" className={rateBtn(rateType === 'mv')} data-rate="mv" aria-pressed={rateType === 'mv'} onClick={() => setRateType('mv')}>
+                MV
+              </button>
+            </div>
+          </div>
+          <div id="tasa-equiv" className={hintClass}>
+            {equiv}
           </div>
         </div>
-        <div id="tasa-equiv" className={hintClass}>
-          {equiv}
+      )}
+      {tipo === 'fija' && (
+        <div id="m-pago-wrap">
+          <TipoToggle
+            label="Pago de rendimientos"
+            value={pago}
+            opciones={meta?.pagos_inversion ?? []}
+            tonos={TONOS_PAGO}
+            idPrefix="rp"
+            onChange={setPago}
+          />
         </div>
-      </div>
-      <div id="m-pago-wrap" style={tipo === 'fija' ? undefined : { display: 'none' }}>
-        <TipoToggle
-          label="Pago de rendimientos"
-          value={pago}
-          opciones={meta?.pagos_inversion ?? []}
-          tonos={TONOS_PAGO}
-          idPrefix="rp"
-          onChange={setPago}
-        />
-      </div>
-      <div id="m-dia-pago-wrap" className="form-group" style={tipo === 'fija' && pago === 'mensual' ? undefined : { display: 'none' }}>
-        <label className="form-label" htmlFor="m-dia-pago">
-          Día del mes que paga
-        </label>
-        <input
-          className="form-input"
-          type="number"
-          id="m-dia-pago"
-          min="1"
-          max="31"
-          value={diaPago}
-          placeholder="Ej. 15"
-          onChange={(e) => setDiaPago(e.target.value)}
-        />
-      </div>
+      )}
+      {tipo === 'fija' && pago === 'mensual' && (
+        <div id="m-dia-pago-wrap" className="form-group">
+          <label className="form-label" htmlFor="m-dia-pago">
+            Día del mes que paga
+          </label>
+          <input
+            className="form-input"
+            type="number"
+            id="m-dia-pago"
+            min="1"
+            max="31"
+            value={diaPago}
+            placeholder="Ej. 15"
+            onChange={(e) => setDiaPago(e.target.value)}
+          />
+        </div>
+      )}
       <div className="form-group">
         <label className="form-label" htmlFor="m-fecha-ini">
           Fecha inicio

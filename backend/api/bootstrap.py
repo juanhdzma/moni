@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
 from ..calculos import listados
-from ..calculos.constantes import DIAS_DESACTUALIZADO, TEXTO_DESACTUALIZADO
-from ..calculos.fechas import ahora_bogota, hoy_bogota
+from ..calculos.constantes import TEXTO_DESACTUALIZADO
+from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..core import estado as store
 from ..core.db import conexion
 
@@ -15,9 +15,9 @@ def bootstrap():
         hoy = hoy_bogota()
         return {
             "hoy": hoy.isoformat(),
-            "ahora": ahora_bogota(),
+            "ahora": ahora_bogota_iso(),
             "categorias": store.categorias(conn),
             "ajustes": store.ajustes(conn),
             "alertas": listados.alertas(store.filas(conn, "activos"), store.filas(conn, "inversiones"), hoy),
-            "desactualizado": {"dias": DIAS_DESACTUALIZADO, "texto": TEXTO_DESACTUALIZADO},
+            "desactualizado": {"texto": TEXTO_DESACTUALIZADO},
         }

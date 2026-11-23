@@ -48,7 +48,7 @@ describe('Activos render', () => {
     const viejo = { ...a1, desactualizado: true }
     mockFetch({ 'GET /api/activos/resumen': resumenDe([viejo]) })
     renderWithProviders(<Activos active />, {
-      estado: estado({ desactualizado: { dias: 45, texto: 'Sin actualizar hace más de 45 días' } }),
+      estado: estado({ desactualizado: { texto: 'Sin actualizar hace más de 45 días' } }),
     })
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Sin actualizar hace más de 45 días')
   })

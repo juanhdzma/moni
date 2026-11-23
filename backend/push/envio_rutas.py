@@ -43,7 +43,7 @@ def _limitar(request: Request) -> None:
     while cola and ahora - cola[0] > VENTANA_S:
         cola.popleft()
     if len(cola) >= MAX_ENVIOS:
-        raise HTTPException(429, "Demasiados envios", headers={"Retry-After": str(VENTANA_S)})
+        raise HTTPException(429, "Demasiados envíos", headers={"Retry-After": str(VENTANA_S)})
     cola.append(ahora)
 
 

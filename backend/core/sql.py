@@ -1,6 +1,18 @@
-from fastapi import HTTPException
-
+from ..calculos.operaciones.movimientos import ErrorDeDominio
+from .montos import pesos
 from .tablas import TX_COLS
+
+ENTIDADES = {
+    "transacciones": "Movimiento",
+    "deudas": "Deuda",
+    "inversiones": "Inversión",
+    "activos": "Activo",
+    "recurrentes": "Recurrente",
+}
+
+
+def _no_encontrado(table, row_id):
+    return ErrorDeDominio(f"{ENTIDADES.get(table, 'Registro')} {row_id} no encontrado", 404)
 
 
 def insert_row(conn, table, cols, values):
@@ -24,17 +36,26 @@ def update_row(conn, table, cols, row_id, values):
         [values.get(c) for c in cols] + [row_id],
     )
     if cur.rowcount == 0:
-        raise HTTPException(404, f"{table} {row_id} no encontrado")
+        raise _no_encontrado(table, row_id)
 
 
 def get_row(conn, table, row_id):
     row = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (row_id,)).fetchone()
     if row is None:
-        raise HTTPException(404, f"{table} {row_id} no encontrado")
+        raise _no_encontrado(table, row_id)
     return dict(row)
+
+
+def guardar_y_leer(conn, table, row_id):
+    conn.commit()
+    return get_row(conn, table, row_id)
 
 
 def delete_row(conn, table, row_id):
     cur = conn.execute(f"DELETE FROM {table} WHERE id = ?", (row_id,))
     if cur.rowcount == 0:
-        raise HTTPException(404, f"{table} {row_id} no encontrado")
+        raise _no_encontrado(table, row_id)
+
+
+def fijar_saldo(conn, deuda_id, saldo):
+    conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (pesos(saldo), deuda_id))

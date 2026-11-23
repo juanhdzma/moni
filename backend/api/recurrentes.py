@@ -12,16 +12,11 @@ router = APIRouter()
 register_borrado(router, "rec", "recurrentes")
 
 
-def _categoria_sugerida(rec: dict, nombres_por_tipo: dict) -> str:
-    nombres = [c["nombre"] for c in nombres_por_tipo[rec["tipo"]]]
-    return rec["nombre"] if rec["nombre"] in nombres else nombres[-1]
-
-
 @router.get("/api/rec/{row_id:int}", name="get_rec")
 def leer_rec(row_id: int):
     with conexion() as conn:
         rec = detalle(conn, "recurrentes", row_id)
-        return {**rec, "categoria_sugerida": _categoria_sugerida(rec, categorias(conn))}
+        return {**rec, "categoria_sugerida": operaciones.categoria_sugerida(rec, categorias(conn))}
 
 
 @router.post("/api/rec", name="create_rec")
@@ -61,5 +56,5 @@ def rec_resumen():
         resumen = operaciones.resumen_recurrentes(coleccion(conn, "recurrentes"), simbolo(conn))
         cats = categorias(conn)
     for lista in ("ingresos", "gastos"):
-        resumen[lista] = [{**r, "categoria_sugerida": _categoria_sugerida(r, cats)} for r in resumen[lista]]
+        resumen[lista] = [{**r, "categoria_sugerida": operaciones.categoria_sugerida(r, cats)} for r in resumen[lista]]
     return resumen

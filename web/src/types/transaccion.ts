@@ -8,6 +8,7 @@ export interface Transaccion {
   categoria: string
   descripcion: string
   monto: number
+  monto_firmado: number
   notas: string
   tarjeta_id: number | null
   tarjeta_nombre: string | null
@@ -25,7 +26,7 @@ export type ColTx = 'fecha' | 'tipo' | 'categoria' | 'descripcion' | 'monto'
 export interface FiltrosTx {
   col?: ColTx
   dir?: 1 | -1
-  tipo?: 'ingreso' | 'gasto' | ''
+  tipo?: TipoTx | ''
   mes?: string
   cat?: string
 }

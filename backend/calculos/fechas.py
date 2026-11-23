@@ -24,7 +24,7 @@ def hoy_bogota() -> datetime.date:
     return datetime.datetime.now(TZ).date()
 
 
-def ahora_bogota() -> str:
+def ahora_bogota_iso() -> str:
     return datetime.datetime.now(TZ).strftime("%Y-%m-%dT%H:%M")
 
 

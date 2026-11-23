@@ -15,7 +15,6 @@ export interface Alertas {
 }
 
 export interface UmbralDesactualizado {
-  dias: number
   texto: string
 }
 
@@ -36,10 +35,4 @@ export interface CrudPayloads {
   inv: InvIn
   activo: ActivoIn
   rec: RecIn
-}
-
-export interface PreviewValor {
-  delta: number
-  total: number
-  total_pct: number
 }

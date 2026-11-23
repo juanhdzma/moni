@@ -35,10 +35,6 @@ export function AdelantoForm({ d }: { d: Deuda }) {
   const comision = preview?.comision ?? 0
 
   const save = async () => {
-    if (!monto.trim()) {
-      setModalStatus('err', 'Ingresá el monto del adelanto')
-      return
-    }
     if (!saldoEscrito.trim()) {
       setModalStatus('err', tieneCupo ? 'Ingresá el cupo disponible después del adelanto' : 'Ingresá el saldo después del adelanto')
       return

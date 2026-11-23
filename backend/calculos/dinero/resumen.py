@@ -20,6 +20,7 @@ from .series import (
 
 PERIODOS_EVOLUCION = PERIODOS_GASTOS[1:]
 MESES_ESTE_MES = 6
+MESES_PROYECCION = 12
 
 
 def frase_mes(ahorro_pct: float, ingresos: float) -> dict:
@@ -81,7 +82,8 @@ def resumen_dashboard(estado, hoy: datetime.date) -> dict:
         "gastos_mes": mes["gastos"],
         "quedo_mes": mes["ingresos"] - mes["gastos"],
         "ahorro_pct": mes["ahorro_pct"],
-        "proy_delta": sum(ultimos12) / len(ultimos12) * 12,
+        "proy_delta": sum(ultimos12) / len(ultimos12) * MESES_PROYECCION,
+        "texto_proyeccion": f"proyectados en {MESES_PROYECCION} meses",
         "cuota_total": sum(d["cuota_mensual"] for d in activas),
         "deudas_activas": len(activas),
         "total_invertido": total_invertido,

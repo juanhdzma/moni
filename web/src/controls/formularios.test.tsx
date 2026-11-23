@@ -14,7 +14,7 @@ afterEach(() => vi.unstubAllGlobals())
 describe('TipoToggle', () => {
   it('marca la opción elegida, usa el tono por valor y notifica el cambio', async () => {
     const onChange = vi.fn()
-    render(<TipoToggle value="ingreso" opciones={META.tipos_transaccion.slice(0, 2)} idPrefix="t" onChange={onChange} />)
+    render(<TipoToggle value="ingreso" opciones={META.tipos_manuales} idPrefix="t" onChange={onChange} />)
     expect(screen.getByRole('group', { name: 'Tipo' })).toBeInTheDocument()
     expect(document.getElementById('t-ingreso')).toHaveClass('tipo-btn', 'ingreso', 'sel')
     await userEvent.click(screen.getByRole('button', { name: 'Gasto' }))

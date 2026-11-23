@@ -6,15 +6,15 @@ import { FraseTexto, Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
 import { Select } from '../../controls/Select'
 import { cargarListadoTx } from '../../lib/api'
-import { FRANQUICIA_ICONS, cop, fmtDate } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
-import type { ColTx, ColumnaTransaccion, FilaTx, FiltrosTx } from '../../types'
+import type { ColTx, ColumnaTransaccion, FiltrosTx } from '../../types'
 import { openTxForm, openTxFormById } from './forms'
+import { FilasTx } from './TxTabla'
 
 interface Orden {
   col: string
@@ -23,69 +23,6 @@ interface Orden {
 
 const siguienteOrden = (actual: Orden, { col, dir_defecto }: ColumnaTransaccion): Orden =>
   actual.col === col ? { col, dir: actual.dir === 1 ? -1 : 1 } : { col, dir: dir_defecto }
-
-function PmCell({ t }: { t: FilaTx }) {
-  const icon = t.tipo === 'gasto' && t.tarjeta_id ? FRANQUICIA_ICONS[t.tarjeta_franquicia ?? ''] || FRANQUICIA_ICONS.Otra : 'assets/icons/efectivo.svg'
-  return (
-    <div className="flex items-center gap-2">
-      <img src={icon} width="18" height="18" alt="" className="shrink-0" />
-      <span title={t.tarjeta_nombre ?? undefined}>{t.metodo_pago}</span>
-    </div>
-  )
-}
-
-const CELDA = 'px-2 py-2 align-middle'
-
-function TxRow({ t, onEdit }: { t: FilaTx; onEdit: (id: number) => void }) {
-  const prefix = t.tipo === 'ingreso' ? '+' : '−'
-  const editable =
-    t.tipo === 'transfer'
-      ? {}
-      : {
-          onClick: () => onEdit(t.id),
-          onKeyDown: (e: React.KeyboardEvent) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              onEdit(t.id)
-            }
-          },
-          tabIndex: 0,
-          role: 'button',
-          'aria-label': `Editar ${t.descripcion || t.categoria}`,
-        }
-  return (
-    <tr
-      {...editable}
-      className={cn('border-b last:border-b-0', t.tipo !== 'transfer' && 'cursor-pointer hover:bg-muted focus-visible:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring')}
-    >
-      <td data-label="Fecha" className={cn(CELDA, 'whitespace-nowrap text-xs text-muted-foreground')}>
-        {fmtDate(t.fecha)}
-      </td>
-      <td data-label="Tipo" className={cn(CELDA, 'hidden text-xs text-muted-foreground sm:table-cell')}>
-        {t.tipo_label}
-      </td>
-      <td data-label="Categoría" className={cn(CELDA, 'hidden sm:table-cell')}>
-        {t.categoria}
-      </td>
-      <td data-label="Descripción" className={cn(CELDA, 'min-w-0 max-w-[14rem] truncate')}>
-        <span className="block truncate">{t.descripcion || '—'}</span>
-        <span className="block truncate text-xs text-muted-foreground sm:hidden">
-          {t.categoria} · {t.tipo_label}
-        </span>
-        <div className="mt-0.5 text-xs text-muted-foreground md:hidden">
-          <PmCell t={t} />
-        </div>
-      </td>
-      <td data-label="Monto" className={cn(CELDA, 'whitespace-nowrap text-right font-semibold', t.tipo === 'ingreso' ? 'text-cartera' : t.tipo === 'transfer' ? 'text-muted-foreground' : 'text-foreground')}>
-        {prefix}
-        {cop(t.monto)}
-      </td>
-      <td data-label="Método de pago" className={cn(CELDA, 'hidden text-xs text-muted-foreground md:table-cell')}>
-        <PmCell t={t} />
-      </td>
-    </tr>
-  )
-}
 
 export function Transacciones({ active }: TabProps) {
   const ctx = useOpenerCtx()
@@ -112,48 +49,6 @@ export function Transacciones({ active }: TabProps) {
   const pills = data?.pills ?? []
   const quitar = { mes: () => setMesSel(''), tipo: () => setTipoSel(''), cat: () => setCatSel('') }
   const onEdit = (id: number) => openTxFormById(ctx, id)
-
-  const COLS = 6
-  const mensaje = (key: string, children: React.ReactNode) => (
-    <tr key={key}>
-      <td colSpan={COLS} className="px-2 py-10 text-center text-sm text-muted-foreground">
-        {children}
-      </td>
-    </tr>
-  )
-
-  const rows: React.ReactNode[] = []
-  if (!data) {
-    rows.push(mensaje('loading', 'Cargando...'))
-  } else if (!list.length) {
-    rows.push(
-      mensaje(
-        'empty',
-        <>
-          <div className="font-semibold text-foreground">Sin movimientos</div>
-          <div>Agregá un ingreso o gasto con el botón de arriba.</div>
-        </>,
-      ),
-    )
-  } else if (sort.col !== 'fecha') {
-    list.forEach((t) => rows.push(<TxRow key={t.id} t={t} onEdit={onEdit} />))
-  } else {
-    let lastBucket: string | null = null
-    list.forEach((t) => {
-      const bucket = t.grupo
-      if (bucket !== lastBucket) {
-        rows.push(
-          <tr key={`g-${bucket}-${t.id}`} className="tx-group-row bg-muted">
-            <td className="tx-group-label px-2 py-1.5 text-xs font-semibold text-muted-foreground" colSpan={COLS}>
-              {bucket}
-            </td>
-          </tr>,
-        )
-        lastBucket = bucket
-      }
-      rows.push(<TxRow key={t.id} t={t} onEdit={onEdit} />)
-    })
-  }
 
   const r = data?.resumen ?? { neto: 0, dato: null, segmentos: [] }
 
@@ -267,7 +162,7 @@ export function Transacciones({ active }: TabProps) {
                 <th className="hidden px-2 py-2 text-left text-xs font-semibold text-muted-foreground md:table-cell">Método de pago</th>
               </tr>
             </thead>
-            <tbody id="tx-tbody">{rows}</tbody>
+            <tbody id="tx-tbody"><FilasTx items={data ? list : null} agrupar={sort.col === 'fecha'} onEdit={onEdit} /></tbody>
           </table>
         </div>
       </Panel>

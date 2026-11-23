@@ -30,7 +30,6 @@ def meta():
     return {
         "frecuencias": opciones_frecuencia(),
         "franquicias": [{"value": f, "label": f or "Ninguna"} for f in get_args(Franquicia)],
-        "tipos_transaccion": _opciones(ETIQUETAS_TIPO_FILA),
         "tipos_manuales": _opciones({k: v for k, v in ETIQUETAS_TIPO_FILA.items() if k != "transfer"}),
         "tipos_categoria": ETIQUETAS_TIPO_CATEGORIA,
         "tipos_inversion": TIPOS_INVERSION,

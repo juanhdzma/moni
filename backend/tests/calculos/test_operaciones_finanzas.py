@@ -83,3 +83,11 @@ def test_comision_adelanto():
     assert op.comision_adelanto(1_000_000, 500_000, 1_520_000) == 20_000
     assert op.comision_adelanto(1_000_000, 500_000, 1_500_000) == 0
     assert op.comision_adelanto(1_000_000, 500_000, 1_400_000) == 0
+
+
+def test_equivalencia_tasa():
+    assert op.tasas.equivalencia_tasa(0, "ea") == {"ea": None, "mv": None, "texto": None}
+    ea = op.tasas.equivalencia_tasa(12, "ea")
+    assert ea["ea"] == 12 and ea["texto"].startswith("Equivale a ") and ea["texto"].endswith("% MV")
+    mv = op.tasas.equivalencia_tasa(1, "mv")
+    assert mv["mv"] == 1 and mv["texto"].endswith("% EA")

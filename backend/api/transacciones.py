@@ -1,18 +1,19 @@
 import logging
 from typing import Literal, Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from ..calculos import listados
-from ..calculos.fechas import ahora_bogota, hoy_bogota
+from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
+from ..calculos.operaciones.movimientos import ErrorDeDominio
 from ..core.db import conexion
 from ..core import estado as store
 from ..core.estado import coleccion
 from ..core.montos import pesos
 from ..core.ops_ocultas import ocultar_op
-from ..core.sql import delete_row, get_row, insert_row, update_row
+from ..core.sql import delete_row, fijar_saldo, get_row, guardar_y_leer, insert_row, update_row
 from ..core.tablas import TX_COLS
 from ..schemas.transaccion import TxIn
-from ..schemas.validadores import ColumnaTx
+from ..schemas.validadores import ColumnaTx, TipoTx
 from .lecturas import register_lectura
 
 logger = logging.getLogger("moni")
@@ -28,9 +29,9 @@ def ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
         logger.warning("tx apunta a tarjeta %s inexistente; se ignora el ajuste de saldo", tarjeta_id)
         return
     if not tarjeta["es_tarjeta"]:
-        raise HTTPException(400, f"tarjeta_id {tarjeta_id} no es una tarjeta válida")
+        raise ErrorDeDominio(f"La tarjeta {tarjeta_id} no es válida")
     nuevo_saldo = pesos(tarjeta["saldo_actual"] + delta)
-    conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (nuevo_saldo, tarjeta_id))
+    fijar_saldo(conn, tarjeta_id, nuevo_saldo)
     logger.info(
         "tarjeta %s: saldo_actual %.2f -> %.2f (delta %.2f)",
         tarjeta_id, tarjeta["saldo_actual"], nuevo_saldo, delta,
@@ -55,8 +56,7 @@ def create_tx(body: TxIn):
         _aplicar_efecto_en_tarjeta(conn, data)
         if data["op_clave"]:
             ocultar_op(conn, data["op_clave"])
-        conn.commit()
-        return get_row(conn, "transacciones", new_id)
+        return guardar_y_leer(conn, "transacciones", new_id)
 
 
 @router.put("/api/tx/{row_id}", name="update_tx")
@@ -66,8 +66,7 @@ def update_tx(row_id: int, body: TxIn):
         data = body.model_dump()
         update_row(conn, "transacciones", TX_COLS, row_id, data)
         _aplicar_efecto_en_tarjeta(conn, data)
-        conn.commit()
-        return get_row(conn, "transacciones", row_id)
+        return guardar_y_leer(conn, "transacciones", row_id)
 
 
 @router.delete("/api/tx/{row_id}", status_code=204, name="delete_tx")
@@ -83,7 +82,7 @@ def opciones_tx(tx_id: Optional[int] = None):
     with conexion() as conn:
         tx = get_row(conn, "transacciones", tx_id) if tx_id is not None else None
         return listados.opciones_tx(
-            store.categorias(conn), coleccion(conn, "deudas"), tx, ahora_bogota()
+            store.categorias(conn), coleccion(conn, "deudas"), tx, ahora_bogota_iso()
         )
 
 
@@ -91,7 +90,7 @@ def opciones_tx(tx_id: Optional[int] = None):
 def listar_tx(
     col: ColumnaTx = "fecha",
     dir: Literal["1", "-1"] = "-1",
-    tipo: str = "",
+    tipo: TipoTx | Literal[""] = "",
     mes: str = "",
     cat: str = "",
 ):

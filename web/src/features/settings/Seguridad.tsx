@@ -4,8 +4,6 @@ import { errMsg } from '../../lib/format'
 import { nombreDeDispositivo, passkeysDisponibles, registrarPasskey } from '../../lib/seguridad/passkeys'
 import { useAuth } from '@/shell/providers/AuthProvider'
 
-const fechaCorta = (iso: string | null): string => (iso ? iso.slice(0, 16).replace('T', ' ') : 'nunca')
-
 export function Seguridad() {
   const { salir } = useAuth()
   const [passkeys, setPasskeys] = useState<Passkey[] | null>(null)
@@ -79,7 +77,7 @@ export function Seguridad() {
               <li className="flex items-center justify-between gap-3 py-2" key={p.id}>
                 <span className="text-sm">
                   {p.nombre}
-                  <span className="ml-2 text-xs text-muted-foreground">Último uso: {fechaCorta(p.ultimo_uso)}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">Último uso: {p.ultimo_uso_texto}</span>
                 </span>
                 <button type="button" className="btn btn-dim btn-sm" onClick={() => void correr(() => borrarPasskey(p.id), 'Face ID eliminado')}>
                   Eliminar
@@ -99,7 +97,7 @@ export function Seguridad() {
                 <span className="min-w-0 text-xs text-muted-foreground">
                   <span className="text-sm text-foreground">{s.actual ? 'Esta sesión' : s.user_agent || 'Sesión'}</span>
                   <br />
-                  {s.ip} · {s.metodo} · {fechaCorta(s.ultimo_uso)}
+                  {s.ip} · {s.metodo} · {s.ultimo_uso_texto}
                 </span>
                 {!s.actual && (
                   <button type="button" className="btn btn-dim btn-sm" onClick={() => void correr(() => revocarSesion(s.id), 'Sesión revocada')}>

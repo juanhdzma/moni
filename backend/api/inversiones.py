@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
 from ..calculos import operaciones
+from ..calculos.fechas import hoy_bogota
+from ..calculos.operaciones.movimientos import retiro_parcial, valor_estimado_tras_aporte
 from ..core.db import conexion
 from ..core.estado import coleccion, simbolo
 from ..core.montos import pesos
@@ -10,38 +12,23 @@ from ..core.tablas import CAT_GASTO, CAT_INGRESO, INV_COLS
 from ..schemas.inversion import InvAporte, InvIn, InvRendimiento, InvRetiro
 from ..schemas.previews import MontoPreview, NuevoValor
 from .lecturas import register_borrado, register_lectura
-from ..calculos.fechas import hoy_bogota
-from ..calculos.formato import plural
-from ..calculos.operaciones.movimientos import retiro_parcial, valor_estimado_tras_aporte
 
 router = APIRouter()
 register_lectura(router, "inv", "inversiones")
 register_borrado(router, "inv", "inversiones")
 
-DESCRIPCION_RENDIMIENTO = (
-    "Un rendimiento cuenta de UN solo lado, nunca de los dos.\n\n"
-    "Antes esto subía valor_actual y además insertaba el ingreso, así que el\n"
-    "patrimonio subía dos veces por el mismo peso: un CDT de 1.000.000 que paga\n"
-    "95.000 quedaba mostrando 1.190.000. Si capitaliza, la plata sigue adentro de\n"
-    "la inversión y no entró a la cartera; si te la pagan, salió de la inversión\n"
-    "y su valor no se mueve."
-)
+DESCRIPCION_RENDIMIENTO = "Un rendimiento cuenta de un solo lado: si capitaliza sube valor_actual sin transacción; si se paga, es un ingreso y el valor no cambia."
 
 
-def _datos_inversion(body: InvIn, hoy) -> dict:
+def _datos_inversion(body: InvIn, anterior: dict | None) -> dict:
     data = operaciones.normalizar_tasa(body.model_dump())
-    if data["valor_actual"] is None:
-        data["valor_actual"] = data["monto_invertido"]
-    data["fecha_inicio"] = data["fecha_inicio"] or hoy.isoformat()
-    return data
+    return operaciones.completar_inversion(data, anterior, hoy_bogota())
 
 
 @router.post("/api/inv", name="create_inv")
 def crear_inv(body: InvIn):
-    hoy = hoy_bogota()
     with conexion() as conn:
-        data = _datos_inversion(body, hoy)
-        data["valor_actualizado_en"] = data["valor_actualizado_en"] or data["fecha_inicio"]
+        data = _datos_inversion(body, None)
         crear_tx = data.pop("crear_tx")
         new_id = insert_row(conn, "inversiones", INV_COLS, data)
         if crear_tx:
@@ -55,14 +42,9 @@ def crear_inv(body: InvIn):
 
 @router.put("/api/inv/{row_id}", name="update_inv")
 def actualizar_inv(row_id: int, body: InvIn):
-    hoy = hoy_bogota()
     with conexion() as conn:
-        anterior = get_row(conn, "inversiones", row_id)
-        data = _datos_inversion(body, hoy)
+        data = _datos_inversion(body, get_row(conn, "inversiones", row_id))
         data.pop("crear_tx")
-        if not data["valor_actualizado_en"]:
-            mismo_valor = anterior["valor_actual"] == data["valor_actual"]
-            data["valor_actualizado_en"] = anterior["valor_actualizado_en"] if mismo_valor else hoy.isoformat()
         update_row(conn, "inversiones", INV_COLS, row_id, data)
         conn.commit()
         return get_row(conn, "inversiones", row_id)
@@ -149,6 +131,5 @@ def inv_aporte_preview(inv_id: int, body: MontoPreview):
 def inv_resumen():
     with conexion() as conn:
         resumen = operaciones.resumen_inversiones(coleccion(conn, "inversiones"), simbolo(conn))
-    posiciones = len(resumen["fijas"]) + len(resumen["variables"])
-    resumen["texto_posiciones"] = plural(posiciones, "posición", "posiciones")
+    resumen["texto_posiciones"] = operaciones.texto_posiciones(resumen)
     return resumen

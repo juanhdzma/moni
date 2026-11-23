@@ -10,7 +10,7 @@ def test_challenge_reusado_falla(client):
     assert client.post(VERIFICAR_LOGIN, json=cred).status_code == 200
     client.cookies.clear()
     r = client.post(VERIFICAR_LOGIN, json=auten.firmar(opciones, 2))
-    assert r.status_code == 401 and r.json() == {"detail": "Credenciales invalidas"}
+    assert r.status_code == 401 and r.json() == {"detail": "Credenciales inválidas"}
     assert fallos() == 1
 
 

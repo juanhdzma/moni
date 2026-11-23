@@ -32,26 +32,7 @@ const FRASE_SIN_INGRESOS = {
   partes: [{ texto: 'Todavía no entró plata este mes.', tono: null }],
 }
 
-const RESUMEN_DASHBOARD: ResumenDashboard = {
-  patrimonio: 0,
-  efectivo: 0,
-  total_deuda: 0,
-  total_inv: 0,
-  total_activos: 0,
-  ingresos_mes: 0,
-  gastos_mes: 0,
-  quedo_mes: 0,
-  ahorro_pct: 0,
-  proy_delta: 0,
-  cuota_total: 0,
-  deudas_activas: 0,
-  total_invertido: 0,
-  ganancia_inv: 0,
-  ganancia_inv_pct: 0,
-  partes: [],
-  total_barra: 0,
-  frase_mes: FRASE_SIN_INGRESOS,
-}
+const RESUMEN_DASHBOARD: ResumenDashboard = { patrimonio: 0, proy_delta: 0, texto_proyeccion: 'proyectados en 12 meses', partes: [], total_barra: 0 }
 
 const EVOLUCION: Evolucion = {
   serie: 'patrimonio',

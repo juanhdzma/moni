@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
 import { Panel } from '@/components/panel'
-import { apiFetch } from '../../lib/api'
+import { cargarBackup, importarBackup } from '../../lib/api'
 import { errMsg } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { HINT } from './estilos'
@@ -11,7 +11,7 @@ function Backup() {
 
   const exportar = async () => {
     try {
-      const data = await apiFetch('/api/backup')
+      const data = await cargarBackup()
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -31,12 +31,9 @@ function Backup() {
     setStatus({ cls: 'form-status', msg: 'Importando...' })
     try {
       const payload: unknown = JSON.parse(await file.text())
-      const result = await apiFetch<Record<string, unknown>>('/api/import', { method: 'POST', body: payload })
+      const result = await importarBackup(payload)
       await reload()
-      setStatus({
-        cls: 'form-status ok',
-        msg: 'Importado: ' + Object.entries(result).map(([k, v]) => `${String(v)} ${k}`).join(', '),
-      })
+      setStatus({ cls: 'form-status ok', msg: result.texto })
     } catch (err) {
       setStatus({ cls: 'form-status err', msg: errMsg(err) })
     } finally {

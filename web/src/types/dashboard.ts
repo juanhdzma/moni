@@ -19,23 +19,10 @@ export type FraseMes = Frase & { tipo: 'sin_ingresos' | 'quedo' | 'excedio'; pct
 
 export interface ResumenDashboard {
   patrimonio: number
-  efectivo: number
-  total_deuda: number
-  total_inv: number
-  total_activos: number
-  ingresos_mes: number
-  gastos_mes: number
-  quedo_mes: number
-  ahorro_pct: number
   proy_delta: number
-  cuota_total: number
-  deudas_activas: number
-  total_invertido: number
-  ganancia_inv: number
-  ganancia_inv_pct: number
+  texto_proyeccion: string
   partes: ParteResumen[]
   total_barra: number
-  frase_mes: FraseMes
 }
 
 export type SerieEvolucion = 'patrimonio' | 'inversiones'
@@ -112,6 +99,7 @@ export interface Movimiento {
   categoria: string
   descripcion: string
   monto: number
+  monto_firmado: number
 }
 
 export interface Movimientos {

@@ -49,6 +49,7 @@ export type DeudaIn = Pick<
 export interface DeudaPago {
   nuevo_saldo: number
   total_pagado: number
+  intereses?: number
   fecha?: string
   descripcion?: string
   notas: string

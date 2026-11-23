@@ -7,15 +7,19 @@ def test_roundtrip_export_import(client, tarjeta):
     client.post("/api/rec", json={"nombre": "Netflix", "tipo": "gasto", "monto": 40, "frecuencia": "mensual"})
     client.post("/api/inv", json=INV_OK)
     client.post("/api/activo", json={"nombre": "Casa", "valor_inicial": 1000, "valor_actual": 1200})
+    client.post("/api/categorias", json={"tipo": "gasto", "nombre": "Extra"})
+    client.post("/api/ops-ocultas", json={"clave": "deuda:1:2026-01-01"})
     antes = client.get("/api/backup").json()
-    assert set(antes) == {"transacciones", "deudas", "inversiones", "activos", "recurrentes"}
+    assert set(antes) == {"transacciones", "deudas", "inversiones", "activos", "recurrentes", "categorias", "ops_ocultas"}
     assert all(len(filas) == 1 for tabla, filas in antes.items() if tabla != "deudas")
 
     client.post("/api/truncate")
     assert all(filas == [] for filas in client.get("/api/backup").json().values())
 
-    counts = client.post("/api/import", json=antes).json()
-    assert counts["transacciones"] == 1
+    r = client.post("/api/import", json=antes).json()
+    assert r["counts"]["transacciones"] == 1 and r["counts"]["categorias"] == 1
+    assert r["texto"].startswith("Importado: 1 deuda, 1 inversión, 1 activo")
+    assert "1 operación oculta" in r["texto"]
     assert client.get("/api/backup").json() == antes
 
 
@@ -23,6 +27,11 @@ def test_import_rechaza_filas_corruptas(client):
     r = client.post("/api/import", json={"transacciones": [{**TX_OK, "monto": "mucha plata"}]})
     assert r.status_code == 400
     assert "transacciones[0]" in r.json()["detail"]
+    assert "Debe ser un número" in r.json()["detail"]
+
+
+def test_import_viejo_sin_categorias_ni_ops_entra(client):
+    assert client.post("/api/import", json={"transacciones": [TX_OK]}).status_code == 200
 
 
 def test_import_corrupto_no_deja_nada_a_medias(client):
@@ -33,7 +42,7 @@ def test_import_corrupto_no_deja_nada_a_medias(client):
 
 def test_import_inversion_sin_valor_actual_usa_el_monto_invertido(client):
     fila = {"nombre": "Fondo", "tipo": "variable", "monto_invertido": 500}
-    assert client.post("/api/import", json={"inversiones": [fila]}).json()["inversiones"] == 1
+    assert client.post("/api/import", json={"inversiones": [fila]}).json()["counts"]["inversiones"] == 1
     guardada = client.get("/api/backup").json()["inversiones"][0]
     assert guardada["valor_actual"] == 500
     assert guardada["fecha_inicio"] and guardada["valor_actualizado_en"] == guardada["fecha_inicio"]

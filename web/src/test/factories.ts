@@ -11,6 +11,7 @@ export const tx = (
   tipo,
   categoria,
   monto,
+  monto_firmado: tipo === 'ingreso' ? monto : -monto,
   fecha: '2026-08-01',
   descripcion: '',
   notas: '',
@@ -122,7 +123,7 @@ export const estado = (extra: Partial<Estado> & Filas = {}): Estado => {
     ajustes: { moneda_simbolo: '$' },
     categorias: categoriasBase(),
     alertas: { activos: false, inversiones: false },
-    desactualizado: { dias: 30, texto: 'Valor sin actualizar hace más de 1 mes' },
+    desactualizado: { texto: 'Valor sin actualizar hace más de 1 mes' },
     ...bootstrap,
   }
 }

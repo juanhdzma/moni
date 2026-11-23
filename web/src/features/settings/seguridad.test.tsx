@@ -18,10 +18,10 @@ vi.mock('@simplewebauthn/browser', () => ({
   startRegistration: vi.fn(),
 }))
 
-const PASSKEYS = [{ id: 3, nombre: 'iPhone de Juan', creada: '2026-11-01T10:00:00', ultimo_uso: '2026-11-20T08:30:00' }]
+const PASSKEYS = [{ id: 3, nombre: 'iPhone de Juan', creada: '2026-11-01T10:00:00', ultimo_uso: '2026-11-20T08:30:00', creada_texto: '2026-11-01 05:00', ultimo_uso_texto: '2026-11-20 03:30' }]
 const SESIONES = [
-  { id: 1, creada: '2026-11-20T08:00:00', ultimo_uso: '2026-11-22T09:00:00', ip: '1.2.3.4', user_agent: 'Safari', metodo: 'clave', actual: true },
-  { id: 2, creada: '2026-11-10T08:00:00', ultimo_uso: '2026-11-11T09:00:00', ip: '5.6.7.8', user_agent: 'Chrome', metodo: 'passkey', actual: false },
+  { id: 1, creada: '2026-11-20T08:00:00', ultimo_uso: '2026-11-22T09:00:00', creada_texto: '2026-11-20 03:00', ultimo_uso_texto: '2026-11-22 04:00', ip: '1.2.3.4', user_agent: 'Safari', metodo: 'clave', actual: true },
+  { id: 2, creada: '2026-11-10T08:00:00', ultimo_uso: '2026-11-11T09:00:00', creada_texto: '2026-11-10 03:00', ultimo_uso_texto: '2026-11-11 04:00', ip: '5.6.7.8', user_agent: 'Chrome', metodo: 'passkey', actual: false },
 ]
 
 beforeEach(() => {

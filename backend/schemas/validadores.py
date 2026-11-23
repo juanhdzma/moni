@@ -26,7 +26,7 @@ def _check_clave(v: Optional[str]) -> Optional[str]:
     return v
 
 
-def _check_fecha(v: str, *, requerida: bool) -> str:
+def validar_fecha(v: str, *, requerida: bool) -> str:
     v = (v or "").strip()
     if not v:
         if requerida:
@@ -38,11 +38,11 @@ def _check_fecha(v: str, *, requerida: bool) -> str:
 
 
 def fecha_requerida(*fields: str):
-    return field_validator(*fields)(lambda v: _check_fecha(v, requerida=True))
+    return field_validator(*fields)(lambda v: validar_fecha(v, requerida=True))
 
 
 def fecha_opcional(*fields: str):
-    return field_validator(*fields)(lambda v: _check_fecha(v, requerida=False))
+    return field_validator(*fields)(lambda v: validar_fecha(v, requerida=False))
 
 
 def clave_opcional(*fields: str):

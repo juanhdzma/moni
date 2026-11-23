@@ -33,7 +33,7 @@ def estado(request: Request):
 @router.post("/login")
 async def login(body: LoginIn, request: Request):
     if not password.configurado():
-        return JSONResponse({"detail": "Autenticacion sin configurar"}, status_code=503)
+        return JSONResponse({"detail": "Autenticación sin configurar"}, status_code=503)
     ip = client_ip(request)
     async with lock_ip(ip):
         bloqueada = respuesta_si_bloqueada(ip)
@@ -63,15 +63,23 @@ def listar_sesiones(request: Request):
             "SELECT id, creada, ultimo_uso, ip, user_agent, metodo FROM sesiones WHERE expira > ? ORDER BY ultimo_uso DESC",
             (tiempo.iso(tiempo.ahora()),),
         ).fetchall()
-    return [{**dict(f), "actual": f["id"] == actual["id"]} for f in filas]
+    return [
+        {
+            **dict(f),
+            "creada_texto": tiempo.texto_bogota(f["creada"]),
+            "ultimo_uso_texto": tiempo.texto_bogota(f["ultimo_uso"]),
+            "actual": f["id"] == actual["id"],
+        }
+        for f in filas
+    ]
 
 
 @router.delete("/sesiones/{sesion_id}")
 def revocar_sesion(sesion_id: int, request: Request):
     actual = sesiones.sesion_obligatoria(request)
     if sesion_id == actual["id"]:
-        raise HTTPException(status_code=400, detail="Usa logout para cerrar la sesion actual")
+        raise HTTPException(status_code=400, detail="Usa logout para cerrar la sesión actual")
     if not sesiones.borrar_sesion(sesion_id):
-        raise HTTPException(status_code=404, detail="Sesion no encontrada")
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
     logger.info("sesion revocada id=%d", sesion_id)
     return {"ok": True}

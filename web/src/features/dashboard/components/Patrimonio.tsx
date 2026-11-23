@@ -36,7 +36,7 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
         {!loading && (
           <span className="text-sm text-muted-foreground">
             <Monto valor={proy} formato={copShort} className="font-semibold" />{' '}
-            proyectados en 12 meses
+            {r?.texto_proyeccion}
           </span>
         )}
       </div>

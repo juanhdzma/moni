@@ -10,7 +10,6 @@ export interface ColumnaTransaccion {
 export interface Meta {
   frecuencias: Opcion[]
   franquicias: Opcion[]
-  tipos_transaccion: Opcion<TipoTx>[]
   tipos_manuales: Opcion<'ingreso' | 'gasto'>[]
   tipos_categoria: Opcion<TipoTx>[]
   tipos_inversion: Opcion[]

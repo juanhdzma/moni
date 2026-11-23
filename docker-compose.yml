@@ -8,6 +8,7 @@ services:
       MONI_PASSWORD_HASH: ${MONI_PASSWORD_HASH:-}
       MONI_RP_ID: ${MONI_RP_ID:-moni.nufi.com.co}
       MONI_ORIGIN: ${MONI_ORIGIN:-https://moni.nufi.com.co}
+      # Detrás de un proxy que no sea loopback hay que setearlo: si no, la IP de cliente es la del proxy (3 fallos bloquean a todos) y la cookie no sale Secure
       MONI_TRUSTED_PROXIES: ${MONI_TRUSTED_PROXIES:-127.0.0.0/8,::1/128}
       MONI_BLOCK_HOURS: ${MONI_BLOCK_HOURS:-24}
       MONI_PUSH_TOKEN: ${MONI_PUSH_TOKEN:-}

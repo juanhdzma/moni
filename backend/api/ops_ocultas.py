@@ -6,7 +6,7 @@ from ..calculos import operaciones
 from ..calculos.fechas import hoy_bogota
 from ..core.db import conexion
 from ..core.estado import simbolo
-from ..core.ops_ocultas import FUENTES_OPS, candidatas, claves_ocultas, ocultar_op
+from ..core.ops_ocultas import candidatas, claves_ocultas, ocultar_op, ocultas_con_etiqueta
 from ..schemas.ajustes import OpOculta
 
 router = APIRouter()
@@ -22,13 +22,7 @@ def proximas_operaciones():
 @router.get("/api/ops-ocultas")
 def listar_ops_ocultas():
     with conexion() as conn:
-        nombres = {
-            tipo: {r["id"]: r["nombre"] for r in conn.execute(f"SELECT id, nombre FROM {tabla}")}
-            for tipo, tabla in FUENTES_OPS.items()
-        }
-        filas = conn.execute("SELECT clave, tipo, fuente_id, fecha FROM ops_ocultas ORDER BY creada_en, clave")
-        items = [{**dict(r), "etiqueta": nombres[r["tipo"]].get(r["fuente_id"])} for r in filas]
-        return {"items": items}
+        return {"items": ocultas_con_etiqueta(conn)}
 
 
 @router.post("/api/ops-ocultas", status_code=201)

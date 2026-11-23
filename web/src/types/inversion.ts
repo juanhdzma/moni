@@ -66,3 +66,9 @@ export interface ResumenInversiones {
 export interface PreviewAporte {
   nuevo_valor_estimado: number
 }
+
+export interface PreviewValor {
+  delta: number
+  total: number
+  total_pct: number
+}

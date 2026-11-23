@@ -26,14 +26,14 @@ def test_hash_invalido_falla_cerrado(anon_client, monkeypatch, valor):
 def test_sin_hash_nadie_entra(anon_client, client, monkeypatch):
     monkeypatch.delenv("MONI_PASSWORD_HASH")
     r = login(anon_client)
-    assert r.status_code == 503 and r.json() == {"detail": "Autenticacion sin configurar"}
+    assert r.status_code == 503 and r.json() == {"detail": "Autenticación sin configurar"}
     assert client.get("/api/backup").status_code == 401
     assert sesiones.COOKIE not in r.cookies
 
 
 def test_clave_mala_generica(anon_client):
     r = login(anon_client, "mala")
-    assert r.status_code == 401 and r.json() == {"detail": "Credenciales invalidas"}
+    assert r.status_code == 401 and r.json() == {"detail": "Credenciales inválidas"}
     assert anon_client.get("/api/backup").status_code == 401
 
 

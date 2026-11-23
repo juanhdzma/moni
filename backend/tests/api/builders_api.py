@@ -7,7 +7,7 @@ HOY_ISO = HOY.isoformat()
 MES = HOY_ISO[:7]
 
 TX_KEYS = {"id", "fecha", "tipo", "categoria", "descripcion", "monto", "notas", "tarjeta_id"}
-TX_DERIVADOS = {"tarjeta_nombre", "tarjeta_franquicia", "metodo_pago"}
+TX_DERIVADOS = {"monto_firmado", "tarjeta_nombre", "tarjeta_franquicia", "metodo_pago"}
 DEUDA_DERIVADOS = {
     "activa", "vigente", "progreso_pct", "capital_pagado", "meses_restantes", "nivel_progreso",
     "disponible", "uso_pct", "nivel_uso",

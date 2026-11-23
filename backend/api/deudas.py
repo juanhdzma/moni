@@ -1,15 +1,16 @@
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from ..calculos import operaciones
-from ..calculos.fechas import ahora_bogota
+from ..calculos.fechas import ahora_bogota_iso
 from ..calculos.operaciones import frases_deuda as frases, movimientos
+from ..calculos.operaciones.movimientos import ErrorDeDominio
 from ..core.db import conexion
 from ..core.estado import coleccion, detalle, simbolo
 from ..core.montos import pesos
 from ..core.ops_ocultas import ocultar_op
-from ..core.sql import get_row, insert_row, insert_tx, update_row
+from ..core.sql import fijar_saldo, get_row, guardar_y_leer, insert_row, insert_tx, update_row
 from ..core.tablas import CAT_INGRESO, CAT_TRANSFER, DEUDA_COLS
 from ..schemas.deuda import AdelantoPreview, DeudaAdelanto, DeudaCrear, DeudaIn, DeudaPago
 from ..schemas.previews import PagoPreview
@@ -21,8 +22,8 @@ router = APIRouter()
 register_borrado(router, "deuda", "deudas")
 
 
-def _fila_deuda(conn, deuda_id: int) -> dict:
-    fila = get_row(conn, "deudas", deuda_id)
+def _guardar_y_leer_deuda(conn, deuda_id: int) -> dict:
+    fila = guardar_y_leer(conn, "deudas", deuda_id)
     return {**fila, "es_tarjeta": bool(fila["es_tarjeta"])}
 
 
@@ -45,8 +46,7 @@ def crear_deuda(body: DeudaCrear):
                 descripcion=f"Crédito · {data['nombre']}", monto=data["monto_inicial"] or data["saldo_actual"],
                 notas="",
             )
-        conn.commit()
-        return _fila_deuda(conn, deuda_id)
+        return _guardar_y_leer_deuda(conn, deuda_id)
 
 
 @router.put("/api/deuda/{deuda_id}", name="update_deuda")
@@ -54,15 +54,14 @@ def actualizar_deuda(deuda_id: int, body: DeudaIn):
     with conexion() as conn:
         data = operaciones.normalizar_tasa(body.model_dump())
         update_row(conn, "deudas", DEUDA_COLS, deuda_id, data)
-        conn.commit()
-        return _fila_deuda(conn, deuda_id)
+        return _guardar_y_leer_deuda(conn, deuda_id)
 
 
 def _saldo_tras_adelanto(tarjeta: dict, body: DeudaAdelanto | AdelantoPreview) -> float:
     if body.nuevo_saldo is not None:
         return body.nuevo_saldo
     if not tarjeta["cupo"]:
-        raise HTTPException(400, "La tarjeta no tiene cupo definido")
+        raise ErrorDeDominio("La tarjeta no tiene cupo definido")
     return frases.saldo_tras_adelanto(tarjeta["cupo"], body.disponible_nuevo)
 
 
@@ -84,7 +83,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
         if body.registrar_tx:
             simbolo_moneda = simbolo(conn)
             insert_tx(
-                conn, fecha=body.fecha or ahora_bogota(), tipo="transfer", categoria=CAT_TRANSFER["pago_deuda"],
+                conn, fecha=body.fecha or ahora_bogota_iso(), tipo="transfer", categoria=CAT_TRANSFER["pago_deuda"],
                 descripcion=body.descripcion or frases.descripcion_pago(
                     deuda["nombre"], desglose["capital"], intereses, simbolo_moneda
                 ),
@@ -92,8 +91,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
             )
         if body.op_clave:
             ocultar_op(conn, body.op_clave)
-        conn.commit()
-        return _fila_deuda(conn, deuda_id)
+        return _guardar_y_leer_deuda(conn, deuda_id)
 
 
 @router.post("/api/deuda/{deuda_id}/adelanto")
@@ -102,19 +100,19 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
         tarjeta = get_row(conn, "deudas", deuda_id)
         nuevo_saldo = _saldo_tras_adelanto(tarjeta, body)
         movimientos.validar_adelanto(bool(tarjeta["es_tarjeta"]), tarjeta["saldo_actual"], nuevo_saldo)
-        conn.execute("UPDATE deudas SET saldo_actual = ? WHERE id = ?", (pesos(nuevo_saldo), deuda_id))
+        fijar_saldo(conn, deuda_id, nuevo_saldo)
         if body.registrar_tx:
             insert_tx(
-                conn, fecha=body.fecha or ahora_bogota(), tipo="ingreso", categoria=CAT_INGRESO["avance_tarjeta"],
+                conn, fecha=body.fecha or ahora_bogota_iso(), tipo="ingreso", categoria=CAT_INGRESO["avance_tarjeta"],
                 descripcion=body.descripcion or frases.descripcion_adelanto(tarjeta["nombre"]),
                 monto=body.monto, notas=body.notas,
             )
-        conn.commit()
+        deuda = _guardar_y_leer_deuda(conn, deuda_id)
         logger.info(
             "tarjeta %s: adelanto %.2f, saldo_actual %.2f -> %.2f",
             deuda_id, body.monto, tarjeta["saldo_actual"], nuevo_saldo,
         )
-        return _fila_deuda(conn, deuda_id)
+        return deuda
 
 
 @router.post("/api/deuda/{deuda_id}/pago/preview")

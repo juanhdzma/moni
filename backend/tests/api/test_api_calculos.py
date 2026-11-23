@@ -5,46 +5,20 @@ import pytest
 from .builders_api import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, HOY_ISO, INV_DERIVADOS, REC_DERIVADOS, TX_DERIVADOS, TX_KEYS, sembrar, tx
 
 
-def test_bootstrap_lleva_contexto_de_la_sesion(client):
-    sembrar(client)
-    body = client.get("/api/bootstrap").json()
-    assert body["hoy"] == HOY_ISO
-    assert body["ajustes"] == {"moneda_simbolo": "$"}
-    assert body["alertas"] == {"activos": False, "inversiones": True}
-    assert "conteos" not in body
-    assert body["categorias"]["ingreso"][0] == {"nombre": "Crédito recibido", "sistema": True}
-
-
 def test_put_ignora_campos_derivados(client):
     sembrar(client)
-    activo_id = client.get("/api/backup").json()["activos"][0]["id"]
-    fila = client.get(f"/api/activo/{activo_id}").json()
+    fila = client.get("/api/activos/resumen").json()["items"][0]
     assert ACTIVO_DERIVADOS <= set(fila)
     r = client.put(f"/api/activo/{fila['id']}", json={**fila, "valor_actual": 4_000_000})
     assert r.status_code == 200 and r.json()["valor_actual"] == 4_000_000
 
 
-def test_backup_roundtrip(client):
-    sembrar(client)
-    exportado = client.get("/api/backup").json()
-    client.post("/api/truncate")
-    r = client.post("/api/import", json={k: exportado[k] for k in ("transacciones", "deudas", "inversiones", "activos", "recurrentes")})
-    assert r.status_code == 200, r.text
-
-
 def test_dashboard_resumen(client):
     sembrar(client)
     r = client.get("/api/dashboard/resumen").json()
-    assert set(r) == {
-        "patrimonio", "efectivo", "total_deuda", "total_inv", "total_activos", "ingresos_mes", "gastos_mes",
-        "quedo_mes", "ahorro_pct", "proy_delta", "cuota_total", "deudas_activas", "total_invertido",
-        "ganancia_inv", "ganancia_inv_pct", "total_barra", "frase_mes", "partes",
-    }
-    assert r["ingresos_mes"] == 4_000_000 and r["gastos_mes"] == 1_000_000
-    assert r["efectivo"] == 3_000_000 and r["total_deuda"] == 500_000
+    assert set(r) == {"patrimonio", "proy_delta", "texto_proyeccion", "total_barra", "partes"}
+    assert r["texto_proyeccion"] == "proyectados en 12 meses"
     assert r["patrimonio"] == 3_000_000 + 1_500_000 + 3_500_000 - 500_000
-    assert r["frase_mes"]["texto"] == "Te quedó el 75,0% de lo que entró."
-    assert r["frase_mes"]["partes"][1] == {"texto": "75,0%", "tono": "positivo"}
     assert [p["id"] for p in r["partes"]] == ["activos", "inversiones", "balance", "deudas"]
     assert r["partes"][1]["detalle"].startswith("+$") and r["partes"][1]["detalle"].endswith("%)")
     assert r["partes"][3]["detalle"] == "$100.000/mes · 1 deuda"
@@ -99,8 +73,9 @@ def test_dashboard_movimientos(client):
         tx(client, descripcion=f"t{i}", fecha=f"2026-01-0{i + 1}")
     r = client.get("/api/dashboard/movimientos").json()
     assert set(r) == {"items"} and len(r["items"]) == 5
-    assert set(r["items"][0]) == {"id", "fecha", "tipo", "categoria", "descripcion", "monto"}
+    assert set(r["items"][0]) == {"id", "fecha", "tipo", "categoria", "descripcion", "monto", "monto_firmado"}
     assert r["items"][0]["descripcion"] == "t6"
+    assert r["items"][0]["monto_firmado"] == -r["items"][0]["monto"]
     assert len(client.get("/api/dashboard/movimientos", params={"n": 2}).json()["items"]) == 2
     assert client.get("/api/dashboard/movimientos", params={"n": 51}).status_code == 422
 
@@ -114,6 +89,7 @@ def test_listar_tx(client):
     assert len(r["items"]) == 2
     assert set(r["items"][0]) == TX_KEYS | TX_DERIVADOS | {"grupo", "tipo_label"}
     assert r["items"][0]["grupo"] == "Hoy"
+    assert sorted(t["monto_firmado"] for t in r["items"]) == [-200, 500]
     assert r["filtros"] == {"tipo": "", "mes": "", "cat": ""} and r["pills"] == []
     assert set(r["opciones"]) == {"meses", "categorias", "tipos"}
     assert r["opciones"]["categorias"] == ["Comida", "Pago deuda", "Salario"]

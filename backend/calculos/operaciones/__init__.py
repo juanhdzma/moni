@@ -33,3 +33,5 @@ from .resumenes import (
     resumen_inversiones,
     resumen_recurrentes,
 )
+from .defaults import completar_activo, completar_inversion
+from .textos import categoria_sugerida, texto_activos, texto_posiciones

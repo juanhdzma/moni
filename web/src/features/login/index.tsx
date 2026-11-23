@@ -4,13 +4,10 @@ import { ApiError } from '../../lib/api'
 import { esCancelacion, passkeysDisponibles } from '../../lib/seguridad/passkeys'
 import { useAuth } from '@/shell/providers/AuthProvider'
 
-const MSG_GENERICO = 'Credenciales inválidas'
-
 function mensajeDeLogin(err: unknown): string {
   if (err instanceof ApiError) {
-    if (err.status === 401) return MSG_GENERICO
-    if (err.status === 503) return 'Autenticación sin configurar'
     if (err.status === 403) return ''
+    if (err.status === 401 || err.status === 503) return err.message
   }
   return 'No se pudo iniciar sesión. Probá de nuevo.'
 }

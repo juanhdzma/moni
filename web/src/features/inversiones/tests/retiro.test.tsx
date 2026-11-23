@@ -17,7 +17,7 @@ describe('retiro', () => {
     const f = mockInv({ 'POST /api/inv/5/retiro': {} })
     await abrir(user)
     expect(document.getElementById('m-monto-total')).toHaveValue('1.010.000')
-    expect(document.getElementById('retiro-parcial-fields')).toHaveStyle({ display: 'none' })
+    expect(document.getElementById('retiro-parcial-fields')).toBeNull()
     await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({
@@ -34,7 +34,7 @@ describe('retiro', () => {
     const f = mockInv({ 'POST /api/inv/5/retiro': {} })
     await abrir(user)
     await user.click(modal().getByRole('button', { name: 'Parcial' }))
-    expect(document.getElementById('retiro-total-fields')).toHaveStyle({ display: 'none' })
+    expect(document.getElementById('retiro-total-fields')).toBeNull()
     await typeMoney(user, 'm-monto-parcial', '200000')
     await typeMoney(user, 'm-saldo-queda', '810000')
     await user.type(document.getElementById('m-notas-retiro') as HTMLElement, 'parte')

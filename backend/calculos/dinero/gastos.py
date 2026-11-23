@@ -2,6 +2,7 @@ import datetime
 
 from ..fechas import parse_fecha_hora, restar_meses
 from ..formato import frase, porcentaje_texto
+from ..numeros import monto_firmado
 
 PERIODOS_GASTOS = ("1W", "1M", "3M", "6M", "1Y", "ALL")
 NOMBRE_PERIODO_GASTOS = {
@@ -100,6 +101,9 @@ def gastos_periodo(txs, periodo: str, hoy: datetime.date) -> dict:
 def movimientos_recientes(txs, n: int = 5) -> list[dict]:
     orden = sorted(txs, key=lambda t: t["fecha"], reverse=True)[:n]
     return [
-        {k: t[k] for k in ("id", "fecha", "tipo", "categoria", "descripcion", "monto")}
+        {
+            **{k: t[k] for k in ("id", "fecha", "tipo", "categoria", "descripcion", "monto")},
+            "monto_firmado": monto_firmado(t["tipo"], t["monto"]),
+        }
         for t in orden
     ]

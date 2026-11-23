@@ -4,7 +4,17 @@ import pytest
 
 from backend.calculos.constantes import DIAS_DESACTUALIZADO, TEXTO_DESACTUALIZADO
 
-from .builders_api import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, INV_DERIVADOS, REC_DERIVADOS, TX_DERIVADOS, sembrar
+from .builders_api import DEUDA_DERIVADOS, HOY, INV_DERIVADOS, REC_DERIVADOS, TX_DERIVADOS, sembrar
+
+
+def test_bootstrap_lleva_contexto_de_la_sesion(client):
+    sembrar(client)
+    body = client.get("/api/bootstrap").json()
+    assert body["hoy"] == HOY.isoformat()
+    assert body["ajustes"] == {"moneda_simbolo": "$"}
+    assert body["alertas"] == {"activos": False, "inversiones": True}
+    assert "conteos" not in body
+    assert body["categorias"]["ingreso"][0] == {"nombre": "Crédito recibido", "sistema": True}
 
 
 def test_bootstrap_sin_filas_y_con_umbral(client):
@@ -13,7 +23,7 @@ def test_bootstrap_sin_filas_y_con_umbral(client):
     assert set(datos) == {"hoy", "ahora", "categorias", "ajustes", "alertas", "desactualizado"}
     assert datos["hoy"] == HOY.isoformat()
     assert datos["ahora"].startswith(datos["hoy"]) and len(datos["ahora"]) == 16
-    assert datos["desactualizado"] == {"dias": DIAS_DESACTUALIZADO, "texto": TEXTO_DESACTUALIZADO}
+    assert datos["desactualizado"] == {"texto": TEXTO_DESACTUALIZADO}
     assert datos["ajustes"] == {"moneda_simbolo": "$"}
 
 
@@ -26,7 +36,7 @@ def test_bootstrap_alerta_de_activo_desactualizado(client):
 def _crear_uno_de_cada(client):
     sembrar(client)
     ids = {}
-    for ruta, nombre in (("tx", "transacciones"), ("deuda", "deudas"), ("inv", "inversiones"), ("activo", "activos"), ("rec", "recurrentes")):
+    for ruta, nombre in (("tx", "transacciones"), ("deuda", "deudas"), ("inv", "inversiones"), ("rec", "recurrentes")):
         ids[ruta] = [r["id"] for r in client.get("/api/backup").json()[nombre]]
     return ids
 
@@ -34,14 +44,14 @@ def _crear_uno_de_cada(client):
 def test_detalle_devuelve_la_fila_con_derivados(client):
     client.post("/api/rec", json={"nombre": "Netflix", "tipo": "gasto", "monto": 10, "frecuencia": "mensual", "fecha_inicio": HOY.isoformat()})
     ids = _crear_uno_de_cada(client)
-    esperados = {"tx": TX_DERIVADOS, "deuda": DEUDA_DERIVADOS, "inv": INV_DERIVADOS, "activo": ACTIVO_DERIVADOS, "rec": REC_DERIVADOS}
+    esperados = {"tx": TX_DERIVADOS, "deuda": DEUDA_DERIVADOS, "inv": INV_DERIVADOS, "rec": REC_DERIVADOS}
     for ruta, derivados in esperados.items():
         fila = client.get(f"/api/{ruta}/{ids[ruta][0]}").json()
         assert derivados <= set(fila), ruta
         assert fila["id"] == ids[ruta][0]
 
 
-@pytest.mark.parametrize("ruta", ["tx", "deuda", "inv", "activo", "rec"])
+@pytest.mark.parametrize("ruta", ["tx", "deuda", "inv", "rec"])
 def test_detalle_inexistente_es_404(client, ruta):
     assert client.get(f"/api/{ruta}/9999").status_code == 404
 
@@ -77,3 +87,9 @@ def test_proximas_usa_el_simbolo_de_moneda(client):
         "nombre": "C", "saldo_actual": 500, "cuota_mensual": 100, "proxima_cuota": (HOY + datetime.timedelta(days=2)).isoformat(),
     })
     assert "US$" in client.get("/api/proximas-operaciones").json()["frase"]["texto"]
+
+
+def test_get_activo_por_id_ya_no_existe(client):
+    sembrar(client)
+    activo_id = client.get("/api/backup").json()["activos"][0]["id"]
+    assert client.get(f"/api/activo/{activo_id}").status_code in (404, 405)

@@ -36,10 +36,6 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
   )
 
   const save = async () => {
-    if (!monto.trim()) {
-      setModalStatus('err', 'Ingresá el monto total pagado')
-      return
-    }
     if (!saldoNuevo.trim()) {
       setModalStatus('err', 'Ingresá el saldo capital después del pago')
       return

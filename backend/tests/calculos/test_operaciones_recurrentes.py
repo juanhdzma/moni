@@ -45,13 +45,6 @@ def test_frecuencia_desconocida_o_fecha_vacia():
     assert proxima("2026-08-01", "cada rato", "2026-08-01") is None
 
 
-def test_to_mensual():
-    assert op.to_mensual(100, "mensual") == 100
-    assert op.to_mensual(100, "quincenal") == 200
-    assert op.to_mensual(1200, "anual") == 100
-    assert op.to_mensual(100, "loquesea") == 100
-
-
 def test_derivar_recurrente():
     d = op.derivar_recurrente(recurrente(fecha_inicio="2026-01-15"), D(2026, 8, 1))
     assert d["proximo_pago"] == {"fecha": "2026-08-15", "dias": 14, "texto": "en 14d"}

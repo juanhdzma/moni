@@ -93,12 +93,23 @@ describe('pago', () => {
     const status = () => document.getElementById('m-status') as HTMLElement
     await user.click(screen.getByText('Registrar pago'))
     expect(status()).toHaveTextContent('Ingresá el saldo capital después del pago')
-    await user.clear(document.getElementById('m-monto') as HTMLElement)
-    await user.click(screen.getByText('Registrar pago'))
-    expect(status()).toHaveTextContent('Ingresá el monto total pagado')
     await user.type(document.getElementById('m-monto') as HTMLElement, '10')
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '7000000')
     expect(status()).not.toHaveTextContent('El saldo nuevo no puede superar el saldo anterior')
+  })
+
+  it('muestra el 422 en español del backend cuando el monto va vacío', async () => {
+    const user = userEvent.setup()
+    const f = conResumen(resumenCompleto, {
+      'POST /api/deuda/1/pago': failure(422, [{ loc: ['body', 'total_pagado'], msg: 'Debe ser mayor que 0', type: 'greater_than' }]),
+    })
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await user.click(await pagar('Pagar cuota'))
+    await user.clear(document.getElementById('m-monto') as HTMLElement)
+    await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '5600000')
+    await user.click(screen.getByText('Registrar pago'))
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Debe ser mayor que 0'))
+    expect(f.mutations().filter((c) => c.url === '/api/deuda/1/pago')).toHaveLength(1)
   })
 
   it('muestra el 400 del backend y no calcula nada en el cliente', async () => {

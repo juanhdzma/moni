@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 
 from .. import sesiones
+from .. import tiempo
 from ..bloqueo import fallo_generico, lock_ip, respuesta_si_bloqueada
 from ...core.db import conexion
 from ..ip import client_ip
@@ -62,7 +63,7 @@ async def login_verificar(request: Request, credencial: Credencial):
 def registro_opciones(body: NombreIn, request: Request):
     sesiones.sesion_obligatoria(request)
     if servicio.contar() >= servicio.MAX_PASSKEYS:
-        raise HTTPException(status_code=409, detail="Limite de passkeys alcanzado")
+        raise HTTPException(status_code=409, detail="Límite de passkeys alcanzado")
     return _json(servicio.opciones_registro(client_ip(request)))
 
 
@@ -71,19 +72,19 @@ def registro_verificar(request: Request, credencial: Credencial):
     sesiones.sesion_obligatoria(request)
     nombre = credencial.pop("nombre", None)
     if not isinstance(nombre, str) or not 1 <= len(nombre.strip()) <= 40:
-        raise HTTPException(status_code=422, detail="Nombre invalido")
+        raise HTTPException(status_code=422, detail="Nombre inválido")
     challenge = consumir_challenge(credencial, "registro", client_ip(request))
     if challenge is None:
-        raise HTTPException(status_code=400, detail="Registro invalido")
+        raise HTTPException(status_code=400, detail="Registro inválido")
     try:
         nuevo = servicio.registrar(credencial, challenge, nombre.strip())
     except sqlite3.IntegrityError:
         raise HTTPException(status_code=409, detail="Passkey ya registrado")
     except Exception:
         logger.warning("registro de passkey rechazado ip=%s", client_ip(request))
-        raise HTTPException(status_code=400, detail="Registro invalido")
+        raise HTTPException(status_code=400, detail="Registro inválido")
     if nuevo is None:
-        raise HTTPException(status_code=409, detail="Limite de passkeys alcanzado")
+        raise HTTPException(status_code=409, detail="Límite de passkeys alcanzado")
     logger.info("passkey registrado id=%d", nuevo)
     return {"ok": True, "id": nuevo}
 
@@ -93,7 +94,14 @@ def listar(request: Request):
     sesiones.sesion_obligatoria(request)
     with conexion() as conn:
         filas = conn.execute("SELECT id, nombre, creada, ultimo_uso FROM passkeys ORDER BY id").fetchall()
-    return [dict(f) for f in filas]
+    return [
+        {
+            **dict(f),
+            "creada_texto": tiempo.texto_bogota(f["creada"]),
+            "ultimo_uso_texto": tiempo.texto_bogota(f["ultimo_uso"]),
+        }
+        for f in filas
+    ]
 
 
 @router.delete("/passkeys/{passkey_id}")

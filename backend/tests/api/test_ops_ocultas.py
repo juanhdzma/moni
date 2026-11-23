@@ -27,3 +27,12 @@ def test_arranque_poda_ocultas_obsoletas(client):
     n = conn.execute("SELECT COUNT(*) FROM ops_ocultas").fetchone()[0]
     conn.close()
     assert n == 0
+
+
+def test_poda_sin_operaciones_proximas_borra_todo(client):
+    conn = db.get_conn()
+    conn.execute("INSERT INTO ops_ocultas (clave, tipo, fuente_id, fecha, creada_en) VALUES ('deuda:99:2030-01-01', 'deuda', 99, '2030-01-01', 'x')")
+    podar_ocultas(conn, datetime.date(2029, 12, 30))
+    n = conn.execute("SELECT COUNT(*) FROM ops_ocultas").fetchone()[0]
+    conn.close()
+    assert n == 0

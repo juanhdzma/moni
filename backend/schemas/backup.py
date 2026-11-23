@@ -7,3 +7,5 @@ class ImportPayload(BaseModel):
     inversiones: list[dict] = []
     activos: list[dict] = []
     recurrentes: list[dict] = []
+    categorias: list[dict] = []
+    ops_ocultas: list[dict] = []

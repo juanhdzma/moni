@@ -10,7 +10,7 @@ export const ESTADO_VACIO: Estado = {
   ajustes: { moneda_simbolo: '$' },
   categorias: { ingreso: [], gasto: [], transfer: [] },
   alertas: { activos: false, inversiones: false },
-  desactualizado: { dias: 0, texto: '' },
+  desactualizado: { texto: '' },
 }
 
 export interface DataApi {

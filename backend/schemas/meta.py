@@ -24,7 +24,6 @@ class ColumnaTx(BaseModel):
 class MetaOut(BaseModel):
     frecuencias: list[Opcion]
     franquicias: list[Opcion]
-    tipos_transaccion: list[Opcion]
     tipos_manuales: list[Opcion]
     tipos_categoria: list[Opcion]
     tipos_inversion: list[Opcion]

@@ -1,2 +1,3 @@
-def pesos(v: float) -> float:
-    return float(round(v))
+from ..calculos.numeros import pesos
+
+__all__ = ["pesos"]

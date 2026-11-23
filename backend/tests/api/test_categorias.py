@@ -18,3 +18,14 @@ def test_categorias_errores(client):
     assert client.post("/api/categorias", json={"tipo": "otro", "nombre": "x"}).status_code == 422
     assert client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Inversión"}).status_code == 409
     assert client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Nada"}).status_code == 404
+
+
+def test_categorias_errores_en_espanol_con_su_status(client):
+    r = client.post("/api/categorias", json={"tipo": "gasto", "nombre": "Inversión"})
+    assert (r.status_code, r.json()) == (409, {"detail": "Categoría repetida"})
+    r = client.post("/api/categorias", json={"tipo": "gasto", "nombre": "  "})
+    assert (r.status_code, r.json()) == (422, {"detail": "Nombre vacío"})
+    r = client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Inversión"})
+    assert (r.status_code, r.json()) == (409, {"detail": "Las categorías de sistema no se pueden borrar"})
+    r = client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Nada"})
+    assert (r.status_code, r.json()) == (404, {"detail": "Categoría no encontrada"})
