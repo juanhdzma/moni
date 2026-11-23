@@ -1,5 +1,5 @@
 import type { ActivoIn } from './activo'
-import type { Categorias, TipoTx } from './comun'
+import type { Categorias } from './comun'
 import type { DeudaIn } from './deuda'
 import type { InvIn } from './inversion'
 import type { RecIn } from './recurrente'
@@ -36,18 +36,6 @@ export interface CrudPayloads {
   inv: InvIn
   activo: ActivoIn
   rec: RecIn
-}
-
-export interface MigrarLocalIn {
-  categorias: Record<TipoTx, string[]>
-  ops_ocultas: string[]
-  moneda_simbolo: string | null
-}
-
-export interface MigrarLocalResult {
-  categorias: number
-  ops_ocultas: number
-  moneda_simbolo: boolean
 }
 
 export interface PreviewValor {

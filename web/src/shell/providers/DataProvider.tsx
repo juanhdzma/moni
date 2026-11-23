@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { cargarBootstrap } from '@/lib/api'
 import { errMsg, setCurrencySymbol } from '@/lib/format'
-import { migrarLocalStorage } from '@/lib/storage/migracion'
 import { afectaAlBootstrap, subirVersiones, TODAS_LAS_ENTIDADES, VERSIONES_INICIALES, type Entidad, type Versiones } from '@/shell/invalidacion'
 import type { Estado } from '@/types'
 
@@ -84,7 +83,7 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
 
   useEffect(() => {
     if (initialEstado) return
-    void migrarLocalStorage().then(cargarEstado)
+    void cargarEstado()
   }, [initialEstado, cargarEstado])
 
   setCurrencySymbol(estado.ajustes.moneda_simbolo)

@@ -4,11 +4,6 @@ from backend.core.ops_ocultas import podar_ocultas
 from backend.core import db
 
 
-def test_migrar_local_limita_tamanos(client):
-    assert client.post("/api/migrar-local", json={"categorias": {"gasto": ["x" * 61]}}).status_code == 422
-    assert client.post("/api/migrar-local", json={"ops_ocultas": ["x"] * 501}).status_code == 422
-
-
 def test_get_proximas_operaciones_no_escribe(client):
 
     conn = db.get_conn()

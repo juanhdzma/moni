@@ -3,8 +3,7 @@ from fastapi import APIRouter, HTTPException
 from ..calculos import listados
 from ..core import estado as store
 from ..core.db import conexion
-from ..core.ops_ocultas import ocultar_op
-from ..schemas.ajustes import AjustesIn, CategoriaIn, MigracionLocal
+from ..schemas.ajustes import AjustesIn, CategoriaIn
 from ..schemas.validadores import TipoTx
 
 router = APIRouter()
@@ -47,50 +46,3 @@ def put_ajustes(body: AjustesIn):
         conn.commit()
         return store.ajustes(conn)
 
-
-def _migrar_categorias(conn, categorias):
-    migradas = 0
-    for tipo, nombres in categorias.items():
-        if tipo not in listados.TIPOS:
-            continue
-        for nombre in nombres[:200]:
-            limpio = nombre.strip()
-            if limpio and not listados.es_categoria_sistema(tipo, limpio):
-                migradas += conn.execute(
-                    "INSERT OR IGNORE INTO categorias (tipo, nombre) VALUES (?, ?)", (tipo, limpio)
-                ).rowcount
-    return migradas
-
-
-def _migrar_ops_ocultas(conn, claves):
-    migradas = 0
-    for clave in claves:
-        try:
-            migradas += ocultar_op(conn, clave)
-        except ValueError:
-            continue
-    return migradas
-
-
-def _migrar_simbolo(conn, simbolo):
-    if simbolo is None:
-        return False
-    try:
-        limpio = listados.validar_simbolo(simbolo)
-    except ValueError:
-        return False
-    return conn.execute(
-        "INSERT OR IGNORE INTO ajustes (clave, valor) VALUES ('moneda_simbolo', ?)", (limpio,)
-    ).rowcount > 0
-
-
-@router.post("/api/migrar-local")
-def migrar_local(body: MigracionLocal):
-    with conexion() as conn:
-        resultado = {
-            "categorias": _migrar_categorias(conn, body.categorias),
-            "ops_ocultas": _migrar_ops_ocultas(conn, body.ops_ocultas),
-            "moneda_simbolo": _migrar_simbolo(conn, body.moneda_simbolo),
-        }
-        conn.commit()
-        return resultado

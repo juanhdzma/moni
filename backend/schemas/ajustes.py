@@ -1,6 +1,4 @@
-from typing import Annotated, Optional
-
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, field_validator
 
 from ..calculos import listados
 from .validadores import TipoTx, clave_opcional
@@ -18,12 +16,6 @@ class AjustesIn(BaseModel):
     @classmethod
     def _simbolo(cls, v: str) -> str:
         return listados.validar_simbolo(v)
-
-
-class MigracionLocal(BaseModel):
-    categorias: dict[str, list[Annotated[str, Field(max_length=60)]]] = Field(default={}, max_length=10)
-    ops_ocultas: list[Annotated[str, Field(max_length=100)]] = Field(default=[], max_length=500)
-    moneda_simbolo: Optional[str] = None
 
 
 class OpOculta(BaseModel):

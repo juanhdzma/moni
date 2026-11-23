@@ -107,53 +107,6 @@ describe('DataProvider estado del backend', () => {
     expect(f.mutations()).toHaveLength(0)
   })
 
-  it('sin datos en localStorage no llama a /api/migrar-local', async () => {
-    const f = mockFetch()
-    render(
-      <DataProvider>
-        <Estado />
-      </DataProvider>,
-    )
-    await waitFor(() => expect(screen.getByTestId('loaded')).toHaveTextContent('true'))
-    expect(f.callsTo('POST', '/api/migrar-local')).toHaveLength(0)
-  })
-
-  it('migra localStorage una vez, borra las tres claves y luego carga', async () => {
-    localStorage.setItem('moni_cats', JSON.stringify({ gasto: ['Mascotas', 3], otro: ['x'] }))
-    localStorage.setItem('moni_skipped_ops', JSON.stringify(['deuda:3:2026-11-25', 7]))
-    localStorage.setItem('moni_currency_symbol', 'CHF')
-    const f = mockFetch({ 'POST /api/migrar-local': { categorias: 1, ops_ocultas: 1, moneda_simbolo: true } })
-    render(
-      <DataProvider>
-        <Estado />
-      </DataProvider>,
-    )
-    await waitFor(() => expect(screen.getByTestId('loaded')).toHaveTextContent('true'))
-    const [migracion] = f.callsTo('POST', '/api/migrar-local')
-    expect(migracion?.headers['X-Moni-Request']).toBe('1')
-    expect(migracion?.body).toEqual({
-      categorias: { ingreso: [], gasto: ['Mascotas'], transfer: [] },
-      ops_ocultas: ['deuda:3:2026-11-25'],
-      moneda_simbolo: 'CHF',
-    })
-    expect(localStorage.getItem('moni_cats')).toBeNull()
-    expect(localStorage.getItem('moni_skipped_ops')).toBeNull()
-    expect(localStorage.getItem('moni_currency_symbol')).toBeNull()
-    expect(f.calls.map((c) => `${c.method} ${c.url}`)).toEqual(['POST /api/migrar-local', 'GET /api/bootstrap'])
-  })
-
-  it('si la migración falla no borra nada y igual carga', async () => {
-    localStorage.setItem('moni_skipped_ops', JSON.stringify(['deuda:3:2026-11-25']))
-    mockFetch({ 'POST /api/migrar-local': failure(500, 'boom') })
-    render(
-      <DataProvider>
-        <Estado />
-      </DataProvider>,
-    )
-    await waitFor(() => expect(screen.getByTestId('loaded')).toHaveTextContent('true'))
-    expect(localStorage.getItem('moni_skipped_ops')).not.toBeNull()
-  })
-
   it('reload sube la versión de las entidades afectadas y pide /api/bootstrap solo si alguna lo afecta', async () => {
     const f = mockFetch()
     function Recargar() {
