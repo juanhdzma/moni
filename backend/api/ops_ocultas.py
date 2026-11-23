@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException
 from ..calculos import operaciones
 from ..calculos.fechas import hoy_bogota
 from ..core.db import conexion
-from ..core.estado import ajustes
-from ..core.ops_ocultas import FUENTES_OPS, candidatas, ocultar_op
+from ..core.estado import simbolo
+from ..core.ops_ocultas import FUENTES_OPS, candidatas, claves_ocultas, ocultar_op
 from ..schemas.ajustes import OpOculta
 
 router = APIRouter()
@@ -16,8 +16,7 @@ router = APIRouter()
 def proximas_operaciones():
     with conexion() as conn:
         hoy = hoy_bogota()
-        ocultas = {r["clave"] for r in conn.execute("SELECT clave FROM ops_ocultas")}
-        return operaciones.armar_proximas(candidatas(conn, hoy), ocultas, hoy, ajustes(conn)["moneda_simbolo"])
+        return operaciones.armar_proximas(candidatas(conn, hoy), claves_ocultas(conn), hoy, simbolo(conn))
 
 
 @router.get("/api/ops-ocultas")

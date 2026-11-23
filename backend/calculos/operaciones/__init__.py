@@ -11,6 +11,7 @@ from .finanzas import (
     proxima_fecha_inversion,
     rendimiento_mensual_fija,
 )
+from .tasas import normalizar_tasa
 from .frecuencias import (
     FRECUENCIAS,
     frecuencia_label,
@@ -24,7 +25,6 @@ from .proximas import (
     calcular_proximas_operaciones,
     clave_op,
     claves_vigentes,
-    operaciones_proximas,
 )
 from .resumenes import (
     preview_venta_activo,

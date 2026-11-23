@@ -1,11 +1,10 @@
 def test_categorias_crud(client):
-    base = client.get("/api/categorias").json()
+    base = client.get("/api/bootstrap").json()["categorias"]
     assert set(base) == {"ingreso", "gasto", "transfer"}
     assert base["gasto"] == [{"nombre": "Inversión", "sistema": True}, {"nombre": "Compra activos", "sistema": True}]
     r = client.post("/api/categorias", json={"tipo": "gasto", "nombre": "  Mascotas "})
     assert r.status_code == 201
     assert r.json()["gasto"][-1] == {"nombre": "Mascotas", "sistema": False}
-    assert client.get("/api/categorias").json() == r.json()
     assert client.get("/api/bootstrap").json()["categorias"] == r.json()
     r = client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Mascotas"})
     assert r.status_code == 200 and r.json() == base

@@ -1,22 +1,27 @@
 from fastapi import APIRouter
 
 from ..calculos import operaciones
-from ..calculos.operaciones.frecuencias import opciones_frecuencia
 from ..core.db import conexion
-from ..core.estado import categorias, coleccion
+from ..core.estado import categorias, coleccion, detalle, simbolo
 from ..core.sql import get_row, insert_row, update_row
 from ..core.tablas import REC_COLS
 from ..schemas.recurrente import RecIn
-from .crud import register_borrado, register_lectura
+from .lecturas import register_borrado
 
 router = APIRouter()
-register_lectura(router, "rec", "recurrentes")
 register_borrado(router, "rec", "recurrentes")
 
 
 def _categoria_sugerida(rec: dict, nombres_por_tipo: dict) -> str:
     nombres = [c["nombre"] for c in nombres_por_tipo[rec["tipo"]]]
     return rec["nombre"] if rec["nombre"] in nombres else nombres[-1]
+
+
+@router.get("/api/rec/{row_id:int}", name="get_rec")
+def leer_rec(row_id: int):
+    with conexion() as conn:
+        rec = detalle(conn, "recurrentes", row_id)
+        return {**rec, "categoria_sugerida": _categoria_sugerida(rec, categorias(conn))}
 
 
 @router.post("/api/rec", name="create_rec")
@@ -53,8 +58,8 @@ def pausar_rec(row_id: int):
 @router.get("/api/rec/resumen")
 def rec_resumen():
     with conexion() as conn:
-        resumen = operaciones.resumen_recurrentes(coleccion(conn, "recurrentes"))
+        resumen = operaciones.resumen_recurrentes(coleccion(conn, "recurrentes"), simbolo(conn))
         cats = categorias(conn)
     for lista in ("ingresos", "gastos"):
         resumen[lista] = [{**r, "categoria_sugerida": _categoria_sugerida(r, cats)} for r in resumen[lista]]
-    return {**resumen, "frecuencias": opciones_frecuencia()}
+    return resumen

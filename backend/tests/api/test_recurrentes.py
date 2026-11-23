@@ -31,14 +31,14 @@ def test_editar_con_activo_explicito_lo_aplica(client):
     assert r.json()["activo"] == 1
 
 
-def test_resumen_expone_frecuencias_y_categoria_sugerida(client):
-    cats = client.get("/api/categorias").json()
+def test_resumen_y_detalle_exponen_categoria_sugerida(client):
+    cats = client.get("/api/bootstrap").json()["categorias"]
     conocida = cats["ingreso"][0]["nombre"]
-    _crear(client, nombre=conocida, tipo="ingreso")
+    propia = _crear(client, nombre=conocida, tipo="ingreso")
     _crear(client, nombre="Inventado")
     resumen = client.get("/api/rec/resumen").json()
-    assert [f["value"] for f in resumen["frecuencias"]][:3] == ["semanal", "quincenal", "mensual"]
-    assert resumen["frecuencias"][2]["label"] == "Mensual"
+    assert "frecuencias" not in resumen
+    assert client.get(f"/api/rec/{propia['id']}").json()["categoria_sugerida"] == conocida
     assert resumen["ingresos"][0]["categoria_sugerida"] == conocida
     assert resumen["gastos"][0]["categoria_sugerida"] == cats["gasto"][-1]["nombre"]
 

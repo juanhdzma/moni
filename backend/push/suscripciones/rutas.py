@@ -30,13 +30,10 @@ class PushUnsub(BaseModel):
 
 
 def _ejecutar(sql: str, params: tuple) -> dict:
-    conn = db.get_conn()
-    try:
+    with db.conexion() as conn:
         conn.execute(sql, params)
         conn.commit()
-        return {"ok": True}
-    finally:
-        conn.close()
+    return {"ok": True}
 
 
 @router.get("/api/push/key")

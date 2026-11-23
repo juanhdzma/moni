@@ -10,10 +10,9 @@ from .builders import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, HOY, INV_DERIVADOS, REC
 def test_bootstrap_sin_filas_y_con_umbral(client):
     sembrar(client)
     datos = client.get("/api/bootstrap").json()
-    assert set(datos) == {"hoy", "ahora", "categorias", "ajustes", "alertas", "conteos", "desactualizado"}
+    assert set(datos) == {"hoy", "ahora", "categorias", "ajustes", "alertas", "desactualizado"}
     assert datos["hoy"] == HOY.isoformat()
     assert datos["ahora"].startswith(datos["hoy"]) and len(datos["ahora"]) == 16
-    assert datos["conteos"] == {"activos": 1, "inversiones": 2}
     assert datos["desactualizado"] == {"dias": DIAS_DESACTUALIZADO, "texto": TEXTO_DESACTUALIZADO}
     assert datos["ajustes"] == {"moneda_simbolo": "$"}
 
@@ -62,7 +61,7 @@ def test_detalle_tx_trae_la_tarjeta(client):
 def test_inversion_expone_capitaliza_default(client):
     inv = client.post("/api/inv", json={"nombre": "CDT", "tipo": "fija", "monto_invertido": 100, "pago": "vencimiento"}).json()
     assert client.get(f"/api/inv/{inv['id']}").json()["capitaliza_default"] is True
-    assert client.get(f"/api/inv/{inv['id']}/rendimiento/defaults").json() == {"capitaliza_default": True}
+    assert client.get(f"/api/inv/{inv['id']}/rendimiento/defaults").status_code == 404
 
 
 def test_credito_saldado_se_puede_editar_pero_no_crear_sin_saldo(client):

@@ -2,6 +2,41 @@ SALDO_MINIMO = 1
 DIAS_DESACTUALIZADO = 30
 TEXTO_DESACTUALIZADO = "Valor sin actualizar hace más de 1 mes"
 
+TIPOS_INVERSION = [{"value": "fija", "label": "Fija"}, {"value": "variable", "label": "Variable"}]
+PAGOS_INVERSION = [{"value": "mensual", "label": "Mensual"}, {"value": "vencimiento", "label": "Al vencimiento"}]
+CLASES_DEUDA = [{"value": "prestamo", "label": "Préstamo"}, {"value": "tarjeta", "label": "Tarjeta"}]
+TIPOS_RETIRO = [{"value": "total", "label": "Total"}, {"value": "parcial", "label": "Parcial"}]
+DESTINOS_RENDIMIENTO = [
+    {
+        "value": "cuenta",
+        "label": "Me lo pagan",
+        "hint": "Entra como ingreso a tu cartera. El valor de la inversión no cambia.",
+    },
+    {
+        "value": "capitaliza",
+        "label": "Capitaliza",
+        "hint": "Sube el valor de la inversión. No entra plata a tu cartera.",
+    },
+]
+MONEDAS = [
+    {"value": "$", "label": "Peso colombiano ($)"},
+    {"value": "US$", "label": "Dólar (US$)"},
+    {"value": "€", "label": "Euro (€)"},
+    {"value": "MX$", "label": "Peso mexicano (MX$)"},
+    {"value": "£", "label": "Libra esterlina (£)"},
+]
+SERIES_EVOLUCION = [{"value": "patrimonio", "label": "Patrimonio"}, {"value": "inversiones", "label": "Inversiones"}]
+ETIQUETAS_TIPO_CATEGORIA = [
+    {"value": "ingreso", "label": "Ingresos"},
+    {"value": "gasto", "label": "Gastos"},
+    {"value": "transfer", "label": "Transferencias"},
+]
+
+
+def valores(opciones: list[dict]) -> tuple:
+    return tuple(o["value"] for o in opciones)
+
+
 CATEGORIAS_SISTEMA = {
     "ingreso": {
         "credito_recibido": "Crédito recibido",

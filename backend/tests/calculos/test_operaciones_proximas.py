@@ -49,15 +49,16 @@ def test_proximas_juntan_ventana_y_orden():
 def test_armar_proximas_filtra_ocultas_y_arma_textos():
     ops = candidatas_mixtas()
     r = op.armar_proximas(ops, {"deuda:1:2026-08-25", "deuda:9:2026-01-01"}, HOY)
-    assert [i["clave"] for i in r["items"]] == [
+    assert [i["clave"] for i in r["items"] + r["extra"]] == [
         "deuda:4:2026-08-10",
         "recurrente:8:2026-08-15",
         "recurrente:7:2026-08-18",
         "inversion:5:2026-08-20",
     ]
+    assert r["extra"] == [] and r["texto_ver_todas"] is None
     assert r["hoy"] == "2026-08-15"
     assert r["vencidas"] == 1
-    assert r["salen_total"] == 10 + 30_000
+    assert "salen_total" not in r and "dias_ventana" not in r
     primero, segundo = r["items"][0], r["items"][1]
     assert primero["texto_dias"] == "vencido 5d" and primero["vencida"] is True
     assert segundo["texto_dias"] == "hoy" and segundo["dia"] == 15 and segundo["mes_corto"] == "ago."
@@ -80,14 +81,6 @@ def test_inversion_dia_31_en_febrero_cae_el_28():
     assert [o["clave"] for o in ops] == ["inversion:5:2026-02-28"]
 
 
-def test_operaciones_proximas_ventana_de_un_dia():
-    deudas = [deuda(1, "Credito", 100, 100_000, "2026-08-16"), deuda(2, "Vieja", 100, 1, "2026-08-14")]
-    recs = [recurrente(2, "Salario", tipo="ingreso", monto=3_000_000, fecha_inicio="2026-07-15")]
-    ops = op.operaciones_proximas(deudas, [inversion(3, dia_pago=20)], recs, HOY)
-    assert ops == [(D(2026, 8, 15), "Salario", 3_000_000), (D(2026, 8, 16), "Credito", -100_000)]
-    assert len(op.operaciones_proximas(deudas, [inversion(3, dia_pago=20)], recs, HOY, dias=5)) == 3
-
-
 def test_armar_proximas_frase_con_y_sin_vencidas():
     r = op.armar_proximas(candidatas_mixtas(), set(), HOY)
     assert r["frase"]["texto"] == "Tenés 1 pago vencido y $430.010 por pagar en 45 días."
@@ -102,11 +95,13 @@ def test_armar_proximas_plural_vencidas_y_vacio():
     )
     assert "2 pagos vencidos" in op.armar_proximas(ops, set(), HOY)["frase"]["texto"]
     vacio = op.armar_proximas([], set(), HOY)
-    assert vacio["frase"] is None and vacio["dias_ventana"] == 45
+    assert vacio["frase"] is None and vacio["items"] == []
     assert vacio["texto_vacio"] == "Sin operaciones en los próximos 45 días."
 
 
 def test_armar_proximas_corta_a_20_pero_cuenta_todas():
     deudas = [deuda(i, proxima_cuota="2026-08-20") for i in range(1, 26)]
     r = op.armar_proximas(op.calcular_proximas_operaciones(deudas, [], [], HOY), set(), HOY)
-    assert len(r["items"]) == 20 and r["visibles"] == 5
+    assert len(r["items"]) == 5 and len(r["extra"]) == 15 and r["visibles"] == 5
+    assert r["texto_ver_todas"] == "Ver las 20"
+    assert r["items"][0]["clave"] != r["extra"][0]["clave"]

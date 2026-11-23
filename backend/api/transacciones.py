@@ -13,7 +13,7 @@ from ..core.sql import delete_row, get_row, insert_row, update_row
 from ..core.tablas import TX_COLS
 from ..schemas.transaccion import TxIn
 from ..schemas.validadores import ColumnaTx
-from .crud import register_lectura
+from .lecturas import register_lectura
 
 logger = logging.getLogger("moni")
 router = APIRouter()
@@ -97,4 +97,6 @@ def listar_tx(
 ):
     with conexion() as conn:
         hoy = hoy_bogota()
-        return listados.listar_transacciones(coleccion(conn, "transacciones"), col, int(dir), tipo, mes, cat, hoy)
+        return listados.listar_transacciones(
+            coleccion(conn, "transacciones"), col, int(dir), tipo, mes, cat, hoy, store.simbolo(conn)
+        )

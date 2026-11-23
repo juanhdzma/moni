@@ -77,7 +77,8 @@ def test_gastos(periodo):
 
 def test_proximas_operaciones():
     cands = operaciones.calcular_proximas_operaciones(DEUDAS, INVS, RECS, HOY)
-    items = operaciones.armar_proximas(cands, set(), HOY)["items"]
+    items = operaciones.armar_proximas(cands, set(), HOY)
+    items = items["items"] + items["extra"]
     obtenido = [
         {
             "clave": i["clave"], "tipo": i["tipo"], "fuente_id": i["fuente_id"], "fecha": i["fecha"],

@@ -16,6 +16,10 @@ def ajustes(conn):
     return {"moneda_simbolo": pares.get("moneda_simbolo", "$")}
 
 
+def simbolo(conn):
+    return ajustes(conn)["moneda_simbolo"]
+
+
 DERIVADORES = {
     "transacciones": lambda t, hoy, por_id: listados.derivar_tx(t, por_id),
     "deudas": lambda d, hoy, por_id: operaciones.derivar_deuda(d),

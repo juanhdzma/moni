@@ -139,3 +139,9 @@ def test_bloqueo_poda_bloqueos_vencidos_y_borra_intentos(entorno, reloj, monkeyp
     conn = db.get_conn()
     assert conn.execute("SELECT COUNT(*) FROM ips_bloqueadas").fetchone()[0] == 0
     conn.close()
+
+
+def test_respuesta_bloqueada_incluye_texto_legible():
+    cuerpo = bloqueo.respuesta_bloqueada(2 * 3600 + 15 * 60 - 20).body
+    assert b"Demasiados intentos. Prob\xc3\xa1 de nuevo en 2 h 15 min." in cuerpo
+    assert b"1 min" in bloqueo.respuesta_bloqueada(5).body

@@ -26,8 +26,7 @@ def tamano_payload(payload: dict) -> int:
 def enviar_a_todos(title: str, body: str, url: Optional[str] = None, tag: Optional[str] = None) -> dict:
     key = clave_privada()
     payload = json.dumps(armar_payload(title, body, url, tag))
-    conn = db.get_conn()
-    try:
+    with db.conexion() as conn:
         enviadas = 0
         eliminadas = 0
         for s in conn.execute("SELECT * FROM push_subs").fetchall():
@@ -43,7 +42,5 @@ def enviar_a_todos(title: str, body: str, url: Optional[str] = None, tag: Option
                     logger.warning("push falló para sub %s: %s", s["id"], e)
             except Exception as e:
                 logger.warning("push falló para sub %s: %s", s["id"], e)
-        return {"enviadas": enviadas, "eliminadas": eliminadas}
-    finally:
         conn.commit()
-        conn.close()
+        return {"enviadas": enviadas, "eliminadas": eliminadas}

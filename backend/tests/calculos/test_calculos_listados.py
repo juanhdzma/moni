@@ -85,9 +85,12 @@ def test_grupo_fecha():
 
 
 def test_resumen_tx():
-    assert L.resumen_tx([]) == {"ingresos": 0, "gastos": 0, "neto": 0, "segmentos": []}
+    vacio = L.resumen_tx([])
+    assert vacio["dato"]["texto"] == "entró $0 · salió $0" and vacio["segmentos"] == []
     r = L.resumen_tx([tx("ingreso", "Salario", 1000), tx("gasto", "Comida", 400), tx("gasto", "Comida", 100), tx("gasto", "Ocio", 50)])
     assert (r["ingresos"], r["gastos"], r["neto"]) == (1000, 550, 450)
+    assert r["dato"]["texto"] == "entró $1.000 · salió $550"
+    assert L.resumen_tx([tx("ingreso", "Salario", 10)], "US$")["dato"]["texto"] == "entró US$10 · salió US$0"
     assert r["segmentos"] == [{"key": "Comida", "label": "Comida", "valor": 500}, {"key": "Ocio", "label": "Ocio", "valor": 50}]
 
 
@@ -105,11 +108,10 @@ def test_top_segmentos():
 def test_derivar_tx():
     deudas = {7: {"nombre": "Visa Platinum Banco Muy Largo", "franquicia": "Visa"}}
     d = L.derivar_tx(tx("gasto", "A", 5, fecha="3/8/2026 14:05", tarjeta_id=7), deudas)
-    assert d["fecha"] == "2026-08-03T14:05" and d["mes"] == "2026-08"
-    assert d["es_gasto_cartera"] is False
+    assert d["fecha"] == "2026-08-03T14:05" and "mes" not in d and "es_gasto_cartera" not in d
     assert d["metodo_pago"] == "Visa Platinum Banco …" and d["tarjeta_franquicia"] == "Visa"
     d = L.derivar_tx(tx("gasto", "A", 5), deudas)
-    assert d["es_gasto_cartera"] is True and d["metodo_pago"] == "Efectivo / Débito" and d["tarjeta_nombre"] is None
+    assert d["metodo_pago"] == "Efectivo / Débito" and d["tarjeta_nombre"] is None
     assert L.derivar_tx(tx("gasto", "A", 5, tarjeta_id=99), deudas)["metodo_pago"] == "Efectivo / Débito"
     assert L.derivar_tx(tx("ingreso", "A", 5, tarjeta_id=7), deudas)["metodo_pago"] == "Efectivo / Débito"
 

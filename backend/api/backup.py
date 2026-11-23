@@ -2,7 +2,9 @@ import sqlite3
 
 from fastapi import APIRouter, HTTPException
 
+from ..calculos.fechas import hoy_bogota
 from ..core.db import conexion
+from ..core.estado import filas
 from ..core.tablas import ACTIVO_COLS, DEUDA_COLS, INV_COLS, REC_COLS, TX_COLS
 from ..schemas.activo import ActivoIn
 from ..schemas.backup import ImportPayload
@@ -22,6 +24,15 @@ IMPORT_TABLES = [
 ]
 
 
+def _normalizar_inversion(fila):
+    fila["valor_actual"] = fila["valor_actual"] if fila["valor_actual"] is not None else fila["monto_invertido"]
+    fila["fecha_inicio"] = fila["fecha_inicio"] or hoy_bogota().isoformat()
+    fila["valor_actualizado_en"] = fila["valor_actualizado_en"] or fila["fecha_inicio"]
+
+
+NORMALIZADORES = {"inversiones": _normalizar_inversion}
+
+
 def _validar_fila_import(table, model, row, idx):
     if not isinstance(row, dict):
         raise HTTPException(400, f"{table}[{idx}]: se esperaba un objeto")
@@ -34,7 +45,22 @@ def _validar_fila_import(table, model, row, idx):
             if not isinstance(row[extra], (int, float)) or isinstance(row[extra], bool):
                 raise HTTPException(400, f"{table}[{idx}].{extra} debe ser numérico")
             limpia[extra] = row[extra]
+    if table in NORMALIZADORES:
+        NORMALIZADORES[table](limpia)
     return limpia
+
+
+def _mensaje_integridad(error):
+    detalle = str(error)
+    if detalle.startswith("UNIQUE"):
+        return f"Import falló (¿ids duplicados? borrá los datos existentes primero): {detalle}"
+    return f"Import falló: fila inválida ({detalle})"
+
+
+@router.get("/api/backup")
+def exportar():
+    with conexion() as conn:
+        return {table: filas(conn, table) for table, _cols, _model in IMPORT_TABLES}
 
 
 @router.post("/api/import")
@@ -61,7 +87,7 @@ def import_data(body: ImportPayload):
             return counts
         except sqlite3.IntegrityError as e:
             conn.rollback()
-            raise HTTPException(400, f"Import falló (¿ids duplicados? borrá los datos existentes primero): {e}")
+            raise HTTPException(400, _mensaje_integridad(e))
 
 
 @router.post("/api/truncate")

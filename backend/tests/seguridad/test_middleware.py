@@ -57,26 +57,26 @@ def test_solo_las_publicas_declaradas_estan_abiertas():
 @pytest.mark.parametrize(
     "metodo,path",
     [
-        ("GET", "//api/all"),
-        ("GET", "///api/all"),
-        ("GET", "/API/all"),
-        ("GET", "/Api/ALL"),
-        ("GET", "/api/all/"),
-        ("GET", "/api/auth/estado/../all"),
-        ("GET", "/api/auth/../all"),
-        ("GET", "/api/./all"),
-        ("GET", "/api//all"),
+        ("GET", "//api/meta"),
+        ("GET", "///api/meta"),
+        ("GET", "/API/meta"),
+        ("GET", "/Api/META"),
+        ("GET", "/api/meta/"),
+        ("GET", "/api/auth/estado/../meta"),
+        ("GET", "/api/auth/../meta"),
+        ("GET", "/api/./meta"),
+        ("GET", "/api//meta"),
         ("GET", "/api/auth/estado/"),
         ("GET", "/api/auth/ESTADO"),
         ("GET", "/api/auth//estado"),
         ("GET", "/api/auth/estado/extra"),
-        ("HEAD", "/api/all"),
-        ("OPTIONS", "/api/all"),
-        ("PATCH", "/api/all"),
-        ("TRACE", "/api/all"),
+        ("HEAD", "/api/meta"),
+        ("OPTIONS", "/api/meta"),
+        ("PATCH", "/api/meta"),
+        ("TRACE", "/api/meta"),
         ("HEAD", "/api/auth/estado"),
         ("POST", "/api/truncate"),
-        ("GET", "/api/%61ll"),
+        ("GET", "/api/%6deta"),
         ("GET", "/api"),
         ("GET", "/api/"),
         ("GET", "/apix/all"),
@@ -115,7 +115,7 @@ def asgi(path, metodo="GET"):
     return out["status"]
 
 
-@pytest.mark.parametrize("path", ["//api/all", "///api/all", "/api/auth/estado/../all", "/api/auth/./../all", "/API//all/", "/api/auth/estado/../../api/all"])
+@pytest.mark.parametrize("path", ["//api/meta", "///api/meta", "/api/auth/estado/../meta", "/api/auth/./../meta", "/API//meta/", "/api/auth/estado/../../api/meta"])
 def test_path_tricks_asgi_crudo(entorno, path):
     with TestClient(main.app):
         assert asgi(path) == 401
@@ -131,7 +131,7 @@ def test_docs_desactivados(client, anon_client):
 
 
 def test_headers_de_seguridad(client, anon_client):
-    for r in (client.get("/api/all"), anon_client.get("/api/all"), anon_client.get("/"), anon_client.get("/api/auth/estado")):
+    for r in (client.get("/api/meta"), anon_client.get("/api/meta"), anon_client.get("/"), anon_client.get("/api/auth/estado")):
         h = r.headers
         assert "default-src 'self'" in h["content-security-policy"]
         assert "frame-ancestors 'none'" in h["content-security-policy"]
@@ -141,6 +141,6 @@ def test_headers_de_seguridad(client, anon_client):
         assert h["referrer-policy"] == "no-referrer"
         assert "camera=()" in h["permissions-policy"]
         assert "strict-transport-security" not in h
-    assert client.get("/api/all").headers["cache-control"] == "no-store"
-    assert anon_client.get("/api/all").headers["cache-control"] == "no-store"
+    assert client.get("/api/meta").headers["cache-control"] == "no-store"
+    assert anon_client.get("/api/meta").headers["cache-control"] == "no-store"
     assert anon_client.get("/").headers.get("cache-control") != "no-store"

@@ -4,15 +4,12 @@ from fastapi import APIRouter, Query
 
 from ..calculos import dinero, operaciones
 from ..calculos.fechas import hoy_bogota
+from ..calculos.formato import porcentaje_texto
 from ..core import estado as store
 from ..core.db import conexion
-from ..schemas.validadores import PeriodoEvolucion, PeriodoGastos
+from ..schemas.validadores import PeriodoEvolucion, PeriodoGastos, SerieEvolucion
 
 router = APIRouter()
-
-
-def _simbolo(conn) -> str:
-    return store.ajustes(conn)["moneda_simbolo"]
 
 
 def _estado_de_hoy(conn):
@@ -31,18 +28,18 @@ def dashboard_resumen():
     with conexion() as conn:
         estado, hoy = _estado_de_hoy(conn)
         resumen = dinero.resumen_dashboard(estado, hoy)
-        partes = dinero.partes_patrimonio(resumen, store.conteos(conn), _simbolo(conn))
+        partes = dinero.partes_patrimonio(resumen, store.conteos(conn), store.simbolo(conn))
         return {**resumen, "partes": partes}
 
 
 @router.get("/api/dashboard/evolucion")
 def dashboard_evolucion(
-    serie: Literal["patrimonio", "inversiones"] = "patrimonio",
+    serie: SerieEvolucion = "patrimonio",
     periodo: PeriodoEvolucion = "6M",
 ):
     with conexion() as conn:
         estado, hoy = _estado_de_hoy(conn)
-        return dinero.evolucion(estado, serie, periodo, hoy, _simbolo(conn))
+        return dinero.evolucion(estado, serie, periodo, hoy, store.simbolo(conn))
 
 
 @router.get("/api/dashboard/este-mes")
@@ -59,14 +56,6 @@ def dashboard_gastos(periodo: PeriodoGastos = "1M"):
         return dinero.gastos_periodo(estado["transacciones"], periodo, hoy)
 
 
-@router.get("/api/dashboard/periodos")
-def dashboard_periodos():
-    return {
-        "gastos": dinero.opciones_periodo(dinero.PERIODOS_GASTOS),
-        "evolucion": dinero.opciones_periodo(dinero.PERIODOS_EVOLUCION_VISIBLES),
-    }
-
-
 @router.get("/api/dashboard/movimientos")
 def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
     with conexion() as conn:
@@ -77,6 +66,8 @@ def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
 @router.get("/api/calc/tasa")
 def calc_tasa(valor: float, tipo: Literal["ea", "mv"] = "ea"):
     if valor <= 0:
-        return {"ea": None, "mv": None}
+        return {"ea": None, "mv": None, "texto": None}
     ea = operaciones.convertir_tasa(valor, tipo)
-    return {"ea": ea, "mv": valor if tipo == "mv" else operaciones.ea_a_mv(ea)}
+    mv = valor if tipo == "mv" else operaciones.ea_a_mv(ea)
+    equivalente = f"{porcentaje_texto(mv, 4)}% MV" if tipo == "ea" else f"{porcentaje_texto(ea, 2)}% EA"
+    return {"ea": ea, "mv": mv, "texto": f"Equivale a {equivalente}"}

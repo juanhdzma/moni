@@ -148,6 +148,9 @@ def conexion():
     conn = get_conn()
     try:
         yield conn
+    except BaseException:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 

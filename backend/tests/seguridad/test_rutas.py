@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 
 from backend import main
-from backend.core.csrf import CSRF_HEADER
 from backend.core import db
 from backend.seguridad import sesiones
 from backend.tests.conftest import IP_TEST
@@ -42,7 +41,7 @@ def test_cookie_secure_en_https_directo_y_con_proxy_confiable(entorno, monkeypat
 
 def test_estado_publico(anon_client):
     r = anon_client.get("/api/auth/estado")
-    assert r.json() == {"configurado": True, "autenticado": False, "passkeys": 0, "bloqueada": False}
+    assert r.json() == {"configurado": True, "autenticado": False, "passkeys": 0}
 
 
 def test_estado_autenticado(client):
@@ -63,11 +62,6 @@ def test_logout(anon_client):
 def test_logout_sin_sesion(anon_client):
     assert anon_client.post("/api/auth/logout").status_code == 401
 
-
-def test_logout_exige_csrf(anon_client):
-    login(anon_client)
-    del anon_client.headers[CSRF_HEADER]
-    assert anon_client.post("/api/auth/logout").status_code == 403
 
 
 def test_listar_y_revocar_sesiones(anon_client):

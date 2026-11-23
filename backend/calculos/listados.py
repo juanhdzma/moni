@@ -2,11 +2,20 @@ import unicodedata
 from datetime import timedelta
 
 from backend.calculos.constantes import CATEGORIAS_SISTEMA, tiene_saldo
+from backend.calculos.formato import cop, frase
 from backend.calculos.fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
 
 
 TIPOS = tuple(CATEGORIAS_SISTEMA)
 COLUMNAS_ORDEN = ("fecha", "tipo", "categoria", "descripcion", "monto")
+ETIQUETAS_COLUMNA = {
+    "fecha": "Fecha",
+    "tipo": "Tipo",
+    "categoria": "Categoría",
+    "descripcion": "Descripción",
+    "monto": "Monto",
+}
+DIRECCION_INICIAL = {"fecha": -1, "tipo": 1, "categoria": 1, "descripcion": 1, "monto": -1}
 ETIQUETAS_TIPO = {"ingreso": "Ingresos", "gasto": "Gastos"}
 ETIQUETAS_TIPO_FILA = {"ingreso": "Ingreso", "gasto": "Gasto", "transfer": "Auto"}
 EFECTIVO_DEBITO = "Efectivo / Débito"
@@ -71,9 +80,7 @@ def top_segmentos(items, n=4):
 def derivar_tx(fila, deudas_por_id):
     tx = dict(fila)
     tx["fecha"] = normalizar_fecha(fila["fecha"])
-    tx["mes"] = mes_de(tx["fecha"])
     tarjeta_id = fila.get("tarjeta_id")
-    tx["es_gasto_cartera"] = fila["tipo"] == "gasto" and not tarjeta_id
     tarjeta = deudas_por_id.get(tarjeta_id) if fila["tipo"] == "gasto" and tarjeta_id else None
     tx["tarjeta_nombre"] = tarjeta["nombre"] if tarjeta else None
     tx["tarjeta_franquicia"] = tarjeta["franquicia"] if tarjeta else None
@@ -119,7 +126,13 @@ def grupo_fecha(fecha, hoy):
     return f"{mes[0].upper()}{mes[1:]} - {d.year}"
 
 
-def resumen_tx(txs):
+def frase_flujo(verbo_entra, verbo_sale, ingresos, gastos, simbolo="$", sufijo=""):
+    return frase(
+        f"{verbo_entra} ", (cop(ingresos, simbolo), "positivo"), f" · {verbo_sale} ", (cop(gastos, simbolo), "fuerte"), sufijo,
+    )
+
+
+def resumen_tx(txs, simbolo="$"):
     ingresos = 0
     gastos = 0
     por_cat = {}
@@ -134,6 +147,7 @@ def resumen_tx(txs):
         "ingresos": ingresos,
         "gastos": gastos,
         "neto": ingresos - gastos,
+        "dato": frase_flujo("entró", "salió", ingresos, gastos, simbolo),
         "segmentos": top_segmentos(segmentos),
     }
 
@@ -144,7 +158,7 @@ def _clave_texto(v):
     return (base, plano, v.swapcase())
 
 
-def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=None):
+def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=None, simbolo="$"):
     if col not in COLUMNAS_ORDEN:
         raise ValueError("columna inválida")
     meses = meses_disponibles(txs)
@@ -171,7 +185,6 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
     items = [
         {
             **t,
-            "mes": mes_de(t["fecha"]),
             "tipo_label": ETIQUETAS_TIPO_FILA[t["tipo"]],
             "grupo": grupo_fecha(t["fecha"], hoy) if col == "fecha" else None,
         }
@@ -193,7 +206,7 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
             "tipos": [{"value": k, "label": v} for k, v in ETIQUETAS_TIPO.items()],
         },
         "pills": pills,
-        "resumen": resumen_tx(items),
+        "resumen": resumen_tx(items, simbolo),
     }
 
 

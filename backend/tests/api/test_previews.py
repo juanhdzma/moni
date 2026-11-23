@@ -26,8 +26,3 @@ def test_previews_de_activo(client):
     assert client.post("/api/activo/999/venta/preview", json={"precio": 1}).status_code == 404
     assert client.get("/api/activos/resumen").json()["items"][0]["valor_actual"] == 1200
 
-
-def test_previews_exigen_header_csrf(client, prestamo):
-    client.headers.pop("x-moni-request")
-    r = client.post(f"/api/deuda/{prestamo['id']}/pago/preview", json={"total_pagado": 1, "nuevo_saldo": 0})
-    assert r.status_code == 403

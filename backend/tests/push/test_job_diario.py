@@ -3,6 +3,7 @@ import datetime
 import pytest
 
 from backend.core import db
+from backend.core.ops_ocultas import candidatas
 from backend.push import envio, job_diario
 from backend.tests.push.constantes import SUB, HOY
 
@@ -23,6 +24,23 @@ def test_operaciones_proximas_hoy_y_manana(client, prestamo):
     msg = job_diario.armar_mensaje(ops, HOY)
     assert msg["title"] == "Moni: 2 operaciones"
     assert msg["body"] == "Hoy: Salario +$3.000.000\nMañana: Credito -$100.000"
+
+
+def test_operacion_oculta_no_se_avisa_y_usa_simbolo(client, monkeypatch):
+    client.post("/api/push/subscribe", json=SUB)
+    client.post("/api/rec", json={"nombre": "Netflix", "tipo": "gasto", "monto": 30_000, "frecuencia": "mensual", "fecha_inicio": "2026-05-15"})
+    client.post("/api/rec", json={"nombre": "Gym", "tipo": "gasto", "monto": 50_000, "frecuencia": "mensual", "fecha_inicio": "2026-05-15"})
+    conn = db.get_conn()
+    ops = job_diario.operaciones_del_dia(conn, HOY)
+    ocultar = next(c for c in candidatas(conn, HOY) if c["etiqueta"] == "Netflix")["clave"]
+    conn.close()
+    assert len(ops) == 2
+    client.post("/api/ops-ocultas", json={"clave": ocultar})
+    client.put("/api/ajustes", json={"moneda_simbolo": "US$"})
+    enviados = []
+    monkeypatch.setattr(envio, "webpush", lambda info, data, **kw: enviados.append(data))
+    assert job_diario.avisar(HOY) == 1
+    assert "Gym -US$50.000" in enviados[0] and "Netflix" not in enviados[0]
 
 
 def test_avisar_envia_y_poda_subs_muertas(client, monkeypatch):

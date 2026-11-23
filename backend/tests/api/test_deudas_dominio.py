@@ -110,3 +110,29 @@ def test_resumen_trae_frases_resueltas(client, prestamo, tarjeta):
     assert credito["detalle"] == "24,0% EA · $100.000/mes"
     assert credito["progreso_texto"] == "0,0% pagado"
     assert r["tarjetas"][0]["frases"]["detalle"] == "Cupo $1.000.000"
+
+
+def test_get_deuda_devuelve_frases_como_el_resumen(client, prestamo):
+    deuda = client.get(f"/api/deuda/{prestamo['id']}").json()
+    resumen = client.get("/api/deudas/resumen").json()
+    assert deuda["frases"] == resumen["creditos"][0]["frases"]
+
+
+def test_normalizar_tasa_convierte_mv_a_ea():
+    from backend.calculos.operaciones import normalizar_tasa
+
+    assert normalizar_tasa({"tasa_ea": 12.5}) == {"tasa_ea": 12.5}
+    convertida = normalizar_tasa({"tasa_ea": 2, "tasa_tipo": "mv"})
+    assert "tasa_tipo" not in convertida and convertida["tasa_ea"] > 26
+
+
+def test_es_tarjeta_sale_como_bool_y_progreso_no_pasa_de_100(client, prestamo):
+    assert prestamo["es_tarjeta"] is False
+    tarjeta = client.post("/api/deuda", json={"nombre": "Visa", "es_tarjeta": True, "cupo": 1000}).json()
+    assert tarjeta["es_tarjeta"] is True
+    assert client.get(f"/api/deuda/{tarjeta['id']}").json()["es_tarjeta"] is True
+    sobrepagada = client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "monto_inicial": 100, "saldo_actual": 0})
+    assert sobrepagada.json()["es_tarjeta"] is False
+    creciente = client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "monto_inicial": 100, "saldo_actual": 500}).json()
+    deuda = client.get(f"/api/deuda/{creciente['id']}").json()
+    assert deuda["progreso_pct"] == 0 and "intereses_pagados" not in deuda

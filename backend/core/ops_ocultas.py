@@ -31,6 +31,10 @@ def candidatas(conn, hoy):
     )
 
 
+def claves_ocultas(conn) -> set[str]:
+    return {r["clave"] for r in conn.execute("SELECT clave FROM ops_ocultas")}
+
+
 def podar_ocultas(conn, hoy):
     vigentes = operaciones.claves_vigentes(candidatas(conn, hoy))
     if vigentes:

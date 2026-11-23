@@ -47,6 +47,7 @@ def agrupar_gastos(txs) -> list[dict]:
     filas = []
     for categoria, lista in grupos.items():
         recientes = sorted(lista, key=lambda t: t["fecha"], reverse=True)[:MAX_DETALLE]
+        restantes = max(0, len(lista) - MAX_DETALLE)
         filas.append(
             {
                 "categoria": categoria,
@@ -62,7 +63,8 @@ def agrupar_gastos(txs) -> list[dict]:
                     }
                     for t in recientes
                 ],
-                "restantes": max(0, len(lista) - MAX_DETALLE),
+                "restantes": restantes,
+                "restantes_texto": f"y {restantes} más en Transacciones" if restantes else None,
             }
         )
     return sorted(filas, key=lambda f: f["valor"], reverse=True)

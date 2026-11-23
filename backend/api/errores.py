@@ -3,6 +3,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
+from ..calculos.operaciones.movimientos import ErrorDeDominio
+
 MENSAJES = {
     "missing": lambda e: "Este valor es requerido",
     "greater_than": lambda e: f"Debe ser mayor que {e['ctx']['gt']:g}",
@@ -30,6 +32,10 @@ def mensaje_en_espanol(error: dict) -> str:
     if traductor:
         return traductor(error)
     return error["msg"].removeprefix(PREFIJO_VALOR)
+
+
+async def errores_de_dominio(request: Request, exc: ErrorDeDominio):
+    return JSONResponse({"detail": exc.mensaje}, status_code=exc.status)
 
 
 async def errores_de_validacion(request: Request, exc: RequestValidationError):

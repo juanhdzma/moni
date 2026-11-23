@@ -79,7 +79,7 @@ def test_rendimiento_que_capitaliza_ignora_registrar_tx(client):
 @pytest.mark.parametrize("pago,esperado", [("vencimiento", True), ("mensual", False), (None, False)])
 def test_capitaliza_default_segun_pago(client, pago, esperado):
     inv = _crear(client, pago=pago, dia_pago=15 if pago == "mensual" else None)
-    assert client.get(f"/api/inv/{inv['id']}/rendimiento/defaults").json() == {"capitaliza_default": esperado}
+    assert client.get(f"/api/inv/{inv['id']}").json()["capitaliza_default"] is esperado
 
 
 def test_retiro_total_borra_y_parcial_prorratea(client):
@@ -104,3 +104,16 @@ def test_resumen_trae_texto_de_posiciones_y_tipos(client):
     assert client.get("/api/inv/resumen").json()["texto_posiciones"] == "0 posiciones"
     _crear(client)
     assert client.get("/api/inv/resumen").json()["texto_posiciones"] == "1 posición"
+
+
+def test_normaliza_segun_tipo_y_vacios(client):
+    variable = _crear(client, tipo="variable", tasa_ea=12, pago="mensual", dia_pago=5)
+    assert (variable["tasa_ea"], variable["pago"], variable["dia_pago"]) == (None, None, None)
+    vencimiento = _crear(client, pago="vencimiento", dia_pago=15, tasa_ea=8)
+    assert (vencimiento["tasa_ea"], vencimiento["pago"], vencimiento["dia_pago"]) == (8, "vencimiento", None)
+    mensual = _crear(client, pago="mensual", dia_pago=15)
+    assert mensual["dia_pago"] == 15
+    crudo = _crear(client, tasa_ea="", dia_pago="", valor_actual="", pago="vencimiento")
+    assert (crudo["tasa_ea"], crudo["dia_pago"], crudo["valor_actual"]) == (None, None, 1000)
+    sin_tasa = _crear(client, tasa_ea=0)
+    assert sin_tasa["tasa_ea"] is None

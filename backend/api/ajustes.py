@@ -10,12 +10,6 @@ from ..schemas.validadores import TipoTx
 router = APIRouter()
 
 
-@router.get("/api/categorias")
-def get_categorias():
-    with conexion() as conn:
-        return store.categorias(conn)
-
-
 @router.post("/api/categorias", status_code=201)
 def crear_categoria(body: CategoriaIn):
     with conexion() as conn:
@@ -40,12 +34,6 @@ def borrar_categoria(tipo: TipoTx, nombre: str):
             raise HTTPException(404, "categoría no encontrada")
         conn.commit()
         return store.categorias(conn)
-
-
-@router.get("/api/ajustes")
-def get_ajustes():
-    with conexion() as conn:
-        return store.ajustes(conn)
 
 
 @router.put("/api/ajustes")

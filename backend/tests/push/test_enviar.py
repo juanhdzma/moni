@@ -92,3 +92,15 @@ def test_test_y_key_exigen_sesion(anon_client):
     assert anon_client.post("/api/push/test").status_code == 401
     assert anon_client.get("/api/push/key").status_code == 401
     assert anon_client.post("/api/push/subscribe", json={"endpoint": "https://fcm.googleapis.com/x", "keys": {"p256dh": "a", "auth": "b"}}).status_code == 401
+
+
+def test_limitar_purga_ips_vencidas(monkeypatch):
+    class Req:
+        client = type("C", (), {"host": "9.9.9.9"})()
+        headers = {}
+
+    envio_rutas._envios["1.1.1.1"].append(0.0)
+    monkeypatch.setattr(envio_rutas.time, "monotonic", lambda: 1000.0)
+    monkeypatch.setattr(envio_rutas, "client_ip", lambda r: "9.9.9.9")
+    envio_rutas._limitar(Req())
+    assert list(envio_rutas._envios) == ["9.9.9.9"]

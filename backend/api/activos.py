@@ -10,7 +10,7 @@ from ..core.sql import delete_row, get_row, insert_row, insert_tx, update_row
 from ..core.tablas import ACTIVO_COLS, CAT_GASTO, CAT_INGRESO
 from ..schemas.activo import ActivoIn, ActivoValor, ActivoVenta
 from ..schemas.previews import NuevoValor, PrecioPreview
-from .crud import register_borrado, register_lectura
+from .lecturas import register_borrado, register_lectura
 
 router = APIRouter()
 register_lectura(router, "activo", "activos")

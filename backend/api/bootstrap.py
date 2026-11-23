@@ -19,6 +19,5 @@ def bootstrap():
             "categorias": store.categorias(conn),
             "ajustes": store.ajustes(conn),
             "alertas": listados.alertas(store.filas(conn, "activos"), store.filas(conn, "inversiones"), hoy),
-            "conteos": store.conteos(conn),
             "desactualizado": {"dias": DIAS_DESACTUALIZADO, "texto": TEXTO_DESACTUALIZADO},
         }

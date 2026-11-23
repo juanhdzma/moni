@@ -27,7 +27,6 @@ def estado(request: Request):
         "configurado": password.configurado(),
         "autenticado": sesiones.requiere_sesion(request) is not None,
         "passkeys": passkeys,
-        "bloqueada": False,
     }
 
 

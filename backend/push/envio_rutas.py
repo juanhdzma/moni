@@ -37,6 +37,8 @@ class PushEnviar(BaseModel):
 
 def _limitar(request: Request) -> None:
     ahora = time.monotonic()
+    for ip in [ip for ip, c in _envios.items() if not c or ahora - c[-1] > VENTANA_S]:
+        del _envios[ip]
     cola = _envios[client_ip(request)]
     while cola and ahora - cola[0] > VENTANA_S:
         cola.popleft()

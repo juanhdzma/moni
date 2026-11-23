@@ -1,7 +1,5 @@
 from .fechas import redondear_js
 
-TONOS = ("positivo", "negativo", "fuerte")
-
 
 def _miles(n: int) -> str:
     return f"{n:,}".replace(",", ".")

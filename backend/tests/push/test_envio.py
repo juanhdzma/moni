@@ -34,3 +34,26 @@ def test_vapid_concurrente_genera_una_sola_clave(client):
     with ThreadPoolExecutor(8) as ex:
         keys = set(ex.map(lambda _: vapid.public_key(), range(8)))
     assert len(keys) == 1
+
+
+def test_enviar_no_hace_commit_si_hay_excepcion(client, monkeypatch):
+    conn = db.get_conn()
+    conn.execute("INSERT INTO push_subs (endpoint, p256dh, auth) VALUES ('https://fcm.googleapis.com/a', 'k', 'a')")
+    conn.commit()
+    conn.close()
+
+    class Resp:
+        status_code = 410
+
+    def falso(*a, **k):
+        raise envio.WebPushException("gone", response=Resp())
+
+    monkeypatch.setattr(envio, "webpush", falso)
+    monkeypatch.setattr(envio, "clave_privada", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+    try:
+        envio.enviar_a_todos("t", "b")
+    except RuntimeError:
+        pass
+    conn = db.get_conn()
+    assert conn.execute("SELECT COUNT(*) FROM push_subs").fetchone()[0] == 1
+    conn.close()

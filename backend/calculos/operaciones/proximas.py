@@ -94,12 +94,13 @@ def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date
         )
     vencidas = sum(1 for i in items if i["dias"] < 0)
     salen_total = sum(-i["monto"] for i in items if i["monto"] < 0)
+    restantes = items[PROX_OP_VISIBLES:PROX_OP_MAX_ITEMS]
     return {
         "hoy": hoy.isoformat(),
-        "items": items[:PROX_OP_MAX_ITEMS],
+        "items": items[:PROX_OP_VISIBLES],
+        "extra": restantes,
+        "texto_ver_todas": f"Ver las {len(items[:PROX_OP_MAX_ITEMS])}" if restantes else None,
         "vencidas": vencidas,
-        "salen_total": salen_total,
-        "dias_ventana": PROX_OP_ADELANTE_DIAS,
         "visibles": PROX_OP_VISIBLES,
         "frase": _frase_proximas(vencidas, salen_total, simbolo) if items else None,
         "texto_vacio": f"Sin operaciones en los próximos {PROX_OP_ADELANTE_DIAS} días.",
@@ -108,14 +109,3 @@ def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date
 
 def claves_vigentes(candidatas: list[dict]) -> set[str]:
     return {c["clave"] for c in candidatas}
-
-
-def operaciones_proximas(
-    deudas: list, inversiones: list, recurrentes: list, hoy: datetime.date, dias: int = 1
-) -> list[tuple[datetime.date, str, float]]:
-    limite = hoy + datetime.timedelta(days=dias)
-    return [
-        (c["fecha"], c["etiqueta"], c["monto"])
-        for c in calcular_proximas_operaciones(deudas, inversiones, recurrentes, hoy)
-        if hoy <= c["fecha"] <= limite
-    ]

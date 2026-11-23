@@ -1,6 +1,7 @@
 from typing import Optional
 
 from ..formato import cop, porcentaje_texto
+from .finanzas import intereses_pagados
 
 SIMBOLO_POR_DEFECTO = "$"
 
@@ -17,8 +18,7 @@ def saldo_tras_adelanto(cupo: float, disponible_nuevo: float) -> float:
     return cupo - disponible_nuevo
 
 
-def _intereses_texto(deuda: dict, simbolo: str) -> Optional[str]:
-    intereses = deuda["intereses_pagados"]
+def _intereses_texto(intereses: Optional[dict], simbolo: str) -> Optional[str]:
     if intereses is None:
         return None
     return ("" if intereses["exacto"] else "~") + cop(intereses["valor"], simbolo)
@@ -27,7 +27,8 @@ def _intereses_texto(deuda: dict, simbolo: str) -> Optional[str]:
 def frases_deuda(deuda: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
     cupo = deuda.get("cupo") or 0
     meses = deuda["meses_restantes"]
-    intereses = _intereses_texto(deuda, simbolo)
+    pagados = intereses_pagados(deuda)
+    intereses = _intereses_texto(pagados, simbolo)
     return {
         "detalle": (
             f"Cupo {cop(cupo, simbolo)}" if cupo > 0 else "Sin cupo definido"
@@ -40,7 +41,7 @@ def frases_deuda(deuda: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
         "intereses_texto": intereses,
         "intereses_ayuda": (
             "Suma de los pagos registrados en Moni"
-            if deuda["intereses_pagados"] and deuda["intereses_pagados"]["exacto"]
+            if pagados and pagados["exacto"]
             else "Estimado por amortización — todavía no hay pagos registrados"
         ),
         "intereses_saldada_texto": f"{intereses} en intereses" if intereses else None,
@@ -61,8 +62,9 @@ def con_frases(resumen: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
     def anotar(filas: list[dict]) -> list[dict]:
         return [{**d, "frases": frases_deuda(d, simbolo)} for d in filas]
 
+    publico = {k: v for k, v in resumen.items() if k != "intereses_aproximado"}
     return {
-        **resumen,
+        **publico,
         "dato": frases_resumen(resumen, simbolo),
         "creditos": anotar(resumen["creditos"]),
         "tarjetas": anotar(resumen["tarjetas"]),

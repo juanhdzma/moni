@@ -1,18 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from ..calculos import operaciones
 from ..core.db import conexion
-from ..core.estado import coleccion, detalle
+from ..core.estado import coleccion, simbolo
 from ..core.montos import pesos
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import delete_row, get_row, insert_row, insert_tx, update_row
 from ..core.tablas import CAT_GASTO, CAT_INGRESO, INV_COLS
 from ..schemas.inversion import InvAporte, InvIn, InvRendimiento, InvRetiro
 from ..schemas.previews import MontoPreview, NuevoValor
-from .crud import register_borrado, register_lectura
+from .lecturas import register_borrado, register_lectura
 from ..calculos.fechas import hoy_bogota
 from ..calculos.formato import plural
-from ..calculos.operaciones.movimientos import ErrorDeDominio, retiro_parcial, valor_estimado_tras_aporte
+from ..calculos.operaciones.movimientos import retiro_parcial, valor_estimado_tras_aporte
 
 router = APIRouter()
 register_lectura(router, "inv", "inversiones")
@@ -29,10 +29,7 @@ DESCRIPCION_RENDIMIENTO = (
 
 
 def _datos_inversion(body: InvIn, hoy) -> dict:
-    data = body.model_dump()
-    tipo_tasa = data.pop("tasa_tipo")
-    if data["tasa_ea"]:
-        data["tasa_ea"] = operaciones.convertir_tasa(data["tasa_ea"], tipo_tasa)
+    data = operaciones.normalizar_tasa(body.model_dump())
     if data["valor_actual"] is None:
         data["valor_actual"] = data["monto_invertido"]
     data["fecha_inicio"] = data["fecha_inicio"] or hoy.isoformat()
@@ -69,12 +66,6 @@ def actualizar_inv(row_id: int, body: InvIn):
         update_row(conn, "inversiones", INV_COLS, row_id, data)
         conn.commit()
         return get_row(conn, "inversiones", row_id)
-
-
-@router.get("/api/inv/{inv_id}/rendimiento/defaults")
-def rendimiento_defaults(inv_id: int):
-    with conexion() as conn:
-        return {"capitaliza_default": detalle(conn, "inversiones", inv_id)["capitaliza_default"]}
 
 
 @router.post("/api/inv/{inv_id}/rendimiento", description=DESCRIPCION_RENDIMIENTO)
@@ -125,10 +116,7 @@ def retirar_inv(inv_id: int, body: InvRetiro):
             delete_row(conn, "inversiones", inv_id)
             descripcion = f"Retiro total · {inv['nombre']}"
         else:
-            try:
-                nuevo = retiro_parcial(inv["valor_actual"], inv["monto_invertido"], body.monto, body.saldo_queda)
-            except ErrorDeDominio as e:
-                raise HTTPException(e.status, e.mensaje)
+            nuevo = retiro_parcial(inv["valor_actual"], inv["monto_invertido"], body.monto, body.saldo_queda)
             conn.execute(
                 "UPDATE inversiones SET valor_actual = ?, monto_invertido = ?, valor_actualizado_en = ? WHERE id = ?",
                 (nuevo.valor_actual, nuevo.monto_invertido, body.fecha, inv_id),
@@ -160,7 +148,7 @@ def inv_aporte_preview(inv_id: int, body: MontoPreview):
 @router.get("/api/inv/resumen")
 def inv_resumen():
     with conexion() as conn:
-        resumen = operaciones.resumen_inversiones(coleccion(conn, "inversiones"))
+        resumen = operaciones.resumen_inversiones(coleccion(conn, "inversiones"), simbolo(conn))
     posiciones = len(resumen["fijas"]) + len(resumen["variables"])
     resumen["texto_posiciones"] = plural(posiciones, "posición", "posiciones")
     return resumen

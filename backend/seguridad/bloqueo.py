@@ -78,9 +78,22 @@ async def fallo_generico(request: Request, motivo: str) -> JSONResponse:
     return JSONResponse({"detail": "Credenciales invalidas"}, status_code=401)
 
 
+def _duracion(segundos: int) -> str:
+    minutos = max(1, -(-segundos // 60))
+    horas, minutos = divmod(minutos, 60)
+    partes = [f"{horas} h"] if horas else []
+    if minutos:
+        partes.append(f"{minutos} min")
+    return " ".join(partes)
+
+
 def respuesta_bloqueada(segundos: int) -> JSONResponse:
     return JSONResponse(
-        {"detail": "IP bloqueada", "reintentar_en_s": segundos},
+        {
+            "detail": "IP bloqueada",
+            "reintentar_en_s": segundos,
+            "texto": f"Demasiados intentos. Probá de nuevo en {_duracion(segundos)}.",
+        },
         status_code=403,
         headers={"Retry-After": str(segundos)},
     )

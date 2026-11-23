@@ -80,3 +80,15 @@ def test_tx_huerfana_se_puede_editar_y_borrar(client, tarjeta):
     )
     assert edit.status_code == 200
     assert client.delete(f"/api/tx/{tx['id']}").status_code == 204
+
+
+def test_tarjeta_id_se_anula_si_no_es_gasto(client, tarjeta):
+    base = {"fecha": "2026-05-01", "categoria": "Salario", "monto": 100, "tarjeta_id": tarjeta["id"]}
+    ingreso = client.post("/api/tx", json={**base, "tipo": "ingreso"}).json()
+    assert ingreso["tarjeta_id"] is None
+    saldo = client.get(f"/api/deuda/{tarjeta['id']}").json()["saldo_actual"]
+    gasto = client.post("/api/tx", json={**base, "tipo": "gasto"}).json()
+    assert gasto["tarjeta_id"] == tarjeta["id"]
+    editado = client.put(f"/api/tx/{gasto['id']}", json={**base, "tipo": "ingreso"}).json()
+    assert editado["tarjeta_id"] is None
+    assert client.get(f"/api/deuda/{tarjeta['id']}").json()["saldo_actual"] == saldo
