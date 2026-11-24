@@ -17,14 +17,14 @@ import type { TabProps } from '@/shell/layout/TabContent'
 
 type TabId = 'dashboard' | 'transacciones' | 'deudas' | 'inversiones' | 'activos' | 'recurrentes' | 'settings'
 
-const TABS: { id: TabId; nav: string; drawer: string; Tab: ComponentType<TabProps> }[] = [
-  { id: 'dashboard', nav: 'Dashboard', drawer: 'Dashboard', Tab: Dashboard },
-  { id: 'transacciones', nav: 'Transacciones', drawer: 'Transacciones', Tab: Transacciones },
-  { id: 'deudas', nav: 'Deudas', drawer: 'Deudas', Tab: Deudas },
-  { id: 'inversiones', nav: 'Inversiones', drawer: 'Inversiones', Tab: Inversiones },
-  { id: 'activos', nav: 'Activos', drawer: 'Activos', Tab: Activos },
-  { id: 'recurrentes', nav: 'Recurrentes', drawer: 'Recurrentes', Tab: Recurrentes },
-  { id: 'settings', nav: 'Ajustes', drawer: 'Ajustes', Tab: Settings },
+const TABS: { id: TabId; nav: string; Tab: ComponentType<TabProps> }[] = [
+  { id: 'dashboard', nav: 'Dashboard', Tab: Dashboard },
+  { id: 'transacciones', nav: 'Transacciones', Tab: Transacciones },
+  { id: 'deudas', nav: 'Deudas', Tab: Deudas },
+  { id: 'inversiones', nav: 'Inversiones', Tab: Inversiones },
+  { id: 'activos', nav: 'Activos', Tab: Activos },
+  { id: 'recurrentes', nav: 'Recurrentes', Tab: Recurrentes },
+  { id: 'settings', nav: 'Ajustes', Tab: Settings },
 ]
 
 const FAB_ACTIONS: Partial<Record<TabId, (ctx: OpenerCtx) => void>> = {
@@ -99,7 +99,7 @@ export function Shell() {
                       warn[t.id] && 'has-warning',
                     )}
                   >
-                    {t.drawer}
+                    {t.nav}
                     {warn[t.id] && <AvisoPrecio />}
                   </button>
                 ))}

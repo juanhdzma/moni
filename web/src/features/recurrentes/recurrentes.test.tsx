@@ -28,8 +28,6 @@ const resumen = (extra: Partial<ResumenRecurrentes> = {}): ResumenRecurrentes =>
       { texto: ' en fijos', tono: null },
     ],
   },
-  total_gastos_mensual: 30000,
-  total_ingresos_mensual: 1000000,
   neto_mensual: 970000,
   segmentos: [{ key: '2', label: 'Netflix', valor: 30000 }],
   ingresos: [salario],
@@ -71,7 +69,7 @@ describe('render', () => {
   })
 
   it('header shows a negative net and the fixed costs in the legend', async () => {
-    view([], resumen({ neto_mensual: -50000, total_ingresos_mensual: 0, total_gastos_mensual: 50000, segmentos: [{ key: '9', label: 'Arriendo', valor: 50000 }], ingresos: [], gastos: [] }))
+    view([], resumen({ neto_mensual: -50000, segmentos: [{ key: '9', label: 'Arriendo', valor: 50000 }], ingresos: [], gastos: [] }))
     const card = document.getElementById('rec-total') as HTMLElement
     await waitFor(() => expect(card.textContent).toContain('−$50.000'))
     expect(within(card).getByRole('list', { name: 'De qué está hecho' })).toHaveTextContent('Arriendo')

@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react'
 import { apiFetch } from '@/lib/api'
-import { errMsg } from '@/lib/format'
 import type { CrudEntity, CrudPayloads } from '@/types'
 import { entidadesAfectadasPor, entidadesAfectadasPorRuta } from '@/shell/invalidacion'
 import { useData } from '@/shell/providers/DataProvider'
@@ -10,13 +9,13 @@ interface Identificada {
   id: number
 }
 
-export interface CrudOp {
+interface CrudOp {
   <E extends CrudEntity>(entity: E, action: 'add', payload: CrudPayloads[E]): Promise<void>
   <E extends CrudEntity>(entity: E, action: 'update', payload: CrudPayloads[E] & Identificada): Promise<void>
   (entity: CrudEntity, action: 'delete', payload: Identificada): Promise<void>
 }
 
-export interface Mutations {
+interface Mutations {
   crudOp: CrudOp
   crudOpOrBanner: CrudOp
   apiAction: (path: string, payload?: unknown) => Promise<void>
@@ -24,14 +23,15 @@ export interface Mutations {
 }
 
 export function useMutations(): Mutations {
-  const { reload, showBanner } = useData()
+  const { reload, conBanner } = useData()
   const { closeModal, pendingOpClave } = useModal()
 
   const crudOp = useCallback(
     async (entity: CrudEntity, action: 'add' | 'update' | 'delete', payload: object) => {
       const base = `/api/${entity}`
+      let op_clave: string | null = null
       if (action === 'add') {
-        const op_clave = entity === 'tx' ? pendingOpClave() : null
+        op_clave = entity === 'tx' ? pendingOpClave() : null
         await apiFetch(base, { method: 'POST', body: op_clave ? { ...payload, op_clave } : payload })
       } else if (action === 'update') {
         const { id, ...body } = payload as Identificada
@@ -40,7 +40,7 @@ export function useMutations(): Mutations {
         await apiFetch(`${base}/${(payload as Identificada).id}`, { method: 'DELETE' })
       }
       closeModal()
-      await reload(entidadesAfectadasPor(entity))
+      await reload(entidadesAfectadasPor(entity, action, payload, op_clave))
     },
     [reload, closeModal, pendingOpClave],
   )
@@ -51,33 +51,23 @@ export function useMutations(): Mutations {
       const body = op_clave && typeof payload === 'object' && payload !== null ? { ...payload, op_clave } : payload
       await apiFetch(path, { method: 'POST', body })
       closeModal()
-      await reload(entidadesAfectadasPorRuta(path))
+      await reload(entidadesAfectadasPorRuta(path, payload, op_clave))
     },
     [reload, closeModal, pendingOpClave],
   )
 
   const crudOpOrBanner = useCallback(
     async (entity: CrudEntity, action: 'add' | 'update' | 'delete', payload: object) => {
-      try {
-        await crudOp(entity, action, payload)
-      } catch (err) {
-        await reload()
-        showBanner(errMsg(err))
-      }
+      await conBanner(() => crudOp(entity, action, payload), { recargar: true })
     },
-    [crudOp, showBanner, reload],
+    [crudOp, conBanner],
   )
 
   const apiActionOrBanner = useCallback(
     async (path: string, payload?: unknown) => {
-      try {
-        await apiAction(path, payload)
-      } catch (err) {
-        await reload()
-        showBanner(errMsg(err))
-      }
+      await conBanner(() => apiAction(path, payload), { recargar: true })
     },
-    [apiAction, showBanner, reload],
+    [apiAction, conBanner],
   )
 
   return useMemo(

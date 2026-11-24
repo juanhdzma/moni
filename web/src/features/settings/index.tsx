@@ -19,14 +19,10 @@ export function Settings({ active }: TabProps) {
           <OpsOcultas />
           <Moneda />
           <Panel id="settings-notificaciones-card" titulo="Notificaciones">
-            <div id="settings-notificaciones">
-              <Notificaciones />
-            </div>
+            <Notificaciones />
           </Panel>
           <Panel id="settings-seguridad-card" titulo="Seguridad">
-            <div id="settings-seguridad">
-              <Seguridad />
-            </div>
+            <Seguridad />
           </Panel>
           <BackupPanel />
           <Peligro />

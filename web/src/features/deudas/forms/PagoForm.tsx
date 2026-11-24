@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
-import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
+import { MovimientoCampos } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyField } from '../../../controls/MoneyField'
 import { previewPago } from '../../../lib/api'
 import { cop, numToInput, parseMoney } from '../../../lib/format'
-import { useModal } from '@/shell/providers/ModalProvider'
-import { useOpenerCtx } from '@/shell/hooks/openers'
+import { useCerrarYAbrir } from '@/shell/hooks/openers'
+import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from '@/shell/hooks/usePreview'
@@ -15,15 +15,12 @@ import type { Deuda, DeudaPago } from '../../../types'
 import { openDeudaFormById } from './openers'
 
 export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
-  const ctx = useOpenerCtx()
-  const { closeModal, setModalStatus } = useModal()
+  const editar = useCerrarYAbrir((ctx) => openDeudaFormById(ctx, d.id))
   const guardar = useGuardar()
   const { apiAction } = useMutations()
   const [monto, setMonto] = useState(liquidar ? numToInput(d.saldo_actual) : numToInput(d.cuota_mensual))
   const [saldoNuevo, setSaldoNuevo] = useState(liquidar ? '0' : '')
-  const [fecha, setFecha] = useState('')
-  const [notas, setNotas] = useState('')
-  const [registrarTx, setRegistrarTx] = useState(true)
+  const campos = useCamposMovimiento('')
   const hint = liquidar
     ? 'Ajustá si el banco cobra intereses adicionales al cancelar.'
     : 'Pre-llenado con la cuota mensual — ajustá si aplica.'
@@ -36,17 +33,11 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
   )
 
   const save = async () => {
-    if (!saldoNuevo.trim()) {
-      setModalStatus('err', 'Ingresá el saldo capital después del pago')
-      return
-    }
     await guardar(async () => {
-      const body: DeudaPago = {
-        nuevo_saldo: saldoNuevoN,
+      const body: Omit<DeudaPago, 'nuevo_saldo'> & Partial<Pick<DeudaPago, 'nuevo_saldo'>> = {
+        ...(saldoNuevo.trim() && { nuevo_saldo: saldoNuevoN }),
         total_pagado: total,
-        fecha: fecha || undefined,
-        notas: notas.trim(),
-        registrar_tx: registrarTx,
+        ...campos.cuerpo(),
         avanzar_cuota: !liquidar,
       }
       await apiAction(`/api/deuda/${d.id}/pago`, body)
@@ -69,22 +60,15 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
           <span className="text-deudas">{preview ? cop(preview.intereses) : '—'}</span>
         </BreakdownRow>
       </Breakdown>
-      <FechaNotas
+      <MovimientoCampos
+        campos={campos}
         fechaLabel="Fecha del pago (ahora si se omite)"
-        fecha={fecha}
-        onFecha={setFecha}
-        notas={notas}
-        onNotas={setNotas}
         notasPlaceholder={liquidar ? 'Abonar a la deuda' : 'Ej. Cuota #14'}
       />
-      <RegistrarToggle checked={registrarTx} onChange={setRegistrarTx} />
       <FormFooter
         saveLabel={liquidar ? 'Abonar' : 'Registrar pago'}
         onSave={() => void save()}
-        onEdit={() => {
-          closeModal()
-          openDeudaFormById(ctx, d.id)
-        }}
+        onEdit={editar}
         editLabel="Editar deuda"
       />
     </>

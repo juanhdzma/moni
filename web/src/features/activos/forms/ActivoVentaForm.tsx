@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
-import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
+import { MovimientoCampos } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyField } from '../../../controls/MoneyField'
 import { Variacion } from '../../../controls/Variacion'
 import { previewVenta } from '../../../lib/api'
 import { cop, numToInput, parseMoney } from '../../../lib/format'
+import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { usePreview } from '@/shell/hooks/usePreview'
@@ -16,15 +17,14 @@ export function ActivoVentaForm({ activo: a }: { activo: Activo }) {
   const guardar = useGuardar()
   const { apiAction } = useMutations()
   const [precioTxt, setPrecioTxt] = useState(numToInput(a.valor_actual))
-  const [fecha, setFecha] = useState('')
-  const [notas, setNotas] = useState('')
-  const [registrarTx, setRegistrarTx] = useState(true)
+  const campos = useCamposMovimiento('')
   const precio = parseMoney(precioTxt)
   const prev = usePreview(precio > 0 ? `activo-venta:${a.id}:${precio}` : null, () => previewVenta(a.id, precio))
 
   const save = async () => {
     await guardar(async () => {
-      const body: ActivoVenta = { precio, notas: notas.trim(), registrar_tx: registrarTx, ...(fecha && { fecha }) }
+      const { fecha, ...resto } = campos.cuerpo()
+      const body: ActivoVenta = { precio, ...resto, ...(fecha && { fecha }) }
       await apiAction(`/api/activo/${a.id}/venta`, body)
     })
   }
@@ -41,15 +41,7 @@ export function ActivoVentaForm({ activo: a }: { activo: Activo }) {
           <Variacion valor={prev?.vs_actual ?? 0} />
         </BreakdownRow>
       </Breakdown>
-      <FechaNotas
-        fechaLabel="Fecha de venta (hoy si se omite)"
-        fecha={fecha}
-        onFecha={setFecha}
-        notas={notas}
-        onNotas={setNotas}
-        notasPlaceholder="Ej. Vendido a tercero"
-      />
-      <RegistrarToggle checked={registrarTx} onChange={setRegistrarTx} />
+      <MovimientoCampos campos={campos} fechaLabel="Fecha de venta (hoy si se omite)" notasPlaceholder="Ej. Vendido a tercero" />
       <FormFooter saveLabel="Confirmar venta" onSave={() => void save()} cancelClassName="sm:ml-auto" />
     </>
   )

@@ -9,7 +9,7 @@ import { DataProvider, ESTADO_VACIO, useData } from '@/shell/providers/DataProvi
 import { useVista } from '@/shell/hooks/useVista'
 
 function Harness({ clave }: { clave: string | null }) {
-  const { data, loading, error } = useVista(clave, cargarMovimientos.bind(null, 3), ['transacciones'])
+  const { data, loading, error } = useVista(clave, cargarMovimientos, ['transacciones'])
   const { reload, banner } = useData()
   return (
     <>
@@ -35,7 +35,7 @@ describe('useVista', () => {
       </DataProvider>,
     )
     await waitFor(() => expect(screen.getByTestId('n')).toHaveTextContent('1'))
-    expect(f.callsTo('GET', '/api/dashboard/movimientos?n=3')).toHaveLength(1)
+    expect(f.callsTo('GET', '/api/dashboard/movimientos')).toHaveLength(1)
     n = 2
     await user.click(screen.getByText('recargar'))
     await waitFor(() => expect(screen.getByTestId('n')).toHaveTextContent('2'))
@@ -110,7 +110,7 @@ describe('useVista', () => {
     const f = mockFetch()
     function Vistas() {
       const { reload } = useData()
-      useVista('mov', cargarMovimientos.bind(null, 3), ['transacciones'])
+      useVista('mov', cargarMovimientos, ['transacciones'])
       useVista('rec', cargarResumenRecurrentes, ['recurrentes'])
       return <button onClick={() => void reload(['deudas'])}>mutar deuda</button>
     }
@@ -123,7 +123,7 @@ describe('useVista', () => {
     await user.click(screen.getByText('mutar deuda'))
     await new Promise((r) => setTimeout(r, 20))
     expect(f.callsTo('GET', '/api/rec/resumen')).toHaveLength(1)
-    expect(f.callsTo('GET', '/api/dashboard/movimientos?n=3')).toHaveLength(1)
+    expect(f.callsTo('GET', '/api/dashboard/movimientos')).toHaveLength(1)
   })
 
   it('una vista de pestaña inactiva no pide nada hasta que se activa, y solo si cambió algo', async () => {

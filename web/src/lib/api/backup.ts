@@ -1,6 +1,6 @@
 import { apiFetch } from './client'
 
-export interface ResultadoImport {
+interface ResultadoImport {
   counts: Record<string, number>
   texto: string
 }

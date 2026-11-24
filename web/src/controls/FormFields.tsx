@@ -1,3 +1,4 @@
+import type { CamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { AdvancedToggle } from './AdvancedToggle'
 import { DatePicker } from './DatePicker'
 
@@ -21,7 +22,7 @@ type NotasProps = {
   onChange: (v: string) => void
 }
 
-export function NotasField({ id, placeholder, value, onChange }: NotasProps) {
+function NotasField({ id, placeholder, value, onChange }: NotasProps) {
   return (
     <div className="form-group">
       <label className="form-label font-normal text-muted-foreground" htmlFor={id}>
@@ -65,4 +66,28 @@ type RegistrarProps = { checked: boolean; onChange: (v: boolean) => void; label?
 
 export function RegistrarToggle({ checked, onChange, label = 'Registrar en transacciones' }: RegistrarProps) {
   return <AdvancedToggle checked={checked} onChange={onChange} label={label} hint="Desactivá si ya lo registraste en otra parte." />
+}
+
+type MovimientoProps = {
+  campos: CamposMovimiento
+  fechaLabel: string
+  notasPlaceholder: string
+  fechaType?: 'date' | 'datetime-local'
+}
+
+export function MovimientoCampos({ campos, fechaLabel, notasPlaceholder, fechaType }: MovimientoProps) {
+  return (
+    <>
+      <FechaNotas
+        fechaLabel={fechaLabel}
+        fecha={campos.fecha}
+        onFecha={campos.setFecha}
+        notas={campos.notas}
+        onNotas={campos.setNotas}
+        notasPlaceholder={notasPlaceholder}
+        fechaType={fechaType}
+      />
+      <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} />
+    </>
+  )
 }

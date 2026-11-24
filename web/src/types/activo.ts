@@ -31,7 +31,7 @@ export interface ResumenActivos {
   total_inicial: number
   total_actual: number
   variacion: number
-  variacion_pct: number
+  mostrar_variacion: boolean
   segmentos: Segmento[]
   items: Activo[]
   texto_variacion: string

@@ -49,7 +49,6 @@ export async function loginConPasskey(): Promise<void> {
 export async function registrarPasskey(nombre: string): Promise<number> {
   const optionsJSON = await apiFetch<PublicKeyCredentialCreationOptionsJSON>('/api/auth/passkey/registro/opciones', {
     method: 'POST',
-    body: { nombre },
   })
   const credencial = await startRegistration({ optionsJSON })
   const { id } = await apiFetch<{ ok: boolean; id: number }>('/api/auth/passkey/registro/verificar', {

@@ -95,7 +95,7 @@ describe('Cómo vas', () => {
     await waitFor(() => expect(stat('evol-resumen')).toHaveTextContent('Subiste'))
     fireEvent.click(pill('evol-period-pills', '3M'))
     await waitFor(() => expect(m.callsTo('GET', '/api/dashboard/evolucion?serie=patrimonio&periodo=3M')).toHaveLength(1))
-    m.set('GET /api/dashboard/evolucion', { ...EVOLUCION, serie: 'inversiones', periodo: '3M', cambio: 0, verbo: 'Te mantuviste', sujeto: ' en inversiones', mes_desde: 'jun', desde: 500000, hasta: 500000, nombre_serie: 'Inversiones', frase: frase('Te mantuviste en inversiones desde fin de jun: de $500k a ', ['$500k', 'fuerte'], '.') })
+    m.set('GET /api/dashboard/evolucion', { ...EVOLUCION, serie: 'inversiones', periodo: '3M', cambio: 0, desde: 500000, nombre_serie: 'Inversiones', descripcion_grafico: 'Evolución mensual de inversiones', frase: frase('Te mantuviste en inversiones desde fin de jun: de $500k a ', ['$500k', 'fuerte'], '.') })
     fireEvent.click(pill('evol-serie', 'Inversiones'))
     await waitFor(() => expect(m.callsTo('GET', '/api/dashboard/evolucion?serie=inversiones&periodo=3M')).toHaveLength(1))
     await waitFor(() => expect(stat('evol-resumen')).toHaveTextContent('Te mantuviste en inversiones desde fin de jun: de $500k a $500k.'))

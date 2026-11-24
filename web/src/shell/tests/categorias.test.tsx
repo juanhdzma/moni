@@ -34,23 +34,25 @@ describe('useCategorias', () => {
     expect(screen.getByTestId('gasto')).toHaveTextContent('Inversión:true|Compra activos:true|Mascotas:false')
   })
 
-  it('agregar hace POST /api/categorias y recarga /api/bootstrap', async () => {
+  it('agregar hace POST /api/categorias y aplica la respuesta sin pedir /api/bootstrap', async () => {
     const user = userEvent.setup()
-    const f = mockFetch({ 'POST /api/categorias': categoriasBase() })
+    const f = mockFetch({ 'POST /api/categorias': conMascotas().categorias })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('add'))
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(screen.getByTestId('gasto')).toHaveTextContent('Mascotas:false'))
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     const [post] = f.callsTo('POST', '/api/categorias')
     expect(post?.headers['X-Moni-Request']).toBe('1')
     expect(post?.body).toEqual({ tipo: 'gasto', nombre: 'Mascotas' })
   })
 
-  it('quitar hace DELETE con tipo y nombre en el query', async () => {
+  it('quitar hace DELETE con tipo y nombre en el query y aplica la respuesta', async () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'DELETE /api/categorias?tipo=gasto&nombre=Mascotas': categoriasBase() })
     renderWithProviders(<Harness />, { estado: conMascotas() })
     await user.click(screen.getByText('del'))
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(screen.getByTestId('gasto')).not.toHaveTextContent('Mascotas'))
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     expect(f.mutations()).toMatchObject([{ method: 'DELETE', headers: { 'X-Moni-Request': '1' } }])
   })
 

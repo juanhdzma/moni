@@ -1,6 +1,6 @@
 import { entero } from './dinero'
 
-export interface MoneyInputLike {
+interface MoneyInputLike {
   value: string
   selectionStart: number | null
   setSelectionRange(start: number, end: number): void
@@ -25,5 +25,6 @@ export function fmtMoneyInput(el: MoneyInputLike): void {
 export function parseMoney(value: string): number {
   return parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0
 }
+
 
 export const numToInput = entero

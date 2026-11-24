@@ -15,6 +15,7 @@ function Harness() {
     <>
       <div data-testid="banner">{banner}</div>
       <output data-testid="deudas">{versiones.deudas}</output>
+      <output data-testid="transacciones">{versiones.transacciones}</output>
       <button onClick={() => void crudOp('deuda', 'update', { ...deuda({ id: 7, nombre: 'X' }), es_tarjeta: false, crear_tx: false } as never)}>upd</button>
       <button onClick={() => void apiAction('/api/deuda/3/pago', { monto: 5 }).catch(err)}>act</button>
       <button onClick={() => void apiActionOrBanner('/api/rec/2/pausar')}>actb</button>
@@ -34,12 +35,13 @@ function Harness() {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('mutaciones', () => {
-  it('add: POST /api/tx con header, JSON y recarga', async () => {
+  it('add: POST /api/tx con header, JSON y recarga solo de transacciones si no hay tarjeta', async () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/tx': {} })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('add'))
-    await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
+    await waitFor(() => expect(screen.getByTestId('transacciones')).toHaveTextContent('1'))
+    expect(screen.getByTestId('deudas')).toHaveTextContent('0')
     expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     const [post] = f.mutations()
     expect(post?.method).toBe('POST')
@@ -68,6 +70,7 @@ describe('mutaciones', () => {
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('del'))
     await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
+    expect(screen.getByTestId('transacciones')).toHaveTextContent('1')
     expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     const [del] = f.mutations()
     expect(del?.headers).toEqual({ 'X-Moni-Request': '1' })

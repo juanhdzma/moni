@@ -75,7 +75,7 @@ describe('Deudas render', () => {
   })
 
   it('empty states', async () => {
-    const f = conResumen({ ...resumenCompleto, total: 0, total_cuotas: 0, total_intereses: 0, dato: { ...resumenCompleto.dato, intereses: null }, segmentos: [], creditos: [], tarjetas: [], terminadas: [] })
+    const f = conResumen({ ...resumenCompleto, total: 0, total_intereses: 0, dato: { ...resumenCompleto.dato, intereses: null }, segmentos: [], creditos: [], tarjetas: [], terminadas: [], texto_vacio_creditos: { titulo: 'Sin créditos', texto: 'Agregá uno con el botón + de arriba.' } })
     renderWithProviders(<Deudas active />)
     expect(await screen.findByText('Sin créditos')).toBeInTheDocument()
     expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(1)
@@ -95,11 +95,12 @@ describe('Deudas render', () => {
   it('tarjeta sin cupo', async () => {
     conResumen({
       ...resumenCompleto,
-      tarjetas: [{ ...tarjeta, saldo_actual: 0, cupo: 0, total_intereses: 0, disponible: null, uso_pct: 0, frases: { ...tarjeta.frases, detalle: 'Sin cupo definido' } }],
+      tarjetas: [{ ...tarjeta, saldo_actual: 0, cupo: 0, total_intereses: 0, disponible: null, tiene_cupo: false, uso_pct: 0, frases: { ...tarjeta.frases, detalle: 'Sin cupo definido', intereses_texto: null, disponible_texto: null } }],
     })
     renderWithProviders(<Deudas active />, { estado: full() })
     expect(await screen.findByText('Sin cupo definido')).toBeInTheDocument()
     expect(screen.queryByText(/Disponible:/)).toBeNull()
+    expect(screen.queryByText(/Intereses pagados:/)).toBeNull()
   })
 
   it('los botones de las cards son alcanzables por teclado', async () => {

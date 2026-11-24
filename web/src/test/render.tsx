@@ -7,7 +7,7 @@ import type { EstadoAuth } from '../lib/seguridad/auth'
 import type { Estado } from '../types'
 import { estado as estadoVacio } from './factories'
 
-export const ESTADO_AUTENTICADO: EstadoAuth = { configurado: true, autenticado: true, passkeys: 0 }
+export const ESTADO_AUTENTICADO: EstadoAuth = { configurado: true, autenticado: true, tiene_passkeys: false }
 
 export function Providers({ children, estado, loaded }: { children: ReactNode; estado?: Estado; loaded?: boolean }) {
   return (

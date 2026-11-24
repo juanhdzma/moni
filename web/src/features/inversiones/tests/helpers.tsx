@@ -49,7 +49,6 @@ export function installFakeClock() {
 }
 
 const RESUMEN: ResumenInversiones = {
-  total_invertido: 1_500_000,
   total_actual: 1_460_000,
   ganancia: -40_000,
   ganancia_pct: -2.67,
@@ -67,7 +66,7 @@ const RESUMEN: ResumenInversiones = {
 const resumenDe = (invs: Inversion[]): ResumenInversiones =>
   invs === DEFAULT
     ? RESUMEN
-    : { ...RESUMEN, texto_posiciones: `${invs.length} ${invs.length === 1 ? 'posición' : 'posiciones'}`, total_invertido: 0, total_actual: 0, ganancia: 0, ganancia_pct: 0, segmentos: [], fijas: invs.filter((i) => i.tipo === 'fija'), variables: invs.filter((i) => i.tipo === 'variable') }
+    : { ...RESUMEN, texto_posiciones: `${invs.length} ${invs.length === 1 ? 'posición' : 'posiciones'}`, total_actual: 0, ganancia: 0, ganancia_pct: 0, segmentos: [], fijas: invs.filter((i) => i.tipo === 'fija'), variables: invs.filter((i) => i.tipo === 'variable') }
 
 export const DEFAULT = [CDT, FONDO]
 let actual: Inversion[] = DEFAULT

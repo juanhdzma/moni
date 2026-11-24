@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-export interface LadoPanel {
+interface LadoPanel {
   label: string
   valor: ReactNode
   clase?: string

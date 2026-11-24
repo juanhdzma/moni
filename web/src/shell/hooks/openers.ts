@@ -17,3 +17,12 @@ export function useOpenerCtx(): OpenerCtx {
 export function openConFila<T>(ctx: OpenerCtx, cargar: () => Promise<T>, abrir: (fila: T) => void): void {
   cargar().then(abrir, (err: unknown) => ctx.showBanner(errMsg(err)))
 }
+
+export function useCerrarYAbrir(abrir: (ctx: OpenerCtx) => void): () => void {
+  const ctx = useOpenerCtx()
+  const { closeModal } = useModal()
+  return () => {
+    closeModal()
+    abrir(ctx)
+  }
+}

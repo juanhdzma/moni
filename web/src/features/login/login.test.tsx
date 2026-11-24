@@ -12,8 +12,8 @@ vi.mock('@simplewebauthn/browser', () => ({
   startRegistration: vi.fn(),
 }))
 
-const ESTADO_LOGIN = { configurado: true, autenticado: false, passkeys: 0 }
-const ESTADO_OK = { configurado: true, autenticado: true, passkeys: 0 }
+const ESTADO_LOGIN = { configurado: true, autenticado: false, tiene_passkeys: false }
+const ESTADO_OK = { configurado: true, autenticado: true, tiene_passkeys: false }
 
 beforeEach(() => {
   localStorage.clear()
@@ -154,7 +154,7 @@ describe('login con Face ID', () => {
     const opciones = { challenge: 'ch', rpId: 'localhost', allowCredentials: [] }
     vi.mocked(webauthn.startAuthentication).mockResolvedValue(credencial as unknown as Awaited<ReturnType<typeof webauthn.startAuthentication>>)
     const m = mockFetch({
-      'GET /api/auth/estado': { ...ESTADO_LOGIN, passkeys: 1 },
+      'GET /api/auth/estado': { ...ESTADO_LOGIN, tiene_passkeys: true },
       'POST /api/auth/passkey/login/opciones': opciones,
       'POST /api/auth/passkey/login/verificar': { ok: true },
     })
@@ -174,7 +174,7 @@ describe('login con Face ID', () => {
   it('si el usuario cancela Face ID muestra un mensaje sin verificar nada', async () => {
     vi.mocked(webauthn.startAuthentication).mockRejectedValue(new Error('cancelado'))
     const m = mockFetch({
-      'GET /api/auth/estado': { ...ESTADO_LOGIN, passkeys: 1 },
+      'GET /api/auth/estado': { ...ESTADO_LOGIN, tiene_passkeys: true },
       'POST /api/auth/passkey/login/opciones': { challenge: 'ch' },
     })
     const user = userEvent.setup()
@@ -188,7 +188,7 @@ describe('login con Face ID', () => {
     const cancelado = Object.assign(new Error('cancelado'), { name: 'NotAllowedError' })
     vi.mocked(webauthn.startAuthentication).mockRejectedValue(cancelado)
     mockFetch({
-      'GET /api/auth/estado': { ...ESTADO_LOGIN, passkeys: 1 },
+      'GET /api/auth/estado': { ...ESTADO_LOGIN, tiene_passkeys: true },
       'POST /api/auth/passkey/login/opciones': { challenge: 'ch' },
     })
     const user = userEvent.setup()
@@ -201,7 +201,7 @@ describe('login con Face ID', () => {
   it('una assertion invalida da el mismo mensaje generico que la clave', async () => {
     vi.mocked(webauthn.startAuthentication).mockResolvedValue(credencial as unknown as Awaited<ReturnType<typeof webauthn.startAuthentication>>)
     mockFetch({
-      'GET /api/auth/estado': { ...ESTADO_LOGIN, passkeys: 1 },
+      'GET /api/auth/estado': { ...ESTADO_LOGIN, tiene_passkeys: true },
       'POST /api/auth/passkey/login/opciones': { challenge: 'ch' },
       'POST /api/auth/passkey/login/verificar': failure(401, 'Credenciales inválidas'),
     })
@@ -213,7 +213,7 @@ describe('login con Face ID', () => {
 
   it('sin autenticador de plataforma oculta el boton', async () => {
     vi.mocked(webauthn.platformAuthenticatorIsAvailable).mockResolvedValue(false)
-    mockFetch({ 'GET /api/auth/estado': { ...ESTADO_LOGIN, passkeys: 1 } })
+    mockFetch({ 'GET /api/auth/estado': { ...ESTADO_LOGIN, tiene_passkeys: true } })
     render(<App />)
     await screen.findByLabelText('Clave')
     await new Promise((r) => setTimeout(r, 20))
@@ -244,7 +244,7 @@ describe('oferta de Face ID', () => {
     const user = await loginConClave(m)
     await user.click(await screen.findByRole('button', { name: 'Activar' }))
     await waitFor(() => expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')).toHaveLength(1))
-    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toEqual({ nombre: 'Este dispositivo' })
+    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toBeUndefined()
     expect(webauthn.startRegistration).toHaveBeenCalledWith({ optionsJSON: opciones })
     expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')[0]?.body).toEqual({ ...credencial, nombre: 'Este dispositivo' })
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Activar Face ID' })).toBeNull())

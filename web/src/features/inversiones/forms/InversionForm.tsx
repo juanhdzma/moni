@@ -14,7 +14,8 @@ import { useMutations } from '@/shell/hooks/useMutations'
 import { usePreview } from '@/shell/hooks/usePreview'
 import type { InvIn, Inversion, PagoInv, TipoInv } from '../../../types'
 import { FormFooter } from '../../../controls/FormFooter'
-import { hintClass, rateBtn } from './styles'
+import { Hint } from '../../../controls/Hint'
+import { rateBtn } from './styles'
 
 const TONOS_TIPO = { fija: 'ingreso', variable: 'gasto' } as const
 const TONOS_PAGO = { mensual: 'ingreso' } as const
@@ -27,12 +28,14 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
   const guardar = useGuardar()
   const isEdit = inv !== null
   const [nombre, setNombre] = useState(inv?.nombre ?? '')
-  const [tipo, setTipo] = useState<TipoInv>(inv?.tipo || 'fija')
+  const [tipoElegido, setTipo] = useState<TipoInv | null>(null)
+  const tipo = tipoElegido ?? inv?.tipo ?? meta?.defaults.tipo_inversion ?? 'fija'
   const [invertido, setInvertido] = useState(inv ? numToInput(inv.monto_invertido) : '')
   const [actual, setActual] = useState(inv ? numToInput(inv.valor_actual) : '')
   const [tasa, setTasa] = useState(inv?.tasa_ea ? String(inv.tasa_ea) : '')
   const [rateType, setRateType] = useState<'ea' | 'mv'>('ea')
-  const [pago, setPago] = useState<PagoInv>(inv?.pago || 'vencimiento')
+  const [pagoElegido, setPago] = useState<PagoInv | null>(null)
+  const pago = pagoElegido ?? inv?.pago ?? meta?.defaults.pago_inversion ?? 'vencimiento'
   const [diaPago, setDiaPago] = useState(inv?.dia_pago ? String(inv.dia_pago) : '')
   const [fecha, setFecha] = useState(soloFecha(inv?.fecha_inicio) || estado.hoy)
   const [esNueva, setEsNueva] = useState(true)
@@ -101,9 +104,7 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
               </button>
             </div>
           </div>
-          <div id="tasa-equiv" className={hintClass}>
-            {equiv}
-          </div>
+          <Hint id="tasa-equiv">{equiv}</Hint>
         </div>
       )}
       {tipo === 'fija' && (

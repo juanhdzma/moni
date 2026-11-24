@@ -1,4 +1,4 @@
-export interface ApiFetchOptions {
+interface ApiFetchOptions {
   method?: string
   body?: unknown
 }
@@ -34,7 +34,7 @@ export class ApiError extends Error {
   }
 }
 
-export interface AuthEvents {
+interface AuthEvents {
   noAutenticado: () => void
   bloqueada: (texto: string) => void
 }

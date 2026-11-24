@@ -37,34 +37,35 @@ describe('adelanto', () => {
     })
     expect(m?.body).not.toHaveProperty('nuevo_saldo')
     expect(m?.body).not.toHaveProperty('descripcion')
-    expect(m?.body).not.toHaveProperty('fecha')
+    expect(m?.body).toMatchObject({ fecha: '' })
   })
 
-  it('tarjeta sin cupo: pide saldo después; validaciones', async () => {
+  it('tarjeta sin cupo: pide saldo después y lo manda', async () => {
     const user = userEvent.setup()
     const f = conResumen(resumenCompleto, { 'POST /api/deuda/2/adelanto': {}, 'POST /api/deuda/2/adelanto/preview': { comision: 50000 } })
-    renderWithProviders(<Deudas active />, { estado: estado({ deudas: [{ ...tarjeta, cupo: 0 }] }) })
+    renderWithProviders(<Deudas active />, { estado: estado({ deudas: [{ ...tarjeta, cupo: 0, tiene_cupo: false, frases: { ...tarjeta.frases, disponible_texto: null } }] }) })
     await abrir(user)
     expect(document.getElementById('m-disponible-nuevo')).toBeNull()
-    const status = () => document.getElementById('m-status') as HTMLElement
     await user.type(document.getElementById('m-monto') as HTMLElement, '100')
-    await user.click(screen.getByText('Pedir adelanto'))
-    expect(status()).toHaveTextContent('Ingresá el saldo después del adelanto')
-    await user.clear(document.getElementById('m-saldo-nuevo') as HTMLElement)
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '1100000')
     await user.click(screen.getByText('Pedir adelanto'))
     await waitFor(() => expect(acc(f)).toHaveLength(1))
     expect(acc(f)[0]?.body).toMatchObject({ monto: 100, nuevo_saldo: 1100000 })
   })
 
-  it('con cupo sin disponible: mensaje de cupo', async () => {
+  it('sin saldo ni disponible no valida en el cliente: omite ambos y muestra el 422 del backend', async () => {
     const user = userEvent.setup()
-    conResumen()
+    const f = conResumen(resumenCompleto, {
+      'POST /api/deuda/2/adelanto': failure(422, 'nuevo_saldo o disponible_nuevo requerido'),
+    })
     renderWithProviders(<Deudas active />, { estado: full() })
     await abrir(user)
     await user.type(document.getElementById('m-monto') as HTMLElement, '100')
     await user.click(screen.getByText('Pedir adelanto'))
-    expect(document.getElementById('m-status')).toHaveTextContent('Ingresá el cupo disponible después del adelanto')
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('requerido'))
+    const m = f.mutations().filter((c) => c.url === '/api/deuda/2/adelanto')[0]
+    expect(m?.body).not.toHaveProperty('nuevo_saldo')
+    expect(m?.body).not.toHaveProperty('disponible_nuevo')
   })
 
   it('muestra el 422 en español del backend cuando el monto va vacío', async () => {

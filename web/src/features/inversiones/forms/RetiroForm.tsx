@@ -9,6 +9,7 @@ import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { TipoToggle } from '../../../controls/TipoToggle'
 import { InversionPanel } from './InversionPanel'
+import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 
 export function RetiroForm({ inv }: { inv: Inversion }) {
@@ -20,12 +21,10 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
   const [montoTotal, setMontoTotal] = useState(numToInput(inv.valor_actual))
   const [montoParcial, setMontoParcial] = useState('')
   const [saldoQueda, setSaldoQueda] = useState('')
-  const [fecha, setFecha] = useState(estado.hoy)
-  const [notas, setNotas] = useState('')
-  const [registrar, setRegistrar] = useState(true)
+  const campos = useCamposMovimiento(estado.hoy)
 
   const buildBody = (): InvRetiro => {
-    const comun = { fecha, notas: notas.trim(), registrar_tx: registrar }
+    const comun = campos.cuerpo()
     if (tipo === 'total') return { tipo: 'total', monto: parseMoney(montoTotal), ...comun }
     return {
       tipo: 'parcial',
@@ -75,13 +74,13 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
         fechaId="m-fecha-retiro"
         notasId="m-notas-retiro"
         fechaLabel="Fecha"
-        fecha={fecha}
-        onFecha={setFecha}
-        notas={notas}
-        onNotas={setNotas}
+        fecha={campos.fecha}
+        onFecha={campos.setFecha}
+        notas={campos.notas}
+        onNotas={campos.setNotas}
         notasPlaceholder="Ej. Vencimiento CDT"
       />
-      <RegistrarToggle checked={registrar} onChange={setRegistrar} />
+      <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} />
       <FormFooter saveLabel="Confirmar retiro" onSave={() => void save()} />
     </>
   )

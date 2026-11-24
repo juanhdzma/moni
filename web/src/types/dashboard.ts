@@ -12,6 +12,7 @@ export interface ParteResumen {
   nombre: string
   valor: number
   negativo: boolean
+  valor_firmado: number
   detalle: string | null
 }
 
@@ -40,12 +41,9 @@ export interface Evolucion {
   meses: number
   puntos: PuntoEvolucion[]
   desde: number
-  hasta: number
   cambio: number
-  verbo: string
-  sujeto: string
-  mes_desde: string
   nombre_serie: string
+  descripcion_grafico: string
   frase: Frase
 }
 
@@ -59,7 +57,6 @@ export interface EsteMes {
   ingresos: number
   gastos: number
   quedo: number
-  ahorro_pct: number
   frase: FraseMes
   descripcion_grafico: string
   meses: MesEntroSalio[]
@@ -78,13 +75,11 @@ export interface CategoriaGasto {
   valor: number
   n: number
   detalle: DetalleGasto[]
-  restantes: number
   restantes_texto: string | null
 }
 
 export interface GastosPeriodo {
   periodo: PeriodoGastos
-  nombre_periodo: string
   total: number
   max: number
   top: { categoria: string; valor: number; pct: number } | null

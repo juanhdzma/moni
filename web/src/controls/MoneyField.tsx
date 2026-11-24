@@ -1,3 +1,4 @@
+import { Hint } from './Hint'
 import { MoneyInput } from './MoneyInput'
 
 interface Props {
@@ -17,11 +18,7 @@ export function MoneyField({ id, label, value, onChange, hint, hintId, placehold
         {label}
       </label>
       <MoneyInput id={id} value={value} onChange={onChange} placeholder={placeholder} />
-      {hint && (
-        <div id={hintId} className="mt-1.5 text-xs text-muted-foreground">
-          {hint}
-        </div>
-      )}
+      {hint && <Hint id={hintId}>{hint}</Hint>}
     </div>
   )
 }

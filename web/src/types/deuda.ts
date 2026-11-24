@@ -7,6 +7,7 @@ export interface FrasesDeuda {
   intereses_texto: string | null
   intereses_ayuda: string
   intereses_saldada_texto: string | null
+  disponible_texto: string | null
 }
 
 export interface DatoResumenDeudas {
@@ -33,9 +34,10 @@ export interface Deuda {
   vigente: boolean
   progreso_pct: number
   capital_pagado: number
-  meses_restantes: number | null
+  meses_restantes?: number | null
   nivel_progreso: Nivel
   disponible: number | null
+  tiene_cupo: boolean
   uso_pct: number
   nivel_uso: Nivel
   frases: FrasesDeuda
@@ -70,13 +72,13 @@ export interface DeudaAdelanto {
 
 export interface ResumenDeudas {
   total: number
-  total_cuotas: number
   total_intereses: number
   segmentos: Segmento[]
   dato: DatoResumenDeudas
   creditos: Deuda[]
   tarjetas: Deuda[]
   terminadas: Deuda[]
+  texto_vacio_creditos: { titulo: string; texto: string }
 }
 
 export interface PreviewPago {

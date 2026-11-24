@@ -41,7 +41,7 @@ export function Evolucion() {
       {loading ? (
         <div className="h-[200px] animate-pulse rounded-lg bg-muted" />
       ) : (
-        <ChartContainer config={config} className="aspect-auto h-[200px] w-full" aria-label={`Evolución mensual de ${config.valor.label.toLowerCase()}`}>
+        <ChartContainer config={config} className="aspect-auto h-[200px] w-full" aria-label={ev?.descripcion_grafico}>
           <AreaChart data={datos} margin={{ left: 4, right: 8, top: 8, bottom: 0 }}>
             <defs>
               <linearGradient id="evol-fill" x1="0" y1="0" x2="0" y2="1">

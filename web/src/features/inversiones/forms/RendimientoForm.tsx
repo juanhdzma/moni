@@ -10,6 +10,7 @@ import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
 import { TipoToggle } from '../../../controls/TipoToggle'
 import { useEditarInversion } from './openInvForm'
+import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 
 export function RendimientoForm({ inv }: { inv: Inversion }) {
@@ -23,17 +24,13 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
   const [monto, setMonto] = useState(expected ? numToInput(expected) : '')
   const [eleccion, setCapitaliza] = useState<boolean | null>(null)
   const capitaliza = eleccion ?? inv.capitaliza_default
-  const [fecha, setFecha] = useState(estado.hoy)
-  const [notas, setNotas] = useState('')
-  const [registrar, setRegistrar] = useState(true)
+  const campos = useCamposMovimiento(estado.hoy)
 
   const save = async () => {
     const body: InvRendimiento = {
       monto: parseMoney(monto),
-      fecha,
-      notas: notas.trim(),
       capitaliza,
-      registrar_tx: registrar,
+      ...campos.cuerpo(),
     }
     await guardar(() => apiAction(`/api/inv/${inv.id}/rendimiento`, body))
   }
@@ -70,10 +67,10 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
         hint={destinos.find((d) => d.value === (capitaliza ? 'capitaliza' : 'cuenta'))?.hint}
         onChange={(v) => setCapitaliza(v === 'capitaliza')}
       />
-      <FechaNotas fechaType="date" fechaLabel="Fecha" fecha={fecha} onFecha={setFecha} notas={notas} onNotas={setNotas} notasPlaceholder="Ej. Intereses mes de junio" />
+      <FechaNotas fechaType="date" fechaLabel="Fecha" fecha={campos.fecha} onFecha={campos.setFecha} notas={campos.notas} onNotas={campos.setNotas} notasPlaceholder="Ej. Intereses mes de junio" />
       {!capitaliza && (
         <div id="wrap-rend-advanced">
-          <RegistrarToggle checked={registrar} onChange={setRegistrar} />
+          <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} />
         </div>
       )}
       <FormFooter saveLabel="Registrar" onSave={() => void save()} onEdit={editar} editLabel="Editar inversión" />

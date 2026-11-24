@@ -1,13 +1,14 @@
-import { useState, type ChangeEvent } from 'react'
+import type { ChangeEvent } from 'react'
 import { Panel } from '@/components/panel'
 import { cargarBackup, importarBackup } from '../../lib/api'
-import { errMsg } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
-import { HINT } from './estilos'
+import { StatusMessage } from '../../controls/FormStatus'
+import { Hint } from '../../controls/Hint'
+import { useStatus } from '@/shell/hooks/useStatus'
 
-function Backup() {
+export function BackupPanel() {
   const { reload, estado } = useData()
-  const [status, setStatus] = useState({ cls: 'form-status', msg: '' })
+  const status = useStatus()
 
   const exportar = async () => {
     try {
@@ -20,7 +21,7 @@ function Backup() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      setStatus({ cls: 'form-status err', msg: errMsg(err) })
+      status.err(err)
     }
   }
 
@@ -28,21 +29,21 @@ function Backup() {
     const input = e.target
     const file = input.files?.[0]
     if (!file) return
-    setStatus({ cls: 'form-status', msg: 'Importando...' })
+    status.info('Importando...')
     try {
       const payload: unknown = JSON.parse(await file.text())
       const result = await importarBackup(payload)
       await reload()
-      setStatus({ cls: 'form-status ok', msg: result.texto })
+      status.ok(result.texto)
     } catch (err) {
-      setStatus({ cls: 'form-status err', msg: errMsg(err) })
+      status.err(err)
     } finally {
       input.value = ''
     }
   }
 
   return (
-    <>
+    <Panel id="settings-backup-card" titulo="Backup">
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="btn btn-accent btn-sm" onClick={() => void exportar()}>
           Exportar JSON
@@ -52,22 +53,11 @@ function Backup() {
           <input type="file" accept="application/json" className="hidden" onChange={(e) => void importar(e)} />
         </label>
       </div>
-      <div className={HINT}>
+      <Hint className="mt-2">
         Importar solo agrega filas del archivo; no reemplaza lo que ya tenés. Si los ids chocan con datos existentes, fallará.
-      </div>
-      <div className={status.cls} id="settings-backup-status" role={status.cls.includes('err') ? 'alert' : undefined}>
-        {status.msg}
-      </div>
-    </>
-  )
-}
-
-export function BackupPanel() {
-  return (
-    <Panel id="settings-backup-card" titulo="Backup">
-      <div id="settings-backup">
-        <Backup />
-      </div>
+      </Hint>
+      <StatusMessage cls={status.cls} msg={status.msg} id="settings-backup-status" />
     </Panel>
   )
 }
+

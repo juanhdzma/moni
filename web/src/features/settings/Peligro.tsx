@@ -30,7 +30,7 @@ function TruncateConfirm() {
   return (
     <>
       <div className="mb-4 text-sm text-muted-foreground">
-        Esto borra permanentemente todas las transacciones, deudas, inversiones, activos y recurrentes.
+        Esto borra permanentemente todas las transacciones, deudas, inversiones, activos, recurrentes, categorías personalizadas y operaciones ocultas.
         Esta acción no se puede deshacer. Exportá un backup antes si no estás seguro.
       </div>
       <div className="form-group">
@@ -58,21 +58,9 @@ function TruncateConfirm() {
   )
 }
 
-function DangerBody() {
-  const { openModal } = useModal()
-  return (
-    <>
-      <div className="mb-3 text-sm text-muted-foreground">
-        Borra todas las transacciones, deudas, inversiones, activos y recurrentes. No se puede deshacer.
-      </div>
-      <button type="button" className="btn btn-danger btn-sm" onClick={() => openModal('Borrar todos los datos', <TruncateConfirm />)}>
-        Borrar todos los datos
-      </button>
-    </>
-  )
-}
-
 export function Peligro() {
+  const { openModal } = useModal()
+
   return (
     <Panel
       id="settings-danger-card"
@@ -80,9 +68,12 @@ export function Peligro() {
       className="border-deudas/40"
       extra={<TriangleAlert className="size-4 text-deudas" aria-hidden="true" />}
     >
-      <div id="settings-danger">
-        <DangerBody />
+      <div className="mb-3 text-sm text-muted-foreground">
+        Borra todas las transacciones, deudas, inversiones, activos, recurrentes, categorías personalizadas y operaciones ocultas. No se puede deshacer.
       </div>
+      <button type="button" className="btn btn-danger btn-sm" onClick={() => openModal('Borrar todos los datos', <TruncateConfirm />)}>
+        Borrar todos los datos
+      </button>
     </Panel>
   )
 }

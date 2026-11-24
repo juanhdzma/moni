@@ -39,9 +39,9 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
   vigente: false,
   progreso_pct: 0,
   capital_pagado: 0,
-  meses_restantes: null,
   nivel_progreso: 'bajo',
   disponible: null,
+  tiene_cupo: false,
   uso_pct: 0,
   nivel_uso: 'bajo',
   frases: {
@@ -51,6 +51,7 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
     intereses_texto: null,
     intereses_ayuda: '',
     intereses_saldada_texto: null,
+    disponible_texto: null,
   },
   ...extra,
 })

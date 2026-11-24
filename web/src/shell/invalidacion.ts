@@ -38,20 +38,45 @@ const ENTIDADES_DEL_BOOTSTRAP: Entidad[] = ['activos', 'inversiones', 'ajustes',
 
 export const afectaAlBootstrap = (afectadas: Entidad[]): boolean => afectadas.some((e) => ENTIDADES_DEL_BOOTSTRAP.includes(e))
 
-const AFECTADAS_POR_RECURSO: Record<CrudEntity, Entidad[]> = {
-  tx: ['transacciones', 'deudas'],
-  deuda: ['deudas', 'transacciones'],
-  inv: ['inversiones', 'transacciones'],
-  activo: ['activos', 'transacciones'],
-  rec: ['recurrentes'],
+type Accion = 'add' | 'update' | 'delete'
+
+const ENTIDAD_POR_RECURSO: Record<CrudEntity, Entidad> = {
+  tx: 'transacciones',
+  deuda: 'deudas',
+  inv: 'inversiones',
+  activo: 'activos',
+  rec: 'recurrentes',
 }
 
-export const entidadesAfectadasPor = (recurso: CrudEntity): Entidad[] => AFECTADAS_POR_RECURSO[recurso]
+const ACCIONES_CON_MOVIMIENTO = ['pago', 'adelanto', 'aporte', 'retiro', 'venta', 'rendimiento']
+const ACCIONES_SIN_MOVIMIENTO = ['valor', 'pausar']
 
-export function entidadesAfectadasPorRuta(path: string): Entidad[] {
+const conOpOculta = (entidades: Entidad[], opClave: string | null): Entidad[] => (opClave ? [...entidades, 'opsOcultas'] : entidades)
+
+const escribeTx = (cuerpo: Record<string, unknown>): boolean => cuerpo.registrar_tx !== false && cuerpo.capitaliza !== true
+
+export function entidadesAfectadasPor(recurso: CrudEntity, accion: Accion, payload: object, opClave: string | null = null): Entidad[] {
+  const cuerpo = payload as Record<string, unknown>
+  const propia = ENTIDAD_POR_RECURSO[recurso]
+  if (recurso === 'tx') {
+    const tocaTarjeta = accion !== 'add' || cuerpo.tarjeta_id != null
+    return conOpOculta(tocaTarjeta ? ['transacciones', 'deudas'] : ['transacciones'], opClave)
+  }
+  const escribeMovimiento = accion === 'add' ? cuerpo.crear_tx === true : accion === 'delete' && recurso === 'deuda'
+  return escribeMovimiento ? [propia, 'transacciones'] : [propia]
+}
+
+export function entidadesAfectadasPorRuta(path: string, payload: unknown = null, opClave: string | null = null): Entidad[] {
   if (/^\/api\/ops-ocultas(?:[/?]|$)/.test(path)) return ['opsOcultas']
-  const recurso = /^\/api\/([a-z]+)(?:\/|$)/.exec(path)?.[1]
-  return recurso && recurso in AFECTADAS_POR_RECURSO ? AFECTADAS_POR_RECURSO[recurso as CrudEntity] : TODAS_LAS_ENTIDADES
+  const m = /^\/api\/(deuda|inv|activo|rec)\/\d+\/([a-z]+)$/.exec(path)
+  const recurso = m?.[1] as CrudEntity | undefined
+  const accion = m?.[2] ?? ''
+  if (!recurso) return TODAS_LAS_ENTIDADES
+  const propia = ENTIDAD_POR_RECURSO[recurso]
+  if (ACCIONES_SIN_MOVIMIENTO.includes(accion)) return [propia]
+  if (!ACCIONES_CON_MOVIMIENTO.includes(accion)) return TODAS_LAS_ENTIDADES
+  const cuerpo = typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>) : {}
+  return conOpOculta(escribeTx(cuerpo) ? [propia, 'transacciones'] : [propia], opClave)
 }
 
 export function subirVersiones(actuales: Versiones, afectadas: Entidad[]): Versiones {
@@ -69,10 +94,10 @@ export const DEPENDENCIAS_DE_VISTA = {
   esteMes: ['transacciones'],
   gastos: ['transacciones'],
   movimientos: ['transacciones'],
-  proximasOperaciones: ['transacciones', 'deudas', 'inversiones', 'recurrentes', 'opsOcultas', 'ajustes'],
-  opsOcultas: ['opsOcultas', 'transacciones', 'deudas', 'inversiones', 'recurrentes'],
+  proximasOperaciones: ['deudas', 'inversiones', 'recurrentes', 'opsOcultas', 'ajustes'],
+  opsOcultas: ['opsOcultas', 'deudas', 'inversiones', 'recurrentes'],
   listadoTransacciones: ['transacciones', 'categorias', 'ajustes'],
-  opcionesTransaccion: ['transacciones', 'deudas', 'categorias'],
+  opcionesTransaccion: ['deudas', 'categorias'],
   resumenDeudas: ['deudas', 'ajustes'],
   resumenInversiones: ['inversiones', 'ajustes'],
   resumenActivos: ['activos', 'ajustes'],

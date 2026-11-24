@@ -19,8 +19,6 @@ export interface Recurrente {
 export type RecIn = Pick<Recurrente, 'nombre' | 'tipo' | 'monto' | 'frecuencia' | 'fecha_inicio' | 'notas'> & Partial<Pick<Recurrente, 'activo'>>
 
 export interface ResumenRecurrentes {
-  total_gastos_mensual: number
-  total_ingresos_mensual: number
   neto_mensual: number
   dato: Frase
   segmentos: Segmento[]

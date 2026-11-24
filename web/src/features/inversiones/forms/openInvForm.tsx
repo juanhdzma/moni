@@ -1,5 +1,4 @@
-import { openConFila, useOpenerCtx, type OpenerCtx } from '@/shell/hooks/openers'
-import { useModal } from '@/shell/providers/ModalProvider'
+import { openConFila, useCerrarYAbrir, type OpenerCtx } from '@/shell/hooks/openers'
 import { cargarInversion } from '../../../lib/api'
 import type { Inversion } from '../../../types'
 import { InversionForm } from './InversionForm'
@@ -13,10 +12,5 @@ export function openInvFormById(ctx: OpenerCtx, id: number): void {
 }
 
 export function useEditarInversion(inv: Inversion): () => void {
-  const ctx = useOpenerCtx()
-  const { closeModal } = useModal()
-  return () => {
-    closeModal()
-    openInvFormById(ctx, inv.id)
-  }
+  return useCerrarYAbrir((ctx) => openInvFormById(ctx, inv.id))
 }

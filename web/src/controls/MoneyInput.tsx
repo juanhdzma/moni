@@ -1,24 +1,22 @@
-import type { ChangeEvent, CSSProperties } from 'react'
-import { fmtMoneyInput } from '../lib/format'
+import type { ChangeEvent } from 'react'
+import { fmtMoneyInput, getCurrencySymbol } from '../lib/format'
 
 interface Props {
   value: string
   onChange: (value: string) => void
   id?: string
   placeholder?: string
-  prefix?: string
-  style?: CSSProperties
   ariaLabel?: string
 }
 
-export function MoneyInput({ value, onChange, id, placeholder = '0', prefix = '$', style, ariaLabel }: Props) {
+export function MoneyInput({ value, onChange, id, placeholder = '0', ariaLabel }: Props) {
   const handle = (e: ChangeEvent<HTMLInputElement>) => {
     fmtMoneyInput(e.currentTarget)
     onChange(e.currentTarget.value)
   }
   return (
-    <div className="money-wrap" style={style}>
-      <span className="money-pfx">{prefix}</span>
+    <div className="money-wrap">
+      <span className="money-pfx">{getCurrencySymbol()}</span>
       <input
         className="form-input"
         type="text"

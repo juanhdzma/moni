@@ -64,6 +64,8 @@ export const META: Meta = {
     { col: 'descripcion', label: 'Descripción', dir_defecto: 1 },
     { col: 'monto', label: 'Monto', dir_defecto: -1 },
   ],
+  defaults: { frecuencia_recurrente: 'mensual', tipo_inversion: 'fija', pago_inversion: 'vencimiento' },
+  push: { hora: '8:00', texto: 'hoy o mañana' },
   periodos: {
     gastos: [
       { value: '1W', label: '1S' },

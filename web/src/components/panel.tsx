@@ -122,7 +122,6 @@ export function Resumen({
   extra?: ReactNode
   loaded: boolean
 }) {
-  const segs = segmentos
   return (
     <section id={id} aria-labelledby={`${id}-titulo`} className="rounded-2xl border bg-card p-5 text-card-foreground sm:p-6">
       <div className="flex items-start justify-between gap-4">
@@ -141,15 +140,15 @@ export function Resumen({
         </div>
         {extra}
       </div>
-      {loaded && segs.length > 0 && (
+      {loaded && segmentos.length > 0 && (
         <>
           <div aria-hidden="true" className="mt-5 flex h-3 gap-1 overflow-hidden rounded-full">
-            {segs.map((s, i) => (
+            {segmentos.map((s, i) => (
               <span key={s.key} className={color} style={{ flexGrow: s.valor, flexBasis: 0, minWidth: 4, opacity: TONOS[i] }} />
             ))}
           </div>
           <ul aria-label="De qué está hecho" className="mt-2.5 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-            {segs.map((s, i) => (
+            {segmentos.map((s, i) => (
               <li key={s.key} className="flex min-w-0 items-center gap-2">
                 <span aria-hidden="true" className={cn('size-2.5 shrink-0 rounded-full', color)} style={{ opacity: TONOS[i] }} />
                 <span className="max-w-[14rem] truncate">{s.label}</span>

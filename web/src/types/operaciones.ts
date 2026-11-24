@@ -10,7 +10,7 @@ export interface OperacionProxima {
   etiqueta: string
   sub: string
   monto: number
-  dias: number
+  sin_monto: boolean
   texto_dias: string
   vencida: boolean
 }
@@ -20,8 +20,7 @@ export interface ProximasOperaciones {
   items: OperacionProxima[]
   extra: OperacionProxima[]
   texto_ver_todas: string | null
-  vencidas: number
-  visibles: number
+  texto_ver_menos: string | null
   frase: Frase | null
   texto_vacio: string
 }

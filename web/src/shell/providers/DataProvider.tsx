@@ -13,11 +13,13 @@ export const ESTADO_VACIO: Estado = {
   desactualizado: { texto: '' },
 }
 
-export interface DataApi {
+interface DataApi {
   estado: Estado
   loaded: boolean
   versiones: Versiones
   reload: (afectadas?: Entidad[]) => Promise<void>
+  aplicarEstado: (parcial: Partial<Estado>, afectadas: Entidad[]) => void
+  conBanner: (accion: () => Promise<unknown>, opciones?: { recargar?: boolean }) => Promise<boolean>
   banner: string | null
   showBanner: (msg: string) => void
   reportRenderFailure: (name: string) => void
@@ -73,6 +75,26 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
     [cargarEstado],
   )
 
+  const aplicarEstado = useCallback((parcial: Partial<Estado>, afectadas: Entidad[]) => {
+    lastRequest.current += 1
+    setEstado((e) => ({ ...e, ...parcial }))
+    setVersiones((v) => subirVersiones(v, afectadas))
+  }, [])
+
+  const conBanner = useCallback(
+    async (accion: () => Promise<unknown>, { recargar = false } = {}) => {
+      try {
+        await accion()
+        return true
+      } catch (err) {
+        if (recargar) await reload()
+        showBanner(errMsg(err))
+        return false
+      }
+    },
+    [reload, showBanner],
+  )
+
   const reportRenderFailure = useCallback(
     (name: string) => {
       failed.current.add(name)
@@ -89,8 +111,8 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
   setCurrencySymbol(estado.ajustes.moneda_simbolo)
 
   const value = useMemo(
-    () => ({ estado, loaded, versiones, reload, banner, showBanner, reportRenderFailure }),
-    [estado, loaded, versiones, reload, banner, showBanner, reportRenderFailure],
+    () => ({ estado, loaded, versiones, reload, aplicarEstado, conBanner, banner, showBanner, reportRenderFailure }),
+    [estado, loaded, versiones, reload, aplicarEstado, conBanner, banner, showBanner, reportRenderFailure],
   )
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

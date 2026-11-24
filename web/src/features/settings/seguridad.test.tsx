@@ -73,7 +73,7 @@ describe('Seguridad', () => {
     await user.type(campo, 'MacBook')
     await user.click(screen.getByRole('button', { name: 'Agregar Face ID' }))
     await waitFor(() => expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')).toHaveLength(1))
-    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toEqual({ nombre: 'MacBook' })
+    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toBeUndefined()
     expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')[0]?.body).toEqual({ ...credencial, nombre: 'MacBook' })
     expect(await screen.findByText('Face ID activado en este dispositivo')).toBeInTheDocument()
   })

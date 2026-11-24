@@ -23,12 +23,15 @@ const OPS = {
 }
 
 describe('categorias', () => {
-  it('agrega con POST /api/categorias y recarga', async () => {
-    const f = mockFetch({ 'POST /api/categorias': { ingreso: [], gasto: [], transfer: [] } })
+  it('agrega con POST /api/categorias y usa la respuesta sin refetch', async () => {
+    const base = estadoBase()
+    const gasto = [...base.categorias.gasto, { nombre: 'Mascotas', sistema: false }]
+    const f = mockFetch({ 'POST /api/categorias': { ...base.categorias, gasto } })
     renderWithProviders(<Settings active />)
     await waitFor(() => expect(document.getElementById('settings-new-cat-gasto')).not.toBeNull())
     await userEvent.type(document.getElementById('settings-new-cat-gasto') as HTMLInputElement, 'Mascotas{Enter}')
-    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap').length).toBeGreaterThan(0))
+    expect(await screen.findByText('Mascotas')).toBeTruthy()
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/categorias', headers: { 'X-Moni-Request': '1' }, body: { tipo: 'gasto', nombre: 'Mascotas' } })
     expect((document.getElementById('settings-new-cat-gasto') as HTMLInputElement).value).toBe('')
   })
@@ -36,10 +39,10 @@ describe('categorias', () => {
   it('quita una custom con DELETE y query', async () => {
     const base = estadoBase()
     const estado = { ...base, categorias: { ...base.categorias, gasto: [...base.categorias.gasto, { nombre: 'Mascotas', sistema: false }] } }
-    const f = mockFetch({ 'DELETE /api/categorias': {} })
+    const f = mockFetch({ 'DELETE /api/categorias': base.categorias })
     renderWithProviders(<Settings active />, { estado })
     await userEvent.click(screen.getByRole('button', { name: 'Eliminar Mascotas' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    await waitFor(() => expect(screen.queryByText('Mascotas')).toBeNull())
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/categorias?tipo=gasto&nombre=Mascotas', headers: { 'X-Moni-Request': '1' } })
   })
 
@@ -58,7 +61,7 @@ describe('operaciones ocultas', () => {
     expect(await screen.findByText('deuda:1:2026-01-01')).toBeTruthy()
     expect(screen.getByText(/Moto/)).toBeTruthy()
     await userEvent.click(screen.getAllByRole('button', { name: 'Restaurar' })[0] as HTMLElement)
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    await waitFor(() => expect(screen.queryByText('Mascotas')).toBeNull())
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/ops-ocultas?clave=deuda%3A1%3A2026-01-01', headers: { 'X-Moni-Request': '1' } })
     await waitFor(() => expect(f.callsTo('GET', '/api/ops-ocultas').length).toBeGreaterThan(1))
   })
@@ -67,7 +70,7 @@ describe('operaciones ocultas', () => {
     const f = mockFetch({ 'GET /api/ops-ocultas': OPS, 'DELETE /api/ops-ocultas': {} })
     renderWithProviders(<Settings active />)
     await userEvent.click(await screen.findByRole('button', { name: 'Restaurar todas' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    await waitFor(() => expect(screen.queryByText('Mascotas')).toBeNull())
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/ops-ocultas', headers: { 'X-Moni-Request': '1' } })
   })
 
@@ -92,6 +95,8 @@ describe('moneda', () => {
     await userEvent.click(await screen.findByRole('option', { name: 'Euro (€)' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'PUT', url: '/api/ajustes', headers: { 'X-Moni-Request': '1' }, body: { moneda_simbolo: '€' } })
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Símbolo mostrado junto a los montos' })).toHaveTextContent('Euro (€)')
   })
 })
 
@@ -126,7 +131,7 @@ describe('backup', () => {
     fireEvent.change(input, { target: { files: [file] } })
     await waitFor(() => expect(document.getElementById('settings-backup-status')?.textContent).toBe('Importado: 2 transacciones, 1 deuda'))
     expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/import', headers: { 'X-Moni-Request': '1' }, body: payload })
-    expect(document.getElementById('settings-backup-status')?.className).toBe('form-status ok')
+    expect(document.getElementById('settings-backup-status')).toHaveClass('form-status', 'ok')
   })
 
   it('muestra el error del import', async () => {
@@ -135,7 +140,8 @@ describe('backup', () => {
     const file = new File(['{}'], 'b.json', { type: 'application/json' })
     fireEvent.change(document.querySelector('input[type=file]') as HTMLInputElement, { target: { files: [file] } })
     await waitFor(() => expect(document.getElementById('settings-backup-status')?.textContent).toBe('ids duplicados'))
-    expect(document.getElementById('settings-backup-status')?.className).toBe('form-status err')
+    expect(document.getElementById('settings-backup-status')).toHaveClass('form-status', 'err')
+    expect(screen.getByRole('alert')).toHaveTextContent('ids duplicados')
   })
 })
 
@@ -176,7 +182,7 @@ describe('teclado', () => {
 describe('labels', () => {
   it('moneda y confirmación de borrado se encuentran por su label', async () => {
     renderWithProviders(<Settings active />)
-    expectLabels(document.getElementById('settings-currency') as HTMLElement, { 'Símbolo mostrado junto a los montos': 'settings-currency-select' })
+    expectLabels(document.getElementById('settings-currency-card') as HTMLElement, { 'Símbolo mostrado junto a los montos': 'settings-currency-select' })
     await userEvent.click(screen.getByRole('button', { name: 'Borrar todos los datos' }))
     expectLabels(modalBody(), { 'Escribí BORRAR para confirmar': 'm-confirm-truncate' })
   })

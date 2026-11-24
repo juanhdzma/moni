@@ -111,7 +111,7 @@ export function Transacciones({ active }: TabProps) {
               id="f-tipo-filter"
               ariaLabel="Tipo"
               value={tipoSel ?? ''}
-              onChange={(v) => setTipoSel(v === 'ingreso' || v === 'gasto' ? v : '')}
+              onChange={(v) => setTipoSel(tipos.some((t) => t.value === v) ? (v as FiltrosTx['tipo']) : '')}
               options={[{ value: '', label: 'Todos los tipos' }, ...tipos]}
             />
             <Select

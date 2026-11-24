@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { cop, signStr } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-export function tonoDe(valor: number) {
+function tonoDe(valor: number) {
   const positivo = valor >= 0
   return {
     positivo,

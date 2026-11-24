@@ -72,7 +72,7 @@ describe('Próximas operaciones', () => {
   })
 
   it('muestra el mensaje vacío', async () => {
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items: [], vencidas: 0, frase: null } }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items: [], frase: null } }))
     renderWithProviders(<Dashboard active />)
     expect(await screen.findByText('Sin operaciones en los próximos 45 días.')).toBeInTheDocument()
   })
@@ -93,7 +93,7 @@ describe('Próximas operaciones', () => {
     const { unmount } = renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('dash-proximas')).toHaveTextContent('$70.000 por pagar en los próximos 45 días.'))
     unmount()
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, vencidas: 1, frase: frase('Tenés ', ['1 pago vencido', 'negativo'], ' y ', ['$20.000', 'fuerte'], ' por pagar en 45 días.') } }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, frase: frase('Tenés ', ['1 pago vencido', 'negativo'], ' y ', ['$20.000', 'fuerte'], ' por pagar en 45 días.') } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('dash-proximas')).toHaveTextContent('Tenés 1 pago vencido y $20.000 por pagar en 45 días.'))
   })
@@ -101,7 +101,7 @@ describe('Próximas operaciones', () => {
   it('muestra items y despliega extra con el texto del backend', async () => {
     const op = (i: number) => ({ ...(PROXIMAS.items[0] as OperacionProxima), clave: `recurrente:${i}:2026-08-17`, fuente_id: i, etiqueta: `R${i}` })
     const items = [1, 2, 3, 4, 5].map(op)
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items, extra: [op(6), op(7)], texto_ver_todas: 'Ver las 7' } }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items, extra: [op(6), op(7)], texto_ver_todas: 'Ver las 7', texto_ver_menos: 'Ver menos' } }))
     renderWithProviders(<Dashboard active />)
     await screen.findByText('Ver las 7')
     expect(list().querySelectorAll('.prox-op-row')).toHaveLength(5)
@@ -112,7 +112,7 @@ describe('Próximas operaciones', () => {
   })
 
   it('una cuota en cero no lleva signo', async () => {
-    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items: [{ ...(PROXIMAS.items[1] as OperacionProxima), etiqueta: 'Visa', monto: 0 }] } }))
+    mockFetch(rutas({ 'GET /api/proximas-operaciones': { ...PROXIMAS, items: [{ ...(PROXIMAS.items[1] as OperacionProxima), etiqueta: 'Visa', monto: 0, sin_monto: true }] } }))
     renderWithProviders(<Dashboard active />)
     const row = (await screen.findByText('Visa')).closest('.prox-op-row') as HTMLElement
     expect(row.textContent).not.toMatch(/[+−]\$0/)

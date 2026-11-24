@@ -16,7 +16,6 @@ export const credito = deuda({
   vigente: true,
   progreso_pct: 40,
   capital_pagado: 4000000,
-  meses_restantes: 12,
   nivel_progreso: 'medio',
   frases: {
     detalle: '20,0% EA · $500.000/mes',
@@ -25,6 +24,7 @@ export const credito = deuda({
     intereses_texto: '$800.000',
     intereses_ayuda: 'Suma de los pagos registrados en Moni',
     intereses_saldada_texto: '$800.000 en intereses',
+    disponible_texto: null,
   },
 })
 export const tarjeta = deuda({
@@ -38,6 +38,7 @@ export const tarjeta = deuda({
   activa: true,
   vigente: true,
   disponible: 4000000,
+  tiene_cupo: true,
   uso_pct: 20,
   nivel_uso: 'bajo',
   frases: {
@@ -47,6 +48,7 @@ export const tarjeta = deuda({
     intereses_texto: '$12.000',
     intereses_ayuda: 'Suma de los pagos registrados en Moni',
     intereses_saldada_texto: null,
+    disponible_texto: '$4.000.000',
   },
 })
 export const saldado = deuda({
@@ -67,6 +69,7 @@ export const saldado = deuda({
     intereses_texto: '$150.000',
     intereses_ayuda: 'Suma de los pagos registrados en Moni',
     intereses_saldada_texto: '$150.000 en intereses',
+    disponible_texto: null,
   },
 })
 
@@ -74,7 +77,6 @@ export const full = () => estado({ deudas: [credito, tarjeta, saldado] })
 
 export const resumenCompleto = {
   total: 7000000,
-  total_cuotas: 500000,
   total_intereses: 962000,
   dato: { cuotas: '$500.000', cuotas_sufijo: '/mes en cuotas', intereses: '$962.000', intereses_sufijo: 'pagados en intereses' },
   segmentos: [
@@ -84,6 +86,7 @@ export const resumenCompleto = {
   creditos: [credito],
   tarjetas: [tarjeta],
   terminadas: [saldado],
+  texto_vacio_creditos: { titulo: 'Sin créditos activos', texto: '¡Todos los créditos están saldados!' },
 }
 
 export const conResumen = (r: unknown = resumenCompleto, extra: Record<string, unknown> = {}) =>

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { FechaNotas } from '../../../controls/FormFields'
+import { Hint } from '../../../controls/Hint'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { Select } from '../../../controls/Select'
 import { cargarOpcionesTx } from '../../../lib/api/transacciones'
@@ -74,7 +75,7 @@ export function CamposTx({ tipo, categorias, valores, onCambio, fechaType, ayuda
       <div className="form-group">
         <label className="form-label" htmlFor="m-monto">Monto (COP)</label>
         <MoneyInput id="m-monto" value={valores.monto} onChange={(monto) => onCambio({ monto })} ariaLabel="Monto (COP)" />
-        {ayudaMonto && <div className="mt-1.5 text-xs text-muted-foreground">{ayudaMonto}</div>}
+        {ayudaMonto && <Hint>{ayudaMonto}</Hint>}
       </div>
       {children}
       <FechaNotas

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { borrarPasskey, cargarPasskeys, cargarSesiones, revocarSesion, type Passkey, type Sesion } from '../../lib/seguridad/auth'
-import { errMsg } from '../../lib/format'
 import { nombreDeDispositivo, passkeysDisponibles, registrarPasskey } from '../../lib/seguridad/passkeys'
+import { StatusMessage } from '../../controls/FormStatus'
+import { useStatus } from '@/shell/hooks/useStatus'
 import { useAuth } from '@/shell/providers/AuthProvider'
 
 export function Seguridad() {
@@ -10,7 +11,7 @@ export function Seguridad() {
   const [sesiones, setSesiones] = useState<Sesion[] | null>(null)
   const [disponible, setDisponible] = useState(false)
   const [nombre, setNombre] = useState(nombreDeDispositivo)
-  const [status, setStatus] = useState({ cls: 'form-status', msg: '' })
+  const { cls, msg, ok: estadoOk, err: estadoErr } = useStatus()
 
   const cargar = useCallback(async () => {
     try {
@@ -18,9 +19,9 @@ export function Seguridad() {
       setPasskeys(p)
       setSesiones(s)
     } catch (err) {
-      setStatus({ cls: 'form-status err', msg: errMsg(err) })
+      estadoErr(err)
     }
-  }, [])
+  }, [estadoErr])
 
   useEffect(() => {
     void Promise.resolve().then(cargar)
@@ -36,10 +37,10 @@ export function Seguridad() {
   const correr = async (fn: () => Promise<unknown>, ok: string) => {
     try {
       await fn()
-      setStatus({ cls: 'form-status ok', msg: ok })
+      estadoOk(ok)
       await cargar()
     } catch (err) {
-      setStatus({ cls: 'form-status err', msg: errMsg(err) })
+      estadoErr(err)
     }
   }
 
@@ -108,14 +109,12 @@ export function Seguridad() {
             ))}
           </ul>
         )}
-        <button type="button" className="btn btn-danger btn-sm mt-3" onClick={() => void salir().catch((err: unknown) => setStatus({ cls: 'form-status err', msg: errMsg(err) }))}>
+        <button type="button" className="btn btn-danger btn-sm mt-3" onClick={() => void salir().catch((err: unknown) => estadoErr(err))}>
           Cerrar sesión
         </button>
       </section>
 
-      <div className={status.cls} id="settings-seguridad-status" role={status.cls.includes('err') ? 'alert' : undefined}>
-        {status.msg}
-      </div>
+      <StatusMessage cls={cls} msg={msg} id="settings-seguridad-status" />
     </div>
   )
 }

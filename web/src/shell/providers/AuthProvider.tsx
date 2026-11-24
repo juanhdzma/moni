@@ -5,9 +5,9 @@ import { loginConPasskey } from '@/lib/seguridad/passkeys'
 
 export type Fase = 'cargando' | 'login' | 'autenticado' | 'sin_configurar' | 'error'
 
-export interface AuthApi {
+interface AuthApi {
   fase: Fase
-  passkeys: number
+  tienePasskeys: boolean
   textoBloqueo: string | null
   loginReciente: boolean
   entrar: (clave: string) => Promise<void>
@@ -35,7 +35,7 @@ const esBloqueo = (err: unknown): err is ApiError => err instanceof ApiError && 
 
 export function AuthProvider({ children, initialEstado }: Props) {
   const [fase, setFase] = useState<Fase>(initialEstado ? faseDe(initialEstado) : 'cargando')
-  const [passkeys, setPasskeys] = useState(initialEstado?.passkeys ?? 0)
+  const [tienePasskeys, setTienePasskeys] = useState(initialEstado?.tiene_passkeys ?? false)
   const [textoBloqueo, setTextoBloqueo] = useState<string | null>(null)
   const [loginReciente, setLoginReciente] = useState(false)
 
@@ -47,7 +47,7 @@ export function AuthProvider({ children, initialEstado }: Props) {
   const recargar = useCallback(async () => {
     try {
       const e = await cargarEstadoAuth()
-      setPasskeys(e.passkeys)
+      setTienePasskeys(e.tiene_passkeys)
       setFase(faseDe(e))
     } catch (err) {
       if (esBloqueo(err)) {
@@ -106,8 +106,8 @@ export function AuthProvider({ children, initialEstado }: Props) {
   }, [])
 
   const value = useMemo(
-    () => ({ fase, passkeys, textoBloqueo, loginReciente, entrar, entrarConPasskey, salir, recargar }),
-    [fase, passkeys, textoBloqueo, loginReciente, entrar, entrarConPasskey, salir, recargar],
+    () => ({ fase, tienePasskeys, textoBloqueo, loginReciente, entrar, entrarConPasskey, salir, recargar }),
+    [fase, tienePasskeys, textoBloqueo, loginReciente, entrar, entrarConPasskey, salir, recargar],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

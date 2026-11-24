@@ -24,7 +24,7 @@ const resumenDe = (activos: typeof a1[]) => ({
   total_inicial: activos.reduce((s, a) => s + a.valor_inicial, 0),
   total_actual: activos.reduce((s, a) => s + a.valor_actual, 0),
   variacion: activos.length ? 50000 : 0,
-  variacion_pct: activos.length ? 50 : 0,
+  mostrar_variacion: activos.length > 0,
   segmentos: activos.map((a) => ({ key: String(a.id), label: a.nombre, valor: a.valor_actual })),
   items: activos,
   texto_variacion: '50,0% sobre lo pagado',
@@ -68,6 +68,13 @@ describe('Activos render', () => {
     expect(screen.getAllByText('+50,0%').length).toBeGreaterThan(0)
     expect(screen.getByText(/Adquirido/)).toBeInTheDocument()
     expect(screen.queryByText(/sin actualizar/)).toBeNull()
+  })
+
+  it('hides the variation text when the backend says not to show it', async () => {
+    mockFetch({ 'GET /api/activos/resumen': { ...resumenDe([a1]), mostrar_variacion: false } })
+    renderWithProviders(<Activos active />, { estado: estado({ hoy: '2026-06-15' }) })
+    await waitFor(() => expect(document.getElementById('activos-total')).toHaveTextContent('1 activo'))
+    expect(document.getElementById('activos-total')).not.toHaveTextContent('sobre lo pagado')
   })
 
   it('shows stale warning', async () => {

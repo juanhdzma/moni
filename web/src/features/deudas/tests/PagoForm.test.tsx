@@ -40,7 +40,7 @@ describe('pago', () => {
     })
     expect(m?.body).not.toHaveProperty('intereses')
     expect(m?.body).not.toHaveProperty('descripcion')
-    expect(m?.body).not.toHaveProperty('fecha')
+    expect(m?.body).toMatchObject({ fecha: '' })
   })
 
   it('muestra el desglose que devuelve el backend para un saldo fraccionario', async () => {
@@ -85,17 +85,18 @@ describe('pago', () => {
     })
   })
 
-  it('validaciones del pago', async () => {
+  it('sin saldo nuevo no valida en el cliente: omite nuevo_saldo y muestra el 422 del backend', async () => {
     const user = userEvent.setup()
-    conResumen()
+    const f = conResumen(resumenCompleto, {
+      'POST /api/deuda/1/pago': failure(422, [{ loc: ['body', 'nuevo_saldo'], msg: 'Campo requerido', type: 'missing' }]),
+    })
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await pagar('Pagar cuota'))
-    const status = () => document.getElementById('m-status') as HTMLElement
     await user.click(screen.getByText('Registrar pago'))
-    expect(status()).toHaveTextContent('Ingresá el saldo capital después del pago')
-    await user.type(document.getElementById('m-monto') as HTMLElement, '10')
-    await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '7000000')
-    expect(status()).not.toHaveTextContent('El saldo nuevo no puede superar el saldo anterior')
+    await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Campo requerido'))
+    const m = f.mutations().filter((c) => c.url === '/api/deuda/1/pago')
+    expect(m).toHaveLength(1)
+    expect(m[0]?.body).not.toHaveProperty('nuevo_saldo')
   })
 
   it('muestra el 422 en español del backend cuando el monto va vacío', async () => {

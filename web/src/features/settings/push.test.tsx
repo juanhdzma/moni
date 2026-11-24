@@ -32,11 +32,12 @@ describe('notificaciones', () => {
     expect(screen.getByText(/no soporta notificaciones/)).toBeTruthy()
   })
 
-  it('explica como funciona el aviso', () => {
+  it('explica como funciona el aviso', async () => {
     stubPush()
     mockFetch()
     renderWithProviders(<Notificaciones />)
     expect(screen.getByText(/Cómo funciona/)).toBeTruthy()
+    expect(await screen.findByText('Aviso diario a las 8:00 de las cuotas, rendimientos y recurrentes que vencen hoy o mañana.')).toBeTruthy()
   })
 
   it('probar manda el test', async () => {

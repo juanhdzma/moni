@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
+import { StatusMessage } from '../../controls/FormStatus'
+import { Hint } from '../../controls/Hint'
+import { useMeta } from '@/shell/hooks/useMeta'
+import { useStatus } from '@/shell/hooks/useStatus'
 import { activarPush, desactivarPush, probarPush, pushSoportado, suscripcionActual } from '../../lib/seguridad/push'
-import { errMsg } from '../../lib/format'
-import { HINT } from './estilos'
 
 export function Notificaciones() {
   const soportado = pushSoportado()
   const [activas, setActivas] = useState(false)
-  const [status, setStatus] = useState({ cls: 'form-status', msg: '' })
+  const meta = useMeta()
+  const status = useStatus()
 
   useEffect(() => {
     if (!soportado) return
@@ -17,24 +20,24 @@ export function Notificaciones() {
     try {
       await fn()
       if (activasDespues !== undefined) setActivas(activasDespues)
-      setStatus({ cls: 'form-status ok', msg: ok })
+      status.ok(ok)
     } catch (err) {
-      setStatus({ cls: 'form-status err', msg: errMsg(err) })
+      status.err(err)
     }
   }
 
   if (!soportado) {
     return (
-      <div className={HINT}>
+      <Hint className="mt-2">
         Este navegador no soporta notificaciones. En iPhone agregá Moni a la pantalla de inicio (Compartir, Agregar a inicio) y abrila desde ahí.
-      </div>
+      </Hint>
     )
   }
 
   return (
     <>
       <div className="mb-3 text-sm text-muted-foreground">
-        Aviso diario a las 8:00 de las cuotas, rendimientos y recurrentes que vencen hoy o mañana.
+        {meta && `Aviso diario a las ${meta.push.hora} de las cuotas, rendimientos y recurrentes que vencen ${meta.push.texto}.`}
       </div>
       <div className="mb-3 text-xs text-muted-foreground">
         Cómo funciona: al activarlo, este dispositivo se suscribe al servidor de Moni y recibe los avisos aunque la app esté cerrada. Al tocar un aviso se abre Moni en la sección correspondiente. Podés desactivarlo cuando quieras y cada dispositivo se activa por separado.
@@ -55,9 +58,7 @@ export function Notificaciones() {
           </button>
         )}
       </div>
-      <div className={status.cls} id="settings-notificaciones-status" role={status.cls.includes('err') ? 'alert' : undefined}>
-        {status.msg}
-      </div>
+      <StatusMessage cls={status.cls} msg={status.msg} id="settings-notificaciones-status" />
     </>
   )
 }

@@ -1,4 +1,4 @@
-import type { Opcion, OpcionConAyuda, TipoTx } from './comun'
+import type { Opcion, OpcionConAyuda, PagoInv, TipoInv, TipoTx } from './comun'
 import type { PeriodoEvolucion, PeriodoGastos } from './dashboard'
 
 export interface ColumnaTransaccion {
@@ -20,5 +20,7 @@ export interface Meta {
   monedas: Opcion[]
   series_evolucion: Opcion[]
   columnas_transaccion: ColumnaTransaccion[]
+  defaults: { frecuencia_recurrente: string; tipo_inversion: TipoInv; pago_inversion: PagoInv }
+  push: { hora: string; texto: string }
   periodos: { gastos: Opcion<PeriodoGastos>[]; evolucion: Opcion<PeriodoEvolucion>[] }
 }

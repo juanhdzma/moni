@@ -21,7 +21,7 @@ export function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const [nombre, setNombre] = useState(item?.nombre || '')
   const [tipo, setTipo] = useState<TipoRec>(item?.tipo === 'ingreso' ? 'ingreso' : 'gasto')
   const [monto, setMonto] = useState(item ? numToInput(item.monto) : '')
-  const [frecuencia, setFrecuencia] = useState<string>(item?.frecuencia || 'mensual')
+  const [frecuencia, setFrecuencia] = useState<string>(item?.frecuencia || meta?.defaults.frecuencia_recurrente || '')
   const [fecha, setFecha] = useState(soloFecha(item?.fecha_inicio))
   const [notas, setNotas] = useState(item?.notas || '')
 

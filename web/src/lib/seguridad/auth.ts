@@ -3,7 +3,7 @@ import { apiFetch } from '../api'
 export interface EstadoAuth {
   configurado: boolean
   autenticado: boolean
-  passkeys: number
+  tiene_passkeys: boolean
 }
 
 export interface Sesion {

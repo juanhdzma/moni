@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Cargando } from '@/components/Cargando'
 import { FormFooter } from '../../../controls/FormFooter'
 import { numToInput } from '../../../lib/format'
 import { useGuardar } from '@/shell/hooks/useGuardar'
@@ -19,7 +20,7 @@ export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string
     notas: '',
   })
 
-  if (!opciones) return <p className="py-6 text-center text-sm text-muted-foreground">Cargando...</p>
+  if (!opciones) return <Cargando />
 
   const save = () => guardar(() => crudOp('tx', 'add', cuerpoTx(tipo, valores, null)))
 

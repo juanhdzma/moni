@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { CategoriaInput } from './CategoriaInput'
 import { useCategorias } from '@/shell/hooks/useCategorias'
 
 interface Props {
@@ -11,16 +12,12 @@ interface Props {
 export function NuevaCategoria({ tipo, onCreada, children }: Props) {
   const { addCategoria } = useCategorias()
   const [abierta, setAbierta] = useState(false)
-  const [nombre, setNombre] = useState('')
 
-  const guardar = () => {
-    const limpio = nombre.trim()
-    if (!limpio) return
-    void addCategoria(tipo, limpio).then((ok) => {
-      if (ok) onCreada(limpio)
+  const guardar = (nombre: string) => {
+    void addCategoria(tipo, nombre).then((ok) => {
+      if (ok) onCreada(nombre)
     })
     setAbierta(false)
-    setNombre('')
   }
 
   return (
@@ -33,24 +30,7 @@ export function NuevaCategoria({ tipo, onCreada, children }: Props) {
       </div>
       {abierta && (
         <div id="new-cat-wrap" className="mt-2">
-          <div className="flex gap-2">
-            <input
-              className="form-input"
-              type="text"
-              id="new-cat-name"
-              maxLength={25}
-              placeholder="Nueva categoría"
-              autoFocus
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') guardar()
-              }}
-            />
-            <button type="button" className="btn btn-accent btn-sm" onClick={guardar}>
-              Ok
-            </button>
-          </div>
+          <CategoriaInput id="new-cat-name" etiqueta="Ok" autoFocus botonClassName="btn-accent btn-sm" onAgregar={guardar} />
         </div>
       )}
     </>

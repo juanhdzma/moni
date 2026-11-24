@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { X } from 'lucide-react'
 import { Panel } from '@/components/panel'
 import { useCategorias } from '@/shell/hooks/useCategorias'
+import { CategoriaInput } from '../transacciones'
 import { useMeta } from '@/shell/hooks/useMeta'
 import type { TipoTx } from '../../types'
 
@@ -9,15 +9,8 @@ const DOT: Record<TipoTx, string> = { ingreso: 'bg-inversiones', gasto: 'bg-deud
 
 function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
   const { categorias, addCategoria, removeCategoria } = useCategorias()
-  const [nuevo, setNuevo] = useState('')
   const cats = categorias[tipo]
 
-  const agregar = () => {
-    const nombre = nuevo.trim()
-    if (!nombre) return
-    void addCategoria(tipo, nombre)
-    setNuevo('')
-  }
 
   return (
     <div>
@@ -38,23 +31,7 @@ function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
         ))}
         {!cats.length && <span className="text-xs text-muted-foreground">Sin categorías todavía</span>}
       </div>
-      <div className="flex gap-2">
-        <input
-          className="form-input"
-          type="text"
-          maxLength={25}
-          id={`settings-new-cat-${tipo}`}
-          placeholder="Nueva categoría"
-          value={nuevo}
-          onChange={(e) => setNuevo(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') agregar()
-          }}
-        />
-        <button type="button" className="btn btn-dim" onClick={agregar}>
-          Agregar
-        </button>
-      </div>
+      <CategoriaInput id={`settings-new-cat-${tipo}`} etiqueta="Agregar" onAgregar={(nombre) => void addCategoria(tipo, nombre)} />
     </div>
   )
 }

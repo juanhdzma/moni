@@ -1,12 +1,17 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { pct } from '@/lib/format'
-import { Monto, Tendencia, tonoDe } from './monto'
+import { Monto, Tendencia } from './monto'
 
-describe('tonoDe', () => {
+describe('tono', () => {
   it('cero cuenta como positivo', () => {
-    expect(tonoDe(0)).toMatchObject({ positivo: true, signo: '+', texto: 'text-inversiones-text' })
-    expect(tonoDe(-1)).toMatchObject({ positivo: false, signo: '−', texto: 'text-deudas', chip: 'bg-deudas/15 text-deudas' })
+    render(<Monto valor={0} chip />)
+    expect(screen.getByText('+$0')).toHaveClass('bg-inversiones/15 text-inversiones-text')
+  })
+
+  it('negativo usa el chip de deudas', () => {
+    render(<Monto valor={-1} chip />)
+    expect(screen.getByText('−$1')).toHaveClass('bg-deudas/15 text-deudas')
   })
 })
 

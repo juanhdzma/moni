@@ -1,14 +1,18 @@
-import type { CSSProperties } from 'react'
 import { CircleAlert, CircleCheck } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useModalStatus } from '@/shell/providers/ModalProvider'
 
-export function FormStatus({ style = { marginTop: 12 } }: { style?: CSSProperties }) {
-  const { cls, msg } = useModalStatus()
+export function StatusMessage({ cls, msg, id, className }: { cls: string; msg: string; id?: string; className?: string }) {
   const Icon = cls === 'err' ? CircleAlert : cls === 'ok' ? CircleCheck : null
   return (
-    <div className={'form-status flex items-start gap-1.5' + (cls ? ' ' + cls : '')} id="m-status" role={cls === 'err' ? 'alert' : undefined} style={style}>
+    <div className={cn('form-status flex items-start gap-1.5', cls, className)} id={id} role={cls === 'err' ? 'alert' : undefined}>
       {Icon && msg && <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}
       {msg}
     </div>
   )
+}
+
+export function FormStatus() {
+  const { cls, msg } = useModalStatus()
+  return <StatusMessage cls={cls} msg={msg} id="m-status" className="mt-3" />
 }

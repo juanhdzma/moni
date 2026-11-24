@@ -51,7 +51,6 @@ export interface InvRetiro {
 }
 
 export interface ResumenInversiones {
-  total_invertido: number
   total_actual: number
   ganancia: number
   ganancia_pct: number
@@ -65,10 +64,16 @@ export interface ResumenInversiones {
 
 export interface PreviewAporte {
   nuevo_valor_estimado: number
+  texto_estimado: string
 }
 
 export interface PreviewValor {
   delta: number
   total: number
   total_pct: number
+}
+
+export interface InvValor {
+  nuevo_valor: number
+  fecha: string
 }

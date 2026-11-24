@@ -1,30 +1,21 @@
 import { useCallback, useMemo } from 'react'
 import { agregarCategoria, quitarCategoria } from '@/lib/api'
-import { errMsg } from '@/lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import type { Categorias, TipoTx } from '@/types'
 
-export interface CategoriasApi {
+interface CategoriasApi {
   categorias: Categorias
   addCategoria: (tipo: TipoTx, nombre: string) => Promise<boolean>
   removeCategoria: (tipo: TipoTx, nombre: string) => Promise<void>
 }
 
 export function useCategorias(): CategoriasApi {
-  const { estado, reload, showBanner } = useData()
+  const { estado, aplicarEstado, conBanner } = useData()
 
   const mutar = useCallback(
-    async (fn: () => Promise<unknown>) => {
-      try {
-        await fn()
-      } catch (err) {
-        showBanner(errMsg(err))
-        return false
-      }
-      await reload(['categorias'])
-      return true
-    },
-    [reload, showBanner],
+    (cambio: () => Promise<Categorias>) =>
+      conBanner(async () => aplicarEstado({ categorias: await cambio() }, ['categorias'])),
+    [aplicarEstado, conBanner],
   )
 
   const addCategoria = useCallback((tipo: TipoTx, nombre: string) => mutar(() => agregarCategoria(tipo, nombre)), [mutar])

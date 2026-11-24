@@ -63,7 +63,7 @@ export function ProximasOperaciones() {
                     </div>
                   </div>
                   <div className="shrink-0 text-right text-sm font-semibold">
-                    <Monto valor={e.monto} signo={e.monto === 0 ? 'ninguno' : 'siempre'} color={e.monto === 0 ? 'ninguno' : 'siempre'} />
+                    <Monto valor={e.monto} signo={e.sin_monto ? 'ninguno' : 'siempre'} color={e.sin_monto ? 'ninguno' : 'siempre'} />
                   </div>
                   <div className="flex shrink-0 gap-1">
                     <button
@@ -96,7 +96,7 @@ export function ProximasOperaciones() {
               aria-expanded={todas}
               className="mt-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground"
             >
-              {todas ? 'Ver menos' : data.texto_ver_todas}
+              {todas ? data.texto_ver_menos : data.texto_ver_todas}
             </button>
           )}
         </>

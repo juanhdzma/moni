@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { MoneyInput } from '../../../controls/MoneyInput'
 import { previewAporte } from '../../../lib/api'
-import { cop, numToInput, parseMoney } from '../../../lib/format'
+import { numToInput, parseMoney } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
+import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
+import { Hint } from '../../../controls/Hint'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvAporte, Inversion } from '../../../types'
-import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
+import { MovimientoCampos } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { InversionPanel } from './InversionPanel'
-import { hintClass } from './styles'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from '@/shell/hooks/usePreview'
 
@@ -18,20 +19,16 @@ export function AporteForm({ inv }: { inv: Inversion }) {
   const guardar = useGuardar()
   const [monto, setMonto] = useState('')
   const [nuevoValor, setNuevoValor] = useState('')
-  const [fecha, setFecha] = useState(estado.hoy)
-  const [notas, setNotas] = useState('')
-  const [registrar, setRegistrar] = useState(true)
+  const campos = useCamposMovimiento(estado.hoy)
 
   const aporteVal = parseMoney(monto)
-  const estimado = usePreview(aporteVal > 0 ? `a:${aporteVal}` : null, () => previewAporte(inv.id, aporteVal))?.nuevo_valor_estimado ?? null
+  const estimado = usePreview(`a:${aporteVal}`, () => previewAporte(inv.id, aporteVal))
 
   const save = async () => {
     const body: InvAporte = {
       monto: parseMoney(monto),
       ...(nuevoValor ? { nuevo_valor: parseMoney(nuevoValor) } : {}),
-      fecha,
-      notas: notas.trim(),
-      registrar_tx: registrar,
+      ...campos.cuerpo(),
     }
     await guardar(() => apiAction(`/api/inv/${inv.id}/aporte`, body))
   }
@@ -53,16 +50,11 @@ export function AporteForm({ inv }: { inv: Inversion }) {
           id="m-nuevo-valor"
           value={nuevoValor}
           onChange={setNuevoValor}
-          placeholder={numToInput(estimado ?? inv.valor_actual)}
+          placeholder={numToInput(estimado?.nuevo_valor_estimado ?? inv.valor_actual)}
         />
-        <div className={hintClass} id="add-more-hint">
-          {estimado !== null
-            ? `Estimado: ${cop(estimado)}. Ajustá si el mercado se movió.`
-            : 'Estimado como valor actual + aporte. Ajustá si el mercado se movió.'}
-        </div>
+        {estimado && <Hint id="add-more-hint">{estimado.texto_estimado}</Hint>}
       </div>
-      <FechaNotas fechaType="date" fechaLabel="Fecha" fecha={fecha} onFecha={setFecha} notas={notas} onNotas={setNotas} notasPlaceholder="Ej. Aporte mensual" />
-      <RegistrarToggle checked={registrar} onChange={setRegistrar} />
+      <MovimientoCampos campos={campos} fechaType="date" fechaLabel="Fecha" notasPlaceholder="Ej. Aporte mensual" />
       <FormFooter saveLabel="Agregar aporte" onSave={() => void save()} />
     </>
   )

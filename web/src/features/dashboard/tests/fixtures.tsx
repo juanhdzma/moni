@@ -30,10 +30,10 @@ export const RESUMEN: ResumenDashboard = {
   proy_delta: 720000,
   texto_proyeccion: 'proyectados en 12 meses',
   partes: [
-    { id: 'activos', nombre: 'Activos', valor: 300000, negativo: false, detalle: '1 activo' },
-    { id: 'inversiones', nombre: 'Inversiones', valor: 500000, negativo: false, detalle: '+$100k (+25,0%)' },
-    { id: 'balance', nombre: 'Cartera', valor: 670000, negativo: false, detalle: 'Efectivo y cuentas' },
-    { id: 'deudas', nombre: 'Deudas', valor: 150000, negativo: true, detalle: '$20.000/mes · 1 deuda' },
+    { id: 'activos', nombre: 'Activos', valor: 300000, negativo: false, valor_firmado: 300000, detalle: '1 activo' },
+    { id: 'inversiones', nombre: 'Inversiones', valor: 500000, negativo: false, valor_firmado: 500000, detalle: '+$100k (+25,0%)' },
+    { id: 'balance', nombre: 'Cartera', valor: 670000, negativo: false, valor_firmado: 670000, detalle: 'Efectivo y cuentas' },
+    { id: 'deudas', nombre: 'Deudas', valor: 150000, negativo: true, valor_firmado: -150000, detalle: '$20.000/mes · 1 deuda' },
   ],
   total_barra: 1620000,
 }
@@ -47,12 +47,9 @@ export const EVOLUCION: Evolucion = {
     { mes: 'ago', valor: 1320000 },
   ],
   desde: 600000,
-  hasta: 1320000,
   cambio: 720000,
-  verbo: 'Subiste',
-  sujeto: '',
-  mes_desde: 'mar',
   nombre_serie: 'Patrimonio',
+  descripcion_grafico: 'Evolución mensual de patrimonio',
   frase: frase('Subiste ', ['+$720k', 'positivo'], ' desde fin de mar: de $600k a ', ['$1,3M', 'fuerte'], '.'),
 }
 
@@ -60,7 +57,6 @@ export const ESTE_MES: EsteMes = {
   ingresos: 1000000,
   gastos: 200000,
   quedo: 800000,
-  ahorro_pct: 80,
   frase: FRASE_QUEDO,
   descripcion_grafico: 'Entró y salió por mes, últimos 6 meses',
   meses: [
@@ -71,14 +67,13 @@ export const ESTE_MES: EsteMes = {
 
 export const GASTOS: GastosPeriodo = {
   periodo: '1M',
-  nombre_periodo: 'el último mes',
   total: 250000,
   max: 200000,
   top: { categoria: 'Comida', valor: 200000, pct: 80 },
   frase: frase(['Comida', 'fuerte'], ' se lleva el ', ['80%', 'fuerte'], ' de lo que gastaste en el último mes.'),
   categorias: [
-    { categoria: 'Comida', valor: 200000, n: 8, detalle: [{ id: 2, fecha: '2026-08-05', descripcion: 'Almuerzo', categoria: 'Comida', monto: 200000 }], restantes: 2, restantes_texto: 'y 2 más en Transacciones' },
-    { categoria: 'Mercado', valor: 50000, n: 1, detalle: [{ id: 3, fecha: '2026-08-06', descripcion: '', categoria: 'Mercado', monto: 50000 }], restantes: 0, restantes_texto: null },
+    { categoria: 'Comida', valor: 200000, n: 8, detalle: [{ id: 2, fecha: '2026-08-05', descripcion: 'Almuerzo', categoria: 'Comida', monto: 200000 }], restantes_texto: 'y 2 más en Transacciones' },
+    { categoria: 'Mercado', valor: 50000, n: 1, detalle: [{ id: 3, fecha: '2026-08-06', descripcion: '', categoria: 'Mercado', monto: 50000 }], restantes_texto: null },
   ],
 }
 
@@ -92,16 +87,15 @@ export const MOVIMIENTOS: Movimientos = {
 
 export const PROXIMAS: ProximasOperaciones = {
   hoy: '2026-08-15',
-  vencidas: 0,
   extra: [],
   texto_ver_todas: null,
-  visibles: 5,
+  texto_ver_menos: null,
   frase: frase(['$70.000', 'fuerte'], ' por pagar en los próximos 45 días.'),
   texto_vacio: 'Sin operaciones en los próximos 45 días.',
   items: [
-    { clave: 'recurrente:3:2026-08-17', tipo: 'recurrente', fuente_id: 3, fecha: '2026-08-17', dia: 17, mes_corto: 'ago', etiqueta: 'Gym', sub: 'Mensual', monto: -50000, dias: 2, texto_dias: 'en 2d', vencida: false },
-    { clave: 'deuda:1:2026-08-20', tipo: 'deuda', fuente_id: 1, fecha: '2026-08-20', dia: 20, mes_corto: 'ago', etiqueta: 'Banco', sub: 'Cuota deuda', monto: -20000, dias: 5, texto_dias: 'en 5d', vencida: false },
-    { clave: 'inversion:2:2026-08-20', tipo: 'inversion', fuente_id: 2, fecha: '2026-08-20', dia: 20, mes_corto: 'ago', etiqueta: 'CDT', sub: 'Rendimiento', monto: 3800, dias: 5, texto_dias: 'en 5d', vencida: false },
+    { clave: 'recurrente:3:2026-08-17', tipo: 'recurrente', fuente_id: 3, fecha: '2026-08-17', dia: 17, mes_corto: 'ago', etiqueta: 'Gym', sub: 'Mensual', monto: -50000, sin_monto: false, texto_dias: 'en 2d', vencida: false },
+    { clave: 'deuda:1:2026-08-20', tipo: 'deuda', fuente_id: 1, fecha: '2026-08-20', dia: 20, mes_corto: 'ago', etiqueta: 'Banco', sub: 'Cuota deuda', monto: -20000, sin_monto: false, texto_dias: 'en 5d', vencida: false },
+    { clave: 'inversion:2:2026-08-20', tipo: 'inversion', fuente_id: 2, fecha: '2026-08-20', dia: 20, mes_corto: 'ago', etiqueta: 'CDT', sub: 'Rendimiento', monto: 3800, sin_monto: false, texto_dias: 'en 5d', vencida: false },
   ],
 }
 

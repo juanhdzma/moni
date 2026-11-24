@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import type { Opcion } from '@/types'
+import { Hint } from './Hint'
 
 type Tono = 'ingreso' | 'gasto'
 
@@ -38,7 +39,7 @@ export function TipoToggle<T extends string>({ label = 'Tipo', value, opciones, 
           </button>
         ))}
       </div>
-      {hint && <div id={hintId} className="mt-1.5 text-xs text-muted-foreground">{hint}</div>}
+      {hint && <Hint id={hintId}>{hint}</Hint>}
     </div>
   )
 }

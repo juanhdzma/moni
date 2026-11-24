@@ -6,23 +6,20 @@ import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyField } from '../../../controls/MoneyField'
 import { previewAdelanto } from '../../../lib/api'
 import { cop, parseMoney } from '../../../lib/format'
-import { useModal } from '@/shell/providers/ModalProvider'
+import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from '@/shell/hooks/usePreview'
 import type { Deuda, DeudaAdelanto } from '../../../types'
 
 export function AdelantoForm({ d }: { d: Deuda }) {
-  const { setModalStatus } = useModal()
   const guardar = useGuardar()
   const { apiAction } = useMutations()
-  const tieneCupo = d.cupo > 0
+  const tieneCupo = d.tiene_cupo
   const [monto, setMonto] = useState('')
   const [disponible, setDisponible] = useState('')
   const [saldoNuevoIn, setSaldoNuevoIn] = useState('')
-  const [fecha, setFecha] = useState('')
-  const [notas, setNotas] = useState('')
-  const [registrarTx, setRegistrarTx] = useState(true)
+  const campos = useCamposMovimiento('')
 
   const montoV = parseMoney(monto)
   const saldoEscrito = tieneCupo ? disponible : saldoNuevoIn
@@ -35,17 +32,11 @@ export function AdelantoForm({ d }: { d: Deuda }) {
   const comision = preview?.comision ?? 0
 
   const save = async () => {
-    if (!saldoEscrito.trim()) {
-      setModalStatus('err', tieneCupo ? 'Ingresá el cupo disponible después del adelanto' : 'Ingresá el saldo después del adelanto')
-      return
-    }
     await guardar(async () => {
-      const body: DeudaAdelanto = {
+      const body: Pick<DeudaAdelanto, 'monto'> & Partial<DeudaAdelanto> = {
         monto: montoV,
-        ...saldoBody(),
-        fecha: fecha || undefined,
-        notas: notas.trim(),
-        registrar_tx: registrarTx,
+        ...(saldoEscrito.trim() && saldoBody()),
+        ...campos.cuerpo(),
       }
       await apiAction(`/api/deuda/${d.id}/adelanto`, body)
     })
@@ -55,7 +46,7 @@ export function AdelantoForm({ d }: { d: Deuda }) {
     <>
       <ModalPanel
         izquierda={{ label: 'Debes', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
-        derecha={tieneCupo ? { label: 'Disponible', valor: cop(d.disponible) } : undefined}
+        derecha={d.frases.disponible_texto ? { label: 'Disponible', valor: d.frases.disponible_texto } : undefined}
       />
       <MoneyField id="m-monto" label="Monto del adelanto (COP)" value={monto} onChange={setMonto} hint="La plata que vas a recibir en tu cuenta." />
       {tieneCupo ? (
@@ -87,13 +78,13 @@ export function AdelantoForm({ d }: { d: Deuda }) {
       </Breakdown>
       <FechaNotas
         fechaLabel="Fecha (ahora si se omite)"
-        fecha={fecha}
-        onFecha={setFecha}
-        notas={notas}
-        onNotas={setNotas}
+        fecha={campos.fecha}
+        onFecha={campos.setFecha}
+        notas={campos.notas}
+        onNotas={campos.setNotas}
         notasPlaceholder="Ej. Adelanto cajero"
       />
-      <RegistrarToggle checked={registrarTx} onChange={setRegistrarTx} label="Registrar como ingreso" />
+      <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} label="Registrar como ingreso" />
       <FormFooter saveLabel="Pedir adelanto" onSave={() => void save()} />
     </>
   )

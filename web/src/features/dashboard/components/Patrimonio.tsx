@@ -59,7 +59,7 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
               {p.nombre}
             </div>
             <div className={cn('mt-0.5 text-lg font-semibold', texto(p))}>
-              {loading ? '—' : <Monto valor={p.negativo ? -Math.abs(p.valor) : Math.abs(p.valor)} formato={copShort} signo="negativo" color="ninguno" />}
+              {loading ? '—' : <Monto valor={p.valor_firmado} formato={copShort} signo="negativo" color="ninguno" />}
             </div>
             <div className="truncate text-xs text-muted-foreground">{p.detalle}</div>
           </li>

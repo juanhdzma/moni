@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Cargando } from '@/components/Cargando'
 import { FormFooter } from '../../../controls/FormFooter'
 import { Select } from '../../../controls/Select'
 import { TipoToggle } from '../../../controls/TipoToggle'
@@ -12,7 +13,7 @@ import { CamposTx, cuerpoTx, useOpcionesTx, type ValoresTx } from './CamposTx'
 
 export function TxForm({ tx }: { tx: Transaccion | null }) {
   const opciones = useOpcionesTx(tx?.id)
-  if (!opciones) return <p className="py-6 text-center text-sm text-muted-foreground">Cargando...</p>
+  if (!opciones) return <Cargando />
   return <TxFormCampos tx={tx} opciones={opciones} />
 }
 

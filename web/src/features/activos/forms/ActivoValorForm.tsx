@@ -7,17 +7,15 @@ import { MoneyField } from '../../../controls/MoneyField'
 import { Variacion } from '../../../controls/Variacion'
 import { previewValorActivo } from '../../../lib/api'
 import { cop, parseMoney } from '../../../lib/format'
-import { useOpenerCtx } from '@/shell/hooks/openers'
+import { useCerrarYAbrir } from '@/shell/hooks/openers'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { usePreview } from '@/shell/hooks/usePreview'
-import { useModal } from '@/shell/providers/ModalProvider'
 import type { Activo, ActivoValor } from '../../../types'
 import { openActivoForm } from './openers'
 
 export function ActivoValorForm({ activo: a }: { activo: Activo }) {
-  const ctx = useOpenerCtx()
-  const { closeModal } = useModal()
+  const editar = useCerrarYAbrir((ctx) => openActivoForm(ctx, a))
   const guardar = useGuardar()
   const { apiAction } = useMutations()
   const [nuevoTxt, setNuevoTxt] = useState('')
@@ -51,10 +49,7 @@ export function ActivoValorForm({ activo: a }: { activo: Activo }) {
       <FormFooter
         saveLabel="Actualizar"
         onSave={() => void save()}
-        onEdit={() => {
-          closeModal()
-          openActivoForm(ctx, a)
-        }}
+        onEdit={editar}
         editLabel="Editar activo"
         cancelClassName="sm:ml-auto"
       />

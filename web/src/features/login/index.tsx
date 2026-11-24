@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ScanFace } from 'lucide-react'
+import { Cargando } from '@/components/Cargando'
 import { ApiError } from '../../lib/api'
 import { esCancelacion, passkeysDisponibles } from '../../lib/seguridad/passkeys'
 import { useAuth } from '@/shell/providers/AuthProvider'
@@ -17,8 +18,8 @@ export function Login() {
 
   if (fase === 'cargando') {
     return (
-      <main className="grid min-h-dvh place-items-center bg-background p-4 text-sm text-muted-foreground" aria-busy="true">
-        Cargando...
+      <main className="grid min-h-dvh place-items-center bg-background p-4" aria-busy="true">
+        <Cargando />
       </main>
     )
   }
@@ -50,14 +51,14 @@ export function Login() {
 }
 
 function Formulario() {
-  const { passkeys, textoBloqueo, entrar, entrarConPasskey } = useAuth()
+  const { tienePasskeys, textoBloqueo, entrar, entrarConPasskey } = useAuth()
   const [clave, setClave] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [faceId, setFaceId] = useState(false)
 
   useEffect(() => {
-    if (passkeys === 0) return
+    if (!tienePasskeys) return
     let vigente = true
     void passkeysDisponibles().then((ok) => {
       if (vigente) setFaceId(ok)
@@ -65,7 +66,7 @@ function Formulario() {
     return () => {
       vigente = false
     }
-  }, [passkeys])
+  }, [tienePasskeys])
 
   const enviar = async (e: FormEvent) => {
     e.preventDefault()

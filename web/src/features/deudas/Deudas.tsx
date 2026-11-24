@@ -116,19 +116,19 @@ function TarjetaCard({ d }: { d: Deuda }) {
       }
     >
       <div className="text-2xl font-semibold leading-none tracking-tight text-deudas">{cop(d.saldo_actual)}</div>
-      {d.cupo > 0 && (
+      {d.tiene_cupo && (
         <>
           <div className="mt-3">
             <Barra valor={d.uso_pct} max={100} className={COLOR_USO[d.nivel_uso]} />
           </div>
           <div className="mt-2 text-sm text-muted-foreground">
-            Disponible: <strong className="text-foreground">{cop(d.disponible)}</strong>
+            Disponible: <strong className="text-foreground">{d.frases.disponible_texto}</strong>
           </div>
         </>
       )}
-      {d.total_intereses > 0 && (
+      {d.frases.intereses_texto && (
         <div className="mt-1 text-sm text-muted-foreground">
-          Intereses pagados: <strong className="text-deudas">{cop(d.total_intereses)}</strong>
+          Intereses pagados: <strong className="text-deudas">{d.frases.intereses_texto}</strong>
         </div>
       )}
     </Item>
@@ -205,11 +205,11 @@ export function Deudas({ active }: TabProps) {
               {loaded &&
                 (creditos.length ? (
                   creditos.map((d) => <PrestamoCard key={d.id} d={d} />)
-                ) : (
+                ) : data && (
                   <EmptyCard
                     icono={<PartyPopper aria-hidden="true" className="size-6" />}
-                    titulo={terminadas.length ? 'Sin créditos activos' : 'Sin créditos'}
-                    texto={terminadas.length ? '¡Todos los créditos están saldados!' : 'Agregá uno con el botón + de arriba.'}
+                    titulo={data.texto_vacio_creditos.titulo}
+                    texto={data.texto_vacio_creditos.texto}
                   />
                 ))}
             </div>

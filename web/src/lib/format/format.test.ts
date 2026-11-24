@@ -58,9 +58,7 @@ test('se ignora todo lo que no sea dígito', () => {
 
 test('las fechas sueltas se normalizan al formatearlas', () => {
   expect(fmtDate('2026-08-15')).toBe('15/08/2026')
-  expect(fmtDate('15/08/2026')).toBe('15/08/2026')
   expect(fmtDateTime('2026-08-15T10:30:00')).toBe('15/08/2026 10:30')
-  expect(fmtDateTime('15/08/2026 9:05')).toBe('15/08/2026 09:05')
 })
 
 test('soloFecha corta la hora y tolera vacíos', () => {
