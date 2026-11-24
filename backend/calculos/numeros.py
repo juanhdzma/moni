@@ -1,9 +1,12 @@
+from .fechas import redondear_js
+
+
 def porcentaje(parte: float, base: float) -> float:
     return parte / base * 100 if base > 0 else 0
 
 
 def pesos(v: float) -> float:
-    return float(round(v))
+    return float(redondear_js(v))
 
 
 def monto_firmado(tipo: str, monto: float) -> float:

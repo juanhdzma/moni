@@ -4,8 +4,9 @@ from pydantic import AfterValidator, Field, StringConstraints, field_validator
 
 from ..calculos.constantes import SERIES_EVOLUCION, valores
 from ..calculos.dinero import PERIODOS_EVOLUCION, PERIODOS_GASTOS
-from ..calculos.fechas import es_fecha_iso, redondear_js
+from ..calculos.fechas import es_fecha_iso
 from ..calculos.listados import COLUMNAS_ORDEN
+from ..calculos.numeros import pesos
 from ..calculos.operaciones.proximas import parse_clave
 
 TipoTx = Literal["ingreso", "gasto", "transfer"]
@@ -17,7 +18,7 @@ PeriodoEvolucion = Literal[PERIODOS_EVOLUCION]
 
 
 def _redondear_entrada(v: float) -> float:
-    return float(redondear_js(v))
+    return pesos(v)
 
 
 def _a_pesos(v: float) -> float:

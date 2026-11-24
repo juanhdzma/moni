@@ -21,7 +21,7 @@ def test_retiro_parcial_prorratea_invertido():
 
 
 def test_retiro_parcial_redondeo_en_borde_medio_peso():
-    assert retiro_parcial(1000, 5, 500, 500).monto_invertido == 2.0
+    assert retiro_parcial(1000, 5, 500, 500).monto_invertido == 3.0
     assert retiro_parcial(1000, 7, 500, 500).monto_invertido == 4.0
 
 

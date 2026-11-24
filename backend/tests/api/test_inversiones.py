@@ -87,6 +87,12 @@ def test_retiro_total_borra_y_parcial_prorratea(client):
     assert client.get("/api/backup").json()["inversiones"] == []
 
 
+def test_retiro_parcial_con_fraccion_medio_peso_redondea_hacia_arriba(client):
+    inv = _crear(client, monto_invertido=5, valor_actual=1000)
+    client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "parcial", "monto": 500, "saldo_queda": 500, "fecha": "2026-05-01"})
+    assert _inv(client, inv["id"])["monto_invertido"] == 3
+
+
 def test_retiro_parcial_sin_saldo_o_con_saldo_mayor_da_400(client):
     inv = _crear(client, valor_actual=1000)
     url = f"/api/inv/{inv['id']}/retiro"
