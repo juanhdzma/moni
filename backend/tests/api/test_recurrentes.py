@@ -56,3 +56,8 @@ def test_activo_por_defecto_y_update_sin_activo_lo_conserva(client):
     client.post(f"/api/rec/{rec['id']}/pausar")
     editado = client.put(f"/api/rec/{rec['id']}", json={**body, "monto": 20}).json()
     assert editado["monto"] == 20 and not editado["activo"]
+
+
+def test_monto_de_recurrente_se_redondea_a_pesos(client):
+    assert client.post("/api/rec", json={**REC, "monto": 100.5}).json()["monto"] == 101
+    assert client.post("/api/rec", json={**REC, "monto": 0.4}).status_code == 422

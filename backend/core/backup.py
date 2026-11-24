@@ -5,6 +5,7 @@ from pydantic import BaseModel, ValidationError, field_validator
 
 from ..calculos import operaciones
 from ..calculos.categorias import validar_categoria, validar_simbolo
+from ..calculos.constantes import clase_deuda_de
 from ..calculos.errores import ErrorDeDominio
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..calculos.formato import plural
@@ -42,7 +43,18 @@ IMPORT_TABLES = [
 
 
 def _normalizar_inversion(fila):
-    operaciones.completar_inversion(fila, None, hoy_bogota())
+    operaciones.normalizar_tasa(fila)
+    operaciones.completar_inversion(fila, None, hoy_bogota(), ahora_bogota_iso())
+
+
+def _normalizar_deuda(fila):
+    operaciones.normalizar_tasa(fila)
+
+
+def _clase_desde_es_tarjeta(fila: dict) -> dict:
+    if "clase_deuda" in fila or "es_tarjeta" not in fila:
+        return fila
+    return {**fila, "clase_deuda": clase_deuda_de(fila["es_tarjeta"])}
 
 
 def _normalizar_op_oculta(fila):
@@ -53,7 +65,9 @@ def _normalizar_op_oculta(fila):
     fila["creada_en"] = fila["creada_en"] or ahora_bogota_iso()
 
 
-NORMALIZADORES = {"inversiones": _normalizar_inversion, "ops_ocultas": _normalizar_op_oculta}
+NORMALIZADORES = {"deudas": _normalizar_deuda, "inversiones": _normalizar_inversion, "ops_ocultas": _normalizar_op_oculta}
+
+PRENORMALIZADORES = {"deudas": _clase_desde_es_tarjeta}
 
 
 def _errores_en_espanol(error):
@@ -64,7 +78,7 @@ def _validar_fila(table, model, row, idx):
     if not isinstance(row, dict):
         raise ErrorDeDominio(f"Fila {table}[{idx}]: se esperaba un objeto")
     try:
-        limpia = model.model_validate(row).model_dump()
+        limpia = model.model_validate(PRENORMALIZADORES.get(table, lambda r: r)(row)).model_dump()
     except ValidationError as e:
         raise ErrorDeDominio(f"Fila {table}[{idx}] inválida: {_errores_en_espanol(e)}")
     for extra in ("id", "total_intereses"):

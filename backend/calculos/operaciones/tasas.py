@@ -1,3 +1,4 @@
+from ..fechas import redondear_js
 from ..formato import porcentaje_texto
 from .finanzas import convertir_tasa, ea_a_mv
 
@@ -5,7 +6,7 @@ from .finanzas import convertir_tasa, ea_a_mv
 def normalizar_tasa(datos: dict) -> dict:
     tipo = datos.pop("tasa_tipo", "ea")
     if datos.get("tasa_ea"):
-        datos["tasa_ea"] = convertir_tasa(datos["tasa_ea"], tipo)
+        datos["tasa_ea"] = redondear_js(convertir_tasa(datos["tasa_ea"], tipo) * 100) / 100
     return datos
 
 

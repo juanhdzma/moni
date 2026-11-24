@@ -3,6 +3,7 @@ import datetime
 from backend.calculos import operaciones
 
 HOY = datetime.date(2026, 7, 1)
+AHORA = "2026-07-01T10:00"
 
 
 def _inv(**kw):
@@ -10,14 +11,14 @@ def _inv(**kw):
 
 
 def test_inversion_nueva_completa_valores():
-    d = operaciones.completar_inversion(_inv(), None, HOY)
+    d = operaciones.completar_inversion(_inv(), None, HOY, AHORA)
     assert d["valor_actual"] == 500 and d["fecha_inicio"] == "2026-07-01" and d["valor_actualizado_en"] == "2026-07-01"
 
 
 def test_inversion_update_conserva_fecha_si_mismo_valor_y_usa_hoy_si_cambia():
     anterior = {"valor_actual": 500, "valor_actualizado_en": "2026-01-05"}
-    assert operaciones.completar_inversion(_inv(fecha_inicio="2026-01-01"), anterior, HOY)["valor_actualizado_en"] == "2026-01-05"
-    assert operaciones.completar_inversion(_inv(valor_actual=600), anterior, HOY)["valor_actualizado_en"] == "2026-07-01"
+    assert operaciones.completar_inversion(_inv(fecha_inicio="2026-01-01"), anterior, HOY, AHORA)["valor_actualizado_en"] == "2026-01-05"
+    assert operaciones.completar_inversion(_inv(valor_actual=600), anterior, HOY, AHORA)["valor_actualizado_en"] == AHORA
 
 
 def _activo(**kw):

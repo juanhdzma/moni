@@ -65,7 +65,7 @@ def client(anon_client):
 def tarjeta(client):
     return client.post(
         "/api/deuda",
-        json={"nombre": "Visa", "monto_inicial": 0, "saldo_actual": 0, "es_tarjeta": True, "cupo": 1_000_000},
+        json={"nombre": "Visa", "monto_inicial": 0, "saldo_actual": 0, "clase_deuda": "tarjeta", "cupo": 1_000_000},
     ).json()
 
 

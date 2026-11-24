@@ -2,7 +2,7 @@ import pytest
 
 from backend.calculos.errores import ErrorDeDominio
 from backend.calculos.operaciones import asientos, movimientos, tarjetas
-from backend.calculos.operaciones.defaults import fecha_o_ahora
+from backend.calculos.fechas import fecha_o_ahora
 from backend.calculos.operaciones.resumenes import con_categoria_sugerida, resumen_activos, resumen_inversiones
 
 

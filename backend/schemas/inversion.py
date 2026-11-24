@@ -3,7 +3,7 @@ from typing import Annotated, Literal, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..calculos.constantes import PAGOS_INVERSION, TIPOS_INVERSION, TIPOS_RETIRO, valores
-from .validadores import Monto, MontoPesos, MontoCero, Nombre, TasaTipo, clave_opcional, fecha_opcional, fecha_requerida
+from .validadores import MontoPesos, MontoCero, Nombre, Tasa, TasaTipo, clave_opcional, fecha_opcional, fecha_requerida
 
 
 TipoInversion = Literal[valores(TIPOS_INVERSION)]
@@ -14,9 +14,9 @@ TipoRetiro = Literal[valores(TIPOS_RETIRO)]
 class InvIn(BaseModel):
     nombre: Nombre
     tipo: TipoInversion
-    monto_invertido: Monto
-    valor_actual: Optional[Monto] = None
-    tasa_ea: Optional[MontoCero] = None
+    monto_invertido: MontoPesos
+    valor_actual: Optional[MontoPesos] = None
+    tasa_ea: Optional[Tasa] = None
     tasa_tipo: TasaTipo = "ea"
     fecha_inicio: str = ""
     pago: Optional[PagoInversion] = None
@@ -75,7 +75,7 @@ class InvRetiro(BaseModel):
 
 
 class InvValor(BaseModel):
-    nuevo_valor: Monto
+    nuevo_valor: MontoPesos
     fecha: str = ""
 
     _v_fecha = fecha_opcional("fecha")

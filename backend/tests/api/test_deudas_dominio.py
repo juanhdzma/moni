@@ -63,7 +63,7 @@ def test_adelanto_sin_saldo_ni_disponible_es_422(client, tarjeta):
 
 
 def test_adelanto_por_disponible_exige_cupo(client):
-    t = client.post("/api/deuda", json={"nombre": "Sin cupo", "es_tarjeta": True}).json()
+    t = client.post("/api/deuda", json={"nombre": "Sin cupo", "clase_deuda": "tarjeta"}).json()
     r = client.post(f"/api/deuda/{t['id']}/adelanto", json={"monto": 100, "disponible_nuevo": 50})
     assert r.status_code == 400
 
@@ -77,7 +77,7 @@ def test_tarjeta_ignora_los_campos_de_prestamo(client):
     r = client.post(
         "/api/deuda",
         json={
-            "nombre": "  Visa  ", "es_tarjeta": True, "monto_inicial": 5, "tasa_ea": 30, "cuota_mensual": 9,
+            "nombre": "  Visa  ", "clase_deuda": "tarjeta", "monto_inicial": 5, "tasa_ea": 30, "cuota_mensual": 9,
             "fecha_inicio": "2026-01-01", "proxima_cuota": "2026-02-01", "cupo": 1000, "franquicia": "Visa",
             "crear_tx": True,
         },
@@ -95,7 +95,7 @@ def test_prestamo_ignora_cupo_y_exige_saldo(client):
 
 
 def test_franquicia_invalida_y_nombre_vacio_son_422(client):
-    base = {"nombre": "V", "es_tarjeta": True}
+    base = {"nombre": "V", "clase_deuda": "tarjeta"}
     assert client.post("/api/deuda", json={**base, "franquicia": "Diners"}).status_code == 422
     assert client.post("/api/deuda", json={**base, "nombre": "   "}).status_code == 422
 
@@ -128,7 +128,7 @@ def test_normalizar_tasa_convierte_mv_a_ea():
 
 def test_es_tarjeta_sale_como_bool_y_progreso_no_pasa_de_100(client, prestamo):
     assert prestamo["es_tarjeta"] is False
-    tarjeta = client.post("/api/deuda", json={"nombre": "Visa", "es_tarjeta": True, "cupo": 1000}).json()
+    tarjeta = client.post("/api/deuda", json={"nombre": "Visa", "clase_deuda": "tarjeta", "cupo": 1000}).json()
     assert tarjeta["es_tarjeta"] is True
     assert client.get(f"/api/deuda/{tarjeta['id']}").json()["es_tarjeta"] is True
     sobrepagada = client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "monto_inicial": 100, "saldo_actual": 0})
@@ -168,3 +168,30 @@ def test_credito_saldado_se_puede_editar_pero_no_crear_sin_saldo(client):
     editada = client.put(f"/api/deuda/{deuda['id']}", json={"nombre": "X2", "monto_inicial": 100, "saldo_actual": 0})
     assert editada.status_code == 200 and editada.json()["saldo_actual"] == 0
     assert client.post("/api/deuda", json={"nombre": "Y", "monto_inicial": 100}).status_code == 422
+
+
+def test_montos_de_deuda_se_redondean_a_pesos(client):
+    r = client.post("/api/deuda", json={
+        "nombre": "P", "monto_inicial": 100.5, "saldo_actual": 100.5, "cuota_mensual": 10.5, "crear_tx": True,
+    }).json()
+    assert (r["monto_inicial"], r["saldo_actual"], r["cuota_mensual"]) == (101, 101, 11)
+    assert client.get("/api/tx").status_code == 200
+    assert client.post("/api/deuda", json={"nombre": "P", "saldo_actual": 0.4}).status_code == 422
+
+
+def test_clase_deuda_deriva_es_tarjeta_y_sale_en_las_filas(client):
+    t = client.post("/api/deuda", json={"nombre": "V", "clase_deuda": "tarjeta", "cupo": 10}).json()
+    assert (t["clase_deuda"], t["es_tarjeta"]) == ("tarjeta", True)
+    p = client.post("/api/deuda", json={"nombre": "P", "saldo_actual": 5}).json()
+    assert (p["clase_deuda"], p["es_tarjeta"]) == ("prestamo", False)
+    assert client.get(f"/api/deuda/{t['id']}").json()["clase_deuda"] == "tarjeta"
+    resumen = client.get("/api/deudas/resumen").json()
+    assert {d["clase_deuda"] for d in resumen["creditos"] + resumen["tarjetas"]} == {"tarjeta", "prestamo"}
+    assert client.post("/api/deuda", json={"nombre": "X", "clase_deuda": "otra"}).status_code == 422
+
+
+def test_tasa_deuda_ea_a_dos_decimales_y_mv_convertida():
+    from backend.calculos.operaciones import normalizar_tasa
+
+    assert normalizar_tasa({"tasa_ea": 12.3456}) == {"tasa_ea": 12.35}
+    assert normalizar_tasa({"tasa_ea": 1, "tasa_tipo": "mv"})["tasa_ea"] == 12.68

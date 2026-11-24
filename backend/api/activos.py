@@ -2,8 +2,7 @@ from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
 from ..calculos.operaciones import asientos, movimientos
-from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
-from ..calculos.operaciones.defaults import fecha_o_ahora
+from ..calculos.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
 from ..core.actualizar import actualizar_columnas
 from ..core.afectadas import ACTIVOS, afectar, con_movimiento
 from ..core.db import conexion

@@ -42,7 +42,7 @@ def test_editar_conserva_fecha_si_el_valor_no_cambia_y_usa_hoy_si_cambia(client)
     igual = client.put(f"/api/inv/{inv['id']}", json=base).json()
     assert igual["valor_actualizado_en"] == "2026-01-05"
     cambia = client.put(f"/api/inv/{inv['id']}", json={**base, "valor_actual": 1200}).json()
-    assert cambia["valor_actualizado_en"] == hoy_bogota().isoformat()
+    assert cambia["valor_actualizado_en"].startswith(hoy_bogota().isoformat()) and "T" in cambia["valor_actualizado_en"]
 
 
 def test_editar_respeta_fecha_explicita(client):
@@ -119,7 +119,7 @@ def test_valor_actualiza_valor_y_fecha(client):
     r = client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 1234.6, "fecha": "2026-05-05"}).json()
     assert (r["valor_actual"], r["valor_actualizado_en"]) == (1235, "2026-05-05")
     sin_fecha = client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 900}).json()
-    assert sin_fecha["valor_actualizado_en"] == hoy_bogota().isoformat()
+    assert sin_fecha["valor_actualizado_en"].startswith(hoy_bogota().isoformat()) and "T" in sin_fecha["valor_actualizado_en"]
     assert client.post("/api/inv/999/valor", json={"nuevo_valor": 1}).status_code == 404
     assert client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 0}).status_code == 422
 
@@ -153,3 +153,29 @@ def test_inv_tasa_tipo_mv_se_guarda_como_ea(client):
     actualizada = client.put(f"/api/inv/{creada['id']}", json={**base, "tasa_ea": 24, "tasa_tipo": "ea"}).json()
     assert actualizada["tasa_ea"] == 24
     assert client.post("/api/inv", json={**base, "tasa_tipo": "x"}).status_code == 422
+
+
+def test_valor_con_fecha_y_hora_o_solo_fecha_se_guarda_tal_cual(client):
+    inv = _crear(client, tipo="variable")
+    r = client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 5, "fecha": "2026-05-05T09:30"}).json()
+    assert r["valor_actualizado_en"] == "2026-05-05T09:30"
+
+
+def test_es_desactualizado_acepta_fecha_sola_y_con_hora():
+    from datetime import date
+
+    from backend.calculos.fechas import es_desactualizado
+
+    hoy = date(2026, 7, 1)
+    assert es_desactualizado("2026-05-01", hoy) and es_desactualizado("2026-05-01T09:30", hoy)
+    assert not es_desactualizado("2026-06-20", hoy) and not es_desactualizado("2026-06-20T09:30", hoy)
+
+
+@pytest.mark.parametrize("campo", ["monto_invertido", "valor_actual"])
+def test_montos_de_inversion_se_redondean_a_pesos(client, campo):
+    assert _crear(client, **{campo: 100.5})[campo] == 101
+    assert client.post("/api/inv", json={"nombre": "x", "tipo": "fija", "monto_invertido": 0.4}).status_code == 422
+
+
+def test_tasa_se_guarda_como_ea_con_dos_decimales(client):
+    assert _crear(client, tasa_ea=12.3456)["tasa_ea"] == 12.35

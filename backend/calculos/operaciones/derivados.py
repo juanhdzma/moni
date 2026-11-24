@@ -1,7 +1,7 @@
 import datetime
 
 from ..fechas import es_desactualizado, texto_dias_corto
-from ..constantes import tiene_saldo
+from ..constantes import clase_deuda_de, tiene_saldo
 from ..formato import porcentaje_texto
 from ..numeros import porcentaje
 from .finanzas import ea_a_mv, proxima_fecha_inversion, rendimiento_mensual_fija
@@ -27,6 +27,7 @@ def derivar_deuda(fila: dict) -> dict:
     return {
         **fila,
         "es_tarjeta": bool(fila.get("es_tarjeta")),
+        "clase_deuda": clase_deuda_de(fila.get("es_tarjeta")),
         "activa": activa,
         "vigente": bool(fila.get("es_tarjeta")) or activa,
         "progreso_pct": progreso,

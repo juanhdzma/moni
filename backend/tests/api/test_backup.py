@@ -109,3 +109,18 @@ def test_import_valida_categorias(client, categorias, fragmento):
 def test_import_categoria_valida_se_guarda_limpia(client):
     client.post("/api/import", json={"categorias": [{"tipo": "gasto", "nombre": " Extra "}]})
     assert client.get("/api/backup").json()["categorias"] == [{"tipo": "gasto", "nombre": "Extra"}]
+
+
+def test_import_acepta_deuda_cruda_con_es_tarjeta_y_redondea(client):
+    fila = {"nombre": "Visa", "es_tarjeta": 1, "cupo": 100.5, "saldo_actual": 10.5, "tasa_ea": 12.3456, "total_intereses": 0}
+    prestamo = {"nombre": "P", "es_tarjeta": 0, "saldo_actual": 100.5, "tasa_ea": 12.3456, "total_intereses": 0}
+    r = client.post("/api/import", json={"deudas": [fila, prestamo]})
+    assert r.status_code == 200, r.json()
+    visa, p = client.get("/api/backup").json()["deudas"]
+    assert (visa["es_tarjeta"], visa["cupo"], visa["saldo_actual"]) == (1, 101, 11)
+    assert (p["es_tarjeta"], p["saldo_actual"], p["tasa_ea"]) == (0, 101, 12.35)
+
+
+def test_import_monto_que_redondea_a_cero_da_error_claro(client):
+    r = client.post("/api/import", json={"inversiones": [{**INV_OK, "monto_invertido": 0.4}]})
+    assert r.status_code == 400 and "monto_invertido" in r.json()["detail"]

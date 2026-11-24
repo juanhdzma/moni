@@ -32,6 +32,10 @@ def ahora_bogota_iso() -> str:
     return ahora_bogota().strftime("%Y-%m-%dT%H:%M")
 
 
+def fecha_o_ahora(fecha: Optional[str]) -> str:
+    return fecha or ahora_bogota_iso()
+
+
 def normalizar_fecha(s: Optional[str]) -> str:
     if not s:
         return ""

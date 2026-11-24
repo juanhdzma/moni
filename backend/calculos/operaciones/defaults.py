@@ -1,12 +1,7 @@
-from ..fechas import ahora_bogota_iso
 from ..numeros import pesos
 
 
-def fecha_o_ahora(fecha: str | None) -> str:
-    return fecha or ahora_bogota_iso()
-
-
-def completar_inversion(datos: dict, anterior: dict | None, hoy) -> dict:
+def completar_inversion(datos: dict, anterior: dict | None, hoy, ahora: str) -> dict:
     if datos["valor_actual"] is None:
         datos["valor_actual"] = datos["monto_invertido"]
     datos["fecha_inicio"] = datos["fecha_inicio"] or hoy.isoformat()
@@ -16,7 +11,7 @@ def completar_inversion(datos: dict, anterior: dict | None, hoy) -> dict:
         elif anterior["valor_actual"] == datos["valor_actual"]:
             datos["valor_actualizado_en"] = anterior["valor_actualizado_en"]
         else:
-            datos["valor_actualizado_en"] = hoy.isoformat()
+            datos["valor_actualizado_en"] = ahora
     return datos
 
 

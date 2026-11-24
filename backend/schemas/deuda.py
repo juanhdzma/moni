@@ -1,29 +1,36 @@
 from typing import Literal, Optional
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, computed_field, model_validator
 
-from .validadores import Monto, MontoPesos, MontoCero, Nombre, clave_opcional, fecha_opcional
+from ..calculos.constantes import CLASES_DEUDA, valores
+from .validadores import MontoPesos, MontoCero, Nombre, Tasa, clave_opcional, fecha_opcional
 
 Franquicia = Literal["Visa", "Mastercard", "Amex", "Otra", ""]
+ClaseDeuda = Literal[valores(CLASES_DEUDA)]
 
 
 class DeudaIn(BaseModel):
     nombre: Nombre
     monto_inicial: MontoCero = 0
     saldo_actual: MontoCero = 0
-    tasa_ea: MontoCero = 0
+    tasa_ea: Tasa = 0
     cuota_mensual: MontoCero = 0
     fecha_inicio: str = ""
     proxima_cuota: str = ""
-    es_tarjeta: bool = False
+    clase_deuda: ClaseDeuda = "prestamo"
     cupo: MontoCero = 0
     franquicia: Franquicia = ""
 
     _v_fecha = fecha_opcional("fecha_inicio", "proxima_cuota")
 
+    @computed_field
+    @property
+    def es_tarjeta(self) -> bool:
+        return self.clase_deuda == "tarjeta"
+
     @model_validator(mode="after")
     def normalizar_segun_tipo(self):
-        if self.es_tarjeta:
+        if self.clase_deuda == "tarjeta":
             self.monto_inicial = self.tasa_ea = self.cuota_mensual = 0
             self.fecha_inicio = self.proxima_cuota = ""
         else:
@@ -37,13 +44,13 @@ class DeudaCrear(DeudaIn):
 
     @model_validator(mode="after")
     def tarjeta_no_registra_credito(self):
-        if self.es_tarjeta:
+        if self.clase_deuda == "tarjeta":
             self.crear_tx = False
         return self
 
     @model_validator(mode="after")
     def exigir_saldo_en_creditos(self):
-        if not self.es_tarjeta and not self.saldo_actual:
+        if self.clase_deuda != "tarjeta" and not self.saldo_actual:
             raise ValueError("Saldo requerido")
         return self
 

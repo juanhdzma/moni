@@ -26,6 +26,6 @@ def test_detalle_no_pisa_rutas_fijas(client):
 
 
 def test_detalle_tx_trae_la_tarjeta(client):
-    tarjeta = client.post("/api/deuda", json={"nombre": "Visa", "es_tarjeta": True, "cupo": 1000, "franquicia": "Visa"}).json()
+    tarjeta = client.post("/api/deuda", json={"nombre": "Visa", "clase_deuda": "tarjeta", "cupo": 1000, "franquicia": "Visa"}).json()
     tx = client.post("/api/tx", json={"tipo": "gasto", "categoria": "Comida", "monto": 5, "tarjeta_id": tarjeta["id"]}).json()
     assert client.get(f"/api/tx/{tx['id']}").json()["tarjeta_nombre"] == "Visa"

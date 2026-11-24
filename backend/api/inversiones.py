@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
-from ..calculos.fechas import hoy_bogota
+from ..calculos.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
 from ..calculos.operaciones import asientos, movimientos, textos
 from ..calculos.operaciones.movimientos import CambioInversion
 from ..core.actualizar import actualizar_columnas
@@ -21,7 +21,7 @@ register_borrado(router, "inv", "inversiones")
 
 def _datos_inversion(body: InvIn, anterior: dict | None) -> dict:
     data = operaciones.normalizar_tasa(body.model_dump())
-    return operaciones.completar_inversion(data, anterior, hoy_bogota())
+    return operaciones.completar_inversion(data, anterior, hoy_bogota(), ahora_bogota_iso())
 
 
 @router.post("/api/inv", name="create_inv")
@@ -93,7 +93,7 @@ def retirar_inv(inv_id: int, body: InvRetiro, response: Response):
 def actualizar_valor_inv(inv_id: int, body: InvValor, response: Response):
     with conexion() as conn:
         get_row(conn, "inversiones", inv_id)
-        cambios = movimientos.aplicar_valor(body.nuevo_valor, body.fecha or hoy_bogota().isoformat())
+        cambios = movimientos.aplicar_valor(body.nuevo_valor, fecha_o_ahora(body.fecha))
         actualizar_columnas(conn, "inversiones", inv_id, cambios)
         afectar(response, INVERSIONES)
         return guardar_y_leer(conn, "inversiones", inv_id)

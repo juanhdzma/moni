@@ -5,7 +5,7 @@ from .builders_api import tx
 
 def _tarjeta(client, nombre="Visa Oro"):
     return client.post(
-        "/api/deuda", json={"nombre": nombre, "monto_inicial": 0, "saldo_actual": 0, "es_tarjeta": True}
+        "/api/deuda", json={"nombre": nombre, "monto_inicial": 0, "saldo_actual": 0, "clase_deuda": "tarjeta"}
     ).json()
 
 

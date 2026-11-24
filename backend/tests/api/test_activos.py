@@ -93,3 +93,9 @@ def test_valor_redondea_a_pesos_y_compra_usa_texto_de_dominio(client):
     assert r["valor_actual"] == 5000
     tx = client.get("/api/backup").json()["transacciones"][0]
     assert tx["descripcion"] == "Compra · Moto"
+
+
+def test_montos_de_activo_se_redondean_a_pesos(client):
+    a = client.post("/api/activo", json={"nombre": "Moto", "valor_inicial": 100.5, "valor_actual": 200.5}).json()
+    assert (a["valor_inicial"], a["valor_actual"]) == (101, 201)
+    assert client.post("/api/activo", json={"nombre": "x", "valor_inicial": 0.4}).status_code == 422

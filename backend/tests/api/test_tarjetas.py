@@ -34,7 +34,7 @@ def test_borrar_gasto_devuelve_el_saldo(client, tarjeta):
 def test_mover_gasto_entre_tarjetas(client, tarjeta):
     otra = client.post(
         "/api/deuda",
-        json={"nombre": "Amex", "monto_inicial": 0, "saldo_actual": 0, "es_tarjeta": True},
+        json={"nombre": "Amex", "monto_inicial": 0, "saldo_actual": 0, "clase_deuda": "tarjeta"},
     ).json()
     tx = _gasto(client, tarjeta["id"], 500).json()
     client.put(
@@ -96,23 +96,23 @@ def test_tarjeta_id_se_anula_si_no_es_gasto(client, tarjeta):
 
 def test_gasto_fraccionario_en_tarjeta_aplicar_y_deshacer_es_inverso(client):
     tarjeta = client.post(
-        "/api/deuda", json={"nombre": "Visa", "saldo_actual": 101, "es_tarjeta": True, "cupo": 1_000_000}
+        "/api/deuda", json={"nombre": "Visa", "saldo_actual": 101, "clase_deuda": "tarjeta", "cupo": 1_000_000}
     ).json()
     tx = _gasto(client, tarjeta["id"], 10.5).json()
-    assert tx["monto"] == 10
-    assert _saldo(client, tarjeta["id"]) == 111
+    assert tx["monto"] == 11
+    assert _saldo(client, tarjeta["id"]) == 112
     client.delete(f"/api/tx/{tx['id']}")
     assert _saldo(client, tarjeta["id"]) == 101
 
 
 def test_no_se_cambia_el_tipo_de_una_deuda_con_movimientos_ligados(client, tarjeta):
     _gasto(client, tarjeta["id"], 500)
-    cuerpo = {"nombre": "Visa", "saldo_actual": 500, "monto_inicial": 500, "es_tarjeta": False}
+    cuerpo = {"nombre": "Visa", "saldo_actual": 500, "monto_inicial": 500, "clase_deuda": "prestamo"}
     r = client.put(f"/api/deuda/{tarjeta['id']}", json=cuerpo)
     assert r.status_code == 400 and "movimientos ligados" in r.json()["detail"]
     assert client.get(f"/api/deuda/{tarjeta['id']}").json()["es_tarjeta"] is True
 
 
 def test_se_cambia_el_tipo_de_una_deuda_sin_movimientos(client, tarjeta):
-    cuerpo = {"nombre": "Visa", "saldo_actual": 500, "monto_inicial": 500, "es_tarjeta": False}
+    cuerpo = {"nombre": "Visa", "saldo_actual": 500, "monto_inicial": 500, "clase_deuda": "prestamo"}
     assert client.put(f"/api/deuda/{tarjeta['id']}", json=cuerpo).status_code == 200

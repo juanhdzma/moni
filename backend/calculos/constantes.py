@@ -56,6 +56,10 @@ def frase_aviso_diario(hora: str) -> str:
     return f"Aviso diario a las {hora} de las cuotas, rendimientos y recurrentes que vencen {TEXTO_VENTANA_AVISO}."
 
 
+def clase_deuda_de(es_tarjeta) -> str:
+    return "tarjeta" if es_tarjeta else "prestamo"
+
+
 def valores(opciones: list[dict]) -> tuple:
     return tuple(o["value"] for o in opciones)
 

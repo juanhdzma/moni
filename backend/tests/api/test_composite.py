@@ -137,7 +137,7 @@ def test_crear_deuda_con_crear_tx_registra_el_credito(client):
 def test_crear_tarjeta_nunca_registra_tx(client):
     client.post(
         "/api/deuda",
-        json={"nombre": "Visa", "monto_inicial": 0, "saldo_actual": 0, "es_tarjeta": True, "crear_tx": True},
+        json={"nombre": "Visa", "monto_inicial": 0, "saldo_actual": 0, "clase_deuda": "tarjeta", "crear_tx": True},
     )
     assert _tx(client) == []
 

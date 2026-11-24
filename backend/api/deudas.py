@@ -3,9 +3,9 @@ import logging
 from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
-from ..calculos.fechas import hoy_bogota
+from ..calculos.constantes import clase_deuda_de
+from ..calculos.fechas import fecha_o_ahora, hoy_bogota
 from ..calculos.operaciones import asientos, frases_deuda as frases, movimientos
-from ..calculos.operaciones.defaults import fecha_o_ahora
 from ..core.afectadas import DEUDAS, afectar, con_movimiento, con_op_oculta
 from ..core.db import conexion
 from ..core.estado import coleccion, detalle, simbolo
@@ -24,7 +24,7 @@ register_borrado(router, "deuda", "deudas")
 
 def _guardar_y_leer_deuda(conn, deuda_id: int) -> dict:
     fila = guardar_y_leer(conn, "deudas", deuda_id)
-    return {**fila, "es_tarjeta": bool(fila["es_tarjeta"])}
+    return {**fila, "es_tarjeta": bool(fila["es_tarjeta"]), "clase_deuda": clase_deuda_de(fila["es_tarjeta"])}
 
 
 @router.get("/api/deuda/{deuda_id:int}", name="get_deuda")
