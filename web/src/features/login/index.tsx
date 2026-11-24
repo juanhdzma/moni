@@ -136,4 +136,4 @@ function Formulario() {
     </main>
   )
 }
-export { OfertaPasskey } from './OfertaPasskey'
+export { ActivarDispositivo } from './ActivarDispositivo'

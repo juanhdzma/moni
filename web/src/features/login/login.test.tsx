@@ -221,77 +221,67 @@ describe('login con passkey', () => {
   })
 })
 
-describe('oferta de passkey', () => {
-  async function loginConClave(m: ReturnType<typeof mockFetch>) {
-    const user = userEvent.setup()
-    render(<App />)
-    await user.type(await screen.findByLabelText('Clave'), 'una-clave-larga')
-    await user.click(screen.getByRole('button', { name: 'Entrar' }))
-    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
-    return user
-  }
+describe('activar en el dispositivo', () => {
+  const dialogo = () => screen.queryByRole('dialog', { name: 'Activar en este dispositivo' })
 
-  it('se ofrece una vez tras el primer login y registra el passkey con el nombre del dispositivo', async () => {
+  it('al abrir la app con sesion ofrece la passkey y la registra con el nombre del dispositivo', async () => {
     const opciones = { challenge: 'r', user: { id: 'u' } }
     const credencial = { id: 'nuevo', rawId: 'nuevo', type: 'public-key', response: {}, clientExtensionResults: {} }
     vi.mocked(webauthn.startRegistration).mockResolvedValue(credencial as unknown as Awaited<ReturnType<typeof webauthn.startRegistration>>)
     const m = mockFetch({
-      'GET /api/auth/estado': ESTADO_LOGIN,
-      'POST /api/auth/login': { ok: true },
+      'GET /api/auth/estado': ESTADO_OK,
       'POST /api/auth/passkey/registro/opciones': opciones,
       'POST /api/auth/passkey/registro/verificar': { ok: true, id: 7 },
     })
-    const user = await loginConClave(m)
-    await user.click(await screen.findByRole('button', { name: 'Activar' }))
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: 'Activar passkey' }))
     await waitFor(() => expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')).toHaveLength(1))
-    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toBeUndefined()
     expect(webauthn.startRegistration).toHaveBeenCalledWith({ optionsJSON: opciones })
     expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')[0]?.body).toEqual({ ...credencial, nombre: 'Este dispositivo' })
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull())
+    await waitFor(() => expect(dialogo()).toBeNull())
     expect(localStorage.getItem('moni_faceid_dispositivo')).toBe('1')
+    expect(localStorage.getItem('moni_faceid_oferta')).toBe('1')
   })
 
-  it('cancelar el prompt no marca la oferta como mostrada ni muestra error, y el foco va a Activar', async () => {
+  it('cancelar el prompt no muestra error y deja el aviso, con el foco en el boton', async () => {
     vi.mocked(webauthn.startRegistration).mockRejectedValue(Object.assign(new Error('x'), { name: 'NotAllowedError' }))
-    const m = mockFetch({
-      'GET /api/auth/estado': ESTADO_LOGIN,
-      'POST /api/auth/login': { ok: true },
-      'POST /api/auth/passkey/registro/opciones': { challenge: 'r', user: { id: 'u' } },
-    })
-    const user = await loginConClave(m)
-    const activar = await screen.findByRole('button', { name: 'Activar' })
+    mockFetch({ 'GET /api/auth/estado': ESTADO_OK, 'POST /api/auth/passkey/registro/opciones': { challenge: 'r', user: { id: 'u' } } })
+    const user = userEvent.setup()
+    render(<App />)
+    const activar = await screen.findByRole('button', { name: 'Activar passkey' })
     await waitFor(() => expect(activar).toHaveFocus())
     await user.click(activar)
     await waitFor(() => expect(activar).toBeEnabled())
     expect(screen.queryByRole('alert')).toBeNull()
-    expect(localStorage.getItem('moni_faceid_oferta')).toBeNull()
     await user.keyboard('{Escape}')
-    expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull()
-    expect(localStorage.getItem('moni_faceid_oferta')).toBe('1')
+    expect(dialogo()).toBeNull()
   })
 
-  it('Ahora no la descarta y no vuelve a aparecer', async () => {
-    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_LOGIN, 'POST /api/auth/login': { ok: true } })
-    const user = await loginConClave(m)
+  it('Ahora no lo cierra sin pedir nada', async () => {
+    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK })
+    const user = userEvent.setup()
+    render(<App />)
     await user.click(await screen.findByRole('button', { name: 'Ahora no' }))
-    expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull()
-    expect(localStorage.getItem('moni_faceid_oferta')).toBe('1')
+    expect(dialogo()).toBeNull()
     expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')).toHaveLength(0)
   })
 
-  it('no se ofrece si ya se mostro o el dispositivo ya tiene passkey', async () => {
-    localStorage.setItem('moni_faceid_dispositivo', '1')
-    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_LOGIN, 'POST /api/auth/login': { ok: true } })
-    await loginConClave(m)
-    await new Promise((r) => setTimeout(r, 20))
-    expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull()
-  })
-
-  it('no se ofrece si la sesion ya estaba abierta (no fue login con clave)', async () => {
+  it('no vuelve a aparecer si ya se le pregunto antes', async () => {
+    localStorage.setItem('moni_faceid_oferta', '1')
     const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK })
     render(<App />)
     await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     await new Promise((r) => setTimeout(r, 20))
-    expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull()
+    expect(dialogo()).toBeNull()
+  })
+
+  it('no aparece si el dispositivo ya tiene passkey', async () => {
+    localStorage.setItem('moni_faceid_dispositivo', '1')
+    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK })
+    render(<App />)
+    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await new Promise((r) => setTimeout(r, 20))
+    expect(dialogo()).toBeNull()
   })
 })

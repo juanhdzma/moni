@@ -1,4 +1,4 @@
-import { Login, OfertaPasskey } from '../features/login'
+import { Login, ActivarDispositivo } from '../features/login'
 import { AuthProvider, useAuth } from '@/shell/providers/AuthProvider'
 import { DataProvider } from '@/shell/providers/DataProvider'
 import { ModalProvider } from '@/shell/providers/ModalProvider'
@@ -11,7 +11,7 @@ function Gate() {
     <DataProvider>
       <ModalProvider>
         <Shell />
-        <OfertaPasskey />
+        <ActivarDispositivo />
       </ModalProvider>
     </DataProvider>
   )

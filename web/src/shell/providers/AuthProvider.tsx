@@ -9,7 +9,6 @@ interface AuthApi {
   fase: Fase
   tienePasskeys: boolean
   textoBloqueo: string | null
-  loginReciente: boolean
   entrar: (clave: string) => Promise<void>
   entrarConPasskey: () => Promise<void>
   salir: () => Promise<void>
@@ -37,7 +36,6 @@ export function AuthProvider({ children, initialEstado }: Props) {
   const [fase, setFase] = useState<Fase>(initialEstado ? faseDe(initialEstado) : 'cargando')
   const [tienePasskeys, setTienePasskeys] = useState(initialEstado?.tiene_passkeys ?? false)
   const [textoBloqueo, setTextoBloqueo] = useState<string | null>(null)
-  const [loginReciente, setLoginReciente] = useState(false)
 
   const bloquear = useCallback((texto: string) => {
     setTextoBloqueo(texto)
@@ -62,7 +60,6 @@ export function AuthProvider({ children, initialEstado }: Props) {
   useEffect(() => {
     setAuthEvents({
       noAutenticado: () => {
-        setLoginReciente(false)
         setFase((f) => (f === 'autenticado' ? 'login' : f))
       },
       bloqueada: bloquear,
@@ -88,7 +85,6 @@ export function AuthProvider({ children, initialEstado }: Props) {
   const entrar = useCallback(
     async (clave: string) => {
       await intentar(() => entrarConClave(clave))
-      setLoginReciente(true)
       setFase('autenticado')
     },
     [intentar],
@@ -101,13 +97,12 @@ export function AuthProvider({ children, initialEstado }: Props) {
 
   const salir = useCallback(async () => {
     await cerrarSesion()
-    setLoginReciente(false)
     setFase('login')
   }, [])
 
   const value = useMemo(
-    () => ({ fase, tienePasskeys, textoBloqueo, loginReciente, entrar, entrarConPasskey, salir, recargar }),
-    [fase, tienePasskeys, textoBloqueo, loginReciente, entrar, entrarConPasskey, salir, recargar],
+    () => ({ fase, tienePasskeys, textoBloqueo, entrar, entrarConPasskey, salir, recargar }),
+    [fase, tienePasskeys, textoBloqueo, entrar, entrarConPasskey, salir, recargar],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

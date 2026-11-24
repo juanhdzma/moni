@@ -19,6 +19,7 @@ export function esCancelacion(err: unknown): boolean {
 }
 
 export const dispositivoTienePasskey = (): boolean => leerStorage(CLAVE_DISPOSITIVO) === '1'
+
 export const ofertaYaMostrada = (): boolean => leerStorage(CLAVE_OFERTA) === '1'
 export const marcarOfertaMostrada = (): void => escribirStorage(CLAVE_OFERTA, '1')
 
