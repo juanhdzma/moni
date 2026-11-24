@@ -1,10 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
 from ..calculos.fechas import hoy_bogota
 from ..calculos.operaciones import asientos, movimientos, textos
 from ..calculos.operaciones.movimientos import CambioInversion
 from ..core.actualizar import actualizar_columnas
+from ..core.afectadas import INVERSIONES, afectar, con_movimiento, con_op_oculta
 from ..core.db import conexion
 from ..core.estado import coleccion, simbolo
 from ..core.ops_ocultas import ocultar_op
@@ -24,72 +25,77 @@ def _datos_inversion(body: InvIn, anterior: dict | None) -> dict:
 
 
 @router.post("/api/inv", name="create_inv")
-def crear_inv(body: InvIn):
+def crear_inv(body: InvIn, response: Response):
     with conexion() as conn:
         data = _datos_inversion(body, None)
         crear_tx = data.pop("crear_tx")
         new_id = insert_row(conn, "inversiones", INV_COLS, data)
         if crear_tx:
             insert_tx(conn, **asientos.tx_inversion_nueva(data))
+        afectar(response, *con_movimiento(INVERSIONES, crear_tx))
         return guardar_y_leer(conn, "inversiones", new_id)
 
 
 @router.put("/api/inv/{row_id}", name="update_inv")
-def actualizar_inv(row_id: int, body: InvIn):
+def actualizar_inv(row_id: int, body: InvIn, response: Response):
     with conexion() as conn:
         data = _datos_inversion(body, get_row(conn, "inversiones", row_id))
         data.pop("crear_tx")
         update_row(conn, "inversiones", INV_COLS, row_id, data)
+        afectar(response, INVERSIONES)
         return guardar_y_leer(conn, "inversiones", row_id)
 
 
-def _persistir(conn, inv_id: int, cambio: CambioInversion) -> None:
+def _persistir(conn, inv_id: int, cambio: CambioInversion) -> tuple[str, ...]:
     if cambio.borrar:
         delete_row(conn, "inversiones", inv_id)
     else:
         actualizar_columnas(conn, "inversiones", inv_id, cambio.cambios)
     if cambio.tx:
         insert_tx(conn, **cambio.tx)
+    return con_movimiento(INVERSIONES, cambio.tx is not None)
 
 
 @router.post("/api/inv/{inv_id}/rendimiento", description=textos.DESCRIPCION_RENDIMIENTO)
-def registrar_rendimiento(inv_id: int, body: InvRendimiento):
+def registrar_rendimiento(inv_id: int, body: InvRendimiento, response: Response):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
-        _persistir(conn, inv_id, movimientos.aplicar_rendimiento(
+        afectadas = _persistir(conn, inv_id, movimientos.aplicar_rendimiento(
             inv, body.monto, body.fecha, body.notas, body.capitaliza, body.registrar_tx
         ))
         ocultar_op(conn, body.op_clave)
+        afectar(response, *con_op_oculta(afectadas, body.op_clave))
         return guardar_y_leer(conn, "inversiones", inv_id)
 
 
 @router.post("/api/inv/{inv_id}/aporte")
-def aportar_inv(inv_id: int, body: InvAporte):
+def aportar_inv(inv_id: int, body: InvAporte, response: Response):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
-        _persistir(conn, inv_id, movimientos.aplicar_aporte(
+        afectar(response, *_persistir(conn, inv_id, movimientos.aplicar_aporte(
             inv, body.monto, body.nuevo_valor, body.fecha, body.notas, body.registrar_tx
-        ))
+        )))
         return guardar_y_leer(conn, "inversiones", inv_id)
 
 
 @router.post("/api/inv/{inv_id}/retiro")
-def retirar_inv(inv_id: int, body: InvRetiro):
+def retirar_inv(inv_id: int, body: InvRetiro, response: Response):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
-        _persistir(conn, inv_id, movimientos.aplicar_retiro(
+        afectar(response, *_persistir(conn, inv_id, movimientos.aplicar_retiro(
             inv, body.tipo, body.monto, body.saldo_queda, body.fecha, body.notas, body.registrar_tx
-        ))
+        )))
         conn.commit()
         return {"ok": True}
 
 
 @router.post("/api/inv/{inv_id}/valor")
-def actualizar_valor_inv(inv_id: int, body: InvValor):
+def actualizar_valor_inv(inv_id: int, body: InvValor, response: Response):
     with conexion() as conn:
         get_row(conn, "inversiones", inv_id)
         cambios = movimientos.aplicar_valor(body.nuevo_valor, body.fecha or hoy_bogota().isoformat())
         actualizar_columnas(conn, "inversiones", inv_id, cambios)
+        afectar(response, INVERSIONES)
         return guardar_y_leer(conn, "inversiones", inv_id)
 
 

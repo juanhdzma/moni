@@ -1,10 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
 from ..calculos.operaciones import asientos, movimientos
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..calculos.operaciones.defaults import fecha_o_ahora
 from ..core.actualizar import actualizar_columnas
+from ..core.afectadas import ACTIVOS, afectar, con_movimiento
 from ..core.db import conexion
 from ..core.estado import coleccion
 from ..core.sql import delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row
@@ -23,39 +24,43 @@ def _datos_activo(body: ActivoIn, anterior: dict | None) -> dict:
 
 
 @router.post("/api/activo", name="create_activo")
-def crear_activo(body: ActivoIn):
+def crear_activo(body: ActivoIn, response: Response):
     with conexion() as conn:
         datos = _datos_activo(body, None)
         activo_id = insert_row(conn, "activos", ACTIVO_COLS, datos)
         if body.crear_tx:
             insert_tx(conn, **asientos.tx_compra_activo(datos))
+        afectar(response, *con_movimiento(ACTIVOS, body.crear_tx))
         return guardar_y_leer(conn, "activos", activo_id)
 
 
 @router.put("/api/activo/{activo_id}", name="update_activo")
-def actualizar_activo(activo_id: int, body: ActivoIn):
+def actualizar_activo(activo_id: int, body: ActivoIn, response: Response):
     with conexion() as conn:
         datos = _datos_activo(body, get_row(conn, "activos", activo_id))
         update_row(conn, "activos", ACTIVO_COLS, activo_id, datos)
+        afectar(response, ACTIVOS)
         return guardar_y_leer(conn, "activos", activo_id)
 
 
 @router.post("/api/activo/{activo_id}/valor")
-def actualizar_valor(activo_id: int, body: ActivoValor):
+def actualizar_valor(activo_id: int, body: ActivoValor, response: Response):
     with conexion() as conn:
         get_row(conn, "activos", activo_id)
         actualizar_columnas(conn, "activos", activo_id, movimientos.aplicar_valor(body.nuevo_valor, fecha_o_ahora(body.fecha)))
+        afectar(response, ACTIVOS)
         return guardar_y_leer(conn, "activos", activo_id)
 
 
 @router.post("/api/activo/{activo_id}/venta")
-def vender_activo(activo_id: int, body: ActivoVenta):
+def vender_activo(activo_id: int, body: ActivoVenta, response: Response):
     with conexion() as conn:
         activo = get_row(conn, "activos", activo_id)
         delete_row(conn, "activos", activo_id)
         if body.registrar_tx:
             insert_tx(conn, **asientos.tx_venta_activo(activo["nombre"], body.precio, fecha_o_ahora(body.fecha), body.notas))
         conn.commit()
+        afectar(response, *con_movimiento(ACTIVOS, body.registrar_tx))
         return {"ok": True}
 
 

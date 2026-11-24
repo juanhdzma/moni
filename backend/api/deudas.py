@@ -1,11 +1,12 @@
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
 from ..calculos.fechas import hoy_bogota
 from ..calculos.operaciones import asientos, frases_deuda as frases, movimientos
 from ..calculos.operaciones.defaults import fecha_o_ahora
+from ..core.afectadas import DEUDAS, afectar, con_movimiento, con_op_oculta
 from ..core.db import conexion
 from ..core.estado import coleccion, detalle, simbolo
 from ..core.ops_ocultas import ocultar_op
@@ -34,24 +35,26 @@ def leer_deuda(deuda_id: int):
 
 
 @router.post("/api/deuda", name="create_deuda")
-def crear_deuda(body: DeudaCrear):
+def crear_deuda(body: DeudaCrear, response: Response):
     with conexion() as conn:
         data = operaciones.completar_deuda(operaciones.normalizar_tasa(body.model_dump()), hoy_bogota())
         crear_tx = data.pop("crear_tx")
         deuda_id = insert_row(conn, "deudas", DEUDA_COLS, data)
         if crear_tx:
             insert_tx(conn, **movimientos.tx_credito_recibido(data))
+        afectar(response, *con_movimiento(DEUDAS, crear_tx))
         return _guardar_y_leer_deuda(conn, deuda_id)
 
 
 @router.put("/api/deuda/{deuda_id}", name="update_deuda")
-def actualizar_deuda(deuda_id: int, body: DeudaIn):
+def actualizar_deuda(deuda_id: int, body: DeudaIn, response: Response):
     with conexion() as conn:
         data = operaciones.normalizar_tasa(body.model_dump())
         actual = get_row(conn, "deudas", deuda_id)
         ligadas = conn.execute("SELECT 1 FROM transacciones WHERE tarjeta_id = ? LIMIT 1", (deuda_id,)).fetchone()
         movimientos.validar_cambio_de_tipo(bool(actual["es_tarjeta"]), data["es_tarjeta"], ligadas is not None)
         update_row(conn, "deudas", DEUDA_COLS, deuda_id, data)
+        afectar(response, DEUDAS)
         return _guardar_y_leer_deuda(conn, deuda_id)
 
 
@@ -60,7 +63,7 @@ def _saldo_tras_adelanto(tarjeta: dict, body: DeudaAdelanto | AdelantoPreview) -
 
 
 @router.post("/api/deuda/{deuda_id}/pago")
-def pagar_deuda(deuda_id: int, body: DeudaPago):
+def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
     with conexion() as conn:
         deuda = get_row(conn, "deudas", deuda_id)
         pago = movimientos.aplicar_pago(
@@ -76,11 +79,12 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
         if body.registrar_tx:
             insert_tx(conn, **pago.tx)
         ocultar_op(conn, body.op_clave)
+        afectar(response, *con_op_oculta(con_movimiento(DEUDAS, body.registrar_tx), body.op_clave))
         return _guardar_y_leer_deuda(conn, deuda_id)
 
 
 @router.post("/api/deuda/{deuda_id}/adelanto")
-def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
+def pedir_adelanto(deuda_id: int, body: DeudaAdelanto, response: Response):
     with conexion() as conn:
         tarjeta = get_row(conn, "deudas", deuda_id)
         nuevo_saldo = _saldo_tras_adelanto(tarjeta, body)
@@ -91,6 +95,7 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
                 tarjeta["nombre"], body.monto, fecha_o_ahora(body.fecha), body.descripcion, body.notas
             ))
         deuda = _guardar_y_leer_deuda(conn, deuda_id)
+        afectar(response, *con_movimiento(DEUDAS, body.registrar_tx))
         logger.info(
             "tarjeta %s: adelanto %.2f, saldo_actual %.2f -> %.2f",
             deuda_id, body.monto, tarjeta["saldo_actual"], nuevo_saldo,

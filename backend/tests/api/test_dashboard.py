@@ -32,9 +32,10 @@ def test_dashboard_evolucion_rechaza_parametros(client, params):
 def test_dashboard_este_mes(client):
     sembrar(client)
     r = client.get("/api/dashboard/este-mes").json()
-    assert set(r) == {"ingresos", "gastos", "quedo", "titulo_quedo", "frase", "descripcion_grafico", "meses"}
+    assert set(r) == {"ingresos", "gastos", "quedo", "titulo_quedo", "texto_tarjeta", "frase", "descripcion_grafico", "meses"}
     assert (r["ingresos"], r["gastos"], r["quedo"], r["frase"]["pct"]) == (4_000_000, 1_000_000, 3_000_000, 75.0)
     assert r["titulo_quedo"] == "Te quedó"
+    assert r["texto_tarjeta"] == "Lo pagado con tarjeta no sale de la cartera."
     assert len(r["meses"]) == 6 and set(r["meses"][-1]) == {"mes", "entro", "salio"}
     assert r["meses"][-1]["entro"] == 4_000_000 and r["meses"][-1]["salio"] == 1_000_000
 

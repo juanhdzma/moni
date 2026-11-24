@@ -171,6 +171,7 @@ def este_mes(estado, hoy: datetime.date) -> dict:
         "gastos": mes["gastos"],
         "quedo": mes["ingresos"] - mes["gastos"],
         "titulo_quedo": "Te quedó",
+        "texto_tarjeta": "Lo pagado con tarjeta no sale de la cartera.",
         "frase": mes["frase"],
         "descripcion_grafico": f"Entró y salió por mes, últimos {MESES_ESTE_MES} meses",
         "meses": [{"mes": etiquetas[i], "entro": entro[i], "salio": salio[i]} for i in range(MESES_ESTE_MES)],

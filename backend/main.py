@@ -14,6 +14,7 @@ from .api.errores import errores_de_dominio, errores_de_validacion
 from .calculos.fechas import hoy_bogota
 from .calculos.errores import ErrorDeDominio
 from .core import db
+from .core.afectadas import afectadas_por_defecto
 from .core.csrf import require_csrf_header
 from .core.ops_ocultas import podar_ocultas
 
@@ -36,6 +37,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Moni API", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
+app.middleware("http")(afectadas_por_defecto)
 app.middleware("http")(require_csrf_header)
 app.middleware("http")(seguridad.middleware_auth)
 app.middleware("http")(seguridad.middleware_headers)

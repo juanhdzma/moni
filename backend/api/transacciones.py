@@ -1,10 +1,11 @@
 import logging
 from typing import Literal, Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from ..calculos import listados
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..calculos.operaciones import tarjetas
+from ..core.afectadas import DEUDAS, OPS_OCULTAS, TRANSACCIONES, afectar
 from ..core.db import conexion
 from ..core import estado as store
 from ..core.estado import coleccion
@@ -43,32 +44,46 @@ def _aplicar_efecto_en_tarjeta(conn, tx):
     ajustar_saldo_tarjeta(conn, tx["tarjeta_id"], tarjetas.delta_saldo_tarjeta(tx))
 
 
+def afectar_tx(response: Response, tarjetas: tuple, op_clave: Optional[str] = None) -> None:
+    entidades = [TRANSACCIONES]
+    if any(t is not None for t in tarjetas):
+        entidades.append(DEUDAS)
+    if op_clave:
+        entidades.append(OPS_OCULTAS)
+    afectar(response, *entidades)
+
+
 @router.post("/api/tx", name="create_tx")
-def create_tx(body: TxIn):
+def create_tx(body: TxIn, response: Response):
     with conexion() as conn:
         data = body.model_dump()
         new_id = insert_row(conn, "transacciones", TX_COLS, data)
         _aplicar_efecto_en_tarjeta(conn, data)
         ocultar_op(conn, data["op_clave"])
+        afectar_tx(response, (data["tarjeta_id"],), data["op_clave"])
         return guardar_y_leer(conn, "transacciones", new_id)
 
 
 @router.put("/api/tx/{row_id}", name="update_tx")
-def update_tx(row_id: int, body: TxIn):
+def update_tx(row_id: int, body: TxIn, response: Response):
     with conexion() as conn:
-        _deshacer_efecto_en_tarjeta(conn, get_row(conn, "transacciones", row_id))
+        anterior = get_row(conn, "transacciones", row_id)
+        _deshacer_efecto_en_tarjeta(conn, anterior)
         data = body.model_dump()
         update_row(conn, "transacciones", TX_COLS, row_id, data)
         _aplicar_efecto_en_tarjeta(conn, data)
+        afectar_tx(response, (anterior["tarjeta_id"], data["tarjeta_id"]))
         return guardar_y_leer(conn, "transacciones", row_id)
 
 
 @router.delete("/api/tx/{row_id}", status_code=204, name="delete_tx")
-def delete_tx(row_id: int):
+def delete_tx(row_id: int, response: Response):
     with conexion() as conn:
-        _deshacer_efecto_en_tarjeta(conn, get_row(conn, "transacciones", row_id))
+        anterior = get_row(conn, "transacciones", row_id)
+        _deshacer_efecto_en_tarjeta(conn, anterior)
         delete_row(conn, "transacciones", row_id)
         conn.commit()
+        afectar_tx(response, (anterior["tarjeta_id"],))
 
 
 @router.get("/api/tx/opciones")
