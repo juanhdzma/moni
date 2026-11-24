@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { cop, signStr } from '@/lib/format'
+import { signStr } from '@/lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { cn } from '@/lib/utils'
 
 function tonoDe(valor: number) {
@@ -29,14 +30,16 @@ interface MontoProps {
   className?: string
 }
 
-export function Monto({ valor, formato = cop, sufijo = '', signo = 'siempre', color = 'siempre', chip = false, flecha = false, className }: MontoProps) {
+export function Monto({ valor, formato, sufijo = '', signo = 'siempre', color = 'siempre', chip = false, flecha = false, className }: MontoProps) {
+  const { cop } = useMoneda()
+  const formatear = formato ?? cop
   const tono = tonoDe(valor)
   const clase = aplica(color, valor) ? (chip ? tono.chip : tono.texto) : undefined
   return (
     <span className={cn(clase, className)}>
       {flecha && <tono.Flecha className="mr-0.5 inline size-3.5 -translate-y-px" aria-hidden="true" />}
       {aplica(signo, valor) && tono.signo}
-      {formato(Math.abs(valor))}
+      {formatear(Math.abs(valor))}
       {sufijo}
     </span>
   )

@@ -1,4 +1,5 @@
-import { render, renderHook, screen, waitFor } from '@testing-library/react'
+import { renderHook, screen, waitFor } from '@testing-library/react'
+import { renderWithProviders } from '../test/render'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { META } from '../test/meta'
@@ -14,7 +15,7 @@ afterEach(() => vi.unstubAllGlobals())
 describe('TipoToggle', () => {
   it('marca la opción elegida, usa el tono por valor y notifica el cambio', async () => {
     const onChange = vi.fn()
-    render(<TipoToggle value="ingreso" opciones={META.tipos_manuales} idPrefix="t" onChange={onChange} />)
+    renderWithProviders(<TipoToggle value="ingreso" opciones={META.tipos_manuales} idPrefix="t" onChange={onChange} />)
     expect(screen.getByRole('group', { name: 'Tipo' })).toBeInTheDocument()
     expect(document.getElementById('t-ingreso')).toHaveClass('tipo-btn', 'ingreso', 'sel')
     await userEvent.click(screen.getByRole('button', { name: 'Gasto' }))
@@ -24,7 +25,7 @@ describe('TipoToggle', () => {
 
 describe('Breakdown y Variacion', () => {
   it('visible depende de la prop y la variación lleva signo y porcentaje', () => {
-    render(
+    renderWithProviders(
       <>
         <Breakdown id="b" visible={false}>
           <BreakdownRow id="r" label="Cambio">

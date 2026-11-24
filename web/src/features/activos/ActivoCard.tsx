@@ -1,12 +1,14 @@
 import { Monto } from '@/components/monto'
 import { Desactualizado } from '@/components/panel'
-import { cop, fmtDate, pct } from '../../lib/format'
+import { fmtDate, pct } from '../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import type { Activo } from '../../types'
 import { openActivoForm, openActivoSellForm, openActivoUpdateForm } from './forms'
 
 export function ActivoCard({ activo: a }: { activo: Activo }) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { estado } = useData()
 

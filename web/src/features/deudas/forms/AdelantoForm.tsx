@@ -5,7 +5,8 @@ import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyField } from '../../../controls/MoneyField'
 import { previewAdelanto } from '../../../lib/api'
-import { cop, parseMoney } from '../../../lib/format'
+import { parseMoney } from '../../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { useGuardar } from '@/shell/hooks/useGuardar'
@@ -13,6 +14,7 @@ import { usePreview } from '@/shell/hooks/usePreview'
 import type { Deuda, DeudaAdelanto } from '../../../types'
 
 export function AdelantoForm({ d }: { d: Deuda }) {
+  const { cop } = useMoneda()
   const guardar = useGuardar()
   const { apiAction } = useMutations()
   const tieneCupo = d.tiene_cupo

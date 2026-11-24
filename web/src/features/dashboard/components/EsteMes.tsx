@@ -1,7 +1,7 @@
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { cargarEsteMes } from '@/lib/api'
-import { copShort } from '@/lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { Monto } from '@/components/monto'
@@ -13,6 +13,7 @@ const config = {
 } satisfies ChartConfig
 
 export function EsteMes() {
+  const { copShort } = useMoneda()
   const { data: r } = useVista('este-mes', cargarEsteMes, DEPENDENCIAS_DE_VISTA.esteMes)
   const loading = r === null
   const quedo = r?.quedo ?? 0

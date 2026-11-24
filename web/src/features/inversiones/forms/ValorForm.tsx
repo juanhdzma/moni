@@ -3,7 +3,8 @@ import { BreakdownVariacion } from '../../../controls/BreakdownVariacion'
 import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyField } from '../../../controls/MoneyField'
 import { previewValorInversion } from '../../../lib/api'
-import { cop, parseMoney } from '../../../lib/format'
+import { parseMoney } from '../../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvValor, Inversion } from '../../../types'
@@ -14,6 +15,7 @@ import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from '@/shell/hooks/usePreview'
 
 export function ValorForm({ inv }: { inv: Inversion }) {
+  const { cop } = useMoneda()
   const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()

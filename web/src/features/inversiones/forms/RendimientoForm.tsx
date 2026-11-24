@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { MoneyField } from '../../../controls/MoneyField'
 import { useMeta } from '@/shell/hooks/useMeta'
-import { cop, entero, parseMoney } from '../../../lib/format'
+import { entero, parseMoney } from '../../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRendimiento, Inversion } from '../../../types'
@@ -14,6 +15,7 @@ import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 
 export function RendimientoForm({ inv }: { inv: Inversion }) {
+  const { cop } = useMoneda()
   const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()

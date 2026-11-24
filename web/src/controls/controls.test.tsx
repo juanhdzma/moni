@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -27,13 +27,13 @@ function SelectHarness() {
 describe('Select', () => {
   it('con un valor desconocido muestra la primera opción y no llama a onChange', () => {
     const onChange = vi.fn()
-    render(<Select value="zzz" onChange={onChange} options={OPTS} id="s" />)
+    renderWithProviders(<Select value="zzz" onChange={onChange} options={OPTS} id="s" />)
     expect(document.getElementById('s')).toHaveTextContent('Alfa')
     expect(onChange).not.toHaveBeenCalled()
   })
 
   it('el id va en el trigger, así que el label lo enfoca y lo nombra', () => {
-    render(
+    renderWithProviders(
       <>
         <label htmlFor="s">Letra</label>
         <Select value="a" onChange={() => undefined} options={OPTS} id="s" />
@@ -95,7 +95,7 @@ describe('MoneyInput', () => {
 
   it('inserta puntos de miles y descarta lo que no es dígito', async () => {
     const user = userEvent.setup()
-    render(<Harness />)
+    renderWithProviders(<Harness />)
     const input = document.getElementById('m') as HTMLInputElement
     await user.type(input, '1234567')
     expect(input.value).toBe('1.234.567')
@@ -106,7 +106,7 @@ describe('MoneyInput', () => {
 
   it('borrar un dígito del medio conserva el caret', async () => {
     const user = userEvent.setup()
-    render(<Harness initial="1.234.567" />)
+    renderWithProviders(<Harness initial="1.234.567" />)
     const input = document.getElementById('m') as HTMLInputElement
     input.focus()
     input.setSelectionRange(3, 3)
@@ -116,7 +116,7 @@ describe('MoneyInput', () => {
   })
 
   it('prefijo $ y inputmode numérico', () => {
-    render(<Harness />)
+    renderWithProviders(<Harness />)
     expect(document.querySelector('.money-pfx')).toHaveTextContent('$')
     expect(document.getElementById('m')).toHaveAttribute('inputmode', 'numeric')
   })
@@ -129,7 +129,7 @@ describe('AdvancedToggle', () => {
       const [c, setC] = useState(true)
       return <AdvancedToggle checked={c} onChange={setC} />
     }
-    render(<H />)
+    renderWithProviders(<H />)
     const box = screen.getByLabelText('Registrar como nuevo en transacciones')
     expect(box).toBeChecked()
     expect(box).toHaveAttribute('id', 'm-es-nueva')

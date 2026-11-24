@@ -1,5 +1,6 @@
 import type { ChangeEvent } from 'react'
-import { fmtMoneyInput, getCurrencySymbol } from '../lib/format'
+import { fmtMoneyInput } from '../lib/format'
+import { useMoneda } from '../shell/hooks/useMoneda'
 
 interface Props {
   value: string
@@ -10,13 +11,14 @@ interface Props {
 }
 
 export function MoneyInput({ value, onChange, id, placeholder = '0', ariaLabel }: Props) {
+  const { simbolo } = useMoneda()
   const handle = (e: ChangeEvent<HTMLInputElement>) => {
     fmtMoneyInput(e.currentTarget)
     onChange(e.currentTarget.value)
   }
   return (
     <div className="money-wrap">
-      <span className="money-pfx">{getCurrencySymbol()}</span>
+      <span className="money-pfx">{simbolo}</span>
       <input
         className="form-input"
         type="text"

@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cop, setCurrencySymbol } from '../../lib/format'
+import { useMoneda } from '../hooks/useMoneda'
 import { ESTADO_INICIAL, failure, json, mockFetch } from '../../test/mockFetch'
 import { estado as estadoFactory } from '../../test/factories'
 import { DataProvider, ESTADO_VACIO, useData } from '@/shell/providers/DataProvider'
@@ -72,6 +72,7 @@ describe('DataProvider recargas superpuestas', () => {
 
 function Estado() {
   const { estado, loaded, versiones } = useData()
+  const { cop } = useMoneda()
   return (
     <>
       <output data-testid="hoy">{estado.hoy}</output>
@@ -87,7 +88,6 @@ describe('DataProvider estado del backend', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => {
     vi.unstubAllGlobals()
-    setCurrencySymbol('$')
   })
 
   it('carga hoy, alertas y ajustes de /api/bootstrap y aplica el símbolo de moneda', async () => {
@@ -105,6 +105,32 @@ describe('DataProvider estado del backend', () => {
     expect(screen.getByTestId('gen')).toHaveTextContent('0')
     expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1)
     expect(f.mutations()).toHaveLength(0)
+  })
+
+  it('useMoneda usa $ si el símbolo es vacío y se actualiza al cambiar la moneda', async () => {
+    mockFetch({ 'GET /api/bootstrap': estadoFactory({ ajustes: { moneda_simbolo: '' } }) })
+    function Cambiar() {
+      const { aplicarEstado } = useData()
+      const { simbolo, copShort } = useMoneda()
+      return (
+        <>
+          <output data-testid="simbolo">{simbolo}</output>
+          <output data-testid="corto">{copShort(2500000)}</output>
+          <button onClick={() => aplicarEstado({ ajustes: { moneda_simbolo: '€' } }, ['ajustes'])}>cambiar</button>
+        </>
+      )
+    }
+    const user = userEvent.setup()
+    render(
+      <DataProvider>
+        <Cambiar />
+      </DataProvider>,
+    )
+    await waitFor(() => expect(screen.getByTestId('simbolo')).toHaveTextContent('$'))
+    expect(screen.getByTestId('corto')).toHaveTextContent('$2,5M')
+    await user.click(screen.getByText('cambiar'))
+    expect(screen.getByTestId('simbolo')).toHaveTextContent('€')
+    expect(screen.getByTestId('corto')).toHaveTextContent('€2,5M')
   })
 
   it('reload sube la versión de las entidades afectadas y pide /api/bootstrap solo si alguna lo afecta', async () => {

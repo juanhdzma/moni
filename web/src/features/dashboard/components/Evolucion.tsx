@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { cargarEvolucion } from '@/lib/api'
-import { cop, copShort } from '@/lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
@@ -10,6 +10,7 @@ import type { PeriodoEvolucion, SerieEvolucion } from '@/types'
 import { FraseTexto, Panel, Periodos } from '@/components/panel'
 
 export function Evolucion() {
+  const { cop, copShort } = useMoneda()
   const [serie, setSerie] = useState<SerieEvolucion>('patrimonio')
   const [period, setPeriod] = useState<PeriodoEvolucion>('6M')
   const { data: ev } = useVista(`${serie}:${period}`, () => cargarEvolucion(serie, period), DEPENDENCIAS_DE_VISTA.evolucion)

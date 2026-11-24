@@ -6,7 +6,8 @@ import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyField } from '../../../controls/MoneyField'
 import { Variacion } from '../../../controls/Variacion'
 import { previewVenta } from '../../../lib/api'
-import { cop, entero, parseMoney } from '../../../lib/format'
+import { entero, parseMoney } from '../../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
@@ -14,6 +15,7 @@ import { usePreview } from '@/shell/hooks/usePreview'
 import type { Activo, ActivoVenta } from '../../../types'
 
 export function ActivoVentaForm({ activo: a }: { activo: Activo }) {
+  const { cop } = useMoneda()
   const guardar = useGuardar()
   const { apiAction } = useMutations()
   const [precioTxt, setPrecioTxt] = useState(entero(a.valor_actual))

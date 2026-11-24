@@ -1,7 +1,7 @@
-import { describe, expect, test, beforeEach } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
-  cop,
-  copShort,
+  formatearCop,
+  formatearCopCorto,
   fmtDate,
   fmtDateShort,
   fmtDateTime,
@@ -10,7 +10,6 @@ import {
   soloFecha,
   parseMoney,
   pct,
-  setCurrencySymbol,
 } from './index'
 
 function input(value: string, caret = value.length) {
@@ -69,10 +68,6 @@ test('soloFecha corta la hora y tolera vacíos', () => {
 })
 
 describe('formato', () => {
-  beforeEach(() => {
-    setCurrencySymbol('$')
-  })
-
   test('parseMoney entiende coma decimal y puntos de miles', () => {
     expect(parseMoney('1.234.567')).toBe(1234567)
     expect(parseMoney('1.234,5')).toBe(1234.5)
@@ -84,14 +79,13 @@ describe('formato', () => {
     expect(entero(null)).toBe('0')
   })
 
-  test('cop y copShort usan el símbolo configurado', () => {
-    expect(cop(1500000)).toBe('$1.500.000')
-    expect(copShort(1500000)).toBe('$1,5M')
-    expect(copShort(-2500)).toBe('−$3k')
-    expect(copShort(2_000_000_000)).toBe('$2,0B')
-    expect(copShort(-500)).toBe('−$500')
-    setCurrencySymbol('€')
-    expect(cop(1000)).toBe('€1.000')
+  test('formatearCop y formatearCopCorto usan el símbolo recibido', () => {
+    expect(formatearCop(1500000, '$')).toBe('$1.500.000')
+    expect(formatearCopCorto(1500000, '$')).toBe('$1,5M')
+    expect(formatearCopCorto(-2500, '$')).toBe('−$3k')
+    expect(formatearCopCorto(2_000_000_000, '$')).toBe('$2,0B')
+    expect(formatearCopCorto(-500, '$')).toBe('−$500')
+    expect(formatearCop(1000, '€')).toBe('€1.000')
   })
 
   test('pct respeta los decimales', () => {

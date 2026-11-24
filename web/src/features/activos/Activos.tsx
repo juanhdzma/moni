@@ -4,7 +4,7 @@ import { EmptyCard } from '@/components/EmptyCard'
 import { Tendencia } from '@/components/monto'
 import { Resumen } from '@/components/panel'
 import { cargarResumenActivos } from '../../lib/api'
-import { cop } from '../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
@@ -14,6 +14,7 @@ import { ActivoCard } from './ActivoCard'
 import { openActivoForm } from './forms'
 
 export function Activos({ active }: TabProps) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { loaded } = useData()
   const { data: resumen } = useVista('activos-resumen', cargarResumenActivos, DEPENDENCIAS_DE_VISTA.resumenActivos)

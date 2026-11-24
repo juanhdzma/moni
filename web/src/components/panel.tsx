@@ -1,7 +1,7 @@
 import { useId, useState, type ReactNode } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { copShort } from '@/lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { cn } from '@/lib/utils'
 import type { Frase, Segmento, TonoFrase } from '@/types'
 
@@ -122,6 +122,7 @@ export function Resumen({
   extra?: ReactNode
   loaded: boolean
 }) {
+  const { copShort } = useMoneda()
   return (
     <section id={id} aria-labelledby={`${id}-titulo`} className="rounded-2xl border bg-card p-5 text-card-foreground sm:p-6">
       <div className="flex items-start justify-between gap-4">

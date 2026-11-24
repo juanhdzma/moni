@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
+import { renderWithProviders } from '../test/render'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
@@ -11,13 +12,13 @@ function Harness({ hint }: { hint?: string }) {
 
 describe('MoneyField', () => {
   it('asocia el label al input y formatea miles', async () => {
-    render(<Harness />)
+    renderWithProviders(<Harness />)
     await userEvent.type(screen.getByLabelText('Monto'), '1234567')
     expect(screen.getByLabelText('Monto')).toHaveValue('1.234.567')
   })
 
   it('el hint es opcional', () => {
-    const { rerender } = render(<Harness />)
+    const { rerender } = renderWithProviders(<Harness />)
     expect(screen.queryByText('Ayuda')).toBeNull()
     rerender(<Harness hint="Ayuda" />)
     expect(screen.getByText('Ayuda')).toBeInTheDocument()

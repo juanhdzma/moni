@@ -3,7 +3,7 @@ import { Pause, Play, Plus } from 'lucide-react'
 import { Monto } from '@/components/monto'
 import { FraseTexto, Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
-import { cop } from '../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { cargarResumenRecurrentes } from '../../lib/api'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
@@ -14,6 +14,7 @@ import type { Recurrente } from '../../types'
 import { openRecurrenteForm, openRecurrenteFormById } from './forms'
 
 function RecCard({ r }: { r: Recurrente }) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { apiActionOrBanner } = useMutations()
   const nextStr = r.proximo_pago?.texto ?? null

@@ -1,26 +1,15 @@
-let currencySymbol = '$'
-
-export function getCurrencySymbol(): string {
-  return currencySymbol
-}
-
-export function setCurrencySymbol(symbol: string): void {
-  currencySymbol = symbol || '$'
-}
-
 export const entero = (n: number | null | undefined): string =>
   new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n || 0)
 
-export const cop = (n: number | null | undefined): string => getCurrencySymbol() + entero(n)
+export const formatearCop = (n: number | null | undefined, simbolo: string): string => simbolo + entero(n)
 
-export function copShort(n: number): string {
+export function formatearCopCorto(n: number, simbolo: string): string {
   const abs = Math.abs(n)
   const s = n < 0 ? '−' : ''
-  const sym = getCurrencySymbol()
-  if (abs >= 1e9) return s + sym + (abs / 1e9).toFixed(1).replace('.', ',') + 'B'
-  if (abs >= 1e6) return s + sym + (abs / 1e6).toFixed(1).replace('.', ',') + 'M'
-  if (abs >= 1e3) return s + sym + Math.round(abs / 1e3) + 'k'
-  return s + cop(abs)
+  if (abs >= 1e9) return s + simbolo + (abs / 1e9).toFixed(1).replace('.', ',') + 'B'
+  if (abs >= 1e6) return s + simbolo + (abs / 1e6).toFixed(1).replace('.', ',') + 'M'
+  if (abs >= 1e3) return s + simbolo + Math.round(abs / 1e3) + 'k'
+  return s + formatearCop(abs, simbolo)
 }
 
 export function pct(n: number | null | undefined, d = 1): string {

@@ -6,7 +6,8 @@ import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyField } from '../../../controls/MoneyField'
 import { Variacion } from '../../../controls/Variacion'
 import { previewValorActivo } from '../../../lib/api'
-import { cop, parseMoney } from '../../../lib/format'
+import { parseMoney } from '../../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useCerrarYAbrir } from '@/shell/hooks/openers'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
@@ -15,6 +16,7 @@ import type { Activo, ActivoValor } from '../../../types'
 import { openActivoForm } from './openers'
 
 export function ActivoValorForm({ activo: a }: { activo: Activo }) {
+  const { cop } = useMoneda()
   const editar = useCerrarYAbrir((ctx) => openActivoForm(ctx, a))
   const guardar = useGuardar()
   const { apiAction } = useMutations()

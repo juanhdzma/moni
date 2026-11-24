@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { cargarBootstrap } from '@/lib/api'
-import { errMsg, setCurrencySymbol } from '@/lib/format'
+import { errMsg } from '@/lib/format'
 import { afectaAlBootstrap, subirVersiones, TODAS_LAS_ENTIDADES, VERSIONES_INICIALES, type Entidad, type Versiones } from '@/shell/invalidacion'
 import type { Estado } from '@/types'
 
@@ -107,8 +107,6 @@ export function DataProvider({ children, initialEstado, initialLoaded }: Props) 
     if (initialEstado) return
     void cargarEstado()
   }, [initialEstado, cargarEstado])
-
-  setCurrencySymbol(estado.ajustes.moneda_simbolo)
 
   const value = useMemo(
     () => ({ estado, loaded, versiones, reload, aplicarEstado, conBanner, banner, showBanner, reportRenderFailure }),

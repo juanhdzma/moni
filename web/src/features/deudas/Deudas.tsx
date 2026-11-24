@@ -4,7 +4,8 @@ import { EmptyCard } from '@/components/EmptyCard'
 import { Barra, Panel, Resumen } from '@/components/panel'
 import { Button } from '@/components/ui/button'
 import { cargarResumenDeudas } from '../../lib/api'
-import { FRANQUICIA_ICONS, cop, fmtDate } from '../../lib/format'
+import { FRANQUICIA_ICONS, fmtDate } from '../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
@@ -35,6 +36,7 @@ function Item({ nombre, badge, sub, children, actions, className }: { nombre: st
 }
 
 function PrestamoCard({ d }: { d: Deuda }) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const frases = d.frases
   return (
@@ -91,6 +93,7 @@ function PrestamoCard({ d }: { d: Deuda }) {
 }
 
 function TarjetaCard({ d }: { d: Deuda }) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   return (
     <Item
@@ -136,6 +139,7 @@ function TarjetaCard({ d }: { d: Deuda }) {
 }
 
 function Terminada({ d }: { d: Deuda }) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const frases = d.frases
   return (
@@ -158,6 +162,7 @@ function Terminada({ d }: { d: Deuda }) {
 }
 
 export function Deudas({ active }: TabProps) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { loaded: cargado } = useData()
   const { data } = useVista('deudas', cargarResumenDeudas, DEPENDENCIAS_DE_VISTA.resumenDeudas)

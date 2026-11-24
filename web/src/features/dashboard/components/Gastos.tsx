@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cargarGastos } from '@/lib/api'
-import { cop, copShort, fmtDateShort } from '@/lib/format'
+import { fmtDateShort } from '@/lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { cn } from '@/lib/utils'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
@@ -10,6 +11,7 @@ import type { PeriodoGastos } from '@/types'
 import { Barra, FraseTexto, Panel, Periodos, Total } from '@/components/panel'
 
 export function Gastos() {
+  const { cop, copShort } = useMoneda()
   const [period, setPeriod] = useState<PeriodoGastos>('1M')
   const [abierta, setAbierta] = useState<string | null>(null)
   const { data: g } = useVista(period, () => cargarGastos(period), DEPENDENCIAS_DE_VISTA.gastos)

@@ -1,5 +1,5 @@
 import { Monto } from '@/components/monto'
-import { cop, copShort } from '@/lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { cn } from '@/lib/utils'
 import type { ParteResumen, ResumenDashboard } from '@/types'
 
@@ -16,6 +16,7 @@ const texto = (p: ParteResumen) => (p.id === 'balance' && p.negativo ? 'text-deu
 const ESQUELETO = [0, 1, 2, 3]
 
 export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading: boolean }) {
+  const { cop, copShort } = useMoneda()
   const partes = r?.partes ?? []
   const totalBarra = r?.total_barra ?? 0
   const proy = r?.proy_delta ?? 0

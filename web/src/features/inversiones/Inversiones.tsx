@@ -4,7 +4,8 @@ import { EmptyCard } from '@/components/EmptyCard'
 import { Monto, Tendencia } from '@/components/monto'
 import { Desactualizado, Panel, Resumen } from '@/components/panel'
 import { cargarResumenInversiones } from '../../lib/api'
-import { cop, fmtDate, pct } from '../../lib/format'
+import { fmtDate, pct } from '../../lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
@@ -32,6 +33,7 @@ function SinInversiones({ vacio }: { vacio: TextoVacio }) {
 }
 
 function InvCard({ inv }: { inv: Inversion }) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { estado } = useData()
   const gan = inv.ganancia
@@ -89,6 +91,7 @@ function InvCard({ inv }: { inv: Inversion }) {
 }
 
 export function Inversiones({ active }: TabProps) {
+  const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { loaded: cargado } = useData()
   const { data } = useVista('inv-resumen', cargarResumenInversiones, DEPENDENCIAS_DE_VISTA.resumenInversiones)
