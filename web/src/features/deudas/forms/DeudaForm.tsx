@@ -11,15 +11,17 @@ import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
 import type { Deuda } from '../../../types'
 
+const CLASE_TARJETA = 'tarjeta'
+
 export function DeudaForm({ d }: { d: Deuda | null }) {
   const meta = useMeta()
   const { guardar, eliminar, esEdicion: isEdit, etiquetaGuardar } = useGuardarEntidad('deuda', {
     item: d,
     conNuevo: (data) => ({ ...data, crear_tx: esNueva }),
   })
-  const [claseSel, setClaseSel] = useState<string | null>(d ? (d.es_tarjeta ? 'tarjeta' : 'prestamo') : null)
+  const [claseSel, setClaseSel] = useState<string | null>(d?.clase_deuda ?? null)
   const clase = claseSel ?? meta?.defaults.clase_deuda ?? ''
-  const esTarjeta = clase === 'tarjeta'
+  const esTarjeta = clase === CLASE_TARJETA
   const [nombre, setNombre] = useState(d?.nombre || '')
   const [montoIni, setMontoIni] = useState(d ? entero(d.monto_inicial) : '')
   const [cupo, setCupo] = useState(d ? entero(d.cupo) : '')
@@ -42,7 +44,7 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
       cuota_mensual: parseMoney(cuota),
       fecha_inicio: fechaIni,
       proxima_cuota: proxima,
-      es_tarjeta: esTarjeta,
+      clase_deuda: clase,
       cupo: parseMoney(cupo),
       franquicia: franquiciaActual,
     })

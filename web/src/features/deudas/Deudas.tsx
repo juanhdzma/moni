@@ -49,8 +49,11 @@ function PrestamoCard({ d }: { d: Deuda }) {
           <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d.id)}>
             Pagar cuota
           </button>
-          <button className="btn btn-dim btn-sm" onClick={() => openDeudaPayFormById(ctx, d.id, true)}>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaPayFormById(ctx, d.id, 'abono')}>
             Abonar
+          </button>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaPayFormById(ctx, d.id, 'liquidar')}>
+            Liquidar
           </button>
           <button className="btn btn-dim btn-sm" onClick={() => openDeudaFormById(ctx, d.id)}>
             Editar
@@ -106,8 +109,11 @@ function TarjetaCard({ d }: { d: Deuda }) {
       sub={d.frases?.detalle}
       actions={
         <>
-          <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d.id, true)}>
+          <button className="btn btn-accent btn-sm flex-1" onClick={() => openDeudaPayFormById(ctx, d.id, 'abono')}>
             Abonar
+          </button>
+          <button className="btn btn-dim btn-sm" onClick={() => openDeudaPayFormById(ctx, d.id, 'liquidar')}>
+            Liquidar
           </button>
           <button className="btn btn-dim btn-sm" onClick={() => openDeudaAdelantoFormById(ctx, d.id)}>
             Adelanto

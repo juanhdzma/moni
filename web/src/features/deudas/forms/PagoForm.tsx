@@ -12,26 +12,28 @@ import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from '@/shell/hooks/usePreview'
-import type { Deuda, DeudaPago } from '../../../types'
+import type { Deuda, DeudaPago, ModoPago } from '../../../types'
 import { openDeudaFormById } from './openers'
 
-export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
+export const ETIQUETA_PAGO: Record<ModoPago, string> = { cuota: 'Pagar cuota', abono: 'Abonar', liquidar: 'Liquidar' }
+
+const NOTAS_PAGO: Record<ModoPago, string> = { cuota: 'Ej. Cuota #14', abono: 'Ej. Abono extraordinario', liquidar: 'Liquidar la deuda' }
+
+export function PagoForm({ d, modo }: { d: Deuda; modo: ModoPago }) {
   const { cop } = useMoneda()
   const editar = useCerrarYAbrir((ctx) => openDeudaFormById(ctx, d.id))
   const guardar = useGuardar()
   const { apiAction } = useMutations()
-  const [monto, setMonto] = useState(liquidar ? entero(d.saldo_actual) : entero(d.cuota_mensual))
-  const [saldoNuevo, setSaldoNuevo] = useState(liquidar ? '0' : '')
+  const sugerido = d.pago[modo]
+  const [monto, setMonto] = useState(sugerido.monto === null ? '' : entero(sugerido.monto))
+  const [saldoNuevo, setSaldoNuevo] = useState(sugerido.nuevo_saldo === null ? '' : entero(sugerido.nuevo_saldo))
   const campos = useCamposMovimiento('')
-  const hint = liquidar
-    ? 'Ajustá si el banco cobra intereses adicionales al cancelar.'
-    : 'Pre-llenado con la cuota mensual — ajustá si aplica.'
 
   const total = parseMoney(monto)
   const saldoNuevoN = parseMoney(saldoNuevo)
   const showBreakdown = Boolean(total) && saldoNuevo.trim() !== ''
   const preview = usePreview(showBreakdown ? `${total}:${saldoNuevoN}` : null, () =>
-    previewPago(d.id, { total_pagado: total, nuevo_saldo: saldoNuevoN }),
+    previewPago(d.id, { total_pagado: total, nuevo_saldo: saldoNuevoN, modo }),
   )
 
   const save = async () => {
@@ -40,7 +42,7 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         ...(saldoNuevo.trim() && { nuevo_saldo: saldoNuevoN }),
         total_pagado: total,
         ...campos.cuerpo(),
-        avanzar_cuota: !liquidar,
+        modo,
       }
       await apiAction(`/api/deuda/${d.id}/pago`, body)
     })
@@ -52,7 +54,7 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
         izquierda={{ label: 'Saldo pendiente', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
         derecha={{ label: 'Cuota mensual', valor: cop(d.cuota_mensual) }}
       />
-      <MoneyField id="m-monto" label="Monto total pagado (COP)" value={monto} onChange={setMonto} hint={hint} />
+      <MoneyField id="m-monto" label="Monto total pagado (COP)" value={monto} onChange={setMonto} hint={sugerido.hint} />
       <MoneyField id="m-saldo-nuevo" label="Saldo capital después del pago" value={saldoNuevo} onChange={setSaldoNuevo} placeholder="Lo que muestra tu banco después" />
       <Breakdown id="pay-breakdown" visible={showBreakdown}>
         <BreakdownRow id="pay-capital" label="A capital">
@@ -65,10 +67,10 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
       <MovimientoCampos
         campos={campos}
         fechaLabel="Fecha del pago (ahora si se omite)"
-        notasPlaceholder={liquidar ? 'Abonar a la deuda' : 'Ej. Cuota #14'}
+        notasPlaceholder={NOTAS_PAGO[modo]}
       />
       <FormFooter
-        saveLabel={liquidar ? 'Abonar' : 'Registrar pago'}
+        saveLabel={ETIQUETA_PAGO[modo]}
         onSave={() => void save()}
         onEdit={editar}
         editLabel="Editar deuda"

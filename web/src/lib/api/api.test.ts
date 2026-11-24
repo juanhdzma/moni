@@ -93,11 +93,11 @@ test('el resumen de deudas llega con las filas tal cual, con id', async () => {
 test('previews y mutaciones nuevas mandan método, ruta, header y body', async () => {
   const fn = mockFetch({ json: () => Promise.resolve({}) })
   const mut = { 'X-Moni-Request': '1', 'Content-Type': 'application/json' }
-  await previewPago(3, { total_pagado: 10, nuevo_saldo: 5 })
+  await previewPago(3, { total_pagado: 10, nuevo_saldo: 5, modo: 'cuota' })
   expect(fn).toHaveBeenLastCalledWith('/api/deuda/3/pago/preview', {
     method: 'POST',
     headers: mut,
-    body: '{"total_pagado":10,"nuevo_saldo":5}',
+    body: '{"total_pagado":10,"nuevo_saldo":5,"modo":"cuota"}',
   })
   await agregarCategoria('gasto', 'Mascotas')
   expect(fn).toHaveBeenLastCalledWith('/api/categorias', { method: 'POST', headers: mut, body: '{"tipo":"gasto","nombre":"Mascotas"}' })

@@ -19,6 +19,14 @@ export interface DatoResumenDeudas {
   intereses_sufijo: string
 }
 
+export type ModoPago = 'cuota' | 'abono' | 'liquidar'
+
+export interface SugerenciaPago {
+  monto: number | null
+  nuevo_saldo: number | null
+  hint: string
+}
+
 export interface Deuda {
   id: number
   nombre: string
@@ -29,6 +37,8 @@ export interface Deuda {
   fecha_inicio: string
   proxima_cuota: string
   es_tarjeta: boolean
+  clase_deuda: string
+  pago: Record<ModoPago, SugerenciaPago>
   cupo: number
   franquicia: string
   activa: boolean
@@ -46,7 +56,7 @@ export interface Deuda {
 export type DeudaIn = Pick<
   Deuda,
   'nombre' | 'monto_inicial' | 'saldo_actual' | 'tasa_ea' | 'cuota_mensual' | 'fecha_inicio' | 'proxima_cuota' | 'cupo' | 'franquicia'
-> & { es_tarjeta: boolean; crear_tx?: boolean }
+> & { clase_deuda: string; crear_tx?: boolean }
 
 export interface DeudaPago {
   nuevo_saldo: number
@@ -56,7 +66,7 @@ export interface DeudaPago {
   descripcion?: string
   notas: string
   registrar_tx: boolean
-  avanzar_cuota: boolean
+  modo: ModoPago
   op_clave?: string | null
 }
 

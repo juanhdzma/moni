@@ -116,4 +116,30 @@ describe('Deudas render', () => {
     await user.keyboard('{Enter}')
     expect(dialog()).toHaveTextContent('Editar deuda')
   })
+
+  it.each([
+    ['deudas-grid-credito', 'Pagar cuota', 'Pagar cuota · Crédito carro'],
+    ['deudas-grid-credito', 'Abonar', 'Abonar · Crédito carro'],
+    ['deudas-grid-credito', 'Liquidar', 'Liquidar · Crédito carro'],
+    ['deudas-grid-tarjeta', 'Abonar', 'Abonar · Visa Oro'],
+    ['deudas-grid-tarjeta', 'Liquidar', 'Liquidar · Visa Oro'],
+  ])('%s: el botón %s abre el modo correspondiente', async (grid, boton, titulo) => {
+    const user = userEvent.setup()
+    conResumen()
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Crédito carro')
+    await user.click(within(document.getElementById(grid) as HTMLElement).getByRole('button', { name: boton }))
+    expect(await within(dialog()).findByRole('button', { name: boton })).toBeInTheDocument()
+    expect(dialog()).toHaveTextContent(titulo)
+  })
+
+  it('la card de crédito tiene los tres botones de pago y la de tarjeta no tiene Pagar cuota', async () => {
+    conResumen()
+    renderWithProviders(<Deudas active />, { estado: full() })
+    const credito = await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Crédito carro')
+    expect(credito).toBeInTheDocument()
+    const nombres = (id: string) => within(document.getElementById(id) as HTMLElement).getAllByRole('button').map((b) => b.textContent)
+    expect(nombres('deudas-grid-credito')).toEqual(['Pagar cuota', 'Abonar', 'Liquidar', 'Editar'])
+    expect(nombres('deudas-grid-tarjeta')).toEqual(['Abonar', 'Liquidar', 'Adelanto', 'Editar'])
+  })
 })

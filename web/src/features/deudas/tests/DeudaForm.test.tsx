@@ -33,7 +33,7 @@ describe('forms', () => {
         cuota_mensual: 100000,
         fecha_inicio: '',
         proxima_cuota: '',
-        es_tarjeta: false,
+        clase_deuda: 'prestamo',
         cupo: 0,
         franquicia: 'Visa',
         crear_tx: true,
@@ -78,7 +78,7 @@ describe('forms', () => {
         cuota_mensual: 0,
         fecha_inicio: '',
         proxima_cuota: '',
-        es_tarjeta: true,
+        clase_deuda: 'tarjeta',
         cupo: 3000000,
         franquicia: 'Visa',
         crear_tx: true,
@@ -96,7 +96,8 @@ describe('forms', () => {
     await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Saldo requerido'))
     expect(document.getElementById('m-status')).toHaveClass('err')
     expect(f.mutations()).toHaveLength(1)
-    expect(f.mutations()[0]?.body).toMatchObject({ nombre: 'X', saldo_actual: 0, es_tarjeta: false })
+    expect(f.mutations()[0]?.body).toMatchObject({ nombre: 'X', saldo_actual: 0, clase_deuda: 'prestamo' })
+    expect(f.mutations()[0]?.body).not.toHaveProperty('es_tarjeta')
   })
 
   it('error del backend se muestra en el modal', async () => {
@@ -135,7 +136,7 @@ describe('forms', () => {
         cuota_mensual: 500000,
         fecha_inicio: '',
         proxima_cuota: '2026-09-05',
-        es_tarjeta: false,
+        clase_deuda: 'prestamo',
         cupo: 0,
         franquicia: 'Visa',
       },

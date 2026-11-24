@@ -16,7 +16,7 @@ function Harness() {
       <div data-testid="banner">{banner}</div>
       <output data-testid="deudas">{versiones.deudas}</output>
       <output data-testid="transacciones">{versiones.transacciones}</output>
-      <button onClick={() => void crudOp('deuda', 'update', { ...deuda({ id: 7, nombre: 'X' }), es_tarjeta: false, crear_tx: false } as never)}>upd</button>
+      <button onClick={() => void crudOp('deuda', 'update', { ...deuda({ id: 7, nombre: 'X' }), clase_deuda: 'prestamo', crear_tx: false } as never)}>upd</button>
       <button onClick={() => void apiAction('/api/deuda/3/pago', { monto: 5 }).catch(err)}>act</button>
       <button onClick={() => void apiActionOrBanner('/api/rec/2/pausar')}>actb</button>
       <button onClick={() => void crudOp('tx', 'delete', { id: 9 })}>del</button>

@@ -1,4 +1,5 @@
 import type {
+  ModoPago,
   PreviewAdelanto,
   PreviewAporte,
   PreviewPago,
@@ -10,7 +11,7 @@ import { get, post, query } from './client'
 
 export const cargarTasa = (valor: number, tipo: 'ea' | 'mv') => get<Tasa>(`/api/calc/tasa${query({ valor, tipo })}`)
 
-export const previewPago = (id: number, body: { total_pagado: number; nuevo_saldo: number }) =>
+export const previewPago = (id: number, body: { total_pagado: number; nuevo_saldo: number; modo: ModoPago }) =>
   post<PreviewPago>(`/api/deuda/${id}/pago/preview`, body)
 export const previewAdelanto = (id: number, body: { monto: number; nuevo_saldo?: number; disponible_nuevo?: number }) =>
   post<PreviewAdelanto>(`/api/deuda/${id}/adelanto/preview`, body)

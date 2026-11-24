@@ -12,7 +12,7 @@ installFakeDate()
 describe('pago', () => {
   const pagar = (name: string) => within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText(name)
 
-  it('pagar cuota: avanzar_cuota true, desglose y body', async () => {
+  it('pagar cuota: modo cuota, desglose y body', async () => {
     const user = userEvent.setup()
     const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 400000, intereses: 100000 } })
     renderWithProviders(<Deudas active />, { estado: full() })
@@ -25,9 +25,9 @@ describe('pago', () => {
     await waitFor(() => expect(document.getElementById('pay-capital')).toHaveTextContent('400.000'))
     expect(document.getElementById('pay-intereses')).toHaveTextContent('100.000')
     const previews = f.mutations().filter((c) => c.url === '/api/deuda/1/pago/preview')
-    expect(previews.at(-1)).toMatchObject({ method: 'POST', headers: hdr, body: { total_pagado: 500000, nuevo_saldo: 5600000 } })
+    expect(previews.at(-1)).toMatchObject({ method: 'POST', headers: hdr, body: { total_pagado: 500000, nuevo_saldo: 5600000, modo: 'cuota' } })
     await user.type(document.getElementById('m-notas') as HTMLElement, ' Cuota #1 ')
-    await user.click(screen.getByText('Registrar pago'))
+    await user.click(within(dialog()).getByRole('button', { name: 'Pagar cuota' }))
     await waitFor(() => expect(acc(f)).toHaveLength(1))
     const m = acc(f)[0]
     expect(m).toMatchObject({ method: 'POST', url: '/api/deuda/1/pago', headers: hdr })
@@ -36,8 +36,9 @@ describe('pago', () => {
       total_pagado: 500000,
       notas: 'Cuota #1',
       registrar_tx: true,
-      avanzar_cuota: true,
+      modo: 'cuota',
     })
+    expect(m?.body).not.toHaveProperty('avanzar_cuota')
     expect(m?.body).not.toHaveProperty('intereses')
     expect(m?.body).not.toHaveProperty('descripcion')
     expect(m?.body).toMatchObject({ fecha: '' })
@@ -60,29 +61,54 @@ describe('pago', () => {
     await user.click(await pagar('Pagar cuota'))
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '5500000')
     await user.click(document.getElementById('m-es-nueva') as HTMLElement)
-    await user.click(screen.getByText('Registrar pago'))
+    await user.click(within(dialog()).getByRole('button', { name: 'Pagar cuota' }))
     await waitFor(() => expect(acc(f)).toHaveLength(1))
-    expect(acc(f)[0]?.body).toMatchObject({ registrar_tx: false, avanzar_cuota: true })
+    expect(acc(f)[0]?.body).toMatchObject({ registrar_tx: false, modo: 'cuota' })
   })
 
-  it('abonar (liquidar): prellenado, avanzar_cuota false', async () => {
+  it('abono: parte vacío, manda modo abono sin avanzar_cuota', async () => {
     const user = userEvent.setup()
-    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 6000000, intereses: 0 } })
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 900000, intereses: 100000 } })
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await pagar('Abonar'))
     expect(dialog()).toHaveTextContent('Abonar · Crédito carro')
+    expect(dialog()).toHaveTextContent('Ingresá cuánto abonaste.')
+    expect(document.getElementById('m-monto')).toHaveValue('')
+    expect(document.getElementById('m-saldo-nuevo')).toHaveValue('')
+    expect(document.getElementById('pay-breakdown')).not.toHaveClass('visible')
+    await user.type(document.getElementById('m-monto') as HTMLElement, '1000000')
+    await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '5000000')
+    await waitFor(() => expect(document.getElementById('pay-capital')).toHaveTextContent('900.000'))
+    const previews = f.mutations().filter((c) => c.url === '/api/deuda/1/pago/preview')
+    expect(previews.at(-1)).toMatchObject({ body: { total_pagado: 1000000, nuevo_saldo: 5000000, modo: 'abono' } })
+    await user.click(within(dialog()).getByRole('button', { name: 'Abonar' }))
+    await waitFor(() => expect(acc(f)).toHaveLength(1))
+    expect(acc(f)[0]).toMatchObject({
+      url: '/api/deuda/1/pago',
+      body: { nuevo_saldo: 5000000, total_pagado: 1000000, modo: 'abono', registrar_tx: true },
+    })
+    expect(acc(f)[0]?.body).not.toHaveProperty('avanzar_cuota')
+  })
+
+  it('liquidar: prellenado con el saldo completo, modo liquidar', async () => {
+    const user = userEvent.setup()
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 6000000, intereses: 0 } })
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await user.click(await pagar('Liquidar'))
+    expect(dialog()).toHaveTextContent('Liquidar · Crédito carro')
     expect(document.getElementById('m-monto')).toHaveValue('6.000.000')
     expect(document.getElementById('m-saldo-nuevo')).toHaveValue('0')
     expect(document.getElementById('pay-breakdown')).toHaveClass('visible')
     await waitFor(() => expect(document.getElementById('pay-capital')).toHaveTextContent('6.000.000'))
     expect(document.getElementById('pay-intereses')).toHaveTextContent('0')
-    expect(f.mutations()[0]).toMatchObject({ url: '/api/deuda/1/pago/preview', body: { total_pagado: 6000000, nuevo_saldo: 0 } })
-    await user.click(within(dialog()).getByRole('button', { name: 'Abonar' }))
+    expect(f.mutations()[0]).toMatchObject({ url: '/api/deuda/1/pago/preview', body: { total_pagado: 6000000, nuevo_saldo: 0, modo: 'liquidar' } })
+    await user.click(within(dialog()).getByRole('button', { name: 'Liquidar' }))
     await waitFor(() => expect(acc(f)).toHaveLength(1))
     expect(acc(f)[0]).toMatchObject({
       url: '/api/deuda/1/pago',
-      body: { nuevo_saldo: 0, total_pagado: 6000000, avanzar_cuota: false, registrar_tx: true },
+      body: { nuevo_saldo: 0, total_pagado: 6000000, modo: 'liquidar', registrar_tx: true },
     })
+    expect(acc(f)[0]?.body).not.toHaveProperty('avanzar_cuota')
   })
 
   it('sin saldo nuevo no valida en el cliente: omite nuevo_saldo y muestra el 422 del backend', async () => {
@@ -92,7 +118,7 @@ describe('pago', () => {
     })
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await pagar('Pagar cuota'))
-    await user.click(screen.getByText('Registrar pago'))
+    await user.click(within(dialog()).getByRole('button', { name: 'Pagar cuota' }))
     await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Campo requerido'))
     const m = f.mutations().filter((c) => c.url === '/api/deuda/1/pago')
     expect(m).toHaveLength(1)
@@ -108,7 +134,7 @@ describe('pago', () => {
     await user.click(await pagar('Pagar cuota'))
     await user.clear(document.getElementById('m-monto') as HTMLElement)
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '5600000')
-    await user.click(screen.getByText('Registrar pago'))
+    await user.click(within(dialog()).getByRole('button', { name: 'Pagar cuota' }))
     await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Debe ser mayor que 0'))
     expect(f.mutations().filter((c) => c.url === '/api/deuda/1/pago')).toHaveLength(1)
   })
@@ -119,7 +145,7 @@ describe('pago', () => {
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await pagar('Pagar cuota'))
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '7000000')
-    await user.click(screen.getByText('Registrar pago'))
+    await user.click(within(dialog()).getByRole('button', { name: 'Pagar cuota' }))
     await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('no puede superar el saldo actual'))
     expect(f.mutations().filter((c) => c.url === '/api/deuda/1/pago')).toHaveLength(1)
   })

@@ -32,6 +32,12 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
   fecha_inicio: '',
   proxima_cuota: '',
   es_tarjeta: false,
+  clase_deuda: 'prestamo',
+  pago: {
+    cuota: { monto: null, nuevo_saldo: null, hint: 'Ingresá cuánto pagaste.' },
+    abono: { monto: null, nuevo_saldo: null, hint: 'Ingresá cuánto abonaste.' },
+    liquidar: { monto: 0, nuevo_saldo: 0, hint: 'Ajustá si el banco cobra intereses adicionales al cancelar.' },
+  },
   cupo: 0,
   franquicia: '',
   activa: false,

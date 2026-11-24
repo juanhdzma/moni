@@ -1,9 +1,9 @@
 import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
 import { cargarDeuda } from '../../../lib/api'
-import type { Deuda } from '../../../types'
+import type { Deuda, ModoPago } from '../../../types'
 import { AdelantoForm } from './AdelantoForm'
 import { DeudaForm } from './DeudaForm'
-import { PagoForm } from './PagoForm'
+import { ETIQUETA_PAGO, PagoForm } from './PagoForm'
 
 export function openDeudaForm(ctx: OpenerCtx, d: Deuda | null = null): void {
   ctx.openModal(d ? 'Editar deuda' : 'Nueva deuda', <DeudaForm d={d} />)
@@ -13,11 +13,11 @@ export function openDeudaFormById(ctx: OpenerCtx, id: number): void {
   openConFila(ctx, () => cargarDeuda(id), (d) => openDeudaForm(ctx, d))
 }
 
-export function openDeudaPayFormById(ctx: OpenerCtx, id: number, liquidar = false): void {
+export function openDeudaPayFormById(ctx: OpenerCtx, id: number, modo: ModoPago = 'cuota'): void {
   openConFila(
     ctx,
     () => cargarDeuda(id),
-    (d) => ctx.openModal(liquidar ? `Abonar · ${d.nombre}` : `Pagar cuota · ${d.nombre}`, <PagoForm d={d} liquidar={liquidar} />),
+    (d) => ctx.openModal(`${ETIQUETA_PAGO[modo]} · ${d.nombre}`, <PagoForm d={d} modo={modo} />),
   )
 }
 
