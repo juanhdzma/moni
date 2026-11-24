@@ -1,14 +1,6 @@
-import type { CrudEntity } from '@/types'
+import type { Entidad } from '@/types'
 
-export type Entidad =
-  | 'transacciones'
-  | 'deudas'
-  | 'inversiones'
-  | 'activos'
-  | 'recurrentes'
-  | 'categorias'
-  | 'ajustes'
-  | 'opsOcultas'
+export type { Entidad }
 
 export const TODAS_LAS_ENTIDADES: Entidad[] = [
   'transacciones',
@@ -38,45 +30,10 @@ const ENTIDADES_DEL_BOOTSTRAP: Entidad[] = ['activos', 'inversiones', 'ajustes',
 
 export const afectaAlBootstrap = (afectadas: Entidad[]): boolean => afectadas.some((e) => ENTIDADES_DEL_BOOTSTRAP.includes(e))
 
-type Accion = 'add' | 'update' | 'delete'
-
-const ENTIDAD_POR_RECURSO: Record<CrudEntity, Entidad> = {
-  tx: 'transacciones',
-  deuda: 'deudas',
-  inv: 'inversiones',
-  activo: 'activos',
-  rec: 'recurrentes',
-}
-
-const ACCIONES_CON_MOVIMIENTO = ['pago', 'adelanto', 'aporte', 'retiro', 'venta', 'rendimiento']
-const ACCIONES_SIN_MOVIMIENTO = ['valor', 'pausar']
-
-const conOpOculta = (entidades: Entidad[], opClave: string | null): Entidad[] => (opClave ? [...entidades, 'opsOcultas'] : entidades)
-
-const escribeTx = (cuerpo: Record<string, unknown>): boolean => cuerpo.registrar_tx !== false && cuerpo.capitaliza !== true
-
-export function entidadesAfectadasPor(recurso: CrudEntity, accion: Accion, payload: object, opClave: string | null = null): Entidad[] {
-  const cuerpo = payload as Record<string, unknown>
-  const propia = ENTIDAD_POR_RECURSO[recurso]
-  if (recurso === 'tx') {
-    const tocaTarjeta = accion !== 'add' || cuerpo.tarjeta_id != null
-    return conOpOculta(tocaTarjeta ? ['transacciones', 'deudas'] : ['transacciones'], opClave)
-  }
-  const escribeMovimiento = accion === 'add' ? cuerpo.crear_tx === true : accion === 'delete' && recurso === 'deuda'
-  return escribeMovimiento ? [propia, 'transacciones'] : [propia]
-}
-
-export function entidadesAfectadasPorRuta(path: string, payload: unknown = null, opClave: string | null = null): Entidad[] {
-  if (/^\/api\/ops-ocultas(?:[/?]|$)/.test(path)) return ['opsOcultas']
-  const m = /^\/api\/(deuda|inv|activo|rec)\/\d+\/([a-z]+)$/.exec(path)
-  const recurso = m?.[1] as CrudEntity | undefined
-  const accion = m?.[2] ?? ''
-  if (!recurso) return TODAS_LAS_ENTIDADES
-  const propia = ENTIDAD_POR_RECURSO[recurso]
-  if (ACCIONES_SIN_MOVIMIENTO.includes(accion)) return [propia]
-  if (!ACCIONES_CON_MOVIMIENTO.includes(accion)) return TODAS_LAS_ENTIDADES
-  const cuerpo = typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>) : {}
-  return conOpOculta(escribeTx(cuerpo) ? [propia, 'transacciones'] : [propia], opClave)
+export function entidadesDeHeader(valor: string | null): Entidad[] {
+  if (!valor) return TODAS_LAS_ENTIDADES
+  const nombres = valor.split(',').map((n) => n.trim())
+  return nombres.every((n) => TODAS_LAS_ENTIDADES.includes(n as Entidad)) ? (nombres as Entidad[]) : TODAS_LAS_ENTIDADES
 }
 
 export function subirVersiones(actuales: Versiones, afectadas: Entidad[]): Versiones {

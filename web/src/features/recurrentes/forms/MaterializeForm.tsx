@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Cargando } from '@/components/Cargando'
 import { FormFooter } from '../../../controls/FormFooter'
-import { numToInput } from '../../../lib/format'
+import { entero } from '../../../lib/format'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { CamposTx, cuerpoTx, useOpcionesTx } from '../../transacciones'
@@ -11,11 +11,11 @@ export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string
   const opciones = useOpcionesTx()
   const guardar = useGuardar()
   const { crudOp } = useMutations()
-  const tipo = r.tipo === 'ingreso' ? 'ingreso' : 'gasto'
+  const tipo = r.tipo
   const [valores, setValores] = useState({
     categoria: r.categoria_sugerida,
     descripcion: r.nombre,
-    monto: numToInput(r.monto),
+    monto: entero(r.monto),
     fecha: dateISO,
     notas: '',
   })

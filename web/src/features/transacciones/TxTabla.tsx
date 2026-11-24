@@ -1,7 +1,7 @@
 import { Monto } from '@/components/monto'
 import { cn } from '@/lib/utils'
 import { FRANQUICIA_ICONS, fmtDate } from '../../lib/format'
-import type { FilaTx } from '../../types'
+import type { FilaTx, TextoVacio } from '../../types'
 
 function PmCell({ t }: { t: FilaTx }) {
   const icon = t.tipo === 'gasto' && t.tarjeta_id ? FRANQUICIA_ICONS[t.tarjeta_franquicia ?? ''] || FRANQUICIA_ICONS.Otra : 'assets/icons/efectivo.svg'
@@ -77,17 +77,18 @@ const mensaje = (key: string, children: React.ReactNode) => (
 interface FilasProps {
   items: FilaTx[] | null
   agrupar: boolean
+  textoVacio?: TextoVacio
   onEdit: (id: number) => void
 }
 
-export function FilasTx({ items, agrupar, onEdit }: FilasProps) {
+export function FilasTx({ items, agrupar, textoVacio, onEdit }: FilasProps) {
   if (!items) return mensaje('loading', 'Cargando...')
   if (!items.length) {
     return mensaje(
       'empty',
       <>
-        <div className="font-semibold text-foreground">Sin movimientos</div>
-        <div>Agregá un ingreso o gasto con el botón de arriba.</div>
+        <div className="font-semibold text-foreground">{textoVacio?.titulo}</div>
+        <div>{textoVacio?.texto}</div>
       </>,
     )
   }

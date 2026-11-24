@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function CategoriaInput({ id, etiqueta, onAgregar, autoFocus, botonClassName }: Props) {
+  const meta = useMeta()
   const [nombre, setNombre] = useState('')
 
   const agregar = () => {
@@ -25,7 +27,7 @@ export function CategoriaInput({ id, etiqueta, onAgregar, autoFocus, botonClassN
         className="form-input"
         type="text"
         id={id}
-        maxLength={25}
+        maxLength={meta?.categoria_largo_max}
         placeholder="Nueva categoría"
         autoFocus={autoFocus}
         value={nombre}

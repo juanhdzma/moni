@@ -10,7 +10,7 @@ import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
-import type { Inversion } from '../../types'
+import type { Inversion, TextoVacio } from '../../types'
 import {
   openInvAddMoreFormById,
   openInvForm,
@@ -18,14 +18,14 @@ import {
   openInvRetirarFormById,
   openInvUpdateValueFormById,
   openInvYieldFormById,
-} from './forms'
+} from './forms/openers'
 
-function SinInversiones({ label }: { label: string }) {
+function SinInversiones({ vacio }: { vacio: TextoVacio }) {
   return (
     <EmptyCard
       como="li"
-      titulo={`Sin ${label}`}
-      texto="Agregá una con el botón + de arriba."
+      titulo={vacio.titulo}
+      texto={vacio.texto}
       icono={<TrendingUp className="size-5" aria-hidden="true" />}
     />
   )
@@ -128,12 +128,12 @@ export function Inversiones({ active }: TabProps) {
         <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
           <Panel id="inv-fijas" titulo="Fijas">
             <ul id="inv-grid-fija" className="card-list divide-y">
-              {loaded && (fijas.length ? fijas.map((i) => <InvCard key={i.id} inv={i} />) : <SinInversiones label="inversiones fijas" />)}
+              {loaded && (fijas.length ? fijas.map((i) => <InvCard key={i.id} inv={i} />) : data && <SinInversiones vacio={data.texto_vacio_fijas} />)}
             </ul>
           </Panel>
           <Panel id="inv-variables" titulo="Variables">
             <ul id="inv-grid-variable" className="card-list divide-y">
-              {loaded && (variables.length ? variables.map((i) => <InvCard key={i.id} inv={i} />) : <SinInversiones label="inversiones variables" />)}
+              {loaded && (variables.length ? variables.map((i) => <InvCard key={i.id} inv={i} />) : data && <SinInversiones vacio={data.texto_vacio_variables} />)}
             </ul>
           </Panel>
         </div>

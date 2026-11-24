@@ -20,7 +20,6 @@ export const CDT = inversion({
   valor_actualizado_en: '2026-11-01',
   ganancia: 10_000,
   ganancia_pct: 1,
-  tasa_mv: 0.9489,
   texto_tasa: '12,00% EA · 0,9489% MV',
   rendimiento_esperado: 9584,
   capitaliza_default: true,
@@ -61,6 +60,8 @@ const RESUMEN: ResumenInversiones = {
   ],
   fijas: [CDT],
   variables: [FONDO],
+  texto_vacio_fijas: { titulo: 'Sin inversiones fijas', texto: 'Agregá una con el botón + de arriba.' },
+  texto_vacio_variables: { titulo: 'Sin inversiones variables', texto: 'Agregá una con el botón + de arriba.' },
 }
 
 const resumenDe = (invs: Inversion[]): ResumenInversiones =>

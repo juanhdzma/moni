@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Breakdown, BreakdownRow } from '../../../controls/Breakdown'
+import { BreakdownVariacion } from '../../../controls/BreakdownVariacion'
 import { FechaField } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
@@ -37,14 +37,14 @@ export function ActivoValorForm({ activo: a }: { activo: Activo }) {
         derecha={{ label: 'Vs. precio inicial', valor: <Variacion valor={a.cambio} porcentaje={a.cambio_pct} /> }}
       />
       <MoneyField id="m-nuevo-valor" label="Nuevo valor (COP)" value={nuevoTxt} onChange={setNuevoTxt} />
-      <Breakdown id="activo-update-preview" visible={nuevo > 0 && prev !== null}>
-        <BreakdownRow id="activo-delta" label="Cambio desde último">
-          <Variacion valor={prev?.delta ?? 0} />
-        </BreakdownRow>
-        <BreakdownRow id="activo-total" label="Variación vs precio inicial">
-          <Variacion valor={prev?.total ?? 0} porcentaje={prev?.total_pct ?? 0} />
-        </BreakdownRow>
-      </Breakdown>
+      <BreakdownVariacion
+        id="activo-update-preview"
+        idDelta="activo-delta"
+        idTotal="activo-total"
+        labelTotal="Variación vs precio inicial"
+        visible={nuevo > 0 && prev !== null}
+        preview={prev}
+      />
       <FechaField id="m-fecha" label="Fecha de valoración (hoy si se omite)" value={fecha} onChange={setFecha} />
       <FormFooter
         saveLabel="Actualizar"

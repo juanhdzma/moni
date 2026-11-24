@@ -34,7 +34,8 @@ describe('Deudas render', () => {
     expect(within(tar).getByAltText('Visa')).toHaveAttribute('src', 'assets/franquicias/visa.svg')
     const term = document.getElementById('deudas-terminados') as HTMLElement
     expect(within(term).getByText('Préstamos terminados')).toBeInTheDocument()
-    expect(within(term).getByText('Saldado')).toBeInTheDocument()
+    expect(within(term).getByText('Saldada')).toBeInTheDocument()
+    expect(within(term).getByText('capital pagado en total')).toBeInTheDocument()
     expect(within(term).getByText(/en intereses/)).toBeInTheDocument()
   })
 
@@ -81,6 +82,7 @@ describe('Deudas render', () => {
     expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(1)
     expect(screen.getByText('Agregá uno con el botón + de arriba.')).toBeInTheDocument()
     expect(screen.getByText('Sin tarjetas')).toBeInTheDocument()
+    expect(screen.getByText('Agregá una con el botón + de arriba.')).toBeInTheDocument()
     expect(document.getElementById('deudas-terminados')?.children).toHaveLength(0)
     expect(document.getElementById('deudas-total')).not.toHaveTextContent('pagados en intereses')
   })

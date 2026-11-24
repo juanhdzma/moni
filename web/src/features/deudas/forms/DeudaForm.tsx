@@ -6,33 +6,35 @@ import { MoneyField } from '../../../controls/MoneyField'
 import { NombreField } from '../../../controls/NombreField'
 import { Select } from '../../../controls/Select'
 import { TipoToggle } from '../../../controls/TipoToggle'
-import { numToInput, parseMoney, soloFecha } from '../../../lib/format'
-import { useConfirmDelete } from '@/shell/hooks/useConfirmDelete'
-import { useGuardar } from '@/shell/hooks/useGuardar'
+import { entero, parseMoney, soloFecha } from '../../../lib/format'
+import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
-import { useMutations } from '@/shell/hooks/useMutations'
-import type { Deuda, DeudaIn } from '../../../types'
+import type { Deuda } from '../../../types'
 
 export function DeudaForm({ d }: { d: Deuda | null }) {
-  const guardar = useGuardar()
-  const { crudOp } = useMutations()
   const meta = useMeta()
-  const eliminar = useConfirmDelete('deuda', d, `¿Eliminar "${d?.nombre}"?`)
-  const isEdit = d !== null
-  const [esTarjeta, setEsTarjeta] = useState(d?.es_tarjeta ?? false)
+  const { guardar, eliminar, esEdicion: isEdit, etiquetaGuardar } = useGuardarEntidad('deuda', {
+    item: d,
+    conNuevo: (data) => ({ ...data, crear_tx: esNueva }),
+  })
+  const [claseSel, setClaseSel] = useState<string | null>(d ? (d.es_tarjeta ? 'tarjeta' : 'prestamo') : null)
+  const clase = claseSel ?? meta?.defaults.clase_deuda ?? ''
+  const esTarjeta = clase === 'tarjeta'
   const [nombre, setNombre] = useState(d?.nombre || '')
-  const [montoIni, setMontoIni] = useState(d ? numToInput(d.monto_inicial) : '')
-  const [cupo, setCupo] = useState(d ? numToInput(d.cupo) : '')
-  const [franquicia, setFranquicia] = useState(d?.franquicia || 'Visa')
-  const [saldo, setSaldo] = useState(d ? numToInput(d.saldo_actual) : '')
+  const [montoIni, setMontoIni] = useState(d ? entero(d.monto_inicial) : '')
+  const [cupo, setCupo] = useState(d ? entero(d.cupo) : '')
+  const [franquicia, setFranquicia] = useState(d?.franquicia || null)
+  const [saldo, setSaldo] = useState(d ? entero(d.saldo_actual) : '')
   const [tasa, setTasa] = useState(d?.tasa_ea ? String(d.tasa_ea) : '')
-  const [cuota, setCuota] = useState(d ? numToInput(d.cuota_mensual) : '')
+  const [cuota, setCuota] = useState(d ? entero(d.cuota_mensual) : '')
   const [fechaIni, setFechaIni] = useState(soloFecha(d?.fecha_inicio))
   const [proxima, setProxima] = useState(soloFecha(d?.proxima_cuota))
   const [esNueva, setEsNueva] = useState(true)
 
+  const franquiciaActual = franquicia ?? meta?.defaults.franquicia ?? ''
+
   const save = async () => {
-    const data: DeudaIn = {
+    await guardar({
       nombre: nombre.trim(),
       monto_inicial: parseMoney(montoIni),
       saldo_actual: parseMoney(saldo),
@@ -42,20 +44,16 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
       proxima_cuota: proxima,
       es_tarjeta: esTarjeta,
       cupo: parseMoney(cupo),
-      franquicia,
-    }
-    await guardar(async () => {
-      if (d) await crudOp('deuda', 'update', { ...data, id: d.id })
-      else await crudOp('deuda', 'add', { ...data, crear_tx: esNueva })
+      franquicia: franquiciaActual,
     })
   }
 
   return (
     <>
       <TipoToggle
-        value={esTarjeta ? 'tarjeta' : 'prestamo'}
+        value={clase}
         opciones={meta?.clases_deuda ?? []}
-        onChange={(v) => setEsTarjeta(v === 'tarjeta')}
+        onChange={setClaseSel}
       />
       <NombreField value={nombre} onChange={setNombre} placeholder={esTarjeta ? 'Ej. Tarjeta Visa' : 'Ej. Crédito de consumo'} />
       {!esTarjeta && (
@@ -68,7 +66,7 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
           <MoneyField id="m-cupo" label="Cupo (COP)" value={cupo} onChange={setCupo} />
           <div className="form-group">
             <label className="form-label" htmlFor="m-franquicia">Franquicia</label>
-            <Select id="m-franquicia" value={franquicia} onChange={setFranquicia} options={meta?.franquicias ?? []} />
+            <Select id="m-franquicia" value={franquiciaActual} onChange={setFranquicia} options={meta?.franquicias ?? []} />
           </div>
         </div>
       )}
@@ -113,7 +111,7 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
           {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
         </div>
       )}
-      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar deuda'} onSave={() => void save()} onDelete={eliminar} />
+      <FormFooter saveLabel={etiquetaGuardar('Agregar deuda')} onSave={() => void save()} onDelete={eliminar} />
     </>
   )
 }

@@ -1,6 +1,7 @@
 interface ApiFetchOptions {
   method?: string
   body?: unknown
+  onAfectadas?: (header: string | null) => void
 }
 
 function mensajeDeError(j: unknown, status: number): string {
@@ -82,6 +83,7 @@ export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions 
     else if (res.status === 401 && !esRutaDeLogin(path)) authEvents?.noAutenticado()
     throw new ApiError(msg, res.status, bloqueo)
   }
+  opts.onAfectadas?.(res.headers.get('X-Moni-Afectadas'))
   if (res.status === 204) return null as T
   return (await res.json()) as T
 }

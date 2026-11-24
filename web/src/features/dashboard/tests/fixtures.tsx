@@ -57,6 +57,8 @@ export const ESTE_MES: EsteMes = {
   ingresos: 1000000,
   gastos: 200000,
   quedo: 800000,
+  titulo_quedo: 'Te quedó',
+  texto_tarjeta: 'Lo pagado con tarjeta no sale de la cartera.',
   frase: FRASE_QUEDO,
   descripcion_grafico: 'Entró y salió por mes, últimos 6 meses',
   meses: [
@@ -69,6 +71,8 @@ export const GASTOS: GastosPeriodo = {
   periodo: '1M',
   total: 250000,
   max: 200000,
+  texto_vacio: 'Sin gastos para este período',
+  texto_total: 'Total gastado, con tarjetas',
   top: { categoria: 'Comida', valor: 200000, pct: 80 },
   frase: frase(['Comida', 'fuerte'], ' se lleva el ', ['80%', 'fuerte'], ' de lo que gastaste en el último mes.'),
   categorias: [

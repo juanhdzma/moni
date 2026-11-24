@@ -1,4 +1,4 @@
-import type { PagoInv, ProximoPago, Segmento, TipoInv } from './comun'
+import type { PagoInv, ProximoPago, Segmento, TextoVacio, TipoInv } from './comun'
 
 export interface Inversion {
   id: number
@@ -13,7 +13,6 @@ export interface Inversion {
   valor_actualizado_en: string
   ganancia: number
   ganancia_pct: number
-  tasa_mv: number | null
   proximo_pago: ProximoPago | null
   rendimiento_esperado: number | null
   desactualizado: boolean
@@ -60,6 +59,8 @@ export interface ResumenInversiones {
   texto_posiciones: string
   fijas: Inversion[]
   variables: Inversion[]
+  texto_vacio_fijas: TextoVacio
+  texto_vacio_variables: TextoVacio
 }
 
 export interface PreviewAporte {

@@ -1,17 +1,15 @@
 import type { ReactNode } from 'react'
 import { FechaNotas } from '../../../controls/FormFields'
-import { Hint } from '../../../controls/Hint'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
 import { Select } from '../../../controls/Select'
 import { cargarOpcionesTx } from '../../../lib/api/transacciones'
 import { parseMoney } from '../../../lib/format'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
+import type { TipoRec } from '../../../types'
 import { NuevaCategoria } from './NuevaCategoria'
 
 const SIN_CATEGORIAS = 'Sin categorías — agregá una con +'
-
-type TipoManual = 'ingreso' | 'gasto'
 
 export interface ValoresTx {
   categoria: string
@@ -24,7 +22,7 @@ export interface ValoresTx {
 export const useOpcionesTx = (txId?: number) =>
   useVista(`tx-opciones:${txId ?? 'nuevo'}`, () => cargarOpcionesTx(txId), DEPENDENCIAS_DE_VISTA.opcionesTransaccion).data
 
-export const cuerpoTx = (tipo: TipoManual, v: ValoresTx, tarjetaId: number | null) => ({
+export const cuerpoTx = (tipo: TipoRec, v: ValoresTx, tarjetaId: number | null) => ({
   fecha: v.fecha,
   tipo,
   categoria: v.categoria,
@@ -35,7 +33,7 @@ export const cuerpoTx = (tipo: TipoManual, v: ValoresTx, tarjetaId: number | nul
 })
 
 interface Props {
-  tipo: TipoManual
+  tipo: TipoRec
   categorias: string[]
   valores: ValoresTx
   onCambio: (parcial: Partial<ValoresTx>) => void
@@ -72,11 +70,7 @@ export function CamposTx({ tipo, categorias, valores, onCambio, fechaType, ayuda
           onChange={(e) => onCambio({ descripcion: e.target.value })}
         />
       </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-monto">Monto (COP)</label>
-        <MoneyInput id="m-monto" value={valores.monto} onChange={(monto) => onCambio({ monto })} ariaLabel="Monto (COP)" />
-        {ayudaMonto && <Hint>{ayudaMonto}</Hint>}
-      </div>
+      <MoneyField id="m-monto" label="Monto (COP)" value={valores.monto} onChange={(monto) => onCambio({ monto })} hint={ayudaMonto} />
       {children}
       <FechaNotas
         fechaType={fechaType}

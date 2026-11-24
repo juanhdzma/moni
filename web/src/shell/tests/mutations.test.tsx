@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { failure, mockFetch } from '../../test/mockFetch'
+import { conAfectadas, failure, mockFetch } from '../../test/mockFetch'
 import { renderWithProviders } from '../../test/render'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
@@ -85,6 +85,25 @@ describe('mutaciones', () => {
     await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
     expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     expect(f.mutations()[0]?.body).toEqual({ monto: 5 })
+  })
+
+  it('usa las entidades del header X-Moni-Afectadas, no el payload', async () => {
+    const user = userEvent.setup()
+    mockFetch({ 'POST /api/tx': conAfectadas({}, 'transacciones,deudas') })
+    renderWithProviders(<Harness />)
+    await user.click(screen.getByText('add'))
+    await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
+    expect(screen.getByTestId('transacciones')).toHaveTextContent('1')
+  })
+
+  it('sin header invalida todo, incluido el bootstrap', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch({ 'POST /api/deuda/3/pago': new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }) })
+    renderWithProviders(<Harness />)
+    await user.click(screen.getByText('act'))
+    await waitFor(() => expect(screen.getByTestId('transacciones')).toHaveTextContent('1'))
+    expect(screen.getByTestId('deudas')).toHaveTextContent('1')
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
   })
 
   it('crudOp propaga el error y no recarga', async () => {

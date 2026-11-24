@@ -8,15 +8,33 @@ export interface Opcion<T extends string = string> {
   label: string
 }
 
-export interface OpcionConAyuda extends Opcion {
+export interface OpcionConTono<T extends string = string> extends Opcion<T> {
+  tono?: TipoRec | null
+}
+
+export interface OpcionConAyuda extends OpcionConTono {
   hint: string
 }
+
+export interface TextoVacio {
+  titulo: string
+  texto: string
+}
+
+export type Entidad =
+  | 'transacciones'
+  | 'deudas'
+  | 'inversiones'
+  | 'activos'
+  | 'recurrentes'
+  | 'categorias'
+  | 'ajustes'
+  | 'opsOcultas'
 
 export type Nivel = 'alto' | 'medio' | 'bajo'
 
 export interface ProximoPago {
   fecha: string
-  dias: number
   texto: string
 }
 

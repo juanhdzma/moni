@@ -28,8 +28,8 @@ export function EsteMes() {
           <dd className="font-medium">{r ? <Monto valor={-r.gastos} color="ninguno" className="text-deudas" /> : '—'}</dd>
         </div>
       </dl>
-      <Total label="Te quedó" valor={loading ? '—' : <Monto valor={quedo} signo="negativo" color="negativo" />} />
-      <p className="mt-1 text-xs text-muted-foreground">Lo pagado con tarjeta no sale de la cartera.</p>
+      <Total label={r?.titulo_quedo ?? ''} valor={loading ? '—' : <Monto valor={quedo} signo="negativo" color="negativo" />} />
+      <p className="mt-1 text-xs text-muted-foreground">{r?.texto_tarjeta}</p>
       {r && (
         <ChartContainer config={config} className="mt-4 aspect-auto h-[120px] w-full" aria-label={r.descripcion_grafico}>
           <BarChart data={r.meses} margin={{ left: 0, right: 0, top: 4, bottom: 0 }} barGap={2}>

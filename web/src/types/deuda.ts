@@ -1,4 +1,4 @@
-import type { Nivel, Segmento } from './comun'
+import type { Nivel, Segmento, TextoVacio } from './comun'
 
 export interface FrasesDeuda {
   detalle: string
@@ -8,6 +8,8 @@ export interface FrasesDeuda {
   intereses_ayuda: string
   intereses_saldada_texto: string | null
   disponible_texto: string | null
+  saldada_badge: string
+  capital_pagado_texto: string
 }
 
 export interface DatoResumenDeudas {
@@ -29,12 +31,10 @@ export interface Deuda {
   es_tarjeta: boolean
   cupo: number
   franquicia: string
-  total_intereses: number
   activa: boolean
   vigente: boolean
   progreso_pct: number
   capital_pagado: number
-  meses_restantes?: number | null
   nivel_progreso: Nivel
   disponible: number | null
   tiene_cupo: boolean
@@ -72,13 +72,13 @@ export interface DeudaAdelanto {
 
 export interface ResumenDeudas {
   total: number
-  total_intereses: number
   segmentos: Segmento[]
   dato: DatoResumenDeudas
   creditos: Deuda[]
   tarjetas: Deuda[]
   terminadas: Deuda[]
-  texto_vacio_creditos: { titulo: string; texto: string }
+  texto_vacio_creditos: TextoVacio
+  texto_vacio_tarjetas: TextoVacio
 }
 
 export interface PreviewPago {

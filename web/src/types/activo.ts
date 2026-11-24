@@ -28,7 +28,6 @@ export interface ActivoValor {
 }
 
 export interface ResumenActivos {
-  total_inicial: number
   total_actual: number
   variacion: number
   mostrar_variacion: boolean

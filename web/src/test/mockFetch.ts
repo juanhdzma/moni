@@ -11,6 +11,7 @@ import type {
   ProximasOperaciones,
   ResumenDashboard,
 } from '../types'
+import { afectadasPorDefecto, HEADER_AFECTADAS } from './afectadas'
 import { estado } from './factories'
 import { filaRegistrada } from './filas'
 import { META } from './meta'
@@ -46,7 +47,7 @@ const EVOLUCION: Evolucion = {
   frase: { texto: '', partes: [] },
 }
 
-const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, quedo: 0, frase: FRASE_SIN_INGRESOS, descripcion_grafico: 'Entró y salió por mes, últimos 6 meses', meses: [] }
+const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, quedo: 0, titulo_quedo: 'Te quedó', texto_tarjeta: 'Lo pagado con tarjeta no sale de la cartera.', frase: FRASE_SIN_INGRESOS, descripcion_grafico: 'Entró y salió por mes, últimos 6 meses', meses: [] }
 
 const GASTOS: GastosPeriodo = {
   periodo: '1M',
@@ -55,6 +56,8 @@ const GASTOS: GastosPeriodo = {
   top: null,
   frase: null,
   categorias: [],
+  texto_vacio: 'Sin gastos para este período',
+  texto_total: 'Total gastado, con tarjetas',
 }
 
 const MOVIMIENTOS: Movimientos = { items: [] }
@@ -66,7 +69,8 @@ const LISTADO_TX: ListadoTx = {
   filtros: { tipo: '', mes: '', cat: '' },
   opciones: { meses: [], categorias: [], tipos: [] },
   pills: [],
-  resumen: { ingresos: 0, gastos: 0, neto: 0, dato: { texto: '', partes: [] }, segmentos: [] },
+  texto_vacio: { titulo: 'Sin movimientos', texto: 'Agregá un ingreso o gasto con el botón de arriba.' },
+  resumen: { titulo: 'Te quedó', ingresos: 0, gastos: 0, neto: 0, dato: { texto: '', partes: [] }, segmentos: [] },
 }
 
 const OPCIONES_TX: OpcionesTx = {
@@ -90,13 +94,13 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/tx/opciones': OPCIONES_TX,
   'GET /api/deudas/resumen': {
     total: 0,
-    total_intereses: 0,
     dato: { cuotas: '$0', cuotas_sufijo: '/mes en cuotas', intereses: null, intereses_sufijo: 'pagados en intereses' },
     segmentos: [],
     creditos: [],
     tarjetas: [],
     terminadas: [],
     texto_vacio_creditos: { titulo: 'Sin créditos', texto: 'Agregá uno con el botón + de arriba.' },
+    texto_vacio_tarjetas: { titulo: 'Sin tarjetas', texto: 'Agregá una con el botón + de arriba.' },
   },
   'GET /api/inv/resumen': {
     total_actual: 0,
@@ -108,9 +112,10 @@ const VISTAS_VACIAS: Record<string, Handler> = {
     segmentos: [],
     fijas: [],
     variables: [],
+    texto_vacio_fijas: { titulo: 'Sin inversiones fijas', texto: 'Agregá una con el botón + de arriba.' },
+    texto_vacio_variables: { titulo: 'Sin inversiones variables', texto: 'Agregá una con el botón + de arriba.' },
   },
   'GET /api/activos/resumen': {
-    total_inicial: 0,
     total_actual: 0,
     variacion: 0,
     mostrar_variacion: false,
@@ -132,11 +137,13 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/auth/passkeys': [],
 }
 
-export const json = (body: unknown, status = 200): Response =>
+export const json = (body: unknown, status = 200, headers: Record<string, string> = {}): Response =>
   new Response(status === 204 ? null : JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   })
+
+export const conAfectadas = (body: unknown, entidades: string): Response => json(body, 200, { [HEADER_AFECTADAS]: entidades })
 
 export const failure = (status: number, detail: unknown): Response => json({ detail }, status)
 
@@ -158,7 +165,9 @@ export function mockFetch(routes: Record<string, Handler> = {}) {
     const h = exacta in table ? table[exacta] : (table[`${method} ${url.split('?')[0] ?? url}`] ?? (method === 'GET' ? filaRegistrada(url) : undefined))
     if (h === undefined) return Promise.resolve(failure(404, `sin mock: ${method} ${url}`))
     const out = typeof h === 'function' ? (h as (c: RecordedCall) => unknown)(call) : h
-    return Promise.resolve(out instanceof Response ? out : json(out))
+    if (out instanceof Response) return Promise.resolve(out)
+    const afectadas = afectadasPorDefecto(method, url, call.body)
+    return Promise.resolve(json(out, 200, afectadas ? { [HEADER_AFECTADAS]: afectadas.join(',') } : {}))
   })
   vi.stubGlobal('fetch', fn)
 

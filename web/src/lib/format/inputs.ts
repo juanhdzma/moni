@@ -1,4 +1,3 @@
-import { entero } from './dinero'
 
 interface MoneyInputLike {
   value: string
@@ -26,5 +25,3 @@ export function parseMoney(value: string): number {
   return parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0
 }
 
-
-export const numToInput = entero

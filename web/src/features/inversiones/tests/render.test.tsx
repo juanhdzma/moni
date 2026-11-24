@@ -25,7 +25,7 @@ describe('render', () => {
 
   it('próximo pago de una mensual', async () => {
     mockInv()
-    await setup([{ ...CDT, pago: 'mensual', dia_pago: 15, proximo_pago: { fecha: '2026-11-15', dias: 3, texto: 'en 3d' } }])
+    await setup([{ ...CDT, pago: 'mensual', dia_pago: 15, proximo_pago: { fecha: '2026-11-15', texto: 'en 3d' } }])
     expect(document.getElementById('inv-grid-fija')).toHaveTextContent('en 3d')
   })
 

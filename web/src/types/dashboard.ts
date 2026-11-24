@@ -57,6 +57,8 @@ export interface EsteMes {
   ingresos: number
   gastos: number
   quedo: number
+  titulo_quedo: string
+  texto_tarjeta: string
   frase: FraseMes
   descripcion_grafico: string
   meses: MesEntroSalio[]
@@ -85,6 +87,8 @@ export interface GastosPeriodo {
   top: { categoria: string; valor: number; pct: number } | null
   frase: Frase | null
   categorias: CategoriaGasto[]
+  texto_vacio: string
+  texto_total: string
 }
 
 export interface Movimiento {

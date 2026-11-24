@@ -142,7 +142,7 @@ function Terminada({ d }: { d: Deuda }) {
     <Item
       className="opacity-80"
       nombre={d.nombre}
-      badge={<span className="shrink-0 rounded-full bg-inversiones/15 px-2 py-0.5 text-xs font-medium text-inversiones-text">Saldado</span>}
+      badge={<span className="shrink-0 rounded-full bg-inversiones/15 px-2 py-0.5 text-xs font-medium text-inversiones-text">{frases.saldada_badge}</span>}
       sub={frases?.detalle}
       actions={
         <button className="btn btn-dim btn-sm flex-1" onClick={() => openDeudaFormById(ctx, d.id)}>
@@ -151,7 +151,7 @@ function Terminada({ d }: { d: Deuda }) {
       }
     >
       <div className="text-xl font-semibold leading-none tracking-tight">{cop(d.monto_inicial)}</div>
-      <div className="mt-1 text-sm text-muted-foreground">capital total pagado</div>
+      <div className="mt-1 text-sm text-muted-foreground">{frases.capital_pagado_texto}</div>
       {frases?.intereses_saldada_texto && <div className="mt-1 text-sm text-deudas">{frases.intereses_saldada_texto}</div>}
     </Item>
   )
@@ -219,8 +219,12 @@ export function Deudas({ active }: TabProps) {
               {loaded &&
                 (tarjetas.length ? (
                   tarjetas.map((d) => <TarjetaCard key={d.id} d={d} />)
-                ) : (
-                  <EmptyCard icono={<CreditCard aria-hidden="true" className="size-6" />} titulo="Sin tarjetas" texto="Agregá una para cargarle gastos y seguir su cupo." />
+                ) : data && (
+                  <EmptyCard
+                    icono={<CreditCard aria-hidden="true" className="size-6" />}
+                    titulo={data.texto_vacio_tarjetas.titulo}
+                    texto={data.texto_vacio_tarjetas.texto}
+                  />
                 ))}
             </div>
           </Panel>

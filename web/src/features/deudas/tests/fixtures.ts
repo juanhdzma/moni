@@ -11,7 +11,6 @@ export const credito = deuda({
   tasa_ea: 20,
   cuota_mensual: 500000,
   proxima_cuota: '2026-09-05',
-  total_intereses: 800000,
   activa: true,
   vigente: true,
   progreso_pct: 40,
@@ -25,6 +24,8 @@ export const credito = deuda({
     intereses_ayuda: 'Suma de los pagos registrados en Moni',
     intereses_saldada_texto: '$800.000 en intereses',
     disponible_texto: null,
+    saldada_badge: 'Saldada',
+    capital_pagado_texto: 'capital pagado en total',
   },
 })
 export const tarjeta = deuda({
@@ -34,7 +35,6 @@ export const tarjeta = deuda({
   cupo: 5000000,
   saldo_actual: 1000000,
   franquicia: 'Visa',
-  total_intereses: 12000,
   activa: true,
   vigente: true,
   disponible: 4000000,
@@ -49,6 +49,8 @@ export const tarjeta = deuda({
     intereses_ayuda: 'Suma de los pagos registrados en Moni',
     intereses_saldada_texto: null,
     disponible_texto: '$4.000.000',
+    saldada_badge: 'Saldada',
+    capital_pagado_texto: 'capital pagado en total',
   },
 })
 export const saldado = deuda({
@@ -58,7 +60,6 @@ export const saldado = deuda({
   saldo_actual: 0,
   tasa_ea: 18,
   cuota_mensual: 200000,
-  total_intereses: 150000,
   progreso_pct: 100,
   capital_pagado: 3000000,
   nivel_progreso: 'alto',
@@ -70,6 +71,8 @@ export const saldado = deuda({
     intereses_ayuda: 'Suma de los pagos registrados en Moni',
     intereses_saldada_texto: '$150.000 en intereses',
     disponible_texto: null,
+    saldada_badge: 'Saldada',
+    capital_pagado_texto: 'capital pagado en total',
   },
 })
 
@@ -77,7 +80,6 @@ export const full = () => estado({ deudas: [credito, tarjeta, saldado] })
 
 export const resumenCompleto = {
   total: 7000000,
-  total_intereses: 962000,
   dato: { cuotas: '$500.000', cuotas_sufijo: '/mes en cuotas', intereses: '$962.000', intereses_sufijo: 'pagados en intereses' },
   segmentos: [
     { key: '1', label: 'Crédito carro', valor: 6000000 },
@@ -86,6 +88,7 @@ export const resumenCompleto = {
   creditos: [credito],
   tarjetas: [tarjeta],
   terminadas: [saldado],
+  texto_vacio_tarjetas: { titulo: 'Sin tarjetas', texto: 'Agregá una con el botón + de arriba.' },
   texto_vacio_creditos: { titulo: 'Sin créditos activos', texto: '¡Todos los créditos están saldados!' },
 }
 

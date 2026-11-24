@@ -6,36 +6,38 @@ import { NombreField } from '../../../controls/NombreField'
 import { TipoToggle } from '../../../controls/TipoToggle'
 import { cargarTasa } from '../../../lib/api'
 import { useData } from '@/shell/providers/DataProvider'
-import { numToInput, parseMoney, soloFecha } from '../../../lib/format'
-import { useConfirmDelete } from '@/shell/hooks/useConfirmDelete'
-import { useGuardar } from '@/shell/hooks/useGuardar'
+import { entero, parseMoney, soloFecha } from '../../../lib/format'
+import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
-import { useMutations } from '@/shell/hooks/useMutations'
 import { usePreview } from '@/shell/hooks/usePreview'
-import type { InvIn, Inversion, PagoInv, TipoInv } from '../../../types'
+import { cn } from '@/lib/utils'
+import type { InvIn, Inversion, Meta, PagoInv, TipoInv } from '../../../types'
 import { FormFooter } from '../../../controls/FormFooter'
 import { Hint } from '../../../controls/Hint'
-import { rateBtn } from './styles'
 
-const TONOS_TIPO = { fija: 'ingreso', variable: 'gasto' } as const
-const TONOS_PAGO = { mensual: 'ingreso' } as const
+const rateBtn = (active: boolean) =>
+  cn('cursor-pointer px-3 py-2 text-sm font-semibold transition-colors', active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')
 
 export function InversionForm({ inv }: { inv: Inversion | null }) {
-  const { estado } = useData()
-  const { crudOp } = useMutations()
   const meta = useMeta()
-  const eliminar = useConfirmDelete('inv', inv, `¿Eliminar "${inv?.nombre}"?`)
-  const guardar = useGuardar()
-  const isEdit = inv !== null
+  return meta ? <InversionCampos inv={inv} meta={meta} /> : null
+}
+
+function InversionCampos({ inv, meta }: { inv: Inversion | null; meta: Meta }) {
+  const { estado } = useData()
+  const { guardar, eliminar, esEdicion: isEdit, etiquetaGuardar } = useGuardarEntidad('inv', {
+    item: inv,
+    conNuevo: (data) => ({ ...data, crear_tx: esNueva }),
+  })
   const [nombre, setNombre] = useState(inv?.nombre ?? '')
   const [tipoElegido, setTipo] = useState<TipoInv | null>(null)
-  const tipo = tipoElegido ?? inv?.tipo ?? meta?.defaults.tipo_inversion ?? 'fija'
-  const [invertido, setInvertido] = useState(inv ? numToInput(inv.monto_invertido) : '')
-  const [actual, setActual] = useState(inv ? numToInput(inv.valor_actual) : '')
+  const tipo = tipoElegido ?? inv?.tipo ?? meta.defaults.tipo_inversion
+  const [invertido, setInvertido] = useState(inv ? entero(inv.monto_invertido) : '')
+  const [actual, setActual] = useState(inv ? entero(inv.valor_actual) : '')
   const [tasa, setTasa] = useState(inv?.tasa_ea ? String(inv.tasa_ea) : '')
-  const [rateType, setRateType] = useState<'ea' | 'mv'>('ea')
+  const [rateType, setRateType] = useState(meta.defaults.tipo_tasa)
   const [pagoElegido, setPago] = useState<PagoInv | null>(null)
-  const pago = pagoElegido ?? inv?.pago ?? meta?.defaults.pago_inversion ?? 'vencimiento'
+  const pago = pagoElegido ?? inv?.pago ?? meta.defaults.pago_inversion
   const [diaPago, setDiaPago] = useState(inv?.dia_pago ? String(inv.dia_pago) : '')
   const [fecha, setFecha] = useState(soloFecha(inv?.fecha_inicio) || estado.hoy)
   const [esNueva, setEsNueva] = useState(true)
@@ -60,7 +62,7 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
       ...(tasa_ea !== null ? { tasa_tipo: rateType } : {}),
     }
 
-    await guardar(() => (inv ? crudOp('inv', 'update', { ...data, id: inv.id }) : crudOp('inv', 'add', { ...data, crear_tx: esNueva })))
+    await guardar(data)
   }
 
   return (
@@ -70,11 +72,11 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
         <div className="form-group">
           <div className="form-label">Tipo</div>
           <div className="rounded-md border bg-muted px-3 py-2 text-[15px] font-medium text-muted-foreground">
-            {meta?.tipos_inversion.find((t) => t.value === tipo)?.label ?? ''}
+            {meta.tipos_inversion.find((t) => t.value === tipo)?.label}
           </div>
         </div>
       ) : (
-        <TipoToggle value={tipo} opciones={meta?.tipos_inversion ?? []} tonos={TONOS_TIPO} onChange={setTipo} />
+        <TipoToggle value={tipo} opciones={meta.tipos_inversion} onChange={setTipo} />
       )}
       <div className="form-row-2">
         <MoneyField id="m-invertido" label="Monto invertido" value={invertido} onChange={setInvertido} />
@@ -96,12 +98,11 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
               onChange={(e) => setTasa(e.target.value)}
             />
             <div className="flex shrink-0 overflow-hidden rounded-md border">
-              <button type="button" className={rateBtn(rateType === 'ea')} data-rate="ea" aria-pressed={rateType === 'ea'} onClick={() => setRateType('ea')}>
-                EA
-              </button>
-              <button type="button" className={rateBtn(rateType === 'mv')} data-rate="mv" aria-pressed={rateType === 'mv'} onClick={() => setRateType('mv')}>
-                MV
-              </button>
+              {meta.tipos_tasa.map((t) => (
+                <button key={t.value} type="button" className={rateBtn(rateType === t.value)} data-rate={t.value} aria-pressed={rateType === t.value} onClick={() => setRateType(t.value)}>
+                  {t.label}
+                </button>
+              ))}
             </div>
           </div>
           <Hint id="tasa-equiv">{equiv}</Hint>
@@ -112,8 +113,7 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
           <TipoToggle
             label="Pago de rendimientos"
             value={pago}
-            opciones={meta?.pagos_inversion ?? []}
-            tonos={TONOS_PAGO}
+            opciones={meta.pagos_inversion}
             idPrefix="rp"
             onChange={setPago}
           />
@@ -143,7 +143,7 @@ export function InversionForm({ inv }: { inv: Inversion | null }) {
         <DatePicker id="m-fecha-ini" value={fecha} onChange={setFecha} />
       </div>
       {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
-      <FormFooter saveLabel={isEdit ? 'Guardar cambios' : 'Agregar inversión'} onSave={() => void save()} onDelete={eliminar} />
+      <FormFooter saveLabel={etiquetaGuardar('Agregar inversión')} onSave={() => void save()} onDelete={eliminar} />
     </>
   )
 }

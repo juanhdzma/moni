@@ -63,12 +63,14 @@ export const listado = (extra: Partial<ListadoTx> = {}): ListadoTx => ({
   opciones,
   pills: [],
   resumen: {
+    titulo: 'Te quedó',
     ingresos: 900000,
     gastos: 5000,
     neto: 895000,
     dato: { texto: 'entró $900.000 · salió $5.000', partes: [] },
     segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000 }],
   },
+  texto_vacio: { titulo: 'Sin movimientos', texto: 'Agregá un ingreso o gasto con el botón de arriba.' },
   ...extra,
 })
 export const opcionesTx = (extra: Partial<OpcionesTx> = {}): OpcionesTx => ({

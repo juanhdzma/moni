@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { MoneyInput } from '../../../controls/MoneyInput'
+import { MoneyField } from '../../../controls/MoneyField'
 import { previewAporte } from '../../../lib/api'
-import { numToInput, parseMoney } from '../../../lib/format'
+import { entero, parseMoney } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
-import { Hint } from '../../../controls/Hint'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvAporte, Inversion } from '../../../types'
 import { MovimientoCampos } from '../../../controls/FormFields'
@@ -36,24 +35,16 @@ export function AporteForm({ inv }: { inv: Inversion }) {
   return (
     <>
       <InversionPanel inv={inv} />
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-monto">
-          Monto que agregas (COP)
-        </label>
-        <MoneyInput id="m-monto" value={monto} onChange={setMonto} />
-      </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-nuevo-valor">
-          Nuevo valor del fondo después del aporte
-        </label>
-        <MoneyInput
-          id="m-nuevo-valor"
-          value={nuevoValor}
-          onChange={setNuevoValor}
-          placeholder={numToInput(estimado?.nuevo_valor_estimado ?? inv.valor_actual)}
-        />
-        {estimado && <Hint id="add-more-hint">{estimado.texto_estimado}</Hint>}
-      </div>
+      <MoneyField id="m-monto" label="Monto que agregas (COP)" value={monto} onChange={setMonto} />
+      <MoneyField
+        id="m-nuevo-valor"
+        label="Nuevo valor del fondo después del aporte"
+        value={nuevoValor}
+        onChange={setNuevoValor}
+        placeholder={entero(estimado?.nuevo_valor_estimado ?? inv.valor_actual)}
+        hint={estimado?.texto_estimado}
+        hintId="add-more-hint"
+      />
       <MovimientoCampos campos={campos} fechaType="date" fechaLabel="Fecha" notasPlaceholder="Ej. Aporte mensual" />
       <FormFooter saveLabel="Agregar aporte" onSave={() => void save()} />
     </>

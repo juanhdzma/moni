@@ -6,7 +6,7 @@ import {
   fmtDateShort,
   fmtDateTime,
   fmtMoneyInput,
-  numToInput,
+  entero,
   soloFecha,
   parseMoney,
   pct,
@@ -79,9 +79,9 @@ describe('formato', () => {
     expect(parseMoney('')).toBe(0)
   })
 
-  test('numToInput usa puntos de miles', () => {
-    expect(numToInput(1234567)).toBe('1.234.567')
-    expect(numToInput(null)).toBe('0')
+  test('entero usa puntos de miles', () => {
+    expect(entero(1234567)).toBe('1.234.567')
+    expect(entero(null)).toBe('0')
   })
 
   test('cop y copShort usan el símbolo configurado', () => {

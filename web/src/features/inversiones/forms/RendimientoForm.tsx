@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { MoneyField } from '../../../controls/MoneyField'
 import { useMeta } from '@/shell/hooks/useMeta'
-import { cop, numToInput, parseMoney } from '../../../lib/format'
+import { cop, entero, parseMoney } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRendimiento, Inversion } from '../../../types'
@@ -9,7 +9,7 @@ import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
 import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
 import { TipoToggle } from '../../../controls/TipoToggle'
-import { useEditarInversion } from './openInvForm'
+import { useEditarInversion } from './openers'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 
@@ -21,7 +21,7 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
   const meta = useMeta()
   const destinos = meta?.destinos_rendimiento ?? []
   const expected = inv.rendimiento_esperado ?? 0
-  const [monto, setMonto] = useState(expected ? numToInput(expected) : '')
+  const [monto, setMonto] = useState(expected ? entero(expected) : '')
   const [eleccion, setCapitaliza] = useState<boolean | null>(null)
   const capitaliza = eleccion ?? inv.capitaliza_default
   const campos = useCamposMovimiento(estado.hoy)
@@ -61,7 +61,6 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
         label="¿Dónde queda el rendimiento?"
         value={capitaliza ? 'capitaliza' : 'cuenta'}
         opciones={destinos}
-        tonos={{ cuenta: 'ingreso' }}
         ids={{ cuenta: 'rend-cuenta', capitaliza: 'rend-capitaliza' }}
         hintId="rend-hint"
         hint={destinos.find((d) => d.value === (capitaliza ? 'capitaliza' : 'cuenta'))?.hint}

@@ -1,13 +1,24 @@
 import type { ReactNode } from 'react'
-import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
+import { openConFila, useCerrarYAbrir, type OpenerCtx } from '@/shell/hooks/openers'
 import { cargarInversion } from '../../../lib/api'
 import type { Inversion } from '../../../types'
 import { AporteForm } from './AporteForm'
+import { InversionForm } from './InversionForm'
 import { RendimientoForm } from './RendimientoForm'
 import { RetiroForm } from './RetiroForm'
 import { ValorForm } from './ValorForm'
 
-export { openInvForm, openInvFormById } from './openInvForm'
+export function openInvForm(ctx: OpenerCtx, inv: Inversion | null = null): void {
+  ctx.openModal(inv ? 'Editar inversión' : 'Nueva inversión', <InversionForm inv={inv} />)
+}
+
+export function openInvFormById(ctx: OpenerCtx, id: number): void {
+  openConFila(ctx, () => cargarInversion(id), (inv) => openInvForm(ctx, inv))
+}
+
+export function useEditarInversion(inv: Inversion): () => void {
+  return useCerrarYAbrir((ctx) => openInvFormById(ctx, inv.id))
+}
 
 function openWithInv(ctx: OpenerCtx, id: number, title: string, render: (inv: Inversion) => ReactNode): void {
   openConFila(ctx, () => cargarInversion(id), (inv) => ctx.openModal(`${title} · ${inv.nombre}`, render(inv)))

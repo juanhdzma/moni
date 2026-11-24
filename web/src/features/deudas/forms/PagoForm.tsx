@@ -5,7 +5,7 @@ import { FormFooter } from '../../../controls/FormFooter'
 import { ModalPanel } from '../../../controls/ModalPanel'
 import { MoneyField } from '../../../controls/MoneyField'
 import { previewPago } from '../../../lib/api'
-import { cop, numToInput, parseMoney } from '../../../lib/format'
+import { cop, entero, parseMoney } from '../../../lib/format'
 import { useCerrarYAbrir } from '@/shell/hooks/openers'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useMutations } from '@/shell/hooks/useMutations'
@@ -18,7 +18,7 @@ export function PagoForm({ d, liquidar }: { d: Deuda; liquidar: boolean }) {
   const editar = useCerrarYAbrir((ctx) => openDeudaFormById(ctx, d.id))
   const guardar = useGuardar()
   const { apiAction } = useMutations()
-  const [monto, setMonto] = useState(liquidar ? numToInput(d.saldo_actual) : numToInput(d.cuota_mensual))
+  const [monto, setMonto] = useState(liquidar ? entero(d.saldo_actual) : entero(d.cuota_mensual))
   const [saldoNuevo, setSaldoNuevo] = useState(liquidar ? '0' : '')
   const campos = useCamposMovimiento('')
   const hint = liquidar

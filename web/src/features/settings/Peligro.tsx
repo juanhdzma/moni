@@ -7,6 +7,9 @@ import { errMsg } from '../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useModal } from '@/shell/providers/ModalProvider'
 
+const QUE_SE_BORRA =
+  'todas las transacciones, deudas, inversiones, activos, recurrentes, categorías personalizadas y operaciones ocultas. Se conservan los ajustes y las suscripciones push.'
+
 function TruncateConfirm() {
   const { closeModal, setModalStatus } = useModal()
   const { reload } = useData()
@@ -30,7 +33,7 @@ function TruncateConfirm() {
   return (
     <>
       <div className="mb-4 text-sm text-muted-foreground">
-        Esto borra permanentemente todas las transacciones, deudas, inversiones, activos, recurrentes, categorías personalizadas y operaciones ocultas.
+        Esto borra permanentemente {QUE_SE_BORRA}
         Esta acción no se puede deshacer. Exportá un backup antes si no estás seguro.
       </div>
       <div className="form-group">
@@ -69,7 +72,7 @@ export function Peligro() {
       extra={<TriangleAlert className="size-4 text-deudas" aria-hidden="true" />}
     >
       <div className="mb-3 text-sm text-muted-foreground">
-        Borra todas las transacciones, deudas, inversiones, activos, recurrentes, categorías personalizadas y operaciones ocultas. No se puede deshacer.
+        Borra {QUE_SE_BORRA} No se puede deshacer.
       </div>
       <button type="button" className="btn btn-danger btn-sm" onClick={() => openModal('Borrar todos los datos', <TruncateConfirm />)}>
         Borrar todos los datos

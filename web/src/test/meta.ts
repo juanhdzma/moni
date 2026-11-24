@@ -27,11 +27,15 @@ export const META: Meta = {
     { value: 'transfer', label: 'Transferencias' },
   ],
   tipos_inversion: [
-    { value: 'fija', label: 'Fija' },
-    { value: 'variable', label: 'Variable' },
+    { value: 'fija', label: 'Fija', tono: 'ingreso' },
+    { value: 'variable', label: 'Variable', tono: 'gasto' },
+  ],
+  tipos_tasa: [
+    { value: 'ea', label: 'EA' },
+    { value: 'mv', label: 'MV' },
   ],
   pagos_inversion: [
-    { value: 'mensual', label: 'Mensual' },
+    { value: 'mensual', label: 'Mensual', tono: 'ingreso' },
     { value: 'vencimiento', label: 'Al vencimiento' },
   ],
   clases_deuda: [
@@ -39,11 +43,11 @@ export const META: Meta = {
     { value: 'tarjeta', label: 'Tarjeta' },
   ],
   tipos_retiro: [
-    { value: 'total', label: 'Total' },
+    { value: 'total', label: 'Total', tono: 'ingreso' },
     { value: 'parcial', label: 'Parcial' },
   ],
   destinos_rendimiento: [
-    { value: 'cuenta', label: 'Me lo pagan', hint: 'Entra como ingreso a tu cartera. El valor de la inversión no cambia.' },
+    { value: 'cuenta', label: 'Me lo pagan', tono: 'ingreso', hint: 'Entra como ingreso a tu cartera. El valor de la inversión no cambia.' },
     { value: 'capitaliza', label: 'Capitaliza', hint: 'Sube el valor de la inversión. No entra plata a tu cartera.' },
   ],
   monedas: [
@@ -64,8 +68,16 @@ export const META: Meta = {
     { col: 'descripcion', label: 'Descripción', dir_defecto: 1 },
     { col: 'monto', label: 'Monto', dir_defecto: -1 },
   ],
-  defaults: { frecuencia_recurrente: 'mensual', tipo_inversion: 'fija', pago_inversion: 'vencimiento' },
-  push: { hora: '8:00', texto: 'hoy o mañana' },
+  defaults: {
+    frecuencia_recurrente: 'mensual',
+    tipo_inversion: 'fija',
+    pago_inversion: 'vencimiento',
+    tipo_tasa: 'ea',
+    clase_deuda: 'prestamo',
+    franquicia: 'Visa',
+  },
+  categoria_largo_max: 25,
+  push: { hora: '8:00', frase: 'Aviso diario a las 8:00 de las cuotas, rendimientos y recurrentes que vencen hoy o mañana.' },
   periodos: {
     gastos: [
       { value: '1W', label: '1S' },

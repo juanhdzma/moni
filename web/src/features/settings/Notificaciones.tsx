@@ -37,7 +37,7 @@ export function Notificaciones() {
   return (
     <>
       <div className="mb-3 text-sm text-muted-foreground">
-        {meta && `Aviso diario a las ${meta.push.hora} de las cuotas, rendimientos y recurrentes que vencen ${meta.push.texto}.`}
+        {meta?.push.frase}
       </div>
       <div className="mb-3 text-xs text-muted-foreground">
         Cómo funciona: al activarlo, este dispositivo se suscribe al servidor de Moni y recibe los avisos aunque la app esté cerrada. Al tocar un aviso se abre Moni en la sección correspondiente. Podés desactivarlo cuando quieras y cada dispositivo se activa por separado.

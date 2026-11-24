@@ -1,4 +1,4 @@
-import type { Opcion, Segmento, TipoTx } from './comun'
+import type { Opcion, Segmento, TextoVacio, TipoRec, TipoTx } from './comun'
 import type { Frase } from './dashboard'
 
 export interface Transaccion {
@@ -41,12 +41,13 @@ export interface ListadoTx {
   filtros: { tipo: string; mes: string; cat: string }
   opciones: { meses: Opcion[]; categorias: string[]; tipos: Opcion[] }
   pills: { campo: 'mes' | 'tipo' | 'cat'; label: string }[]
-  resumen: { ingresos: number; gastos: number; neto: number; dato: Frase; segmentos: Segmento[] }
+  resumen: { titulo: string; ingresos: number; gastos: number; neto: number; dato: Frase; segmentos: Segmento[] }
+  texto_vacio: TextoVacio
 }
 
 export interface OpcionesTx {
   tarjetas: { id: number; nombre: string }[]
   categorias: { ingreso: string[]; gasto: string[] }
   categoria_default: { ingreso: string; gasto: string }
-  inicial: { tipo: 'ingreso' | 'gasto'; categoria: string; tarjeta_id: number | null; fecha: string }
+  inicial: { tipo: TipoRec; categoria: string; tarjeta_id: number | null; fecha: string }
 }

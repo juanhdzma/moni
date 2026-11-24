@@ -12,8 +12,8 @@ import { Recurrentes, openRecurrenteMaterializeFormById } from '.'
 
 const H = { 'X-Moni-Request': '1' }
 
-const salario = recurrente({ id: 1, nombre: 'Salario', tipo: 'ingreso', monto: 1000000, frecuencia: 'mensual', fecha_inicio: '2026-08-15', mensual: 1000000, proximo_pago: { fecha: '2026-08-15', dias: 0, texto: 'hoy' } })
-const netflix = recurrente({ id: 2, nombre: 'Netflix', tipo: 'gasto', monto: 30000, frecuencia: 'mensual', fecha_inicio: '2026-08-20', notas: 'plan', categoria_sugerida: 'Streaming', mensual: 30000, proximo_pago: { fecha: '2026-08-20', dias: 5, texto: 'en 5d' } })
+const salario = recurrente({ id: 1, nombre: 'Salario', tipo: 'ingreso', monto: 1000000, frecuencia: 'mensual', fecha_inicio: '2026-08-15', mensual: 1000000, proximo_pago: { fecha: '2026-08-15', texto: 'hoy' } })
+const netflix = recurrente({ id: 2, nombre: 'Netflix', tipo: 'gasto', monto: 30000, frecuencia: 'mensual', fecha_inicio: '2026-08-20', notas: 'plan', categoria_sugerida: 'Streaming', mensual: 30000, proximo_pago: { fecha: '2026-08-20', texto: 'en 5d' } })
 const gym = recurrente({ id: 3, nombre: 'Gym', tipo: 'gasto', monto: 120000, frecuencia: 'trimestral', frecuencia_label: 'Trimestral', activo: false, fecha_inicio: '2026-01-01', mensual: 40000, proximo_pago: null })
 const items = [salario, netflix, gym]
 

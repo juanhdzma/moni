@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { MoneyField } from '../../../controls/MoneyField'
 import { useMeta } from '@/shell/hooks/useMeta'
-import { numToInput, parseMoney } from '../../../lib/format'
+import { entero, parseMoney } from '../../../lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRetiro, Inversion } from '../../../types'
@@ -18,7 +18,7 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
   const guardar = useGuardar()
   const meta = useMeta()
   const [tipo, setTipo] = useState<'total' | 'parcial'>('total')
-  const [montoTotal, setMontoTotal] = useState(numToInput(inv.valor_actual))
+  const [montoTotal, setMontoTotal] = useState(entero(inv.valor_actual))
   const [montoParcial, setMontoParcial] = useState('')
   const [saldoQueda, setSaldoQueda] = useState('')
   const campos = useCamposMovimiento(estado.hoy)
@@ -42,7 +42,7 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
   return (
     <>
       <InversionPanel inv={inv} />
-      <TipoToggle label="Tipo de retiro" value={tipo} opciones={meta?.tipos_retiro ?? []} tonos={{ total: 'ingreso' }} onChange={setTipo} />
+      <TipoToggle label="Tipo de retiro" value={tipo} opciones={meta?.tipos_retiro ?? []} onChange={setTipo} />
 
       {tipo === 'total' && (
         <div id="retiro-total-fields">

@@ -50,14 +50,14 @@ export function Transacciones({ active }: TabProps) {
   const quitar = { mes: () => setMesSel(''), tipo: () => setTipoSel(''), cat: () => setCatSel('') }
   const onEdit = (id: number) => openTxFormById(ctx, id)
 
-  const r = data?.resumen ?? { neto: 0, dato: null, segmentos: [] }
+  const r = data?.resumen ?? { titulo: '', neto: 0, dato: null, segmentos: [] }
 
   return (
     <TabContent id="transacciones" active={active}>
       <div className="space-y-4">
       <Resumen
         id="tx-resumen"
-        titulo={pills.length ? 'Te quedó con estos filtros' : 'Te quedó'}
+        titulo={r.titulo}
         loaded={!!data}
         valor={<Monto valor={r.neto} color="negativo" />}
         color="bg-muted-foreground"
@@ -162,7 +162,7 @@ export function Transacciones({ active }: TabProps) {
                 <th className="hidden px-2 py-2 text-left text-xs font-semibold text-muted-foreground md:table-cell">Método de pago</th>
               </tr>
             </thead>
-            <tbody id="tx-tbody"><FilasTx items={data ? list : null} agrupar={sort.col === 'fecha'} onEdit={onEdit} /></tbody>
+            <tbody id="tx-tbody"><FilasTx items={data ? list : null} textoVacio={data?.texto_vacio} agrupar={sort.col === 'fecha'} onEdit={onEdit} /></tbody>
           </table>
         </div>
       </Panel>

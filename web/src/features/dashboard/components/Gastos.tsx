@@ -48,7 +48,7 @@ export function Gastos() {
           ))}
         </div>
       ) : !entries.length ? (
-        <p className="py-4 text-sm text-muted-foreground">Sin gastos para este período</p>
+        <p className="py-4 text-sm text-muted-foreground">{g.texto_vacio}</p>
       ) : (
         <>
           <ul id="gastos-categorias" className="-mx-2">
@@ -88,7 +88,7 @@ export function Gastos() {
               )
             })}
           </ul>
-          <Total label="Total gastado, con tarjetas" valor={cop(g.total)} />
+          <Total label={g.texto_total} valor={cop(g.total)} />
         </>
       )}
     </Panel>
