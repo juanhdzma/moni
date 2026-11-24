@@ -47,13 +47,13 @@ export function Seguridad() {
   const agregar = () => {
     const limpio = nombre.trim()
     if (!limpio) return
-    void correr(() => registrarPasskey(limpio), 'Face ID activado en este dispositivo')
+    void correr(() => registrarPasskey(limpio), 'Passkey activada en este dispositivo')
   }
 
   return (
     <div className="space-y-5">
-      <section aria-labelledby="seguridad-faceid-titulo">
-        <h3 id="seguridad-faceid-titulo" className="mb-2 text-sm font-medium">Face ID</h3>
+      <section aria-labelledby="seguridad-passkey-titulo">
+        <h3 id="seguridad-passkey-titulo" className="mb-2 text-sm font-medium">Passkey</h3>
         {disponible ? (
           <div className="flex gap-2">
             <input
@@ -66,11 +66,11 @@ export function Seguridad() {
               onChange={(e) => setNombre(e.target.value)}
             />
             <button type="button" className="btn btn-accent btn-sm" onClick={agregar}>
-              Agregar Face ID
+              Agregar passkey
             </button>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">Este dispositivo no soporta Face ID ni passkeys.</p>
+          <p className="text-xs text-muted-foreground">Este dispositivo no soporta passkeys.</p>
         )}
         {passkeys && passkeys.length > 0 && (
           <ul className="mt-3 divide-y">
@@ -80,7 +80,7 @@ export function Seguridad() {
                   {p.nombre}
                   <span className="ml-2 text-xs text-muted-foreground">Último uso: {p.ultimo_uso_texto}</span>
                 </span>
-                <button type="button" className="btn btn-dim btn-sm" onClick={() => void correr(() => borrarPasskey(p.id), 'Face ID eliminado')}>
+                <button type="button" className="btn btn-dim btn-sm" onClick={() => void correr(() => borrarPasskey(p.id), 'Passkey eliminada')}>
                   Eliminar
                 </button>
               </li>

@@ -11,7 +11,7 @@ import {
 } from '../../lib/seguridad/passkeys'
 import { useAuth } from '@/shell/providers/AuthProvider'
 
-export function OfertaFaceId() {
+export function OfertaPasskey() {
   const { loginReciente } = useAuth()
   const [visible, setVisible] = useState(false)
   const [error, setError] = useState('')
@@ -50,7 +50,7 @@ export function OfertaFaceId() {
       descartar()
     } catch (err) {
       if (!esCancelacion(err)) {
-        setError('No se pudo activar Face ID. Podés hacerlo desde Ajustes.')
+        setError('No se pudo activar la passkey. Podés hacerlo desde Ajustes.')
         marcarOfertaMostrada()
       }
     } finally {
@@ -59,10 +59,10 @@ export function OfertaFaceId() {
   }
 
   return (
-    <div role="dialog" aria-label="Activar Face ID" onKeyDown={(e) => e.key === 'Escape' && descartar()} className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-sm space-y-3 rounded-2xl border bg-card p-4 text-card-foreground shadow-lg">
+    <div role="dialog" aria-label="Activar passkey" onKeyDown={(e) => e.key === 'Escape' && descartar()} className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-sm space-y-3 rounded-2xl border bg-card p-4 text-card-foreground shadow-lg">
       <div className="flex items-center gap-2 text-sm font-medium">
         <ScanFace className="size-4" aria-hidden="true" />
-        Entrar con Face ID
+        Entrar con passkey
       </div>
       <p className="text-sm text-muted-foreground">Activalo en este dispositivo para entrar sin escribir la clave.</p>
       {error && (

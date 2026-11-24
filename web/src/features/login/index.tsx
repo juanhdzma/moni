@@ -55,13 +55,13 @@ function Formulario() {
   const [clave, setClave] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
-  const [faceId, setFaceId] = useState(false)
+  const [passkey, setPasskey] = useState(false)
 
   useEffect(() => {
     if (!tienePasskeys) return
     let vigente = true
     void passkeysDisponibles().then((ok) => {
-      if (vigente) setFaceId(ok)
+      if (vigente) setPasskey(ok)
     })
     return () => {
       vigente = false
@@ -83,14 +83,14 @@ function Formulario() {
     }
   }
 
-  const conFaceId = async () => {
+  const conPasskey = async () => {
     if (enviando) return
     setEnviando(true)
     setError('')
     try {
       await entrarConPasskey()
     } catch (err) {
-      if (!esCancelacion(err)) setError(err instanceof ApiError ? mensajeDeLogin(err) : 'No se pudo verificar Face ID')
+      if (!esCancelacion(err)) setError(err instanceof ApiError ? mensajeDeLogin(err) : 'No se pudo verificar la passkey')
     } finally {
       setEnviando(false)
     }
@@ -126,14 +126,14 @@ function Formulario() {
         <button type="submit" className="btn btn-accent w-full" disabled={!clave || enviando}>
           Entrar
         </button>
-        {faceId && (
-          <button type="button" className="btn btn-dim flex w-full items-center justify-center gap-2" disabled={enviando} onClick={() => void conFaceId()}>
+        {passkey && (
+          <button type="button" className="btn btn-dim flex w-full items-center justify-center gap-2" disabled={enviando} onClick={() => void conPasskey()}>
             <ScanFace className="size-4" aria-hidden="true" />
-            Entrar con Face ID
+            Entrar con passkey
           </button>
         )}
       </form>
     </main>
   )
 }
-export { OfertaFaceId } from './OfertaFaceId'
+export { OfertaPasskey } from './OfertaPasskey'

@@ -7,7 +7,7 @@ Personal finance tracker for a single household: spending, credit cards, loans, 
 ![Dashboard](docs/img/dashboard.png)
 
 > ## Single-owner login
-> Every `/api/*` route requires a session; with no `MONI_PASSWORD_HASH` set nothing can sign in and the API answers 401 (fail closed). There is no user registration. Face ID is an optional WebAuthn passkey registered from Ajustes after signing in with the password. Three failures from one IP within an hour block that IP for `MONI_BLOCK_HOURS` (default 24); a blocked client gets a `403` with a ready-to-show Spanish `texto` and a `Retry-After` header.
+> Every `/api/*` route requires a session; with no `MONI_PASSWORD_HASH` set nothing can sign in and the API answers 401 (fail closed). There is no user registration. Passkey sign-in is an optional WebAuthn credential registered from Ajustes after signing in with the password. Three failures from one IP within an hour block that IP for `MONI_BLOCK_HOURS` (default 24); a blocked client gets a `403` with a ready-to-show Spanish `texto` and a `Retry-After` header.
 
 ## Contents
 

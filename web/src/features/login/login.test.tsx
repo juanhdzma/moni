@@ -140,14 +140,14 @@ describe('sesion vencida', () => {
   })
 })
 
-describe('login con Face ID', () => {
+describe('login con passkey', () => {
   const credencial = { id: 'abc', rawId: 'abc', type: 'public-key', response: { clientDataJSON: 'x' }, clientExtensionResults: {} }
 
   it('sin passkeys no muestra el boton', async () => {
     mockFetch({ 'GET /api/auth/estado': ESTADO_LOGIN })
     render(<App />)
     await screen.findByLabelText('Clave')
-    expect(screen.queryByRole('button', { name: /Face ID/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /passkey/ })).toBeNull()
   })
 
   it('con passkeys pide opciones, firma y verifica con la credencial', async () => {
@@ -160,7 +160,7 @@ describe('login con Face ID', () => {
     })
     const user = userEvent.setup()
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: 'Entrar con Face ID' }))
+    await user.click(await screen.findByRole('button', { name: 'Entrar con passkey' }))
     await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     expect(webauthn.startAuthentication).toHaveBeenCalledWith({ optionsJSON: opciones })
     const opc = m.callsTo('POST', '/api/auth/passkey/login/opciones')[0]
@@ -171,7 +171,7 @@ describe('login con Face ID', () => {
     expect(ver?.headers['X-Moni-Request']).toBe('1')
   })
 
-  it('si el usuario cancela Face ID muestra un mensaje sin verificar nada', async () => {
+  it('si el usuario cancela la passkey muestra un mensaje sin verificar nada', async () => {
     vi.mocked(webauthn.startAuthentication).mockRejectedValue(new Error('cancelado'))
     const m = mockFetch({
       'GET /api/auth/estado': { ...ESTADO_LOGIN, tiene_passkeys: true },
@@ -179,8 +179,8 @@ describe('login con Face ID', () => {
     })
     const user = userEvent.setup()
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: 'Entrar con Face ID' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo verificar Face ID')
+    await user.click(await screen.findByRole('button', { name: 'Entrar con passkey' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo verificar la passkey')
     expect(m.callsTo('POST', '/api/auth/passkey/login/verificar')).toHaveLength(0)
   })
 
@@ -193,8 +193,8 @@ describe('login con Face ID', () => {
     })
     const user = userEvent.setup()
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: 'Entrar con Face ID' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Entrar con Face ID' })).toBeEnabled())
+    await user.click(await screen.findByRole('button', { name: 'Entrar con passkey' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Entrar con passkey' })).toBeEnabled())
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
@@ -207,7 +207,7 @@ describe('login con Face ID', () => {
     })
     const user = userEvent.setup()
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: 'Entrar con Face ID' }))
+    await user.click(await screen.findByRole('button', { name: 'Entrar con passkey' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Credenciales inválidas')
   })
 
@@ -217,11 +217,11 @@ describe('login con Face ID', () => {
     render(<App />)
     await screen.findByLabelText('Clave')
     await new Promise((r) => setTimeout(r, 20))
-    expect(screen.queryByRole('button', { name: /Face ID/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /passkey/ })).toBeNull()
   })
 })
 
-describe('oferta de Face ID', () => {
+describe('oferta de passkey', () => {
   async function loginConClave(m: ReturnType<typeof mockFetch>) {
     const user = userEvent.setup()
     render(<App />)
@@ -247,7 +247,7 @@ describe('oferta de Face ID', () => {
     expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toBeUndefined()
     expect(webauthn.startRegistration).toHaveBeenCalledWith({ optionsJSON: opciones })
     expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')[0]?.body).toEqual({ ...credencial, nombre: 'Este dispositivo' })
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Activar Face ID' })).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull())
     expect(localStorage.getItem('moni_faceid_dispositivo')).toBe('1')
   })
 
@@ -266,7 +266,7 @@ describe('oferta de Face ID', () => {
     expect(screen.queryByRole('alert')).toBeNull()
     expect(localStorage.getItem('moni_faceid_oferta')).toBeNull()
     await user.keyboard('{Escape}')
-    expect(screen.queryByRole('dialog', { name: 'Activar Face ID' })).toBeNull()
+    expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull()
     expect(localStorage.getItem('moni_faceid_oferta')).toBe('1')
   })
 
@@ -274,7 +274,7 @@ describe('oferta de Face ID', () => {
     const m = mockFetch({ 'GET /api/auth/estado': ESTADO_LOGIN, 'POST /api/auth/login': { ok: true } })
     const user = await loginConClave(m)
     await user.click(await screen.findByRole('button', { name: 'Ahora no' }))
-    expect(screen.queryByRole('dialog', { name: 'Activar Face ID' })).toBeNull()
+    expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull()
     expect(localStorage.getItem('moni_faceid_oferta')).toBe('1')
     expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')).toHaveLength(0)
   })
@@ -284,7 +284,7 @@ describe('oferta de Face ID', () => {
     const m = mockFetch({ 'GET /api/auth/estado': ESTADO_LOGIN, 'POST /api/auth/login': { ok: true } })
     await loginConClave(m)
     await new Promise((r) => setTimeout(r, 20))
-    expect(screen.queryByRole('dialog', { name: 'Activar Face ID' })).toBeNull()
+    expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull()
   })
 
   it('no se ofrece si la sesion ya estaba abierta (no fue login con clave)', async () => {
@@ -292,6 +292,6 @@ describe('oferta de Face ID', () => {
     render(<App />)
     await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     await new Promise((r) => setTimeout(r, 20))
-    expect(screen.queryByRole('dialog', { name: 'Activar Face ID' })).toBeNull()
+    expect(screen.queryByRole('dialog', { name: 'Activar passkey' })).toBeNull()
   })
 })

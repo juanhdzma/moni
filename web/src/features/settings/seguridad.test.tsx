@@ -59,7 +59,7 @@ describe('Seguridad', () => {
     expect(m.callsTo('DELETE', '/api/auth/passkeys/3')[0]?.headers['X-Moni-Request']).toBe('1')
   })
 
-  it('agregar Face ID manda el nombre elegido', async () => {
+  it('agregar passkey manda el nombre elegido', async () => {
     const credencial = { id: 'c', rawId: 'c', type: 'public-key', response: {}, clientExtensionResults: {} }
     vi.mocked(webauthn.startRegistration).mockResolvedValue(credencial as unknown as Awaited<ReturnType<typeof webauthn.startRegistration>>)
     const m = mockFetch({
@@ -71,11 +71,11 @@ describe('Seguridad', () => {
     const campo = await screen.findByLabelText('Nombre del dispositivo')
     await user.clear(campo)
     await user.type(campo, 'MacBook')
-    await user.click(screen.getByRole('button', { name: 'Agregar Face ID' }))
+    await user.click(screen.getByRole('button', { name: 'Agregar passkey' }))
     await waitFor(() => expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')).toHaveLength(1))
     expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toBeUndefined()
     expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')[0]?.body).toEqual({ ...credencial, nombre: 'MacBook' })
-    expect(await screen.findByText('Face ID activado en este dispositivo')).toBeInTheDocument()
+    expect(await screen.findByText('Passkey activada en este dispositivo')).toBeInTheDocument()
   })
 
   it('un error al registrar se muestra en el panel', async () => {
@@ -83,7 +83,7 @@ describe('Seguridad', () => {
     mockFetch({ 'POST /api/auth/passkey/registro/opciones': { challenge: 'r' } })
     const user = userEvent.setup()
     renderWithProviders(<Seguridad />)
-    await user.click(await screen.findByRole('button', { name: 'Agregar Face ID' }))
+    await user.click(await screen.findByRole('button', { name: 'Agregar passkey' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('El dispositivo canceló')
   })
 
@@ -91,8 +91,8 @@ describe('Seguridad', () => {
     vi.mocked(webauthn.platformAuthenticatorIsAvailable).mockResolvedValue(false)
     mockFetch()
     renderWithProviders(<Seguridad />)
-    expect(await screen.findByText(/no soporta Face ID/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Agregar Face ID' })).toBeNull()
+    expect(await screen.findByText(/no soporta passkeys/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Agregar passkey' })).toBeNull()
   })
 
   it('cerrar sesion hace POST /api/auth/logout y deja la pantalla sin sesion', async () => {
