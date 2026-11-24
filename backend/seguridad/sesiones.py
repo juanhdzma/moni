@@ -14,6 +14,7 @@ logger = logging.getLogger("moni.auth")
 
 COOKIE = "moni_session"
 SESION_DIAS = 30
+INACTIVIDAD_DIAS = 7
 REFRESCO_USO_S = 60
 
 
@@ -34,7 +35,8 @@ def requiere_sesion(request: Request):
         fila = conn.execute("SELECT * FROM sesiones WHERE token_hash = ?", (hash_token(token),)).fetchone()
         if fila is None:
             return None
-        if fila["expira"] <= tiempo.iso(t):
+        inactiva_desde = t - datetime.timedelta(days=INACTIVIDAD_DIAS)
+        if fila["expira"] <= tiempo.iso(t) or fila["ultimo_uso"] <= tiempo.iso(inactiva_desde):
             conn.execute("DELETE FROM sesiones WHERE id = ?", (fila["id"],))
             conn.commit()
             return None

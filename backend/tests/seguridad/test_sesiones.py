@@ -3,12 +3,34 @@ from backend.seguridad import sesiones
 from backend.tests.seguridad.helpers import login
 
 
+def usar_cada_seis_dias(client, reloj, dias):
+    for _ in range(dias // 6):
+        reloj.avanzar(days=6)
+        assert client.get("/api/backup").status_code == 200
+
+
 def test_sesion_expirada(anon_client, reloj):
     login(anon_client)
     assert anon_client.get("/api/backup").status_code == 200
-    reloj.avanzar(days=29, hours=23)
+    usar_cada_seis_dias(anon_client, reloj, 24)
+    reloj.avanzar(days=5, hours=23)
     assert anon_client.get("/api/backup").status_code == 200
     reloj.avanzar(hours=2)
+    assert anon_client.get("/api/backup").status_code == 401
+    conn = db.get_conn()
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM sesiones").fetchone()[0] == 0
+    finally:
+        conn.close()
+
+
+def test_sesion_inactiva_por_siete_dias(anon_client, reloj):
+    login(anon_client)
+    reloj.avanzar(days=6, hours=23)
+    assert anon_client.get("/api/backup").status_code == 200
+    reloj.avanzar(days=6, hours=23)
+    assert anon_client.get("/api/backup").status_code == 200
+    reloj.avanzar(days=7, hours=1)
     assert anon_client.get("/api/backup").status_code == 401
     conn = db.get_conn()
     try:
