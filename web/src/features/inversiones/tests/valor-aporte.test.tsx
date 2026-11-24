@@ -64,8 +64,8 @@ describe('aporte', () => {
     await user.click(modal().getByText('Opciones de registro'))
     await user.click(modal().getByLabelText('Registrar en transacciones'))
     await user.click(modal().getByRole('button', { name: 'Agregar aporte' }))
-    await waitFor(() => expect(f.mutations()).toHaveLength(1))
-    expect(f.mutations()[0]?.body).toMatchObject({ monto: 50000, nuevo_valor: 520000, notas: 'mensual', registrar_tx: false })
+    await waitFor(() => expect(reales(f)).toHaveLength(1))
+    expect(reales(f)[0]?.body).toMatchObject({ monto: 50000, nuevo_valor: 520000, notas: 'mensual', registrar_tx: false })
   })
 
   it('monto requerido lo valida el backend', async () => {
