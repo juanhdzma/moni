@@ -75,7 +75,7 @@ def test_fecha_con_formato_pero_inexistente_es_422(client, fecha):
 
 
 def test_fecha_inexistente_en_cuota_de_deuda_es_422_y_no_500(client, prestamo):
-    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"nuevo_saldo": 0, "total_pagado": 10, "fecha": "2026-13-45"})
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 0, "total_pagado": 10, "fecha": "2026-13-45"})
     assert r.status_code == 422
 
 
@@ -167,7 +167,7 @@ def test_acciones_compuestas_redondean_el_monto_con_pesos(client, prestamo):
     activo = client.post("/api/activo", json={"nombre": "Moto", "valor_inicial": 5000, "valor_actual": 4000}).json()
     esperado = pesos(100.6)
     assert esperado == 101
-    assert client.post(f"/api/deuda/{prestamo['id']}/pago", json={"nuevo_saldo": 900_000, "total_pagado": 100.6, "fecha": "2026-07-01"}).status_code == 200
+    assert client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100.6, "fecha": "2026-07-01"}).status_code == 200
     client.post(f"/api/inv/{inv['id']}/aporte", json={"monto": 100.6, "fecha": "2026-07-01"})
     assert client.post(f"/api/inv/{inv['id']}/rendimiento", json={"monto": 100.6, "fecha": "2026-07-01"}).status_code == 200
     client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "parcial", "monto": 100.6, "saldo_queda": 900, "fecha": "2026-07-01"})

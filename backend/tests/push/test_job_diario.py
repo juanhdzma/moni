@@ -6,11 +6,12 @@ from backend.calculos.fechas import TZ
 from backend.core import db
 from backend.core.ops_ocultas import candidatas
 from backend.push import envio, job_diario
+from backend.tests.api.builders_api import editable
 from backend.tests.push.ayudas_push import SUB, HOY
 
 
 def test_operaciones_proximas_hoy_y_manana(client, prestamo):
-    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-06-16"})
+    client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-06-16"})
     client.post("/api/rec", json={"nombre": "Salario", "tipo": "ingreso", "monto": 3_000_000, "frecuencia": "mensual", "fecha_inicio": "2026-05-15"})
     client.post("/api/rec", json={"nombre": "Lejano", "tipo": "gasto", "monto": 5, "frecuencia": "mensual", "fecha_inicio": "2026-05-25"})
     client.post("/api/rec", json={"nombre": "Pausado", "tipo": "gasto", "monto": 5, "frecuencia": "mensual", "fecha_inicio": "2026-05-15", "activo": False})

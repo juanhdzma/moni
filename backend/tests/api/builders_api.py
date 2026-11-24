@@ -17,6 +17,10 @@ ACTIVO_DERIVADOS = {"cambio", "cambio_pct", "desactualizado"}
 REC_DERIVADOS = {"frecuencia_label", "mensual", "proximo_pago"}
 
 
+def editable(deuda):
+    return {k: v for k, v in deuda.items() if k != "es_tarjeta"}
+
+
 def tx(client, **kw):
     body = {"fecha": HOY_ISO, "tipo": "gasto", "categoria": "Comida", "descripcion": "x", "monto": 1000, **kw}
     r = client.post("/api/tx", json=body)

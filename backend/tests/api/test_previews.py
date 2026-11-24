@@ -1,9 +1,9 @@
 def test_previews_de_deuda(client, prestamo, tarjeta):
-    r = client.post(f"/api/deuda/{prestamo['id']}/pago/preview", json={"total_pagado": 150_000, "nuevo_saldo": 900_000})
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago/preview", json={"modo": "abono", "total_pagado": 150_000, "nuevo_saldo": 900_000})
     assert r.status_code == 200 and r.json() == {"capital": 100_000, "intereses": 50_000}
     r = client.post(f"/api/deuda/{tarjeta['id']}/adelanto/preview", json={"monto": 100_000, "nuevo_saldo": 110_000})
     assert r.json() == {"comision": 10_000, "nuevo_saldo": 110_000}
-    assert client.post("/api/deuda/999/pago/preview", json={"total_pagado": 1, "nuevo_saldo": 0}).status_code == 404
+    assert client.post("/api/deuda/999/pago/preview", json={"modo": "abono", "total_pagado": 1, "nuevo_saldo": 0}).status_code == 404
     assert client.get("/api/deudas/resumen").json()["creditos"][0]["saldo_actual"] == 1_000_000
 
 

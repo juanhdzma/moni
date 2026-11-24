@@ -68,7 +68,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
         deuda = get_row(conn, "deudas", deuda_id)
         pago = movimientos.aplicar_pago(
             deuda, total_pagado=body.total_pagado, nuevo_saldo=body.nuevo_saldo, intereses=body.intereses,
-            avanzar_cuota=body.avanzar_cuota, fecha=fecha_o_ahora(body.fecha), descripcion=body.descripcion,
+            avanzar_cuota=body.modo == "cuota", fecha=fecha_o_ahora(body.fecha), descripcion=body.descripcion,
             notas=body.notas, simbolo=simbolo(conn),
         )
         conn.execute(

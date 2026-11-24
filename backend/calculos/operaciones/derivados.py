@@ -5,6 +5,7 @@ from ..constantes import clase_deuda_de, tiene_saldo
 from ..formato import porcentaje_texto
 from ..numeros import porcentaje
 from .finanzas import ea_a_mv, proxima_fecha_inversion, rendimiento_mensual_fija
+from .sugerencias_pago import sugerencia_pago
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente, to_mensual
 
 
@@ -37,6 +38,7 @@ def derivar_deuda(fila: dict) -> dict:
         "disponible": max(0, cupo - saldo) if cupo > 0 else None,
         "uso_pct": uso,
         "nivel_uso": _nivel(uso, 90, 60),
+        "pago": sugerencia_pago(saldo, fila["cuota_mensual"]),
     }
 
 

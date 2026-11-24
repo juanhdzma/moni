@@ -1,3 +1,6 @@
+from .builders_api import editable
+
+
 def _tx(client):
     return client.get("/api/backup").json()["transacciones"]
 
@@ -7,7 +10,7 @@ def _deuda(client, id_):
 
 
 def test_pago_deriva_intereses_y_arma_la_descripcion(client, prestamo):
-    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"nuevo_saldo": 920_000, "total_pagado": 100_000})
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 920_000, "total_pagado": 100_000})
     assert r.status_code == 200
     assert _deuda(client, prestamo["id"])["total_intereses"] == 20_000
     tx = _tx(client)[0]
@@ -18,30 +21,30 @@ def test_pago_deriva_intereses_y_arma_la_descripcion(client, prestamo):
 def test_pago_respeta_descripcion_y_fecha_enviadas(client, prestamo):
     client.post(
         f"/api/deuda/{prestamo['id']}/pago",
-        json={"nuevo_saldo": 900_000, "total_pagado": 100_000, "descripcion": "Mia", "fecha": "2026-07-01"},
+        json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "descripcion": "Mia", "fecha": "2026-07-01"},
     )
     assert (_tx(client)[0]["descripcion"], _tx(client)[0]["fecha"]) == ("Mia", "2026-07-01")
 
 
 def test_pago_usa_el_simbolo_de_moneda_de_ajustes(client, prestamo):
     client.put("/api/ajustes", json={"moneda_simbolo": "COP"})
-    client.post(f"/api/deuda/{prestamo['id']}/pago", json={"nuevo_saldo": 900_000, "total_pagado": 100_000})
+    client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000})
     assert _tx(client)[0]["descripcion"] == "Cuota · Credito (capital COP100.000, intereses COP0)"
 
 
 def test_pago_que_sube_el_saldo_se_rechaza(client, prestamo):
-    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"nuevo_saldo": 1_100_000, "total_pagado": 100})
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 1_100_000, "total_pagado": 100})
     assert r.status_code == 400 and "no puede superar" in r.json()["detail"]
 
 
 def test_pago_avanza_la_cuota_en_un_solo_update(client, prestamo):
-    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-01-31"})
+    client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-01-31"})
     client.post(
         f"/api/deuda/{prestamo['id']}/pago",
-        json={"nuevo_saldo": 900_000, "total_pagado": 100_000, "avanzar_cuota": True},
+        json={"modo": "cuota", "nuevo_saldo": 900_000, "total_pagado": 100_000},
     )
     assert _deuda(client, prestamo["id"])["proxima_cuota"] == "2026-02-28"
-    client.post(f"/api/deuda/{prestamo['id']}/pago", json={"nuevo_saldo": 800_000, "total_pagado": 100_000})
+    client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 800_000, "total_pagado": 100_000})
     assert _deuda(client, prestamo["id"])["proxima_cuota"] == "2026-02-28"
 
 
@@ -131,9 +134,9 @@ def test_es_tarjeta_sale_como_bool_y_progreso_no_pasa_de_100(client, prestamo):
     tarjeta = client.post("/api/deuda", json={"nombre": "Visa", "clase_deuda": "tarjeta", "cupo": 1000}).json()
     assert tarjeta["es_tarjeta"] is True
     assert client.get(f"/api/deuda/{tarjeta['id']}").json()["es_tarjeta"] is True
-    sobrepagada = client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "monto_inicial": 100, "saldo_actual": 0})
+    sobrepagada = client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "monto_inicial": 100, "saldo_actual": 0})
     assert sobrepagada.json()["es_tarjeta"] is False
-    creciente = client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "monto_inicial": 100, "saldo_actual": 500}).json()
+    creciente = client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "monto_inicial": 100, "saldo_actual": 500}).json()
     deuda = client.get(f"/api/deuda/{creciente['id']}").json()
     assert deuda["progreso_pct"] == 0 and "intereses_pagados" not in deuda
 
@@ -195,3 +198,35 @@ def test_tasa_deuda_ea_a_dos_decimales_y_mv_convertida():
 
     assert normalizar_tasa({"tasa_ea": 12.3456}) == {"tasa_ea": 12.35}
     assert normalizar_tasa({"tasa_ea": 1, "tasa_tipo": "mv"})["tasa_ea"] == 12.68
+
+
+def test_es_tarjeta_en_el_body_se_rechaza_en_espanol(client, prestamo):
+    body = {"nombre": "Visa", "es_tarjeta": True, "cupo": 1000}
+    for r in (client.post("/api/deuda", json=body), client.put(f"/api/deuda/{prestamo['id']}", json=body)):
+        assert r.status_code == 422
+        assert r.json()["detail"][0]["msg"] == "es_tarjeta fue reemplazado por clase_deuda"
+
+
+def test_sugerencia_de_pago_de_un_prestamo(client, prestamo):
+    pago = client.get(f"/api/deuda/{prestamo['id']}").json()["pago"]
+    assert pago["cuota"]["monto"] == 100_000 and pago["cuota"]["nuevo_saldo"] is None
+    assert pago["abono"]["monto"] is None
+    assert pago["liquidar"]["monto"] == 1_000_000 and pago["liquidar"]["nuevo_saldo"] == 0
+    assert all(pago[m]["hint"] for m in pago)
+
+
+def test_la_cuota_sugerida_no_pasa_del_saldo_y_sin_cuota_no_hay_monto(client, prestamo):
+    url = f"/api/deuda/{prestamo['id']}"
+    cuerpo = {**editable(prestamo), "saldo_actual": 40_000}
+    client.put(url, json=cuerpo)
+    assert client.get(url).json()["pago"]["cuota"]["monto"] == 40_000
+    client.put(url, json={**cuerpo, "cuota_mensual": 0})
+    sin_cuota = client.get(url).json()["pago"]["cuota"]
+    assert sin_cuota["monto"] is None and sin_cuota["hint"] == "Ingresá el monto de la cuota."
+
+
+def test_sugerencia_de_pago_de_una_tarjeta(client):
+    t = client.post("/api/deuda", json={"nombre": "Visa", "clase_deuda": "tarjeta", "cupo": 1000, "saldo_actual": 300}).json()
+    pago = client.get(f"/api/deuda/{t['id']}").json()["pago"]
+    assert pago["cuota"]["monto"] is None
+    assert pago["liquidar"]["monto"] == 300

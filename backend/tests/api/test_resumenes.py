@@ -12,7 +12,7 @@ def test_put_ignora_campos_derivados(client):
 def test_deudas_resumen(client, tarjeta):
     s = sembrar(client)
     saldada = client.post("/api/deuda", json={"nombre": "Saldada", "monto_inicial": 100, "saldo_actual": 100}).json()
-    client.post(f"/api/deuda/{saldada['id']}/pago", json={"nuevo_saldo": 0, "total_pagado": 100})
+    client.post(f"/api/deuda/{saldada['id']}/pago", json={"modo": "liquidar", "nuevo_saldo": 0, "total_pagado": 100})
     r = client.get("/api/deudas/resumen").json()
     assert set(r) == {"total", "segmentos", "creditos", "tarjetas", "terminadas", "dato", "texto_vacio_creditos", "texto_vacio_tarjetas"}
     assert r["texto_vacio_tarjetas"]["titulo"] == "Sin tarjetas"

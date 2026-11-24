@@ -23,6 +23,13 @@ class DeudaIn(BaseModel):
 
     _v_fecha = fecha_opcional("fecha_inicio", "proxima_cuota")
 
+    @model_validator(mode="before")
+    @classmethod
+    def rechazar_es_tarjeta(cls, datos):
+        if isinstance(datos, dict) and "es_tarjeta" in datos:
+            raise ValueError("es_tarjeta fue reemplazado por clase_deuda")
+        return datos
+
     @computed_field
     @property
     def es_tarjeta(self) -> bool:
@@ -80,7 +87,11 @@ class AdelantoPreview(_SaldoTrasAdelanto):
     monto: MontoCero
 
 
+ModoPago = Literal["cuota", "abono", "liquidar"]
+
+
 class DeudaPago(BaseModel):
+    modo: ModoPago
     nuevo_saldo: MontoCero
     total_pagado: MontoPesos
     intereses: Optional[MontoCero] = None
@@ -88,7 +99,6 @@ class DeudaPago(BaseModel):
     descripcion: str = ""
     notas: str = ""
     registrar_tx: bool = True
-    avanzar_cuota: bool = False
     op_clave: Optional[str] = None
 
     _v_fecha = fecha_opcional("fecha")

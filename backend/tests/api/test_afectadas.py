@@ -9,7 +9,7 @@ INV = {"nombre": "CDT", "tipo": "fija", "monto_invertido": 1_000_000, "valor_act
        "tasa_ea": 12, "pago": "mensual", "dia_pago": 15}
 ACTIVO = {"nombre": "Casa", "valor_inicial": 100, "valor_actual": 100}
 REC = {"nombre": "Arriendo", "tipo": "gasto", "monto": 800_000, "frecuencia": "mensual", "fecha_inicio": "2026-01-05"}
-PAGO = {"nuevo_saldo": 900_000, "total_pagado": 100_000, "fecha": "2026-07-01", "descripcion": "x"}
+PAGO = {"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "fecha": "2026-07-01", "descripcion": "x"}
 CLAVE = "recurrente:1:2026-07-01"
 
 
@@ -171,7 +171,7 @@ def test_error_no_trae_header(client):
 
 
 def test_preview_y_lecturas_no_traen_header(client, prestamo):
-    r = client.post(f"/api/deuda/{prestamo['id']}/pago/preview", json={"total_pagado": 100_000, "nuevo_saldo": 900_000})
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago/preview", json={"modo": "abono", "total_pagado": 100_000, "nuevo_saldo": 900_000})
     assert r.status_code == 200 and HEADER_AFECTADAS not in r.headers
     assert HEADER_AFECTADAS not in client.get("/api/meta").headers
 

@@ -1,3 +1,6 @@
+from .builders_api import editable
+
+
 def _tx(client):
     return client.get("/api/backup").json()["transacciones"]
 
@@ -9,7 +12,7 @@ def _uno(client, entidad, id_):
 def test_pago_baja_saldo_acumula_intereses_y_deja_rastro(client, prestamo):
     client.post(
         f"/api/deuda/{prestamo['id']}/pago",
-        json={"nuevo_saldo": 920_000, "total_pagado": 100_000, "intereses": 20_000,
+        json={"modo": "abono", "nuevo_saldo": 920_000, "total_pagado": 100_000, "intereses": 20_000,
               "fecha": "2026-07-01", "descripcion": "Cuota 1"},
     )
     d = _uno(client, "deudas", prestamo["id"])
@@ -25,7 +28,7 @@ def test_intereses_se_acumulan_entre_pagos(client, prestamo):
     for saldo, interes in ((920_000, 20_000), (850_000, 18_000)):
         client.post(
             f"/api/deuda/{prestamo['id']}/pago",
-            json={"nuevo_saldo": saldo, "total_pagado": 100_000, "intereses": interes,
+            json={"modo": "abono", "nuevo_saldo": saldo, "total_pagado": 100_000, "intereses": interes,
                   "fecha": "2026-07-01", "descripcion": "Cuota"},
         )
     assert _uno(client, "deudas", prestamo["id"])["total_intereses"] == 38_000
@@ -34,7 +37,7 @@ def test_intereses_se_acumulan_entre_pagos(client, prestamo):
 def test_registrar_tx_false_no_ensucia_el_ledger(client, prestamo):
     client.post(
         f"/api/deuda/{prestamo['id']}/pago",
-        json={"nuevo_saldo": 900_000, "total_pagado": 100_000, "fecha": "2026-07-01",
+        json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "fecha": "2026-07-01",
               "descripcion": "x", "registrar_tx": False},
     )
     assert _tx(client) == []
@@ -144,7 +147,7 @@ def test_crear_tarjeta_nunca_registra_tx(client):
 
 def _pago(client, deuda_id, **extra):
     body = {
-        "nuevo_saldo": 900_000, "total_pagado": 100_000, "intereses": 0,
+        "modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "intereses": 0,
         "fecha": "2026-08-01", "descripcion": "Cuota", "registrar_tx": False,
     }
     body.update(extra)
@@ -152,31 +155,31 @@ def _pago(client, deuda_id, **extra):
 
 
 def test_pagar_la_cuota_corre_el_vencimiento_un_mes(client, prestamo):
-    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-08-05"})
-    r = _pago(client, prestamo["id"], avanzar_cuota=True)
+    client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-08-05"})
+    r = _pago(client, prestamo["id"], modo="cuota")
     assert r.json()["proxima_cuota"] == "2026-09-05"
 
 
 def test_el_abono_extraordinario_no_corre_el_vencimiento(client, prestamo):
-    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-08-05"})
+    client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-08-05"})
     r = _pago(client, prestamo["id"])
     assert r.json()["proxima_cuota"] == "2026-08-05"
 
 
 def test_el_vencimiento_ancla_el_dia_en_meses_cortos(client, prestamo):
-    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-01-31"})
-    r = _pago(client, prestamo["id"], avanzar_cuota=True)
+    client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-01-31"})
+    r = _pago(client, prestamo["id"], modo="cuota")
     assert r.json()["proxima_cuota"] == "2026-02-28"
 
 
 def test_saldar_la_deuda_limpia_el_vencimiento(client, prestamo):
-    client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "proxima_cuota": "2026-08-05"})
-    r = _pago(client, prestamo["id"], nuevo_saldo=0, total_pagado=1_000_000)
+    client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-08-05"})
+    r = _pago(client, prestamo["id"], nuevo_saldo=0, total_pagado=1_000_000, modo="liquidar")
     assert r.json()["proxima_cuota"] == ""
 
 
 def test_la_tarjeta_no_tiene_vencimiento_que_correr(client, tarjeta):
-    r = _pago(client, tarjeta["id"], nuevo_saldo=0, total_pagado=50_000, avanzar_cuota=True)
+    r = _pago(client, tarjeta["id"], nuevo_saldo=0, total_pagado=50_000, modo="cuota")
     assert r.status_code == 200
     assert r.json()["proxima_cuota"] == ""
 
@@ -199,9 +202,29 @@ def test_saldar_la_deuda_deja_el_saldo_exacto_en_cero(client, prestamo):
     client.post(
         f"/api/deuda/{prestamo['id']}/pago",
         json={
-            "nuevo_saldo": 0.0000000001, "total_pagado": 1_000_000, "intereses": 0,
+            "modo": "liquidar", "nuevo_saldo": 0.0000000001, "total_pagado": 1_000_000, "intereses": 0,
             "fecha": "2026-08-01", "descripcion": "Liquidación", "registrar_tx": False,
         },
     )
     d = _uno(client, "deudas", prestamo["id"])
     assert d["saldo_actual"] == 0
+
+
+def test_el_modo_liquidar_no_corre_el_vencimiento_si_deja_saldo(client, prestamo):
+    client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-08-05"})
+    r = _pago(client, prestamo["id"], modo="liquidar")
+    assert r.json()["proxima_cuota"] == "2026-08-05"
+
+
+def test_el_pago_exige_modo(client, prestamo):
+    body = {"nuevo_saldo": 900_000, "total_pagado": 100_000, "avanzar_cuota": True}
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json=body)
+    assert r.status_code == 422
+    assert r.json()["detail"][0]["loc"][-1] == "modo"
+    assert r.json()["detail"][0]["msg"] == "Este valor es requerido"
+
+
+def test_el_preview_exige_modo_y_rechaza_uno_desconocido(client, prestamo):
+    url = f"/api/deuda/{prestamo['id']}/pago/preview"
+    assert client.post(url, json={"total_pagado": 1, "nuevo_saldo": 0}).status_code == 422
+    assert client.post(url, json={"modo": "x", "total_pagado": 1, "nuevo_saldo": 0}).status_code == 422

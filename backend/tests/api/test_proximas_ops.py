@@ -56,7 +56,7 @@ def test_op_clave_se_oculta_atomicamente_en_tx_pago_y_rendimiento(client, presta
     clave_tx = "recurrente:1:2026-01-01"
     assert client.post("/api/tx", json={"fecha": HOY_ISO, "tipo": "gasto", "categoria": "x", "monto": 1, "op_clave": clave_tx}).status_code == 200
     clave_pago = f"deuda:{prestamo['id']}:2026-01-01"
-    body = {"nuevo_saldo": 900_000, "total_pagado": 100_000, "fecha": HOY_ISO, "descripcion": "p", "op_clave": clave_pago}
+    body = {"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "fecha": HOY_ISO, "descripcion": "p", "op_clave": clave_pago}
     assert client.post(f"/api/deuda/{prestamo['id']}/pago", json=body).status_code == 200
     inv = client.post("/api/inv", json={"nombre": "C", "tipo": "fija", "monto_invertido": 10, "valor_actual": 10}).json()
     clave_rend = f"inversion:{inv['id']}:2026-01-01"
@@ -66,7 +66,7 @@ def test_op_clave_se_oculta_atomicamente_en_tx_pago_y_rendimiento(client, presta
 
 
 def test_op_clave_no_oculta_si_la_mutacion_falla(client, prestamo):
-    body = {"nuevo_saldo": 2_000_000, "total_pagado": 1, "fecha": HOY_ISO, "descripcion": "p", "op_clave": "deuda:1:2026-01-01"}
+    body = {"modo": "abono", "nuevo_saldo": 2_000_000, "total_pagado": 1, "fecha": HOY_ISO, "descripcion": "p", "op_clave": "deuda:1:2026-01-01"}
     assert client.post(f"/api/deuda/{prestamo['id']}/pago", json=body).status_code == 400
     assert client.post("/api/tx", json={"fecha": HOY_ISO, "tipo": "gasto", "categoria": "x", "monto": 1, "op_clave": "mala"}).status_code == 422
     assert client.get("/api/ops-ocultas").json() == {"items": []}

@@ -52,9 +52,10 @@ def _normalizar_deuda(fila):
 
 
 def _clase_desde_es_tarjeta(fila: dict) -> dict:
+    sin_es_tarjeta = {k: v for k, v in fila.items() if k != "es_tarjeta"}
     if "clase_deuda" in fila or "es_tarjeta" not in fila:
-        return fila
-    return {**fila, "clase_deuda": clase_deuda_de(fila["es_tarjeta"])}
+        return sin_es_tarjeta
+    return {**sin_es_tarjeta, "clase_deuda": clase_deuda_de(fila["es_tarjeta"])}
 
 
 def _normalizar_op_oculta(fila):
