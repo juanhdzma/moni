@@ -170,6 +170,7 @@ def este_mes(estado, hoy: datetime.date) -> dict:
         "ingresos": mes["ingresos"],
         "gastos": mes["gastos"],
         "quedo": mes["ingresos"] - mes["gastos"],
+        "titulo_quedo": "Te quedó",
         "frase": mes["frase"],
         "descripcion_grafico": f"Entró y salió por mes, últimos {MESES_ESTE_MES} meses",
         "meses": [{"mes": etiquetas[i], "entro": entro[i], "salio": salio[i]} for i in range(MESES_ESTE_MES)],

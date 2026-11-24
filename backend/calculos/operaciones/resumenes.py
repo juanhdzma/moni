@@ -1,7 +1,7 @@
 from ..formato import cop_corto, frase_flujo, porcentaje_texto, top_segmentos
 from ..numeros import porcentaje
 from .finanzas import intereses_pagados
-from .textos import categoria_sugerida, texto_activos, texto_posiciones
+from .textos import categoria_sugerida, texto_activos, texto_posiciones, texto_vacio_inversiones
 
 
 def _segmentos(filas: list, campo: str) -> list[dict]:
@@ -43,21 +43,25 @@ def resumen_inversiones(filas: list[dict], simbolo: str = "$") -> dict:
         "fijas": [i for i in filas if i["tipo"] == "fija"],
         "variables": [i for i in filas if i["tipo"] == "variable"],
     }
-    return {**resumen, "texto_posiciones": texto_posiciones(resumen)}
+    return {
+        **resumen,
+        "texto_posiciones": texto_posiciones(resumen),
+        "texto_vacio_fijas": texto_vacio_inversiones("inversiones fijas"),
+        "texto_vacio_variables": texto_vacio_inversiones("inversiones variables"),
+    }
 
 
 def resumen_activos(filas: list[dict]) -> dict:
     inicial = sum(a["valor_inicial"] for a in filas)
     actual = sum(a["valor_actual"] for a in filas)
     resumen = {
-        "total_inicial": inicial,
         "total_actual": actual,
         "variacion": actual - inicial,
         "mostrar_variacion": inicial > 0,
         "segmentos": _segmentos(filas, "valor_actual"),
         "items": filas,
     }
-    return {**resumen, **texto_activos(resumen, len(filas))}
+    return {**resumen, **texto_activos(resumen, inicial, len(filas))}
 
 
 def preview_venta_activo(fila: dict, precio: float) -> dict:

@@ -79,6 +79,9 @@ def grupo_fecha(fecha, hoy):
     return f"{mes[0].upper()}{mes[1:]} - {d.year}"
 
 
+TEXTO_VACIO_TX = {"titulo": "Sin movimientos", "texto": "Agregá un ingreso o gasto con el botón de arriba."}
+
+
 def resumen_tx(txs, simbolo="$"):
     ingresos = 0
     gastos = 0
@@ -153,7 +156,8 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
             "tipos": [{"value": k, "label": v} for k, v in ETIQUETAS_TIPO.items()],
         },
         "pills": pills,
-        "resumen": resumen_tx(items, simbolo),
+        "resumen": {**resumen_tx(items, simbolo), "titulo": "Te quedó con estos filtros" if pills else "Te quedó"},
+        "texto_vacio": TEXTO_VACIO_TX,
     }
 
 

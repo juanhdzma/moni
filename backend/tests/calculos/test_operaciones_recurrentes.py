@@ -47,7 +47,7 @@ def test_frecuencia_desconocida_o_fecha_vacia():
 
 def test_derivar_recurrente():
     d = op.derivar_recurrente(recurrente(fecha_inicio="2026-01-15"), D(2026, 8, 1))
-    assert d["proximo_pago"] == {"fecha": "2026-08-15", "dias": 14, "texto": "en 14d"}
+    assert d["proximo_pago"] == {"fecha": "2026-08-15", "texto": "en 14d"}
     assert d["activo"] is True and d["frecuencia_label"] == "Mensual" and d["mensual"] == 100
     assert op.derivar_recurrente(recurrente(fecha_inicio="2026-08-01"), D(2026, 8, 1))["proximo_pago"]["texto"] == "hoy"
     pausada = op.derivar_recurrente(recurrente(activo=0), D(2026, 8, 1))

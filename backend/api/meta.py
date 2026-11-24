@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from ..calculos import dinero
 from ..calculos.constantes import (
+    CATEGORIA_LARGO_MAX,
     DEFAULTS_FORMULARIOS,
     CLASES_DEUDA,
     DESTINOS_RENDIMIENTO,
@@ -12,8 +13,9 @@ from ..calculos.constantes import (
     PAGOS_INVERSION,
     SERIES_EVOLUCION,
     TIPOS_INVERSION,
-    TEXTO_VENTANA_AVISO,
     TIPOS_RETIRO,
+    TIPOS_TASA,
+    frase_aviso_diario,
 )
 from ..calculos.listados import COLUMNAS_ORDEN, DIRECCION_INICIAL, ETIQUETAS_COLUMNA, ETIQUETAS_TIPO_FILA
 from ..calculos.operaciones.frecuencias import opciones_frecuencia
@@ -36,6 +38,7 @@ def meta():
         "tipos_manuales": _opciones({k: v for k, v in ETIQUETAS_TIPO_FILA.items() if k != "transfer"}),
         "tipos_categoria": ETIQUETAS_TIPO_CATEGORIA,
         "tipos_inversion": TIPOS_INVERSION,
+        "tipos_tasa": TIPOS_TASA,
         "pagos_inversion": PAGOS_INVERSION,
         "clases_deuda": CLASES_DEUDA,
         "tipos_retiro": TIPOS_RETIRO,
@@ -50,5 +53,6 @@ def meta():
             "evolucion": dinero.opciones_periodo(dinero.PERIODOS_EVOLUCION_VISIBLES),
         },
         "defaults": DEFAULTS_FORMULARIOS,
-        "push": {"hora": f"{HORA_AVISO}:00", "texto": TEXTO_VENTANA_AVISO},
+        "push": {"hora": f"{HORA_AVISO}:00", "frase": frase_aviso_diario(f"{HORA_AVISO}:00")},
+        "categoria_largo_max": CATEGORIA_LARGO_MAX,
     }

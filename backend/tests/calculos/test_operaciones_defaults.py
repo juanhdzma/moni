@@ -35,7 +35,7 @@ def test_activo_nuevo_y_update():
 
 def test_textos():
     assert operaciones.texto_posiciones({"fijas": [1], "variables": []}) == "1 posición"
-    assert operaciones.texto_activos({"variacion": 0, "total_inicial": 0, "mostrar_variacion": False}, 2) == {"texto_variacion": "", "texto_conteo": "2 activos"}
+    assert operaciones.texto_activos({"variacion": 0, "mostrar_variacion": False}, 0, 2) == {"texto_variacion": "", "texto_conteo": "2 activos"}
     cats = {"gasto": [{"nombre": "A"}, {"nombre": "Z"}]}
     assert operaciones.categoria_sugerida({"tipo": "gasto", "nombre": "A"}, cats) == "A"
     assert operaciones.categoria_sugerida({"tipo": "gasto", "nombre": "Q"}, cats) == "Z"

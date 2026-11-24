@@ -1,5 +1,4 @@
 import datetime
-import math
 
 from ..fechas import es_desactualizado, texto_dias_corto
 from ..constantes import tiene_saldo
@@ -15,13 +14,12 @@ def _nivel(valor: float, alto: float, medio: float) -> str:
 
 def _proximo_pago(fecha: datetime.date, hoy: datetime.date) -> dict:
     dias = (fecha - hoy).days
-    return {"fecha": fecha.isoformat(), "dias": dias, "texto": texto_dias_corto(dias)}
+    return {"fecha": fecha.isoformat(), "texto": texto_dias_corto(dias)}
 
 
 def derivar_deuda(fila: dict) -> dict:
     saldo = fila["saldo_actual"]
     inicial = fila["monto_inicial"]
-    cuota = fila["cuota_mensual"]
     cupo = fila.get("cupo") or 0
     activa = tiene_saldo(fila)
     uso = min(100, saldo / cupo * 100) if cupo > 0 else 0
@@ -33,7 +31,6 @@ def derivar_deuda(fila: dict) -> dict:
         "vigente": bool(fila.get("es_tarjeta")) or activa,
         "progreso_pct": progreso,
         "capital_pagado": inicial - saldo,
-        "meses_restantes": math.ceil(saldo / cuota) if cuota > 0 else None,
         "nivel_progreso": _nivel(progreso, 75, 40),
         "tiene_cupo": cupo > 0,
         "disponible": max(0, cupo - saldo) if cupo > 0 else None,
@@ -53,7 +50,6 @@ def derivar_inversion(fila: dict, hoy: datetime.date) -> dict:
         "capitaliza_default": fila.get("pago") == "vencimiento",
         "ganancia": ganancia,
         "ganancia_pct": porcentaje(ganancia, fila["monto_invertido"]),
-        "tasa_mv": tasa_mv,
         "texto_tasa": None if tasa_mv is None else f"{porcentaje_texto(tasa, 2)}% EA · {porcentaje_texto(tasa_mv, 4)}% MV",
         "proximo_pago": _proximo_pago(proxima_fecha_inversion(dia, hoy), hoy) if fila.get("pago") == "mensual" and dia else None,
         "rendimiento_esperado": rendimiento_mensual_fija(fila["valor_actual"], tasa) if tasa else None,

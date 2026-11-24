@@ -91,6 +91,8 @@ def gastos_periodo(txs, periodo: str, hoy: datetime.date) -> dict:
         "total": total,
         "max": max((c["valor"] for c in categorias), default=0),
         "top": top,
+        "texto_vacio": "Sin gastos para este período",
+        "texto_total": "Total gastado, con tarjetas",
         "frase": top and _frase_top(top, NOMBRE_PERIODO_GASTOS[periodo]),
         "categorias": categorias,
     }

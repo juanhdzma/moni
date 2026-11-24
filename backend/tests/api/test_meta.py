@@ -32,5 +32,37 @@ def test_meta_requiere_sesion(anon_client):
 
 def test_meta_defaults_y_push(client):
     body = client.get("/api/meta").json()
-    assert body["defaults"] == {"frecuencia_recurrente": "mensual", "tipo_inversion": "fija", "pago_inversion": "vencimiento"}
-    assert body["push"] == {"hora": "8:00", "texto": "hoy o mañana"}
+    assert body["defaults"] == {
+        "frecuencia_recurrente": "mensual",
+        "tipo_inversion": "fija",
+        "pago_inversion": "vencimiento",
+        "tipo_tasa": "ea",
+        "clase_deuda": "prestamo",
+        "franquicia": "Visa",
+    }
+    assert body["push"] == {
+        "hora": "8:00",
+        "frase": "Aviso diario a las 8:00 de las cuotas, rendimientos y recurrentes que vencen hoy o mañana.",
+    }
+    assert body["categoria_largo_max"] == 25
+
+
+def test_meta_defaults_existen_en_sus_listas(client):
+    body = client.get("/api/meta").json()
+    d = body["defaults"]
+    assert d["tipo_inversion"] in [o["value"] for o in body["tipos_inversion"]]
+    assert d["pago_inversion"] in [o["value"] for o in body["pagos_inversion"]]
+    assert d["tipo_tasa"] in [o["value"] for o in body["tipos_tasa"]]
+    assert d["clase_deuda"] in [o["value"] for o in body["clases_deuda"]]
+    assert d["franquicia"] in [o["value"] for o in body["franquicias"]]
+    assert d["frecuencia_recurrente"] in [o["value"] for o in body["frecuencias"]]
+
+
+def test_meta_tonos_y_tipos_tasa(client):
+    body = client.get("/api/meta").json()
+    tonos = lambda k: {o["value"]: o.get("tono") for o in body[k]}
+    assert tonos("tipos_inversion") == {"fija": "ingreso", "variable": "gasto"}
+    assert tonos("pagos_inversion") == {"mensual": "ingreso", "vencimiento": None}
+    assert tonos("tipos_retiro") == {"total": "ingreso", "parcial": None}
+    assert tonos("destinos_rendimiento") == {"cuenta": "ingreso", "capitaliza": None}
+    assert body["tipos_tasa"] == [{"value": "ea", "label": "EA"}, {"value": "mv", "label": "MV"}]

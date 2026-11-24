@@ -2,14 +2,22 @@ SALDO_MINIMO = 1
 DIAS_DESACTUALIZADO = 30
 TEXTO_DESACTUALIZADO = "Valor sin actualizar hace más de 1 mes"
 
-TIPOS_INVERSION = [{"value": "fija", "label": "Fija"}, {"value": "variable", "label": "Variable"}]
-PAGOS_INVERSION = [{"value": "mensual", "label": "Mensual"}, {"value": "vencimiento", "label": "Al vencimiento"}]
+TIPOS_INVERSION = [
+    {"value": "fija", "label": "Fija", "tono": "ingreso"},
+    {"value": "variable", "label": "Variable", "tono": "gasto"},
+]
+PAGOS_INVERSION = [
+    {"value": "mensual", "label": "Mensual", "tono": "ingreso"},
+    {"value": "vencimiento", "label": "Al vencimiento"},
+]
+TIPOS_TASA = [{"value": "ea", "label": "EA"}, {"value": "mv", "label": "MV"}]
 CLASES_DEUDA = [{"value": "prestamo", "label": "Préstamo"}, {"value": "tarjeta", "label": "Tarjeta"}]
-TIPOS_RETIRO = [{"value": "total", "label": "Total"}, {"value": "parcial", "label": "Parcial"}]
+TIPOS_RETIRO = [{"value": "total", "label": "Total", "tono": "ingreso"}, {"value": "parcial", "label": "Parcial"}]
 DESTINOS_RENDIMIENTO = [
     {
         "value": "cuenta",
         "label": "Me lo pagan",
+        "tono": "ingreso",
         "hint": "Entra como ingreso a tu cartera. El valor de la inversión no cambia.",
     },
     {
@@ -37,8 +45,15 @@ DEFAULTS_FORMULARIOS = {
     "frecuencia_recurrente": "mensual",
     "tipo_inversion": "fija",
     "pago_inversion": "vencimiento",
+    "tipo_tasa": "ea",
+    "clase_deuda": "prestamo",
+    "franquicia": "Visa",
 }
 TEXTO_VENTANA_AVISO = "hoy o mañana"
+
+
+def frase_aviso_diario(hora: str) -> str:
+    return f"Aviso diario a las {hora} de las cuotas, rendimientos y recurrentes que vencen {TEXTO_VENTANA_AVISO}."
 
 
 def valores(opciones: list[dict]) -> tuple:

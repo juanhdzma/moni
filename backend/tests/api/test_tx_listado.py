@@ -8,7 +8,7 @@ def test_listar_tx(client):
     tx(client, categoria="Comida", monto=200)
     tx(client, tipo="transfer", categoria="Pago deuda", monto=50)
     r = client.get("/api/tx").json()
-    assert set(r) == {"items", "filtros", "opciones", "pills", "resumen"}
+    assert set(r) == {"items", "filtros", "opciones", "pills", "resumen", "texto_vacio"}
     assert len(r["items"]) == 2
     assert set(r["items"][0]) == TX_KEYS | TX_DERIVADOS | {"grupo", "tipo_label"}
     assert r["items"][0]["grupo"] == "Hoy"
@@ -17,8 +17,11 @@ def test_listar_tx(client):
     assert set(r["opciones"]) == {"meses", "categorias", "tipos"}
     assert r["opciones"]["categorias"] == ["Comida", "Pago deuda", "Salario"]
     assert set(r["opciones"]["meses"][0]) == {"value", "label"}
-    assert set(r["resumen"]) == {"ingresos", "gastos", "neto", "dato", "segmentos"}
+    assert set(r["resumen"]) == {"ingresos", "gastos", "neto", "dato", "segmentos", "titulo"}
     assert (r["resumen"]["ingresos"], r["resumen"]["gastos"], r["resumen"]["neto"]) == (500, 200, 300)
+    assert r["resumen"]["titulo"] == "Te quedó"
+    assert r["texto_vacio"]["titulo"] == "Sin movimientos"
+    assert client.get("/api/tx", params={"tipo": "gasto"}).json()["resumen"]["titulo"] == "Te quedó con estos filtros"
     assert r["resumen"]["dato"]["texto"] == "entró $500 · salió $200"
 
 

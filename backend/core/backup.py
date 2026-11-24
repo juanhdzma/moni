@@ -16,6 +16,7 @@ from ..schemas.inversion import InvIn
 from ..schemas.recurrente import RecIn
 from ..schemas.transaccion import TxIn
 from . import estado as store
+from .mensajes import mensaje_en_espanol
 from .tablas import ACTIVO_COLS, DEUDA_COLS, INV_COLS, REC_COLS, TX_COLS
 
 
@@ -56,8 +57,6 @@ NORMALIZADORES = {"inversiones": _normalizar_inversion, "ops_ocultas": _normaliz
 
 
 def _errores_en_espanol(error):
-    from ..api.errores import mensaje_en_espanol  # lazy: importing api here at module level is circular (api.backup imports this module)
-
     return "; ".join(f"{'.'.join(map(str, e['loc']))}: {mensaje_en_espanol(e)}" for e in error.errors())
 
 

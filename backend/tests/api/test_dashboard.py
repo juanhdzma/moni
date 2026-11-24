@@ -32,8 +32,9 @@ def test_dashboard_evolucion_rechaza_parametros(client, params):
 def test_dashboard_este_mes(client):
     sembrar(client)
     r = client.get("/api/dashboard/este-mes").json()
-    assert set(r) == {"ingresos", "gastos", "quedo", "frase", "descripcion_grafico", "meses"}
+    assert set(r) == {"ingresos", "gastos", "quedo", "titulo_quedo", "frase", "descripcion_grafico", "meses"}
     assert (r["ingresos"], r["gastos"], r["quedo"], r["frase"]["pct"]) == (4_000_000, 1_000_000, 3_000_000, 75.0)
+    assert r["titulo_quedo"] == "Te quedó"
     assert len(r["meses"]) == 6 and set(r["meses"][-1]) == {"mes", "entro", "salio"}
     assert r["meses"][-1]["entro"] == 4_000_000 and r["meses"][-1]["salio"] == 1_000_000
 
@@ -41,7 +42,8 @@ def test_dashboard_este_mes(client):
 def test_dashboard_gastos(client):
     sembrar(client)
     r = client.get("/api/dashboard/gastos", params={"periodo": "1W"}).json()
-    assert set(r) == {"periodo", "total", "max", "top", "frase", "categorias"}
+    assert set(r) == {"periodo", "total", "max", "top", "frase", "categorias", "texto_vacio", "texto_total"}
+    assert (r["texto_vacio"], r["texto_total"]) == ("Sin gastos para este período", "Total gastado, con tarjetas")
     assert "la última semana" in r["frase"]["texto"] and r["total"] == 1_000_000 and r["max"] == 900_000
     assert r["top"] == {"categoria": "Comida", "valor": 900_000, "pct": 90.0}
     assert [c["categoria"] for c in r["categorias"]] == ["Comida", "Transporte"]

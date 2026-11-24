@@ -6,7 +6,11 @@ class Opcion(BaseModel):
     label: str
 
 
-class OpcionConAyuda(Opcion):
+class OpcionConTono(Opcion):
+    tono: str | None = None
+
+
+class OpcionConAyuda(OpcionConTono):
     hint: str
 
 
@@ -25,11 +29,14 @@ class DefaultsMeta(BaseModel):
     frecuencia_recurrente: str
     tipo_inversion: str
     pago_inversion: str
+    tipo_tasa: str
+    clase_deuda: str
+    franquicia: str
 
 
 class PushMeta(BaseModel):
     hora: str
-    texto: str
+    frase: str
 
 
 class MetaOut(BaseModel):
@@ -37,10 +44,11 @@ class MetaOut(BaseModel):
     franquicias: list[Opcion]
     tipos_manuales: list[Opcion]
     tipos_categoria: list[Opcion]
-    tipos_inversion: list[Opcion]
-    pagos_inversion: list[Opcion]
+    tipos_inversion: list[OpcionConTono]
+    tipos_tasa: list[Opcion]
+    pagos_inversion: list[OpcionConTono]
     clases_deuda: list[Opcion]
-    tipos_retiro: list[Opcion]
+    tipos_retiro: list[OpcionConTono]
     destinos_rendimiento: list[OpcionConAyuda]
     monedas: list[Opcion]
     series_evolucion: list[Opcion]
@@ -48,3 +56,4 @@ class MetaOut(BaseModel):
     periodos: PeriodosMeta
     defaults: DefaultsMeta
     push: PushMeta
+    categoria_largo_max: int
