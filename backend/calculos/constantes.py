@@ -33,6 +33,14 @@ ETIQUETAS_TIPO_CATEGORIA = [
 ]
 
 
+DEFAULTS_FORMULARIOS = {
+    "frecuencia_recurrente": "mensual",
+    "tipo_inversion": "fija",
+    "pago_inversion": "vencimiento",
+}
+TEXTO_VENTANA_AVISO = "hoy o mañana"
+
+
 def valores(opciones: list[dict]) -> tuple:
     return tuple(o["value"] for o in opciones)
 

@@ -4,11 +4,11 @@ from fastapi import APIRouter
 
 from ..calculos import listados
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
-from ..calculos.operaciones.movimientos import ErrorDeDominio
+from ..calculos.numeros import pesos
+from ..calculos.errores import ErrorDeDominio
 from ..core.db import conexion
 from ..core import estado as store
 from ..core.estado import coleccion
-from ..core.montos import pesos
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import delete_row, fijar_saldo, get_row, guardar_y_leer, insert_row, update_row
 from ..core.tablas import TX_COLS
@@ -82,7 +82,7 @@ def opciones_tx(tx_id: Optional[int] = None):
     with conexion() as conn:
         tx = get_row(conn, "transacciones", tx_id) if tx_id is not None else None
         return listados.opciones_tx(
-            store.categorias(conn), coleccion(conn, "deudas"), tx, ahora_bogota_iso()
+            store.categorias(conn), coleccion(conn, "deudas", hoy_bogota()), tx, ahora_bogota_iso()
         )
 
 
@@ -97,5 +97,5 @@ def listar_tx(
     with conexion() as conn:
         hoy = hoy_bogota()
         return listados.listar_transacciones(
-            coleccion(conn, "transacciones"), col, int(dir), tipo, mes, cat, hoy, store.simbolo(conn)
+            coleccion(conn, "transacciones", hoy), col, int(dir), tipo, mes, cat, hoy, store.simbolo(conn)
         )

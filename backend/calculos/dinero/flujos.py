@@ -1,12 +1,10 @@
+from ..constantes import CATEGORIAS_SISTEMA
+
+_INGRESO = CATEGORIAS_SISTEMA["ingreso"]
+_GASTO = CATEGORIAS_SISTEMA["gasto"]
 CATEGORIAS_NEUTRAS_PATRIMONIO = {
-    "Pago deuda",
-    "Inversión",
-    "Compra activos",
-    "Crédito recibido",
-    "Avance de tarjeta",
-    "Venta activos",
-    "Dividendos",
-}
+    nombre for grupo in CATEGORIAS_SISTEMA.values() for nombre in grupo.values()
+} - {_INGRESO["intereses"]}
 
 
 def es_gasto_cartera(tx) -> bool:
@@ -38,9 +36,9 @@ def flujo_patrimonio(txs) -> float:
 def flujo_inversiones(txs) -> float:
     total = 0
     for t in txs:
-        if t["categoria"] == "Inversión":
+        if t["categoria"] == _GASTO["inversion"]:
             total += t["monto"]
-        elif t["categoria"] == "Dividendos":
+        elif t["categoria"] == _INGRESO["dividendos"]:
             total -= t["monto"]
     return total
 

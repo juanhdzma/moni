@@ -20,12 +20,16 @@ _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _LEGACY = re.compile(r"^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:[\s,]+(\d{1,2}:\d{2}))?")
 
 
+def ahora_bogota() -> datetime.datetime:
+    return datetime.datetime.now(TZ)
+
+
 def hoy_bogota() -> datetime.date:
-    return datetime.datetime.now(TZ).date()
+    return ahora_bogota().date()
 
 
 def ahora_bogota_iso() -> str:
-    return datetime.datetime.now(TZ).strftime("%Y-%m-%dT%H:%M")
+    return ahora_bogota().strftime("%Y-%m-%dT%H:%M")
 
 
 def normalizar_fecha(s: Optional[str]) -> str:
@@ -62,6 +66,11 @@ def parse_fecha_hora(s: Optional[str]) -> Optional[datetime.datetime]:
         except ValueError:
             return None
     return datetime.datetime.combine(d, hora)
+
+
+def es_fecha_iso(s: str) -> bool:
+    forma_iso = bool(_ISO.match(s) or _ISO_HORA.match(s)) and len(s) in (10, 16, 19)
+    return forma_iso and parse_fecha_hora(s) is not None
 
 
 def mes_de(s: Optional[str]) -> str:

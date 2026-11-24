@@ -57,7 +57,7 @@ def test_armar_proximas_filtra_ocultas_y_arma_textos():
     ]
     assert r["extra"] == [] and r["texto_ver_todas"] is None
     assert r["hoy"] == "2026-08-15"
-    assert r["vencidas"] == 1
+    assert "vencidas" not in r and "visibles" not in r and "dias" not in r["items"][0]
     assert "salen_total" not in r and "dias_ventana" not in r
     primero, segundo = r["items"][0], r["items"][1]
     assert primero["texto_dias"] == "vencido 5d" and primero["vencida"] is True
@@ -102,6 +102,13 @@ def test_armar_proximas_plural_vencidas_y_vacio():
 def test_armar_proximas_corta_a_20_pero_cuenta_todas():
     deudas = [deuda(i, proxima_cuota="2026-08-20") for i in range(1, 26)]
     r = op.armar_proximas(op.calcular_proximas_operaciones(deudas, [], [], HOY), set(), HOY)
-    assert len(r["items"]) == 5 and len(r["extra"]) == 15 and r["visibles"] == 5
-    assert r["texto_ver_todas"] == "Ver las 20"
+    assert len(r["items"]) == 5 and len(r["extra"]) == 15
+    assert r["texto_ver_todas"] == "Ver las 20" and r["texto_ver_menos"] == "Ver menos"
     assert r["items"][0]["clave"] != r["extra"][0]["clave"]
+
+
+def test_armar_proximas_marca_sin_monto_y_oculta_ver_menos_si_no_hay_extra():
+    ops = op.calcular_proximas_operaciones([deuda(1, cuota_mensual=0, proxima_cuota="2026-08-20")], [], [], HOY)
+    r = op.armar_proximas(ops, set(), HOY)
+    assert r["items"][0]["sin_monto"] is True
+    assert r["texto_ver_menos"] is None

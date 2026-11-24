@@ -8,7 +8,7 @@ def test_registro_y_login_ok(client):
     assert r.status_code == 200 and r.json()["ok"] is True
     lista = client.get("/api/auth/passkeys").json()
     assert [p["nombre"] for p in lista] == ["iPhone"]
-    assert client.get("/api/auth/estado").json()["passkeys"] == 1
+    assert client.get("/api/auth/estado").json()["tiene_passkeys"] is True
     client.cookies.clear()
     assert client.get("/api/backup").status_code == 401
     r = intento_login(client, auten, 1)

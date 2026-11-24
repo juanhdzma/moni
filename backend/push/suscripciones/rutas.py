@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field, field_validator
 
 from ...core import db
-from .. import envio, vapid
+from .. import vapid
 from .endpoint import endpoint_permitido
 
 router = APIRouter()
@@ -53,8 +53,3 @@ def push_subscribe(body: PushSub):
 @router.post("/api/push/unsubscribe")
 def push_unsubscribe(body: PushUnsub):
     return _ejecutar("DELETE FROM push_subs WHERE endpoint = ?", (body.endpoint,))
-
-
-@router.post("/api/push/test")
-def push_test():
-    return {"enviadas": envio.enviar_a_todos("Moni", "Las notificaciones funcionan.", tag="test")["enviadas"]}

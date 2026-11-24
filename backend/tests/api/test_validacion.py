@@ -50,14 +50,6 @@ def test_dia_pago_fuera_de_rango(client):
     assert r.status_code == 422
 
 
-def test_pago_no_puede_subir_el_saldo(client, prestamo):
-    r = client.post(
-        f"/api/deuda/{prestamo['id']}/pago",
-        json={"nuevo_saldo": 2_000_000, "total_pagado": 100_000, "fecha": "2026-07-01", "descripcion": "x"},
-    )
-    assert r.status_code == 400
-
-
 def test_adelanto_no_puede_bajar_el_saldo(client, tarjeta):
     client.post("/api/tx", json={**TX_OK, "monto": 500, "tarjeta_id": tarjeta["id"]})
     r = client.post(
@@ -65,33 +57,6 @@ def test_adelanto_no_puede_bajar_el_saldo(client, tarjeta):
         json={"monto": 100, "nuevo_saldo": 0, "fecha": "2026-07-01", "descripcion": "x"},
     )
     assert r.status_code == 400
-
-
-def test_adelanto_solo_para_tarjetas(client, prestamo):
-    r = client.post(
-        f"/api/deuda/{prestamo['id']}/adelanto",
-        json={"monto": 100, "nuevo_saldo": 1_100_000, "fecha": "2026-07-01", "descripcion": "x"},
-    )
-    assert r.status_code == 400
-
-
-def test_retiro_parcial_no_puede_dejar_mas_de_lo_que_habia(client):
-    inv = client.post(
-        "/api/inv",
-        json={"nombre": "Fondo", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 1000},
-    ).json()
-    r = client.post(
-        f"/api/inv/{inv['id']}/retiro",
-        json={"tipo": "parcial", "monto": 100, "saldo_queda": 5000, "fecha": "2026-07-01"},
-    )
-    assert r.status_code == 400
-
-
-def test_404_en_entidad_inexistente(client):
-    assert client.delete("/api/deuda/9999").status_code == 404
-    assert client.post(
-        "/api/inv/9999/rendimiento", json={"monto": 100, "fecha": "2026-07-01"}
-    ).status_code == 404
 
 
 def test_no_encontrado_usa_nombre_legible_de_la_entidad(client):
@@ -102,3 +67,90 @@ def test_no_encontrado_usa_nombre_legible_de_la_entidad(client):
 def test_listar_tx_rechaza_tipo_invalido(client):
     assert client.get("/api/tx", params={"tipo": "otro"}).status_code == 422
     assert client.get("/api/tx", params={"tipo": "gasto"}).status_code == 200
+
+
+@pytest.mark.parametrize("fecha", ["2026-13-45", "2026-02-30", "2026-07-01T25:99"])
+def test_fecha_con_formato_pero_inexistente_es_422(client, fecha):
+    assert client.post("/api/tx", json={**TX_OK, "fecha": fecha}).status_code == 422
+
+
+def test_fecha_inexistente_en_cuota_de_deuda_es_422_y_no_500(client, prestamo):
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"nuevo_saldo": 0, "total_pagado": 10, "fecha": "2026-13-45"})
+    assert r.status_code == 422
+
+
+@pytest.mark.parametrize("literal", ["Infinity", "-Infinity", "NaN"])
+def test_monto_infinito_o_nan_es_422(client, literal):
+    cuerpo = '{"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": %s}' % literal
+    r = client.post("/api/tx", content=cuerpo, headers={"content-type": "application/json"})
+    assert r.status_code == 422
+
+
+def test_monto_infinito_en_activo_es_422(client):
+    cuerpo = '{"nombre": "Casa", "valor_inicial": Infinity}'
+    r = client.post("/api/activo", content=cuerpo, headers={"content-type": "application/json"})
+    assert r.status_code == 422
+    assert r.json()["detail"][0]["msg"] == "Debe ser un número finito"
+
+
+@pytest.mark.parametrize(
+    "ruta, cuerpo",
+    [
+        ("/api/activo", {"valor_inicial": 100}),
+        ("/api/rec", {"tipo": "gasto", "monto": 100, "frecuencia": "mensual"}),
+        ("/api/inv", {"tipo": "variable", "monto_invertido": 100}),
+        ("/api/deuda", {"saldo_actual": 100}),
+    ],
+)
+def test_nombre_solo_espacios_es_422(client, ruta, cuerpo):
+    assert client.post(ruta, json={**cuerpo, "nombre": "   "}).status_code == 422
+    assert client.post(ruta, json={**cuerpo, "nombre": "  Ok  "}).json()["nombre"] == "Ok"
+
+
+def test_monto_de_tx_se_redondea_a_pesos_y_rechaza_lo_que_redondea_a_cero(client):
+    r = client.post("/api/tx", json={**TX_OK, "monto": 10.6})
+    assert r.status_code == 200 and r.json()["monto"] == 11
+    assert client.post("/api/tx", json={**TX_OK, "monto": 0.4}).status_code == 422
+
+
+_CUERPO_INV = {"nombre": "X", "tipo": "fija", "monto_invertido": 1}
+_CUERPO_ACTIVO = {"nombre": "X", "valor_inicial": 1}
+
+
+@pytest.mark.parametrize(
+    "metodo, ruta, cuerpo",
+    [
+        ("delete", "/api/deuda/9999", None),
+        ("delete", "/api/inv/999", None),
+        ("delete", "/api/activo/999", None),
+        ("put", "/api/inv/999", _CUERPO_INV),
+        ("put", "/api/activo/999", _CUERPO_ACTIVO),
+        ("post", "/api/inv/9999/rendimiento", {"monto": 100, "fecha": "2026-07-01"}),
+        ("get", "/api/tx/9999", None),
+        ("get", "/api/deuda/9999", None),
+        ("get", "/api/inv/9999", None),
+        ("get", "/api/rec/9999", None),
+    ],
+)
+def test_404_en_entidad_inexistente(client, metodo, ruta, cuerpo):
+    kwargs = {} if cuerpo is None else {"json": cuerpo}
+    assert getattr(client, metodo)(ruta, **kwargs).status_code == 404
+
+
+def _errores(client, payload):
+    r = client.post("/api/tx", json=payload)
+    assert r.status_code == 422
+    return {tuple(e["loc"])[-1]: e for e in r.json()["detail"]}
+
+
+def test_422_formato_y_mensajes(client):
+    errores = _errores(client, {"tipo": "otro", "monto": 0, "fecha": "ayer"})
+    assert set(errores["monto"]) == {"loc", "msg", "type"}
+    assert errores["monto"]["msg"] == "Debe ser mayor que 0"
+    assert errores["tipo"]["msg"] == "Opción inválida"
+    assert errores["fecha"]["msg"].startswith("fecha debe ser")
+
+
+def test_422_valor_requerido(client):
+    errores = _errores(client, {})
+    assert errores["tipo"]["msg"] == "Este valor es requerido"

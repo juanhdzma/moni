@@ -136,3 +136,35 @@ def test_es_tarjeta_sale_como_bool_y_progreso_no_pasa_de_100(client, prestamo):
     creciente = client.put(f"/api/deuda/{prestamo['id']}", json={**prestamo, "monto_inicial": 100, "saldo_actual": 500}).json()
     deuda = client.get(f"/api/deuda/{creciente['id']}").json()
     assert deuda["progreso_pct"] == 0 and "intereses_pagados" not in deuda
+
+
+def test_credito_con_crear_tx_sin_fecha_usa_hoy_y_el_listado_responde(client):
+    from backend.calculos.fechas import hoy_bogota
+
+    deuda = client.post(
+        "/api/deuda", json={"nombre": "Libre", "monto_inicial": 500_000, "saldo_actual": 500_000, "crear_tx": True}
+    ).json()
+    assert deuda["fecha_inicio"] == hoy_bogota().isoformat()
+    assert _tx(client)[0]["fecha"] == deuda["fecha_inicio"]
+    assert client.get("/api/tx").status_code == 200
+
+
+def test_resumen_frases_de_tarjeta_texto_vacio_y_campos_retirados(client, tarjeta):
+    r = client.get("/api/deudas/resumen").json()
+    frases = r["tarjetas"][0]["frases"]
+    assert frases["disponible_texto"] == "$1.000.000" and frases["intereses_texto"] is None
+    assert r["tarjetas"][0]["tiene_cupo"] is True
+    assert r["texto_vacio_creditos"] == {"titulo": "Sin créditos", "texto": "Agregá uno con el botón + de arriba."}
+    assert "total_cuotas" not in r and "meses_restantes" not in r["tarjetas"][0]
+
+
+def test_tiene_cupo_en_el_detalle(client, prestamo, tarjeta):
+    assert client.get(f"/api/deuda/{tarjeta['id']}").json()["tiene_cupo"] is True
+    assert client.get(f"/api/deuda/{prestamo['id']}").json()["tiene_cupo"] is False
+
+
+def test_credito_saldado_se_puede_editar_pero_no_crear_sin_saldo(client):
+    deuda = client.post("/api/deuda", json={"nombre": "X", "monto_inicial": 100, "saldo_actual": 100}).json()
+    editada = client.put(f"/api/deuda/{deuda['id']}", json={"nombre": "X2", "monto_inicial": 100, "saldo_actual": 0})
+    assert editada.status_code == 200 and editada.json()["saldo_actual"] == 0
+    assert client.post("/api/deuda", json={"nombre": "Y", "monto_inicial": 100}).status_code == 422

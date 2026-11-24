@@ -9,12 +9,16 @@ def test_roundtrip_export_import(client, tarjeta):
     client.post("/api/activo", json={"nombre": "Casa", "valor_inicial": 1000, "valor_actual": 1200})
     client.post("/api/categorias", json={"tipo": "gasto", "nombre": "Extra"})
     client.post("/api/ops-ocultas", json={"clave": "deuda:1:2026-01-01"})
+    client.put("/api/ajustes", json={"moneda_simbolo": "US$"})
     antes = client.get("/api/backup").json()
-    assert set(antes) == {"transacciones", "deudas", "inversiones", "activos", "recurrentes", "categorias", "ops_ocultas"}
-    assert all(len(filas) == 1 for tabla, filas in antes.items() if tabla != "deudas")
+    assert antes["ajustes"] == [{"clave": "moneda_simbolo", "valor": "US$"}]
+    assert set(antes) == {"transacciones", "deudas", "inversiones", "activos", "recurrentes", "categorias", "ops_ocultas", "ajustes"}
+    assert all(len(filas) == 1 for tabla, filas in antes.items() if tabla not in ("deudas", "ajustes"))
 
     client.post("/api/truncate")
-    assert all(filas == [] for filas in client.get("/api/backup").json().values())
+    client.put("/api/ajustes", json={"moneda_simbolo": "$"})
+    vacio = client.get("/api/backup").json()
+    assert all(filas == [] for tabla, filas in vacio.items() if tabla != "ajustes")
 
     r = client.post("/api/import", json=antes).json()
     assert r["counts"]["transacciones"] == 1 and r["counts"]["categorias"] == 1
@@ -73,3 +77,16 @@ def test_truncate_reinicia_ids_y_vacia_categorias_y_ops_pero_no_ajustes(client):
 def test_lectura_no_necesita_header_csrf(client):
     client.headers.pop("x-moni-request")
     assert client.get("/api/backup").status_code == 200
+
+
+def test_import_restaura_ajustes_y_rechaza_simbolo_invalido(client):
+    assert client.post("/api/import", json={"ajustes": [{"clave": "moneda_simbolo", "valor": "EUR"}]}).status_code == 200
+    assert client.get("/api/bootstrap").json()["ajustes"] == {"moneda_simbolo": "EUR"}
+    r = client.post("/api/import", json={"ajustes": [{"clave": "moneda_simbolo", "valor": "demasiado"}]})
+    assert r.status_code == 400 and r.json()["detail"].startswith("Fila ajustes[0] inválida")
+    assert client.post("/api/import", json={"ajustes": [{"clave": "otra", "valor": "x"}]}).status_code == 400
+
+
+def test_import_op_oculta_invalida_es_error_de_dominio_en_espanol(client):
+    r = client.post("/api/import", json={"ops_ocultas": [{"clave": "x:1:2026-01-01"}]})
+    assert r.status_code == 400 and r.json()["detail"].startswith("Fila ops_ocultas[0] inválida")

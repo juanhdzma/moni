@@ -1,5 +1,4 @@
-from ..formato import cop_corto, porcentaje_texto
-from ..listados import frase_flujo, top_segmentos
+from ..formato import cop_corto, frase_flujo, porcentaje_texto, top_segmentos
 from ..numeros import porcentaje
 from .finanzas import intereses_pagados
 
@@ -34,7 +33,6 @@ def resumen_inversiones(filas: list[dict], simbolo: str = "$") -> dict:
     ganancia = actual - invertido
     ganancia_pct = porcentaje(ganancia, invertido)
     return {
-        "total_invertido": invertido,
         "total_actual": actual,
         "ganancia": ganancia,
         "ganancia_pct": ganancia_pct,
@@ -53,7 +51,7 @@ def resumen_activos(filas: list[dict]) -> dict:
         "total_inicial": inicial,
         "total_actual": actual,
         "variacion": actual - inicial,
-        "variacion_pct": porcentaje(actual - inicial, inicial),
+        "mostrar_variacion": inicial > 0,
         "segmentos": _segmentos(filas, "valor_actual"),
         "items": filas,
     }
@@ -69,8 +67,6 @@ def resumen_recurrentes(filas: list[dict], simbolo: str = "$") -> dict:
     gastos_activos = [r for r in activas if r["tipo"] != "ingreso"]
     gastos = sum(r["mensual"] for r in gastos_activos)
     return {
-        "total_gastos_mensual": gastos,
-        "total_ingresos_mensual": ingresos,
         "neto_mensual": ingresos - gastos,
         "dato": frase_flujo("entran", "salen", ingresos, gastos, simbolo, " en fijos"),
         "segmentos": _segmentos(gastos_activos, "mensual"),

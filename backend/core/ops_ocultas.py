@@ -1,26 +1,14 @@
-import datetime
-import re
-
 from ..calculos import operaciones
-from ..calculos.fechas import TZ, parse_fecha
+from ..calculos.fechas import ahora_bogota_iso
+from ..calculos.operaciones.proximas import FUENTES_OPS, parse_clave
 from .estado import filas
-
-FUENTES_OPS = {"deuda": "deudas", "inversion": "inversiones", "recurrente": "recurrentes"}
-_CLAVE_OP_RE = re.compile(rf"^({'|'.join(FUENTES_OPS)}):(\d+):(\d{{4}}-\d{{2}}-\d{{2}})$")
-
-
-def parse_clave(clave: str) -> tuple[str, int, str]:
-    m = _CLAVE_OP_RE.match(clave or "")
-    if not m or parse_fecha(m.group(3)) is None:
-        raise ValueError("clave de operación inválida")
-    return m.group(1), int(m.group(2)), m.group(3)
 
 
 def ocultar_op(conn, clave):
     tipo, fuente_id, fecha = parse_clave(clave)
     cur = conn.execute(
         "INSERT OR IGNORE INTO ops_ocultas (clave, tipo, fuente_id, fecha, creada_en) VALUES (?, ?, ?, ?, ?)",
-        (clave, tipo, fuente_id, fecha, datetime.datetime.now(TZ).isoformat(timespec="seconds")),
+        (clave, tipo, fuente_id, fecha, ahora_bogota_iso()),
     )
     return cur.rowcount
 

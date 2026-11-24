@@ -1,13 +1,18 @@
 import sqlite3
 
-from fastapi import APIRouter, HTTPException
-from pydantic import ValidationError
+from typing import Literal
+
+from fastapi import APIRouter
+from pydantic import BaseModel, ValidationError, field_validator
 
 from ..calculos import operaciones
+from ..calculos.categorias import validar_simbolo
+from ..calculos.errores import ErrorDeDominio
 from ..calculos.formato import plural
+from ..calculos.operaciones.proximas import parse_clave
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
+from ..core import estado as store
 from ..core.db import conexion
-from ..core.ops_ocultas import parse_clave
 from ..core.tablas import ACTIVO_COLS, DEUDA_COLS, INV_COLS, REC_COLS, TX_COLS
 from ..schemas.activo import ActivoIn
 from ..schemas.ajustes import CategoriaIn, OpOcultaBackup
@@ -19,6 +24,17 @@ from ..schemas.transaccion import TxIn
 from .errores import mensaje_en_espanol
 
 router = APIRouter()
+
+
+class AjusteBackup(BaseModel):
+    clave: Literal["moneda_simbolo"]
+    valor: str
+
+    @field_validator("valor")
+    @classmethod
+    def _valor(cls, v: str) -> str:
+        return validar_simbolo(v)
+
 
 IMPORT_TABLES = [
     ("deudas", ["id"] + DEUDA_COLS + ["total_intereses"], DeudaIn, ("deuda", "deudas")),
@@ -39,7 +55,7 @@ def _normalizar_op_oculta(fila):
     try:
         fila["tipo"], fila["fuente_id"], fila["fecha"] = parse_clave(fila["clave"])
     except ValueError as e:
-        raise HTTPException(400, f"ops_ocultas inválida: {e}")
+        raise ErrorDeDominio(f"Operación oculta inválida: {e}")
     fila["creada_en"] = fila["creada_en"] or ahora_bogota_iso()
 
 
@@ -52,15 +68,15 @@ def _errores_en_espanol(error):
 
 def _validar_fila_import(table, model, row, idx):
     if not isinstance(row, dict):
-        raise HTTPException(400, f"{table}[{idx}]: se esperaba un objeto")
+        raise ErrorDeDominio(f"Fila {table}[{idx}]: se esperaba un objeto")
     try:
         limpia = model.model_validate(row).model_dump()
     except ValidationError as e:
-        raise HTTPException(400, f"{table}[{idx}] inválido: {_errores_en_espanol(e)}")
+        raise ErrorDeDominio(f"Fila {table}[{idx}] inválida: {_errores_en_espanol(e)}")
     for extra in ("id", "total_intereses"):
         if extra in row and row[extra] is not None:
             if not isinstance(row[extra], (int, float)) or isinstance(row[extra], bool):
-                raise HTTPException(400, f"{table}[{idx}].{extra} debe ser numérico")
+                raise ErrorDeDominio(f"Fila {table}[{idx}]: {extra} debe ser numérico")
             limpia[extra] = row[extra]
     if table in NORMALIZADORES:
         NORMALIZADORES[table](limpia)
@@ -82,10 +98,12 @@ def _texto_importado(counts):
 @router.get("/api/backup")
 def exportar():
     with conexion() as conn:
-        return {
+        filas = {
             table: [dict(r) for r in conn.execute(f"SELECT * FROM {table} ORDER BY rowid")]
             for table, *_ in IMPORT_TABLES
         }
+        filas["ajustes"] = [dict(r) for r in conn.execute("SELECT clave, valor FROM ajustes ORDER BY clave")]
+        return filas
 
 
 @router.post("/api/import")
@@ -95,6 +113,7 @@ def import_data(body: ImportPayload):
         table: [_validar_fila_import(table, model, r, i) for i, r in enumerate(payload.get(table) or [])]
         for table, _cols, model, _nombres in IMPORT_TABLES
     }
+    ajustes = [_validar_fila_import("ajustes", AjusteBackup, r, i) for i, r in enumerate(payload.get("ajustes") or [])]
     with conexion() as conn:
         counts = {}
         try:
@@ -108,11 +127,14 @@ def import_data(body: ImportPayload):
                         [row.get(c) for c in cols],
                     )
                 counts[table] = len(rows)
+            for ajuste in ajustes:
+                store.guardar_moneda_simbolo(conn, ajuste["valor"])
+            counts["ajustes"] = len(ajustes)
             conn.commit()
             return {"counts": counts, "texto": _texto_importado(counts)}
         except sqlite3.IntegrityError as e:
             conn.rollback()
-            raise HTTPException(400, _mensaje_integridad(e))
+            raise ErrorDeDominio(_mensaje_integridad(e))
 
 
 @router.post("/api/truncate")

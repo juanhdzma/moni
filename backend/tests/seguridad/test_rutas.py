@@ -41,7 +41,7 @@ def test_cookie_secure_en_https_directo_y_con_proxy_confiable(entorno, monkeypat
 
 def test_estado_publico(anon_client):
     r = anon_client.get("/api/auth/estado")
-    assert r.json() == {"configurado": True, "autenticado": False, "passkeys": 0}
+    assert r.json() == {"configurado": True, "autenticado": False, "tiene_passkeys": False}
 
 
 def test_estado_autenticado(client):

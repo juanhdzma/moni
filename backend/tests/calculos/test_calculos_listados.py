@@ -3,6 +3,8 @@ from datetime import date
 import pytest
 
 from backend.calculos import listados as L
+from backend.calculos.constantes import tiene_saldo
+from backend.calculos.formato import top_segmentos
 
 HOY = date(2026, 8, 20)
 
@@ -12,9 +14,9 @@ def tx(tipo, categoria, monto, **kw):
 
 
 def test_tiene_saldo():
-    assert L.tiene_saldo({"saldo_actual": 1})
-    assert not L.tiene_saldo({"saldo_actual": 0.99})
-    assert not L.tiene_saldo({"saldo_actual": 1.16e-10})
+    assert tiene_saldo({"saldo_actual": 1})
+    assert not tiene_saldo({"saldo_actual": 0.99})
+    assert not tiene_saldo({"saldo_actual": 1.16e-10})
 
 
 def test_listar_excluye_transfers_ordena_y_filtra():
@@ -62,6 +64,12 @@ def test_orden_texto_minuscula_antes_que_mayuscula_como_icu():
     assert [t["monto"] for t in r["items"]] == [3, 2, 1]
 
 
+def test_meses_disponibles_ignora_fechas_vacias_o_invalidas():
+    txs = [tx("gasto", "B", 1, fecha=""), tx("gasto", "B", 1, fecha="basura"), tx("gasto", "B", 1, fecha="2026-07-01")]
+    assert L.meses_disponibles(txs) == ["2026-07"]
+    assert len(L.listar_transacciones(txs, hoy=HOY)["items"]) == 3
+
+
 def test_meses_y_categorias_disponibles():
     txs = [tx("gasto", "B", 1, fecha="2026-07-01"), tx("transfer", "A", 1, fecha="2026-08-01")]
     assert L.meses_disponibles(txs) == ["2026-08", "2026-07"]
@@ -96,11 +104,11 @@ def test_resumen_tx():
 
 def test_top_segmentos():
     seg = lambda k, v: {"key": k, "label": k, "valor": v}
-    assert L.top_segmentos([seg("a", 0), seg("b", 2), seg("c", 5)]) == [seg("c", 5), seg("b", 2)]
+    assert top_segmentos([seg("a", 0), seg("b", 2), seg("c", 5)]) == [seg("c", 5), seg("b", 2)]
     cinco = [seg(str(i), i) for i in range(1, 6)]
-    assert len(L.top_segmentos(cinco)) == 5
+    assert len(top_segmentos(cinco)) == 5
     seis = [seg(str(i), i) for i in range(1, 7)]
-    r = L.top_segmentos(seis)
+    r = top_segmentos(seis)
     assert [s["key"] for s in r] == ["6", "5", "4", "3", "__otros"]
     assert r[-1] == {"key": "__otros", "label": "Otros", "valor": 3}
 
@@ -114,44 +122,6 @@ def test_derivar_tx():
     assert d["metodo_pago"] == "Efectivo / Débito" and d["tarjeta_nombre"] is None
     assert L.derivar_tx(tx("gasto", "A", 5, tarjeta_id=99), deudas)["metodo_pago"] == "Efectivo / Débito"
     assert L.derivar_tx(tx("ingreso", "A", 5, tarjeta_id=7), deudas)["metodo_pago"] == "Efectivo / Débito"
-
-
-def test_categorias_con_custom():
-    cats = L.categorias_con_custom([
-        {"tipo": "ingreso", "nombre": "Freelance"},
-        {"tipo": "ingreso", "nombre": "Intereses"},
-        {"tipo": "gasto", "nombre": "Viajes"},
-    ])
-    assert list(cats) == ["ingreso", "gasto", "transfer"]
-    assert cats["ingreso"][-1] == {"nombre": "Freelance", "sistema": False}
-    assert [c["nombre"] for c in cats["ingreso"]].count("Intereses") == 1
-    assert cats["gasto"] == [{"nombre": "Inversión", "sistema": True}, {"nombre": "Compra activos", "sistema": True}, {"nombre": "Viajes", "sistema": False}]
-    assert L.categorias_con_custom([])["transfer"] == [{"nombre": "Pago deuda", "sistema": True}]
-
-
-def test_es_categoria_sistema():
-    assert L.es_categoria_sistema("ingreso", "Intereses")
-    assert not L.es_categoria_sistema("gasto", "Freelance")
-    assert not L.es_categoria_sistema("otro", "Intereses")
-
-
-def test_validar_categoria():
-    assert L.validar_categoria("gasto", "  Mercado ", []) == "Mercado"
-    with pytest.raises(ValueError):
-        L.validar_categoria("gasto", "   ", [])
-    with pytest.raises(ValueError):
-        L.validar_categoria("otro", "x", [])
-    with pytest.raises(L.CategoriaDuplicada):
-        L.validar_categoria("gasto", "Inversión", [])
-    with pytest.raises(L.CategoriaDuplicada):
-        L.validar_categoria("gasto", "Viajes", ["Viajes"])
-
-
-def test_validar_simbolo():
-    assert L.validar_simbolo(" US$ ") == "US$"
-    for malo in ["", "   ", "12345", "a\nb", None]:
-        with pytest.raises(ValueError):
-            L.validar_simbolo(malo)
 
 
 def test_alertas():

@@ -71,18 +71,6 @@ def _cdt(client):
     ).json()
 
 
-def test_rendimiento_que_capitaliza_sube_el_valor_y_no_toca_el_ledger(client):
-    inv = _cdt(client)
-    client.post(
-        f"/api/inv/{inv['id']}/rendimiento",
-        json={"monto": 95, "fecha": "2026-07-01", "capitaliza": True},
-    )
-    i = _uno(client, "inversiones", inv["id"])
-    assert i["valor_actual"] == 1095
-    assert i["valor_actualizado_en"] == "2026-07-01"
-    assert _tx(client) == []
-
-
 def test_rendimiento_pagado_entra_al_ledger_y_no_toca_el_valor(client):
     inv = _cdt(client)
     client.post(f"/api/inv/{inv['id']}/rendimiento", json={"monto": 95, "fecha": "2026-07-01"})
@@ -125,16 +113,6 @@ def test_retiro_parcial_reduce_capital_a_prorrata(client):
     )
     i = _uno(client, "inversiones", inv["id"])
     assert (i["monto_invertido"], i["valor_actual"]) == (500, 1000)
-
-
-def test_retiro_total_borra_la_inversion(client):
-    inv = client.post(
-        "/api/inv",
-        json={"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 1100},
-    ).json()
-    client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "total", "monto": 1100, "fecha": "2026-07-01"})
-    assert client.get("/api/backup").json()["inversiones"] == []
-    assert _tx(client)[0]["monto"] == 1100
 
 
 def test_venta_borra_el_activo_y_registra_ingreso(client):

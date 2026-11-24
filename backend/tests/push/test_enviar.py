@@ -99,3 +99,9 @@ def test_limitar_purga_ips_vencidas(monkeypatch):
     monkeypatch.setattr(envio_rutas, "client_ip", lambda r: "9.9.9.9")
     envio_rutas._limitar(Req())
     assert list(envio_rutas._envios) == ["9.9.9.9"]
+
+
+def test_push_test_comparte_rate_limit(client, enviados):
+    codigos = [client.post("/api/push/test").status_code for _ in range(21)]
+    assert codigos[:20] == [200] * 20
+    assert codigos[20] == 429

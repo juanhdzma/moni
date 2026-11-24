@@ -48,11 +48,6 @@ def test_editar_con_fecha_explicita_la_respeta(client):
     assert client.put(f"/api/activo/{a['id']}", json=body).json()["valor_actualizado_en"] == "2026-03-04T09:00"
 
 
-def test_editar_y_borrar_inexistente_dan_404(client):
-    assert client.put("/api/activo/999", json={"nombre": "X", "valor_inicial": 1}).status_code == 404
-    assert client.delete("/api/activo/999").status_code == 404
-
-
 def test_venta_sin_fecha_usa_ahora_y_borra_activo(client):
     a = _crear(client)
     assert client.post(f"/api/activo/{a['id']}/venta", json={"precio": 4200}).status_code == 200
@@ -90,3 +85,11 @@ def test_actualizar_valor_invalido_o_inexistente(client):
     a = _crear(client)
     assert client.post(f"/api/activo/{a['id']}/valor", json={"nuevo_valor": 0}).status_code == 422
     assert client.post("/api/activo/999/valor", json={"nuevo_valor": 5}).status_code == 404
+
+
+def test_valor_redondea_a_pesos_y_compra_usa_texto_de_dominio(client):
+    a = _crear(client, crear_tx=True)
+    r = client.post(f"/api/activo/{a['id']}/valor", json={"nuevo_valor": 4999.5}).json()
+    assert r["valor_actual"] == 5000
+    tx = client.get("/api/backup").json()["transacciones"][0]
+    assert tx["descripcion"] == "Compra · Moto"

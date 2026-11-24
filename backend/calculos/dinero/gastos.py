@@ -64,7 +64,6 @@ def agrupar_gastos(txs) -> list[dict]:
                     }
                     for t in recientes
                 ],
-                "restantes": restantes,
                 "restantes_texto": f"y {restantes} más en Transacciones" if restantes else None,
             }
         )
@@ -89,7 +88,6 @@ def gastos_periodo(txs, periodo: str, hoy: datetime.date) -> dict:
         top = {"categoria": c["categoria"], "valor": c["valor"], "pct": c["valor"] / total * 100 if total else 0}
     return {
         "periodo": periodo,
-        "nombre_periodo": NOMBRE_PERIODO_GASTOS[periodo],
         "total": total,
         "max": max((c["valor"] for c in categorias), default=0),
         "top": top,

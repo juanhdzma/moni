@@ -1,10 +1,10 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from .validadores import Monto, MontoCero, fecha_opcional
+from .validadores import Monto, MontoCero, Nombre, fecha_opcional
 
 
 class ActivoIn(BaseModel):
-    nombre: str = Field(min_length=1)
+    nombre: Nombre
     valor_inicial: Monto
     valor_actual: MontoCero = 0
     fecha_adquisicion: str = ""

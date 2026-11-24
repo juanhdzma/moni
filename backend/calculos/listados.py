@@ -1,14 +1,10 @@
 import unicodedata
 from datetime import timedelta
 
-from .constantes import CATEGORIAS_SISTEMA, tiene_saldo
 from .fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
-from .formato import cop, frase
+from .formato import frase_flujo, top_segmentos
 from .numeros import monto_firmado
-from .operaciones.movimientos import ErrorDeDominio
 
-
-TIPOS = tuple(CATEGORIAS_SISTEMA)
 COLUMNAS_ORDEN = ("fecha", "tipo", "categoria", "descripcion", "monto")
 ETIQUETAS_COLUMNA = {
     "fecha": "Fecha",
@@ -23,48 +19,6 @@ ETIQUETAS_TIPO_FILA = {"ingreso": "Ingreso", "gasto": "Gasto", "transfer": "Auto
 EFECTIVO_DEBITO = "Efectivo / Débito"
 
 
-class CategoriaDuplicada(ErrorDeDominio):
-    status = 409
-
-
-class CategoriaInvalida(ErrorDeDominio):
-    status = 422
-
-
-def es_categoria_sistema(tipo, nombre):
-    return nombre in CATEGORIAS_SISTEMA.get(tipo, {}).values()
-
-
-def categorias_con_custom(custom_rows):
-    cats = {
-        tipo: [{"nombre": n, "sistema": True} for n in nombres.values()]
-        for tipo, nombres in CATEGORIAS_SISTEMA.items()
-    }
-    for row in custom_rows:
-        tipo, nombre = row["tipo"], row["nombre"]
-        if tipo in cats and not any(c["nombre"] == nombre for c in cats[tipo]):
-            cats[tipo].append({"nombre": nombre, "sistema": False})
-    return cats
-
-
-def validar_categoria(tipo, nombre, existentes):
-    if tipo not in TIPOS:
-        raise CategoriaInvalida("Tipo inválido")
-    limpio = (nombre or "").strip()
-    if not limpio:
-        raise CategoriaInvalida("Nombre vacío")
-    if es_categoria_sistema(tipo, limpio) or limpio in existentes:
-        raise CategoriaDuplicada("Categoría repetida")
-    return limpio
-
-
-def validar_simbolo(simbolo):
-    limpio = (simbolo or "").strip()
-    if not 1 <= len(limpio) <= 4 or "\n" in limpio or "\r" in limpio:
-        raise ValueError("símbolo inválido")
-    return limpio
-
-
 def alertas(activos, inversiones, hoy):
     return {
         "activos": any(es_desactualizado(a.get("valor_actualizado_en"), hoy) for a in activos),
@@ -73,14 +27,6 @@ def alertas(activos, inversiones, hoy):
             for i in inversiones
         ),
     }
-
-
-def top_segmentos(items, n=4):
-    orden = sorted((s for s in items if s["valor"] > 0), key=lambda s: -s["valor"])
-    if len(orden) <= n + 1:
-        return orden
-    otros = sum(s["valor"] for s in orden[n:])
-    return orden[:n] + [{"key": "__otros", "label": "Otros", "valor": otros}]
 
 
 def derivar_tx(fila, deudas_por_id):
@@ -105,7 +51,7 @@ def etiqueta_mes(mes):
 
 
 def meses_disponibles(txs):
-    return sorted({mes_de(t["fecha"]) for t in txs}, reverse=True)
+    return sorted({mes_de(t["fecha"]) for t in txs if parse_fecha(t["fecha"])}, reverse=True)
 
 
 def categorias_disponibles(txs):
@@ -131,12 +77,6 @@ def grupo_fecha(fecha, hoy):
         return "Este mes"
     mes = nombre_mes(d.month).lower()
     return f"{mes[0].upper()}{mes[1:]} - {d.year}"
-
-
-def frase_flujo(verbo_entra, verbo_sale, ingresos, gastos, simbolo="$", sufijo=""):
-    return frase(
-        f"{verbo_entra} ", (cop(ingresos, simbolo), "positivo"), f" · {verbo_sale} ", (cop(gastos, simbolo), "fuerte"), sufijo,
-    )
 
 
 def resumen_tx(txs, simbolo="$"):

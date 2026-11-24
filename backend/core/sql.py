@@ -1,5 +1,5 @@
-from ..calculos.operaciones.movimientos import ErrorDeDominio
-from .montos import pesos
+from ..calculos.errores import ErrorDeDominio
+from ..calculos.numeros import pesos
 from .tablas import TX_COLS
 
 ENTIDADES = {

@@ -5,7 +5,6 @@ from typing import Annotated
 from fastapi import APIRouter, Body, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, Field
 
 from .. import sesiones
 from .. import tiempo
@@ -20,10 +19,6 @@ logger = logging.getLogger("moni.auth")
 router = APIRouter(prefix="/api/auth")
 
 Credencial = Annotated[dict, Body()]
-
-
-class NombreIn(BaseModel):
-    nombre: str = Field(min_length=1, max_length=40)
 
 
 def _json(texto: str) -> Response:
@@ -60,7 +55,7 @@ async def login_verificar(request: Request, credencial: Credencial):
 
 
 @router.post("/passkey/registro/opciones")
-def registro_opciones(body: NombreIn, request: Request):
+def registro_opciones(request: Request):
     sesiones.sesion_obligatoria(request)
     if servicio.contar() >= servicio.MAX_PASSKEYS:
         raise HTTPException(status_code=409, detail="Límite de passkeys alcanzado")

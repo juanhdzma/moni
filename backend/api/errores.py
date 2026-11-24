@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
-from ..calculos.operaciones.movimientos import ErrorDeDominio
+from ..calculos.errores import ErrorDeDominio
 
 MENSAJES = {
     "missing": lambda e: "Este valor es requerido",
@@ -18,6 +18,7 @@ MENSAJES = {
     "string_pattern_mismatch": lambda e: "Formato inválido",
     "literal_error": lambda e: "Opción inválida",
     "enum": lambda e: "Opción inválida",
+    "finite_number": lambda e: "Debe ser un número finito",
     "float_parsing": lambda e: "Debe ser un número",
     "int_parsing": lambda e: "Debe ser un número entero",
     "bool_parsing": lambda e: "Debe ser verdadero o falso",

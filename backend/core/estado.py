@@ -1,5 +1,5 @@
 from ..calculos import listados, operaciones
-from ..calculos.fechas import hoy_bogota
+from ..calculos.categorias import categorias_con_custom
 from .sql import get_row
 
 
@@ -8,12 +8,32 @@ def filas(conn, table):
 
 
 def categorias(conn):
-    return listados.categorias_con_custom(conn.execute("SELECT tipo, nombre FROM categorias ORDER BY rowid"))
+    return categorias_con_custom(conn.execute("SELECT tipo, nombre FROM categorias ORDER BY rowid"))
+
+
+def nombres_categorias(conn, tipo):
+    return {r["nombre"] for r in conn.execute("SELECT nombre FROM categorias WHERE tipo = ?", (tipo,))}
+
+
+def agregar_categoria(conn, tipo, nombre):
+    conn.execute("INSERT INTO categorias (tipo, nombre) VALUES (?, ?)", (tipo, nombre))
+
+
+def borrar_categoria(conn, tipo, nombre):
+    return conn.execute("DELETE FROM categorias WHERE tipo = ? AND nombre = ?", (tipo, nombre)).rowcount
 
 
 def ajustes(conn):
     pares = {r["clave"]: r["valor"] for r in conn.execute("SELECT clave, valor FROM ajustes")}
     return {"moneda_simbolo": pares.get("moneda_simbolo", "$")}
+
+
+def guardar_moneda_simbolo(conn, valor):
+    conn.execute(
+        "INSERT INTO ajustes (clave, valor) VALUES ('moneda_simbolo', ?) "
+        "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+        (valor,),
+    )
 
 
 def simbolo(conn):
@@ -43,14 +63,14 @@ def cargar_estado(conn, hoy):
     return {nombre: _derivar(conn, nombre, hoy, por_id) for nombre in DERIVADORES}
 
 
-def coleccion(conn, nombre):
+def coleccion(conn, nombre, hoy):
     por_id = _deudas_por_id(conn) if nombre == "transacciones" else None
-    return _derivar(conn, nombre, hoy_bogota(), por_id)
+    return _derivar(conn, nombre, hoy, por_id)
 
 
-def detalle(conn, nombre, row_id):
+def detalle(conn, nombre, row_id, hoy):
     por_id = _deudas_por_id(conn) if nombre == "transacciones" else None
-    return DERIVADORES[nombre](get_row(conn, nombre, row_id), hoy_bogota(), por_id)
+    return DERIVADORES[nombre](get_row(conn, nombre, row_id), hoy, por_id)
 
 
 def conteos(conn):

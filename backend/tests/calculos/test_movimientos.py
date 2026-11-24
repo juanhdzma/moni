@@ -1,7 +1,11 @@
 import pytest
 
+from backend.calculos.errores import ErrorDeDominio
+
 from backend.calculos.operaciones.movimientos import (
-    ErrorDeDominio,
+    aplicar_pago,
+    saldo_tras_adelanto,
+    tx_credito_recibido,
     proxima_cuota_tras_pago,
     retiro_parcial,
     sumar_un_mes,
@@ -77,3 +81,44 @@ def test_proxima_cuota_tras_pago():
     assert proxima_cuota_tras_pago(False, "2025-01-31", 0, False) == ""
     assert proxima_cuota_tras_pago(False, "2025-01-31", 50, True) == "2025-02-28"
     assert proxima_cuota_tras_pago(False, "2025-01-31", 50, False) is None
+
+
+def _deuda(**kw):
+    return {"nombre": "Credito", "saldo_actual": 1_000_000, "es_tarjeta": 0, "proxima_cuota": "2026-01-31", **kw}
+
+
+def _pago(deuda, **kw):
+    base = dict(
+        total_pagado=100_000, nuevo_saldo=920_000, intereses=None, avanzar_cuota=True,
+        fecha="2026-02-01", descripcion="", notas="", simbolo="$",
+    )
+    return aplicar_pago(deuda, **{**base, **kw})
+
+
+def test_aplicar_pago_deriva_intereses_cuota_y_tx():
+    p = _pago(_deuda())
+    assert (p.saldo_actual, p.intereses, p.proxima_cuota) == (920_000, 20_000, "2026-02-28")
+    assert p.tx["descripcion"] == "Cuota · Credito (capital $80.000, intereses $20.000)"
+    assert p.tx["monto"] == 100_000 and p.tx["tipo"] == "transfer"
+
+
+def test_aplicar_pago_respeta_intereses_y_descripcion_explicitos():
+    p = _pago(_deuda(), intereses=5_000, descripcion="Mia", avanzar_cuota=False)
+    assert (p.intereses, p.proxima_cuota, p.tx["descripcion"]) == (5_000, None, "Mia")
+
+
+def test_aplicar_pago_rechaza_subir_el_saldo():
+    with pytest.raises(ErrorDeDominio):
+        _pago(_deuda(), nuevo_saldo=1_100_000)
+
+
+def test_saldo_tras_adelanto():
+    assert saldo_tras_adelanto(1_000_000, None, 890_000) == 110_000
+    assert saldo_tras_adelanto(None, 5, None) == 5
+    with pytest.raises(ErrorDeDominio):
+        saldo_tras_adelanto(0, None, 1)
+
+
+def test_tx_credito_recibido_cae_al_saldo_sin_monto_inicial():
+    tx = tx_credito_recibido({"nombre": "X", "fecha_inicio": "2026-01-01", "monto_inicial": 0, "saldo_actual": 700})
+    assert tx["monto"] == 700 and tx["descripcion"] == "Crédito · X" and tx["fecha"] == "2026-01-01"

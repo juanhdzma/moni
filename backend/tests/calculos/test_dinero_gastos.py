@@ -38,12 +38,12 @@ def test_agrupar_gastos_recorta_el_detalle_a_seis():
     txs = [tx("gasto", "A", 1, fecha=f"2026-08-{d:02d}", id=d) for d in range(1, 9)]
     fila = agrupar_gastos(txs)[0]
     assert [d["id"] for d in fila["detalle"]] == [8, 7, 6, 5, 4, 3]
-    assert fila["restantes"] == 2
+    assert fila["restantes_texto"] == "y 2 más en Transacciones"
 
 
 def test_gastos_periodo_top_y_total():
     r = gastos_periodo([tx("gasto", "A", 30), tx("gasto", "B", 10)], "1M", HOY)
-    assert r["nombre_periodo"] == "el último mes"
+    assert "el último mes" in r["frase"]["texto"]
     assert r["total"] == 40
     assert r["max"] == 30
     assert r["top"] == {"categoria": "A", "valor": 30, "pct": 75}

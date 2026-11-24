@@ -1,4 +1,5 @@
 import datetime
+import re
 
 from ..fechas import mes_corto, parse_fecha, texto_dias
 from ..constantes import tiene_saldo
@@ -12,8 +13,19 @@ PROX_OP_MAX_ITEMS = 20
 PROX_OP_VISIBLES = 5
 
 
+FUENTES_OPS = {"deuda": "deudas", "inversion": "inversiones", "recurrente": "recurrentes"}
+_CLAVE_OP_RE = re.compile(rf"^({'|'.join(FUENTES_OPS)}):(\d+):(\d{{4}}-\d{{2}}-\d{{2}})$")
+
+
 def clave_op(tipo: str, fuente_id: int, fecha_iso: str) -> str:
     return f"{tipo}:{fuente_id}:{fecha_iso}"
+
+
+def parse_clave(clave: str) -> tuple[str, int, str]:
+    m = _CLAVE_OP_RE.match(clave or "")
+    if not m or parse_fecha(m.group(3)) is None:
+        raise ValueError("clave de operación inválida")
+    return m.group(1), int(m.group(2)), m.group(3)
 
 
 def _candidato(fecha: datetime.date, etiqueta: str, sub: str, monto: float, tipo: str, fuente_id: int) -> dict:
@@ -70,11 +82,17 @@ def _frase_proximas(vencidas: int, salen_total: float, simbolo: str) -> dict:
     return frase(por_pagar, f" por pagar en los próximos {PROX_OP_ADELANTE_DIAS} días.")
 
 
+def sin_ocultas(candidatas: list[dict], ocultas: set[str]) -> list[dict]:
+    return [c for c in candidatas if c["clave"] not in ocultas]
+
+
+def en_ventana(candidatas: list[dict], hoy: datetime.date, dias: int) -> list[dict]:
+    return [c for c in candidatas if hoy <= c["fecha"] <= hoy + datetime.timedelta(days=dias)]
+
+
 def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date, simbolo: str = "$") -> dict:
     items = []
-    for c in candidatas:
-        if c["clave"] in ocultas:
-            continue
+    for c in sin_ocultas(candidatas, ocultas):
         dias = (c["fecha"] - hoy).days
         items.append(
             {
@@ -87,12 +105,12 @@ def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date
                 "etiqueta": c["etiqueta"],
                 "sub": c["sub"],
                 "monto": c["monto"],
-                "dias": dias,
+                "sin_monto": c["monto"] == 0,
                 "texto_dias": texto_dias(dias),
                 "vencida": dias < 0,
             }
         )
-    vencidas = sum(1 for i in items if i["dias"] < 0)
+    vencidas = sum(1 for i in items if i["vencida"])
     salen_total = sum(-i["monto"] for i in items if i["monto"] < 0)
     restantes = items[PROX_OP_VISIBLES:PROX_OP_MAX_ITEMS]
     return {
@@ -100,8 +118,7 @@ def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date
         "items": items[:PROX_OP_VISIBLES],
         "extra": restantes,
         "texto_ver_todas": f"Ver las {len(items[:PROX_OP_MAX_ITEMS])}" if restantes else None,
-        "vencidas": vencidas,
-        "visibles": PROX_OP_VISIBLES,
+        "texto_ver_menos": "Ver menos" if restantes else None,
         "frase": _frase_proximas(vencidas, salen_total, simbolo) if items else None,
         "texto_vacio": f"Sin operaciones en los próximos {PROX_OP_ADELANTE_DIAS} días.",
     }

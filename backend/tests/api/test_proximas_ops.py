@@ -2,21 +2,24 @@ import datetime
 
 import pytest
 
+from backend.core import db
+from backend.core.ops_ocultas import podar_ocultas
+
 from .builders_api import HOY, HOY_ISO, sembrar
 
 
 def test_proximas_operaciones_forma_y_no_poda(client):
     s = sembrar(client)
     r = client.get("/api/proximas-operaciones").json()
-    assert set(r) == {"hoy", "items", "extra", "texto_ver_todas", "vencidas", "visibles", "frase", "texto_vacio"}
+    assert set(r) == {"hoy", "items", "extra", "texto_ver_todas", "texto_ver_menos", "frase", "texto_vacio"}
     assert r["hoy"] == HOY_ISO
     deuda = next(i for i in r["items"] if i["tipo"] == "deuda")
     assert set(deuda) == {
-        "clave", "tipo", "fuente_id", "fecha", "dia", "mes_corto", "etiqueta", "sub", "monto", "dias", "texto_dias", "vencida",
+        "clave", "tipo", "fuente_id", "fecha", "dia", "mes_corto", "etiqueta", "sub", "monto", "sin_monto", "texto_dias", "vencida",
     }
     fecha = (HOY + datetime.timedelta(days=3)).isoformat()
     assert deuda["clave"] == f"deuda:{s['deuda']['id']}:{fecha}"
-    assert (deuda["monto"], deuda["dias"], deuda["texto_dias"], deuda["vencida"], deuda["sub"]) == (-100_000, 3, "en 3d", False, "Cuota deuda")
+    assert (deuda["monto"], deuda["sin_monto"], deuda["texto_dias"], deuda["vencida"], deuda["sub"]) == (-100_000, False, "en 3d", False, "Cuota deuda")
 
     assert client.post("/api/ops-ocultas", json={"clave": deuda["clave"]}).status_code == 201
     assert client.post("/api/ops-ocultas", json={"clave": "deuda:999:2020-01-01"}).status_code == 201
@@ -38,7 +41,8 @@ def test_ops_ocultas_crud(client):
     client.post("/api/ops-ocultas", json={"clave": "inversion:999:2026-11-25"})
     assert client.get("/api/ops-ocultas").json()["items"][1]["etiqueta"] is None
     assert client.delete("/api/ops-ocultas", params={"clave": clave}).status_code == 204
-    assert client.delete("/api/ops-ocultas", params={"clave": clave}).status_code == 404
+    borrado = client.delete("/api/ops-ocultas", params={"clave": clave})
+    assert (borrado.status_code, borrado.json()) == (404, {"detail": "Operación oculta no encontrada"})
     assert client.delete("/api/ops-ocultas").status_code == 204
     assert client.get("/api/ops-ocultas").json() == {"items": []}
 
@@ -66,3 +70,32 @@ def test_op_clave_no_oculta_si_la_mutacion_falla(client, prestamo):
     assert client.post(f"/api/deuda/{prestamo['id']}/pago", json=body).status_code == 400
     assert client.post("/api/tx", json={"fecha": HOY_ISO, "tipo": "gasto", "categoria": "x", "monto": 1, "op_clave": "mala"}).status_code == 422
     assert client.get("/api/ops-ocultas").json() == {"items": []}
+
+
+def test_proximas_usa_el_simbolo_de_moneda(client):
+    client.put("/api/ajustes", json={"moneda_simbolo": "US$"})
+    client.post("/api/deuda", json={
+        "nombre": "C", "saldo_actual": 500, "cuota_mensual": 100, "proxima_cuota": (HOY + datetime.timedelta(days=2)).isoformat(),
+    })
+    assert "US$" in client.get("/api/proximas-operaciones").json()["frase"]["texto"]
+
+
+def test_arranque_poda_ocultas_obsoletas(client):
+
+    conn = db.get_conn()
+    conn.execute("INSERT INTO ops_ocultas (clave, tipo, fuente_id, fecha, creada_en) VALUES ('deuda:99:2030-01-01', 'deuda', 99, '2030-01-01', 'x')")
+    conn.execute("INSERT INTO recurrentes (nombre, tipo, monto, frecuencia, activo, fecha_inicio) VALUES ('r', 'gasto', 1, 'mensual', 1, '2030-01-01')")
+    conn.commit()
+    podar_ocultas(conn, datetime.date(2029, 12, 30))
+    n = conn.execute("SELECT COUNT(*) FROM ops_ocultas").fetchone()[0]
+    conn.close()
+    assert n == 0
+
+
+def test_poda_sin_operaciones_proximas_borra_todo(client):
+    conn = db.get_conn()
+    conn.execute("INSERT INTO ops_ocultas (clave, tipo, fuente_id, fecha, creada_en) VALUES ('deuda:99:2030-01-01', 'deuda', 99, '2030-01-01', 'x')")
+    podar_ocultas(conn, datetime.date(2029, 12, 30))
+    n = conn.execute("SELECT COUNT(*) FROM ops_ocultas").fetchone()[0]
+    conn.close()
+    assert n == 0

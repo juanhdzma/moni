@@ -14,8 +14,8 @@ def descripcion_adelanto(nombre: str) -> str:
     return f"Adelanto · {nombre}"
 
 
-def saldo_tras_adelanto(cupo: float, disponible_nuevo: float) -> float:
-    return cupo - disponible_nuevo
+def descripcion_credito(nombre: str) -> str:
+    return f"Crédito · {nombre}"
 
 
 def _intereses_texto(intereses: Optional[dict], simbolo: str) -> Optional[str]:
@@ -44,6 +44,7 @@ def frases_deuda(deuda: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
             if pagados and pagados["exacto"]
             else "Estimado por amortización — todavía no hay pagos registrados"
         ),
+        "disponible_texto": cop(deuda["disponible"], simbolo) if deuda["tiene_cupo"] else None,
         "intereses_saldada_texto": f"{intereses} en intereses" if intereses else None,
     }
 
@@ -58,13 +59,23 @@ def frases_resumen(resumen: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
     }
 
 
+def texto_vacio_creditos(hay_terminadas: bool) -> dict:
+    if hay_terminadas:
+        return {"titulo": "Sin créditos activos", "texto": "¡Todos los créditos están saldados!"}
+    return {"titulo": "Sin créditos", "texto": "Agregá uno con el botón + de arriba."}
+
+
 def con_frases(resumen: dict, simbolo: str = SIMBOLO_POR_DEFECTO) -> dict:
     def anotar(filas: list[dict]) -> list[dict]:
-        return [{**d, "frases": frases_deuda(d, simbolo)} for d in filas]
+        return [
+            {**{k: v for k, v in d.items() if k != "meses_restantes"}, "frases": frases_deuda(d, simbolo)}
+            for d in filas
+        ]
 
-    publico = {k: v for k, v in resumen.items() if k != "intereses_aproximado"}
+    publico = {k: v for k, v in resumen.items() if k not in ("intereses_aproximado", "total_cuotas")}
     return {
         **publico,
+        "texto_vacio_creditos": texto_vacio_creditos(bool(resumen["terminadas"])),
         "dato": frases_resumen(resumen, simbolo),
         "creditos": anotar(resumen["creditos"]),
         "tarjetas": anotar(resumen["tarjetas"]),

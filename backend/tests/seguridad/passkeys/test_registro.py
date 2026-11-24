@@ -42,8 +42,11 @@ def test_registro_duplicado_y_exclude_credentials(client):
 
 
 def test_nombre_invalido(client):
-    assert client.post(OPCIONES_REGISTRO, json={"nombre": ""}).status_code == 422
-    assert client.post(OPCIONES_REGISTRO, json={"nombre": "x" * 41}).status_code == 422
+    auten = Autenticador()
+    opciones = client.post(OPCIONES_REGISTRO).json()
+    for nombre in ("", "   ", "x" * 41):
+        r = client.post(VERIFICAR_REGISTRO, json={**auten.registrar(opciones), "nombre": nombre})
+        assert r.status_code == 422
 
 
 def test_limite_de_10_passkeys(client):

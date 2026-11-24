@@ -29,3 +29,9 @@ def test_categorias_errores_en_espanol_con_su_status(client):
     assert (r.status_code, r.json()) == (409, {"detail": "Las categorías de sistema no se pueden borrar"})
     r = client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Nada"})
     assert (r.status_code, r.json()) == (404, {"detail": "Categoría no encontrada"})
+
+
+def test_nombre_de_categoria_de_sistema_se_rechaza_en_cualquier_tipo(client):
+    for tipo, nombre in [("gasto", "Intereses"), ("ingreso", "Inversión"), ("gasto", "Pago deuda"), ("transfer", "Dividendos")]:
+        r = client.post("/api/categorias", json={"tipo": tipo, "nombre": nombre})
+        assert (r.status_code, r.json()) == (409, {"detail": "Categoría repetida"}), (tipo, nombre)

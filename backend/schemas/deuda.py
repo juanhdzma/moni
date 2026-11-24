@@ -1,11 +1,10 @@
-from typing import Annotated, Literal, Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, StringConstraints, model_validator
+from pydantic import BaseModel, model_validator
 
-from .validadores import Monto, MontoCero, clave_opcional, fecha_opcional
+from .validadores import Monto, MontoCero, Nombre, clave_opcional, fecha_opcional
 
 Franquicia = Literal["Visa", "Mastercard", "Amex", "Otra", ""]
-Nombre = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 class DeudaIn(BaseModel):

@@ -55,7 +55,7 @@ def dashboard_gastos(periodo: PeriodoGastos = "1M"):
 @router.get("/api/dashboard/movimientos")
 def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
     with conexion() as conn:
-        transacciones = store.coleccion(conn, "transacciones")
+        transacciones = store.coleccion(conn, "transacciones", hoy_bogota())
         return {"items": dinero.movimientos_recientes(transacciones, n)}
 
 

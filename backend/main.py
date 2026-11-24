@@ -12,7 +12,7 @@ from .api import router as api_router
 from .api import meta
 from .api.errores import errores_de_dominio, errores_de_validacion
 from .calculos.fechas import hoy_bogota
-from .calculos.operaciones.movimientos import ErrorDeDominio
+from .calculos.errores import ErrorDeDominio
 from .core import db
 from .core.csrf import require_csrf_header
 from .core.ops_ocultas import podar_ocultas

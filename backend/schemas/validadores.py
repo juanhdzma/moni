@@ -1,14 +1,12 @@
-import re
 from typing import Annotated, Literal, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, StringConstraints, field_validator
 
 from ..calculos.constantes import SERIES_EVOLUCION, valores
-from ..calculos.listados import COLUMNAS_ORDEN
 from ..calculos.dinero import PERIODOS_EVOLUCION, PERIODOS_GASTOS
-from ..core.ops_ocultas import parse_clave
-
-_FECHA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?$")
+from ..calculos.fechas import es_fecha_iso
+from ..calculos.listados import COLUMNAS_ORDEN
+from ..calculos.operaciones.proximas import parse_clave
 
 TipoTx = Literal["ingreso", "gasto", "transfer"]
 ColumnaTx = Literal[COLUMNAS_ORDEN]
@@ -16,8 +14,9 @@ TasaTipo = Literal["ea", "mv"]
 SerieEvolucion = Literal[valores(SERIES_EVOLUCION)]
 PeriodoGastos = Literal[PERIODOS_GASTOS]
 PeriodoEvolucion = Literal[PERIODOS_EVOLUCION]
-Monto = Annotated[float, Field(gt=0)]
-MontoCero = Annotated[float, Field(ge=0)]
+Monto = Annotated[float, Field(gt=0, allow_inf_nan=False)]
+MontoCero = Annotated[float, Field(ge=0, allow_inf_nan=False)]
+Nombre = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 def _check_clave(v: Optional[str]) -> Optional[str]:
@@ -32,7 +31,7 @@ def validar_fecha(v: str, *, requerida: bool) -> str:
         if requerida:
             raise ValueError("fecha requerida")
         return ""
-    if not _FECHA_RE.match(v):
+    if not es_fecha_iso(v):
         raise ValueError("fecha debe ser YYYY-MM-DD o YYYY-MM-DDTHH:MM")
     return v
 

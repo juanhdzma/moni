@@ -10,7 +10,7 @@ from backend.calculos.dinero import (
     net_worth,
     serie_hacia_atras,
 )
-from backend.calculos.listados import tiene_saldo
+from backend.calculos.constantes import tiene_saldo
 
 from .builders_calculos import HOY, activo, deuda, estado, inversion, tx
 

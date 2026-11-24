@@ -2,7 +2,7 @@ import pytest
 
 from backend.core import db
 from backend.push.suscripciones.endpoint import endpoint_permitido
-from backend.tests.push.constantes import SUB
+from backend.tests.push.ayudas_push import SUB
 
 
 def test_subscribe_guarda_y_es_idempotente(client):

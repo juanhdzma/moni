@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from ..calculos.fechas import hoy_bogota
 from ..core.db import conexion
 from ..core.estado import detalle
 from ..core.sql import delete_row
@@ -9,7 +10,7 @@ def register_lectura(router: APIRouter, path, table):
     @router.get(f"/api/{path}/{{row_id:int}}", name=f"get_{path}")
     def leer(row_id: int):
         with conexion() as conn:
-            return detalle(conn, table, row_id)
+            return detalle(conn, table, row_id, hoy_bogota())
 
 
 def register_borrado(router: APIRouter, path, table):

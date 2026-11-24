@@ -9,3 +9,4 @@ class ImportPayload(BaseModel):
     recurrentes: list[dict] = []
     categorias: list[dict] = []
     ops_ocultas: list[dict] = []
+    ajustes: list[dict] = []

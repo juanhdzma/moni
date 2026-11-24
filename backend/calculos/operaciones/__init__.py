@@ -12,15 +12,8 @@ from .finanzas import (
     rendimiento_mensual_fija,
 )
 from .tasas import normalizar_tasa
-from .frecuencias import (
-    FRECUENCIAS,
-    frecuencia_label,
-    proxima_fecha_recurrente,
-    to_mensual,
-)
+from .frecuencias import FRECUENCIAS, proxima_fecha_recurrente, to_mensual
 from .proximas import (
-    PROX_OP_ADELANTE_DIAS,
-    PROX_OP_OVERDUE_DAYS,
     armar_proximas,
     calcular_proximas_operaciones,
     clave_op,
@@ -33,5 +26,5 @@ from .resumenes import (
     resumen_inversiones,
     resumen_recurrentes,
 )
-from .defaults import completar_activo, completar_inversion
+from .defaults import completar_activo, completar_deuda, completar_inversion
 from .textos import categoria_sugerida, texto_activos, texto_posiciones

@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..calculos.fechas import ahora_bogota_iso
+from ..calculos.numeros import pesos
 from .validadores import Monto, TipoTx, clave_opcional, validar_fecha
 
 
@@ -20,6 +21,14 @@ class TxIn(BaseModel):
     @classmethod
     def _v_fecha(cls, v):
         return ahora_bogota_iso() if v is None else validar_fecha(v, requerida=True)
+
+    @field_validator("monto")
+    @classmethod
+    def _v_monto(cls, v):
+        redondeado = pesos(v)
+        if redondeado <= 0:
+            raise ValueError("Debe ser mayor que 0")
+        return redondeado
 
     _v_clave = clave_opcional("op_clave")
 

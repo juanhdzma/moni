@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from backend.calculos import dinero, fechas, listados, operaciones
+from backend.calculos.constantes import tiene_saldo
 
 DATA = json.loads((Path(__file__).parent / "fixtures" / "parity.json").read_text())
 HOY = datetime.date.fromisoformat(DATA["hoy"])
@@ -54,8 +55,17 @@ def test_fechas_y_periodos():
 
 def test_resumen_dashboard():
     r = dinero.resumen_dashboard(ESTADO, HOY)
-    for k, v in EXP["resumen_dashboard"].items():
+    esperado = EXP["resumen_dashboard"]
+    mes = {"ingresos_mes", "gastos_mes", "ahorro_pct"}
+    for k, v in esperado.items():
+        if k in mes:
+            continue
         assert r[k] == pytest.approx(v, rel=0, abs=1e-6) if isinstance(v, float) else r[k] == v, k
+    assert mes.isdisjoint(r)
+    este = dinero.este_mes(ESTADO, HOY)
+    assert este["ingresos"] == esperado["ingresos_mes"]
+    assert este["gastos"] == esperado["gastos_mes"]
+    assert este["frase"]["pct"] == pytest.approx(esperado["ahorro_pct"], rel=0, abs=1e-6)
 
 
 def test_movimientos_recientes():
@@ -72,7 +82,7 @@ def test_gastos(periodo):
     for c in cats:
         assert [d["id"] for d in c["detalle"]] == esperado["detalle"][c["categoria"]]
         assert c["n"] == esperado["n"][c["categoria"]]
-        assert c["restantes"] == max(0, esperado["n"][c["categoria"]] - 6)
+        assert (c["restantes_texto"] is None) == (esperado["n"][c["categoria"]] <= 6)
 
 
 def test_proximas_operaciones():
@@ -82,11 +92,11 @@ def test_proximas_operaciones():
     obtenido = [
         {
             "clave": i["clave"], "tipo": i["tipo"], "fuente_id": i["fuente_id"], "fecha": i["fecha"],
-            "etiqueta": i["etiqueta"], "sub": i["sub"], "monto": i["monto"], "dias": i["dias"], "texto": i["texto_dias"],
+            "etiqueta": i["etiqueta"], "sub": i["sub"], "monto": i["monto"], "texto": i["texto_dias"],
         }
         for i in items
     ]
-    assert obtenido == EXP["proximas"]
+    assert obtenido == [{k: v for k, v in e.items() if k != "dias"} for e in EXP["proximas"]]
 
 
 def test_recurrentes_proxima_fecha():
@@ -141,7 +151,7 @@ def test_cambio_valor_y_desglose():
 def test_deudas_intereses_y_saldo():
     for esperado in EXP["deudas"]:
         d = next(x for x in DEUDAS if x["id"] == esperado["id"])
-        assert listados.tiene_saldo(d) == esperado["tiene_saldo"], d["nombre"]
+        assert tiene_saldo(d) == esperado["tiene_saldo"], d["nombre"]
         assert operaciones.estimar_intereses_pagados(d["monto_inicial"], d["saldo_actual"], d["tasa_ea"], d["cuota_mensual"]) == esperado["estimado"]
         assert operaciones.intereses_pagados(d) == esperado["intereses"], d["nombre"]
     for args, esperado in EXP["estimar_extra"]:

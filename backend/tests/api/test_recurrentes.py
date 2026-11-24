@@ -47,3 +47,12 @@ def test_validacion_de_dominio_en_422(client):
     assert client.post("/api/rec", json={**REC, "monto": 0}).status_code == 422
     assert client.post("/api/rec", json={**REC, "nombre": ""}).status_code == 422
     assert client.post("/api/rec", json={**REC, "frecuencia": "diaria"}).status_code == 422
+
+
+def test_activo_por_defecto_y_update_sin_activo_lo_conserva(client):
+    body = {"nombre": "Netflix", "tipo": "gasto", "monto": 10, "frecuencia": "mensual"}
+    rec = client.post("/api/rec", json=body).json()
+    assert rec["activo"] == 1 or rec["activo"] is True
+    client.post(f"/api/rec/{rec['id']}/pausar")
+    editado = client.put(f"/api/rec/{rec['id']}", json={**body, "monto": 20}).json()
+    assert editado["monto"] == 20 and not editado["activo"]

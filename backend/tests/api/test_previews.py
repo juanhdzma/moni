@@ -12,7 +12,7 @@ def test_previews_de_inversion(client):
     r = client.post(f"/api/inv/{inv['id']}/valor/preview", json={"nuevo_valor": 1500})
     assert r.json() == {"delta": 300, "total": 500, "total_pct": 50.0}
     r = client.post(f"/api/inv/{inv['id']}/aporte/preview", json={"monto": 300})
-    assert r.json() == {"nuevo_valor_estimado": 1500}
+    assert r.json() == {"nuevo_valor_estimado": 1500, "texto_estimado": "Estimado: $1.500. Ajustá si el mercado se movió."}
     assert client.post("/api/inv/999/valor/preview", json={"nuevo_valor": 1}).status_code == 404
     assert client.get("/api/inv/resumen").json()["variables"][0]["valor_actual"] == 1200
 

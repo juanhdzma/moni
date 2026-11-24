@@ -53,12 +53,6 @@ def test_editar_respeta_fecha_explicita(client):
     assert r["valor_actualizado_en"] == "2026-02-02"
 
 
-def test_editar_y_borrar_inexistente_dan_404(client):
-    body = {"nombre": "X", "tipo": "fija", "monto_invertido": 1}
-    assert client.put("/api/inv/999", json=body).status_code == 404
-    assert client.delete("/api/inv/999").status_code == 404
-
-
 def test_aporte_sin_nuevo_valor_suma_el_monto_al_valor_actual(client):
     inv = _crear(client, valor_actual=1200)
     client.post(f"/api/inv/{inv['id']}/aporte", json={"monto": 300, "fecha": "2026-05-01"})
@@ -74,6 +68,7 @@ def test_rendimiento_que_capitaliza_ignora_registrar_tx(client):
     estado = client.get("/api/backup").json()
     assert estado["transacciones"] == []
     assert _inv(client, inv["id"])["valor_actual"] == 1050
+    assert _inv(client, inv["id"])["valor_actualizado_en"] == "2026-05-01"
 
 
 @pytest.mark.parametrize("pago,esperado", [("vencimiento", True), ("mensual", False), (None, False)])
@@ -117,3 +112,44 @@ def test_normaliza_segun_tipo_y_vacios(client):
     assert (crudo["tasa_ea"], crudo["dia_pago"], crudo["valor_actual"]) == (None, None, 1000)
     sin_tasa = _crear(client, tasa_ea=0)
     assert sin_tasa["tasa_ea"] is None
+
+
+def test_valor_actualiza_valor_y_fecha(client):
+    inv = _crear(client, tipo="variable", valor_actual=1000)
+    r = client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 1234.6, "fecha": "2026-05-05"}).json()
+    assert (r["valor_actual"], r["valor_actualizado_en"]) == (1235, "2026-05-05")
+    sin_fecha = client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 900}).json()
+    assert sin_fecha["valor_actualizado_en"] == hoy_bogota().isoformat()
+    assert client.post("/api/inv/999/valor", json={"nuevo_valor": 1}).status_code == 404
+    assert client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 0}).status_code == 422
+
+
+def test_rendimiento_cuenta_de_un_solo_lado(client):
+    inv = _crear(client, valor_actual=1000)
+    base = {"monto": 50, "fecha": "2026-06-01"}
+    cap = client.post(f"/api/inv/{inv['id']}/rendimiento", json={**base, "capitaliza": True}).json()
+    assert cap["valor_actual"] == 1050 and client.get("/api/backup").json()["transacciones"] == []
+    client.post(f"/api/inv/{inv['id']}/rendimiento", json=base)
+    tx = client.get("/api/backup").json()["transacciones"]
+    assert [(t["tipo"], t["monto"], t["descripcion"]) for t in tx] == [("ingreso", 50, "Rendimiento · CDT")]
+    assert _inv(client, inv["id"])["valor_actual"] == 1050
+
+
+def test_aporte_y_retiro_registran_tx_con_su_texto(client):
+    inv = _crear(client, valor_actual=1000)
+    client.post(f"/api/inv/{inv['id']}/aporte", json={"monto": 200, "fecha": "2026-06-01"})
+    assert (_inv(client, inv["id"])["monto_invertido"], _inv(client, inv["id"])["valor_actual"]) == (1200, 1200)
+    client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "total", "monto": 1300, "fecha": "2026-06-02"})
+    descripciones = [t["descripcion"] for t in client.get("/api/backup").json()["transacciones"]]
+    assert descripciones == ["Aporte · CDT", "Retiro total · CDT"]
+    assert [t["monto"] for t in client.get("/api/backup").json()["transacciones"]] == [200, 1300]
+    assert client.get("/api/backup").json()["inversiones"] == []
+
+
+def test_inv_tasa_tipo_mv_se_guarda_como_ea(client):
+    base = {"nombre": "CDT", "tipo": "fija", "monto_invertido": 100, "valor_actual": 100, "tasa_ea": 1, "tasa_tipo": "mv"}
+    creada = client.post("/api/inv", json=base).json()
+    assert round(creada["tasa_ea"], 2) == 12.68 and "tasa_tipo" not in creada
+    actualizada = client.put(f"/api/inv/{creada['id']}", json={**base, "tasa_ea": 24, "tasa_tipo": "ea"}).json()
+    assert actualizada["tasa_ea"] == 24
+    assert client.post("/api/inv", json={**base, "tasa_tipo": "x"}).status_code == 422

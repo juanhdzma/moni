@@ -62,3 +62,9 @@ def push_enviar(body: PushEnviar, request: Request):
         resultado["eliminadas"],
     )
     return resultado
+
+
+@router.post("/api/push/test")
+def push_test(request: Request):
+    _limitar(request)
+    return {"enviadas": envio.enviar_a_todos("Moni", "Las notificaciones funcionan.", tag="test")["enviadas"]}

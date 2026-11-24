@@ -2,10 +2,11 @@ import datetime
 
 import pytest
 
+from backend.calculos.fechas import TZ
 from backend.core import db
 from backend.core.ops_ocultas import candidatas
 from backend.push import envio, job_diario
-from backend.tests.push.constantes import SUB, HOY
+from backend.tests.push.ayudas_push import SUB, HOY
 
 
 def test_operaciones_proximas_hoy_y_manana(client, prestamo):
@@ -74,6 +75,6 @@ def test_avisar_sin_operaciones_no_envia(client, monkeypatch):
 
 
 def test_segundos_hasta_aviso():
-    tz = job_diario.TZ
+    tz = TZ
     assert job_diario.segundos_hasta_aviso(datetime.datetime(2026, 6, 15, 7, 0, tzinfo=tz)) == 3600
     assert job_diario.segundos_hasta_aviso(datetime.datetime(2026, 6, 15, 8, 0, tzinfo=tz)) == 86400

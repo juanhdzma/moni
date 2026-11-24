@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from ..calculos import listados
+from ..calculos.listados import alertas
 from ..calculos.constantes import TEXTO_DESACTUALIZADO
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..core import estado as store
@@ -18,6 +18,6 @@ def bootstrap():
             "ahora": ahora_bogota_iso(),
             "categorias": store.categorias(conn),
             "ajustes": store.ajustes(conn),
-            "alertas": listados.alertas(store.filas(conn, "activos"), store.filas(conn, "inversiones"), hoy),
+            "alertas": alertas(store.filas(conn, "activos"), store.filas(conn, "inversiones"), hoy),
             "desactualizado": {"texto": TEXTO_DESACTUALIZADO},
         }

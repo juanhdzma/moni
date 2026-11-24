@@ -1,19 +1,19 @@
-from typing import Literal, Optional
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from ..calculos.operaciones.frecuencias import FRECUENCIAS
-from .validadores import Monto, fecha_opcional
+from .validadores import Monto, Nombre, fecha_opcional
 
 Frecuencia = Literal[tuple(FRECUENCIAS)]
 
 
 class RecIn(BaseModel):
-    nombre: str = Field(min_length=1)
+    nombre: Nombre
     tipo: Literal["ingreso", "gasto"]
     monto: Monto
     frecuencia: Frecuencia
-    activo: Optional[bool] = None
+    activo: bool = True
     fecha_inicio: str = ""
     notas: str = ""
 

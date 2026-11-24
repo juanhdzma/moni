@@ -1,8 +1,9 @@
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from ..calculos import operaciones
+from ..calculos.errores import ErrorDeDominio
 from ..calculos.fechas import hoy_bogota
 from ..core.db import conexion
 from ..core.estado import simbolo
@@ -39,5 +40,5 @@ def borrar_ops_ocultas(clave: Optional[str] = None):
         if clave is None:
             conn.execute("DELETE FROM ops_ocultas")
         elif conn.execute("DELETE FROM ops_ocultas WHERE clave = ?", (clave,)).rowcount == 0:
-            raise HTTPException(404, "operación oculta no encontrada")
+            raise ErrorDeDominio("Operación oculta no encontrada", 404)
         conn.commit()

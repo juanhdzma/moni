@@ -30,20 +30,7 @@ def test_meta_requiere_sesion(anon_client):
     assert anon_client.get("/api/meta").status_code == 401
 
 
-def _errores(client, payload):
-    r = client.post("/api/tx", json=payload)
-    assert r.status_code == 422
-    return {tuple(e["loc"])[-1]: e for e in r.json()["detail"]}
-
-
-def test_422_formato_y_mensajes(client):
-    errores = _errores(client, {"tipo": "otro", "monto": 0, "fecha": "ayer"})
-    assert set(errores["monto"]) == {"loc", "msg", "type"}
-    assert errores["monto"]["msg"] == "Debe ser mayor que 0"
-    assert errores["tipo"]["msg"] == "Opción inválida"
-    assert errores["fecha"]["msg"].startswith("fecha debe ser")
-
-
-def test_422_valor_requerido(client):
-    errores = _errores(client, {})
-    assert errores["tipo"]["msg"] == "Este valor es requerido"
+def test_meta_defaults_y_push(client):
+    body = client.get("/api/meta").json()
+    assert body["defaults"] == {"frecuencia_recurrente": "mensual", "tipo_inversion": "fija", "pago_inversion": "vencimiento"}
+    assert body["push"] == {"hora": "8:00", "texto": "hoy o mañana"}

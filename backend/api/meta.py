@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from ..calculos import dinero
 from ..calculos.constantes import (
+    DEFAULTS_FORMULARIOS,
     CLASES_DEUDA,
     DESTINOS_RENDIMIENTO,
     ETIQUETAS_TIPO_CATEGORIA,
@@ -11,10 +12,12 @@ from ..calculos.constantes import (
     PAGOS_INVERSION,
     SERIES_EVOLUCION,
     TIPOS_INVERSION,
+    TEXTO_VENTANA_AVISO,
     TIPOS_RETIRO,
 )
 from ..calculos.listados import COLUMNAS_ORDEN, DIRECCION_INICIAL, ETIQUETAS_COLUMNA, ETIQUETAS_TIPO_FILA
 from ..calculos.operaciones.frecuencias import opciones_frecuencia
+from ..push.job_diario import HORA_AVISO
 from ..schemas.deuda import Franquicia
 from ..schemas.meta import MetaOut
 
@@ -46,4 +49,6 @@ def meta():
             "gastos": dinero.opciones_periodo(dinero.PERIODOS_GASTOS),
             "evolucion": dinero.opciones_periodo(dinero.PERIODOS_EVOLUCION_VISIBLES),
         },
+        "defaults": DEFAULTS_FORMULARIOS,
+        "push": {"hora": f"{HORA_AVISO}:00", "texto": TEXTO_VENTANA_AVISO},
     }

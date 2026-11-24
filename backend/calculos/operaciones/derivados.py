@@ -35,6 +35,7 @@ def derivar_deuda(fila: dict) -> dict:
         "capital_pagado": inicial - saldo,
         "meses_restantes": math.ceil(saldo / cuota) if cuota > 0 else None,
         "nivel_progreso": _nivel(progreso, 75, 40),
+        "tiene_cupo": cupo > 0,
         "disponible": max(0, cupo - saldo) if cupo > 0 else None,
         "uso_pct": uso,
         "nivel_uso": _nivel(uso, 90, 60),

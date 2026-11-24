@@ -21,6 +21,17 @@ class ColumnaTx(BaseModel):
     dir_defecto: int
 
 
+class DefaultsMeta(BaseModel):
+    frecuencia_recurrente: str
+    tipo_inversion: str
+    pago_inversion: str
+
+
+class PushMeta(BaseModel):
+    hora: str
+    texto: str
+
+
 class MetaOut(BaseModel):
     frecuencias: list[Opcion]
     franquicias: list[Opcion]
@@ -35,3 +46,5 @@ class MetaOut(BaseModel):
     series_evolucion: list[Opcion]
     columnas_transaccion: list[ColumnaTx]
     periodos: PeriodosMeta
+    defaults: DefaultsMeta
+    push: PushMeta

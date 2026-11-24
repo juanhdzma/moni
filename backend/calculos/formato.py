@@ -32,3 +32,17 @@ def plural(n: int, singular: str, plural_: str) -> str:
 def frase(*partes: str | tuple[str, str]) -> dict:
     items = [{"texto": p, "tono": None} if isinstance(p, str) else {"texto": p[0], "tono": p[1]} for p in partes]
     return {"texto": "".join(i["texto"] for i in items), "partes": items}
+
+
+def frase_flujo(verbo_entra, verbo_sale, ingresos, gastos, simbolo="$", sufijo=""):
+    return frase(
+        f"{verbo_entra} ", (cop(ingresos, simbolo), "positivo"), f" · {verbo_sale} ", (cop(gastos, simbolo), "fuerte"), sufijo,
+    )
+
+
+def top_segmentos(items, n=4):
+    orden = sorted((s for s in items if s["valor"] > 0), key=lambda s: -s["valor"])
+    if len(orden) <= n + 1:
+        return orden
+    otros = sum(s["valor"] for s in orden[n:])
+    return orden[:n] + [{"key": "__otros", "label": "Otros", "valor": otros}]

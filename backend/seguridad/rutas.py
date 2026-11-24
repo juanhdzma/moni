@@ -26,7 +26,7 @@ def estado(request: Request):
     return {
         "configurado": password.configurado(),
         "autenticado": sesiones.requiere_sesion(request) is not None,
-        "passkeys": passkeys,
+        "tiene_passkeys": passkeys > 0,
     }
 
 

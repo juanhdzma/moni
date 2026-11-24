@@ -17,26 +17,24 @@ def test_resumen_dashboard_kpis_del_mes_y_ahorro_acotado_al_mes():
         inversiones=[inversion(1_100_000, 1_000_000)],
     )
     r = resumen_dashboard(e, HOY)
-    assert r["ingresos_mes"] == 1_000_000
-    assert r["gastos_mes"] == 250_000
-    assert r["quedo_mes"] == 750_000
-    assert r["ahorro_pct"] == 75
+    assert not {"ingresos_mes", "gastos_mes", "quedo_mes", "ahorro_pct", "frase_mes"} & set(r)
     assert r["efectivo"] == 5_000_000 + 1_000_000 - 250_000
     assert r["deudas_activas"] == 1
     assert r["cuota_total"] == 50_000
     assert r["ganancia_inv"] == 100_000
     assert r["ganancia_inv_pct"] == pytest.approx(10)
-    assert r["frase_mes"]["tipo"] == "quedo" and r["frase_mes"]["pct"] == 75
-    assert r["frase_mes"]["texto"] == "Te quedó el 75,0% de lo que entró."
+    mes = este_mes(e, HOY)
+    assert mes["frase"]["tipo"] == "quedo" and mes["frase"]["pct"] == 75
+    assert mes["frase"]["texto"] == "Te quedó el 75,0% de lo que entró."
 
 
 def test_resumen_dashboard_sin_ingresos_no_divide_por_cero():
     r = resumen_dashboard(estado(), HOY)
-    assert r["ahorro_pct"] == 0
     assert r["ganancia_inv_pct"] == 0
     assert r["proy_delta"] == 0
-    assert r["frase_mes"]["tipo"] == "sin_ingresos"
-    assert r["frase_mes"]["texto"] == "Todavía no entró plata este mes."
+    frase = este_mes(estado(), HOY)["frase"]
+    assert frase["tipo"] == "sin_ingresos"
+    assert frase["texto"] == "Todavía no entró plata este mes."
 
 
 def test_partes_patrimonio_textos_de_dominio():
@@ -51,6 +49,7 @@ def test_partes_patrimonio_textos_de_dominio():
     assert por_id["inversiones"]["detalle"] == "+$100k (+10,0%)"
     assert por_id["deudas"]["detalle"] == "$50.000/mes · 1 deuda"
     assert por_id["deudas"]["negativo"] is True
+    assert por_id["deudas"]["valor_firmado"] == -500_000 and por_id["activos"]["valor_firmado"] > 0
     sin_inv = partes_patrimonio(resumen_dashboard(estado(), HOY), {"activos": 0, "inversiones": 2})
     assert sin_inv[1]["detalle"] == "2 posiciones"
 
@@ -66,14 +65,13 @@ def test_evolucion_cierra_en_el_patrimonio_y_arma_la_frase():
     r = evolucion(e, "patrimonio", "3M", HOY)
     assert r["meses"] == 3
     assert [p["mes"] for p in r["puntos"]] == ["jun.", "jul.", "ago."]
-    assert r["hasta"] == 5_000_000 - 300_000 + 1_500_000
-    assert r["verbo"] == "Subiste"
-    assert r["sujeto"] == ""
-    assert r["mes_desde"] == "jun."
+    assert r["puntos"][-1]["valor"] == 5_000_000 - 300_000 + 1_500_000
+    assert r["frase"]["texto"].startswith("Subiste") and "desde fin de jun.:" in r["frase"]["texto"]
+    assert r["descripcion_grafico"] == "Evolución mensual de patrimonio"
     inv = evolucion(e, "inversiones", "1M", HOY)
-    assert inv["sujeto"] == " en inversiones"
-    assert inv["hasta"] == 1_500_000
-    assert inv["verbo"] == "Te mantuviste"
+    assert inv["descripcion_grafico"] == "Evolución mensual de inversiones"
+    assert inv["puntos"][-1]["valor"] == 1_500_000
+    assert inv["frase"]["texto"].startswith("Te mantuviste en inversiones")
 
 
 def test_este_mes_agrupa_ingresos_y_gastos_de_cartera():
@@ -87,7 +85,13 @@ def test_este_mes_agrupa_ingresos_y_gastos_de_cartera():
     )
     r = este_mes(e, HOY)
     assert (r["ingresos"], r["gastos"], r["quedo"]) == (4_000, 1_000, 3_000)
-    assert r["ahorro_pct"] == 75
+    assert r["frase"]["pct"] == 75
     assert len(r["meses"]) == 6
     assert r["meses"][-1] == {"mes": "ago.", "entro": 4_000, "salio": 1_000}
     assert r["meses"][-2]["salio"] == 700
+
+
+def test_cartera_negativa_se_firma_negativa_y_deudas_siempre_negativas():
+    e = estado(transacciones=[tx("gasto", "Mercado", 300_000, fecha="2026-08-02")], deudas=[deuda(500_000, 50_000)])
+    por_id = {p["id"]: p for p in partes_patrimonio(resumen_dashboard(e, HOY), {"activos": 0, "inversiones": 0})}
+    assert por_id["balance"]["negativo"] is True and por_id["balance"]["valor_firmado"] == -300_000

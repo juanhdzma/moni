@@ -1,4 +1,25 @@
-from ..formato import plural, porcentaje_texto
+from ..formato import cop, plural, porcentaje_texto
+from ..numeros import porcentaje
+
+PREFIJOS_TX = {
+    "inversion_nueva": "Nueva inversión",
+    "aporte": "Aporte",
+    "rendimiento": "Rendimiento",
+    "retiro_total": "Retiro total",
+    "retiro_parcial": "Retiro parcial",
+    "compra": "Compra",
+    "venta": "Venta",
+}
+
+
+def descripcion_tx(prefijo: str, nombre: str) -> str:
+    return f"{PREFIJOS_TX[prefijo]} · {nombre}"
+
+
+def texto_estimado_aporte(estimado: float | None, simbolo: str) -> str:
+    if estimado is None:
+        return "Estimado como valor actual + aporte. Ajustá si el mercado se movió."
+    return f"Estimado: {cop(estimado, simbolo)}. Ajustá si el mercado se movió."
 
 
 def categoria_sugerida(rec: dict, nombres_por_tipo: dict) -> str:
@@ -7,7 +28,8 @@ def categoria_sugerida(rec: dict, nombres_por_tipo: dict) -> str:
 
 
 def texto_activos(resumen: dict, cantidad: int) -> dict:
-    variacion = f"{porcentaje_texto(abs(resumen['variacion_pct']))}% sobre lo pagado" if resumen["total_inicial"] > 0 else ""
+    variacion_pct = porcentaje(resumen["variacion"], resumen["total_inicial"])
+    variacion = f"{porcentaje_texto(abs(variacion_pct))}% sobre lo pagado" if resumen["mostrar_variacion"] else ""
     return {"texto_variacion": variacion, "texto_conteo": plural(cantidad, "activo", "activos")}
 
 
