@@ -21,3 +21,11 @@ def test_bootstrap_alerta_de_activo_desactualizado(client):
     viejo = (HOY - datetime.timedelta(days=DIAS_DESACTUALIZADO + 1)).isoformat()
     client.post("/api/activo", json={"nombre": "Casa", "valor_inicial": 10, "valor_actualizado_en": viejo})
     assert client.get("/api/bootstrap").json()["alertas"]["activos"] is True
+
+
+def test_ajustes(client):
+    assert client.get("/api/bootstrap").json()["ajustes"] == {"moneda_simbolo": "$"}
+    assert client.put("/api/ajustes", json={"moneda_simbolo": " US$ "}).json() == {"moneda_simbolo": "US$"}
+    assert client.get("/api/bootstrap").json()["ajustes"] == {"moneda_simbolo": "US$"}
+    for malo in ["", "   ", "12345", "a\nb"]:
+        assert client.put("/api/ajustes", json={"moneda_simbolo": malo}).status_code == 422

@@ -1,4 +1,5 @@
 from ..constantes import CATEGORIAS_SISTEMA
+from .frases_deuda import descripcion_adelanto
 from .textos import descripcion_tx
 
 _GASTO = CATEGORIAS_SISTEMA["gasto"]
@@ -38,3 +39,14 @@ def tx_compra_activo(activo: dict) -> dict:
 
 def tx_venta_activo(nombre: str, precio: float, fecha: str, notas: str) -> dict:
     return _tx(fecha, "ingreso", _INGRESO["venta_activos"], "venta", nombre, precio, notas)
+
+
+def tx_adelanto_tarjeta(nombre: str, monto: float, fecha: str, descripcion: str | None, notas: str) -> dict:
+    return {
+        "fecha": fecha,
+        "tipo": "ingreso",
+        "categoria": _INGRESO["avance_tarjeta"],
+        "descripcion": descripcion or descripcion_adelanto(nombre),
+        "monto": monto,
+        "notas": notas,
+    }

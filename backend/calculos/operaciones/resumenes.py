@@ -1,6 +1,7 @@
 from ..formato import cop_corto, frase_flujo, porcentaje_texto, top_segmentos
 from ..numeros import porcentaje
 from .finanzas import intereses_pagados
+from .textos import categoria_sugerida, texto_activos, texto_posiciones
 
 
 def _segmentos(filas: list, campo: str) -> list[dict]:
@@ -32,7 +33,7 @@ def resumen_inversiones(filas: list[dict], simbolo: str = "$") -> dict:
     actual = sum(i["valor_actual"] for i in filas)
     ganancia = actual - invertido
     ganancia_pct = porcentaje(ganancia, invertido)
-    return {
+    resumen = {
         "total_actual": actual,
         "ganancia": ganancia,
         "ganancia_pct": ganancia_pct,
@@ -42,12 +43,13 @@ def resumen_inversiones(filas: list[dict], simbolo: str = "$") -> dict:
         "fijas": [i for i in filas if i["tipo"] == "fija"],
         "variables": [i for i in filas if i["tipo"] == "variable"],
     }
+    return {**resumen, "texto_posiciones": texto_posiciones(resumen)}
 
 
 def resumen_activos(filas: list[dict]) -> dict:
     inicial = sum(a["valor_inicial"] for a in filas)
     actual = sum(a["valor_actual"] for a in filas)
-    return {
+    resumen = {
         "total_inicial": inicial,
         "total_actual": actual,
         "variacion": actual - inicial,
@@ -55,13 +57,23 @@ def resumen_activos(filas: list[dict]) -> dict:
         "segmentos": _segmentos(filas, "valor_actual"),
         "items": filas,
     }
+    return {**resumen, **texto_activos(resumen, len(filas))}
 
 
 def preview_venta_activo(fila: dict, precio: float) -> dict:
     return {"vs_inicial": precio - fila["valor_inicial"], "vs_actual": precio - fila["valor_actual"]}
 
 
-def resumen_recurrentes(filas: list[dict], simbolo: str = "$") -> dict:
+def con_categoria_sugerida(rec: dict, categorias: dict) -> dict:
+    return {**rec, "categoria_sugerida": categoria_sugerida(rec, categorias)}
+
+
+def _ordenadas(filas: list[dict], incluir, categorias: dict) -> list[dict]:
+    elegidas = sorted((r for r in filas if incluir(r)), key=lambda r: r["mensual"], reverse=True)
+    return [con_categoria_sugerida(r, categorias) for r in elegidas]
+
+
+def resumen_recurrentes(filas: list[dict], categorias: dict, simbolo: str = "$") -> dict:
     activas = [r for r in filas if r["activo"]]
     ingresos = sum(r["mensual"] for r in activas if r["tipo"] == "ingreso")
     gastos_activos = [r for r in activas if r["tipo"] != "ingreso"]
@@ -70,6 +82,6 @@ def resumen_recurrentes(filas: list[dict], simbolo: str = "$") -> dict:
         "neto_mensual": ingresos - gastos,
         "dato": frase_flujo("entran", "salen", ingresos, gastos, simbolo, " en fijos"),
         "segmentos": _segmentos(gastos_activos, "mensual"),
-        "ingresos": sorted((r for r in filas if r["tipo"] == "ingreso"), key=lambda r: r["mensual"], reverse=True),
-        "gastos": sorted((r for r in filas if r["tipo"] != "ingreso"), key=lambda r: r["mensual"], reverse=True),
+        "ingresos": _ordenadas(filas, lambda r: r["tipo"] == "ingreso", categorias),
+        "gastos": _ordenadas(filas, lambda r: r["tipo"] != "ingreso", categorias),
     }

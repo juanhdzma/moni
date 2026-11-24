@@ -5,12 +5,13 @@ from .estado import filas
 
 
 def ocultar_op(conn, clave):
+    if not clave:
+        return
     tipo, fuente_id, fecha = parse_clave(clave)
-    cur = conn.execute(
+    conn.execute(
         "INSERT OR IGNORE INTO ops_ocultas (clave, tipo, fuente_id, fecha, creada_en) VALUES (?, ?, ?, ?, ?)",
         (clave, tipo, fuente_id, fecha, ahora_bogota_iso()),
     )
-    return cur.rowcount
 
 
 def candidatas(conn, hoy):

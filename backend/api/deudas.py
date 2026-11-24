@@ -3,13 +3,14 @@ import logging
 from fastapi import APIRouter
 
 from ..calculos import operaciones
-from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
-from ..calculos.operaciones import frases_deuda as frases, movimientos
+from ..calculos.fechas import hoy_bogota
+from ..calculos.operaciones import asientos, frases_deuda as frases, movimientos
+from ..calculos.operaciones.defaults import fecha_o_ahora
 from ..core.db import conexion
 from ..core.estado import coleccion, detalle, simbolo
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import fijar_saldo, get_row, guardar_y_leer, insert_row, insert_tx, update_row
-from ..core.tablas import CAT_INGRESO, DEUDA_COLS
+from ..core.tablas import DEUDA_COLS
 from ..schemas.deuda import AdelantoPreview, DeudaAdelanto, DeudaCrear, DeudaIn, DeudaPago
 from ..schemas.previews import PagoPreview
 from .lecturas import register_borrado
@@ -64,7 +65,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
         deuda = get_row(conn, "deudas", deuda_id)
         pago = movimientos.aplicar_pago(
             deuda, total_pagado=body.total_pagado, nuevo_saldo=body.nuevo_saldo, intereses=body.intereses,
-            avanzar_cuota=body.avanzar_cuota, fecha=body.fecha or ahora_bogota_iso(), descripcion=body.descripcion,
+            avanzar_cuota=body.avanzar_cuota, fecha=fecha_o_ahora(body.fecha), descripcion=body.descripcion,
             notas=body.notas, simbolo=simbolo(conn),
         )
         conn.execute(
@@ -74,8 +75,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago):
         )
         if body.registrar_tx:
             insert_tx(conn, **pago.tx)
-        if body.op_clave:
-            ocultar_op(conn, body.op_clave)
+        ocultar_op(conn, body.op_clave)
         return _guardar_y_leer_deuda(conn, deuda_id)
 
 
@@ -87,11 +87,9 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto):
         movimientos.validar_adelanto(bool(tarjeta["es_tarjeta"]), tarjeta["saldo_actual"], nuevo_saldo)
         fijar_saldo(conn, deuda_id, nuevo_saldo)
         if body.registrar_tx:
-            insert_tx(
-                conn, fecha=body.fecha or ahora_bogota_iso(), tipo="ingreso", categoria=CAT_INGRESO["avance_tarjeta"],
-                descripcion=body.descripcion or frases.descripcion_adelanto(tarjeta["nombre"]),
-                monto=body.monto, notas=body.notas,
-            )
+            insert_tx(conn, **asientos.tx_adelanto_tarjeta(
+                tarjeta["nombre"], body.monto, fecha_o_ahora(body.fecha), body.descripcion, body.notas
+            ))
         deuda = _guardar_y_leer_deuda(conn, deuda_id)
         logger.info(
             "tarjeta %s: adelanto %.2f, saldo_actual %.2f -> %.2f",

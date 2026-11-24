@@ -154,3 +154,29 @@ def test_422_formato_y_mensajes(client):
 def test_422_valor_requerido(client):
     errores = _errores(client, {})
     assert errores["tipo"]["msg"] == "Este valor es requerido"
+
+
+def _ledger(client):
+    return client.get("/api/backup").json()["transacciones"]
+
+
+def test_acciones_compuestas_redondean_el_monto_con_pesos(client, prestamo):
+    from backend.calculos.numeros import pesos
+
+    inv = client.post("/api/inv", json={"nombre": "F", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 1000}).json()
+    activo = client.post("/api/activo", json={"nombre": "Moto", "valor_inicial": 5000, "valor_actual": 4000}).json()
+    esperado = pesos(100.6)
+    assert esperado == 101
+    assert client.post(f"/api/deuda/{prestamo['id']}/pago", json={"nuevo_saldo": 900_000, "total_pagado": 100.6, "fecha": "2026-07-01"}).status_code == 200
+    client.post(f"/api/inv/{inv['id']}/aporte", json={"monto": 100.6, "fecha": "2026-07-01"})
+    assert client.post(f"/api/inv/{inv['id']}/rendimiento", json={"monto": 100.6, "fecha": "2026-07-01"}).status_code == 200
+    client.post(f"/api/inv/{inv['id']}/retiro", json={"tipo": "parcial", "monto": 100.6, "saldo_queda": 900, "fecha": "2026-07-01"})
+    assert client.post(f"/api/activo/{activo['id']}/venta", json={"precio": 100.6, "fecha": "2026-07-01"}).status_code == 200
+    montos = [t["monto"] for t in _ledger(client)]
+    assert len(montos) == 5 and all(m == esperado for m in montos)
+
+
+def test_accion_compuesta_con_monto_que_redondea_a_cero_es_422(client):
+    inv = client.post("/api/inv", json={"nombre": "F", "tipo": "variable", "monto_invertido": 1000}).json()
+    r = client.post(f"/api/inv/{inv['id']}/aporte", json={"monto": 0.3, "fecha": "2026-07-01"})
+    assert r.status_code == 422

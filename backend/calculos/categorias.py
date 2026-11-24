@@ -1,4 +1,4 @@
-from .constantes import CATEGORIAS_SISTEMA
+from .constantes import CATEGORIA_LARGO_MAX, CATEGORIAS_SISTEMA
 from .errores import ErrorDeDominio
 
 TIPOS = tuple(CATEGORIAS_SISTEMA)
@@ -35,6 +35,8 @@ def validar_categoria(tipo, nombre, existentes):
     limpio = (nombre or "").strip()
     if not limpio:
         raise CategoriaInvalida("Nombre vacío")
+    if len(limpio) > CATEGORIA_LARGO_MAX:
+        raise CategoriaInvalida(f"Nombre demasiado largo (máximo {CATEGORIA_LARGO_MAX} caracteres)")
     if limpio in NOMBRES_SISTEMA or limpio in existentes:
         raise CategoriaDuplicada("Categoría repetida")
     return limpio

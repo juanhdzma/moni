@@ -45,6 +45,8 @@ def valores(opciones: list[dict]) -> tuple:
     return tuple(o["value"] for o in opciones)
 
 
+CATEGORIA_LARGO_MAX = 25
+
 CATEGORIAS_SISTEMA = {
     "ingreso": {
         "credito_recibido": "Crédito recibido",

@@ -1,4 +1,9 @@
+from ..fechas import ahora_bogota_iso
 from ..numeros import pesos
+
+
+def fecha_o_ahora(fecha: str | None) -> str:
+    return fecha or ahora_bogota_iso()
 
 
 def completar_inversion(datos: dict, anterior: dict | None, hoy) -> dict:

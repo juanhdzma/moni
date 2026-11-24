@@ -2,7 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, model_validator
 
-from .validadores import Monto, MontoCero, Nombre, clave_opcional, fecha_opcional
+from .validadores import Monto, MontoPesos, MontoCero, Nombre, clave_opcional, fecha_opcional
 
 Franquicia = Literal["Visa", "Mastercard", "Amex", "Otra", ""]
 
@@ -60,7 +60,7 @@ class _SaldoTrasAdelanto(BaseModel):
 
 
 class DeudaAdelanto(_SaldoTrasAdelanto):
-    monto: Monto
+    monto: MontoPesos
     fecha: str = ""
     descripcion: str = ""
     notas: str = ""
@@ -75,7 +75,7 @@ class AdelantoPreview(_SaldoTrasAdelanto):
 
 class DeudaPago(BaseModel):
     nuevo_saldo: MontoCero
-    total_pagado: Monto
+    total_pagado: MontoPesos
     intereses: Optional[MontoCero] = None
     fecha: str = ""
     descripcion: str = ""

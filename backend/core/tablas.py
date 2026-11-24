@@ -7,5 +7,3 @@ ACTIVO_COLS = ["nombre", "valor_inicial", "valor_actual", "fecha_adquisicion", "
 REC_COLS = ["nombre", "tipo", "monto", "frecuencia", "activo", "fecha_inicio", "notas"]
 
 CAT_INGRESO = CATEGORIAS_SISTEMA["ingreso"]
-CAT_GASTO = CATEGORIAS_SISTEMA["gasto"]
-CAT_TRANSFER = CATEGORIAS_SISTEMA["transfer"]

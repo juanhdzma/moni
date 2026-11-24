@@ -1,3 +1,5 @@
+import pytest
+
 TX_OK = {"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": 100}
 INV_OK = {"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "tasa_ea": 10, "fecha_inicio": "2026-01-01"}
 
@@ -90,3 +92,20 @@ def test_import_restaura_ajustes_y_rechaza_simbolo_invalido(client):
 def test_import_op_oculta_invalida_es_error_de_dominio_en_espanol(client):
     r = client.post("/api/import", json={"ops_ocultas": [{"clave": "x:1:2026-01-01"}]})
     assert r.status_code == 400 and r.json()["detail"].startswith("Fila ops_ocultas[0] inválida")
+
+
+@pytest.mark.parametrize("categorias,fragmento", [
+    ([{"tipo": "gasto", "nombre": "  "}], "Nombre vacío"),
+    ([{"tipo": "gasto", "nombre": "Intereses"}], "Categoría repetida"),
+    ([{"tipo": "gasto", "nombre": "x" * 26}], "demasiado largo"),
+    ([{"tipo": "gasto", "nombre": "Extra"}, {"tipo": "gasto", "nombre": " Extra"}], "Categoría repetida"),
+])
+def test_import_valida_categorias(client, categorias, fragmento):
+    r = client.post("/api/import", json={"categorias": categorias})
+    assert r.status_code == 400 and "categorias[" in r.json()["detail"] and fragmento in r.json()["detail"]
+    assert client.get("/api/backup").json()["categorias"] == []
+
+
+def test_import_categoria_valida_se_guarda_limpia(client):
+    client.post("/api/import", json={"categorias": [{"tipo": "gasto", "nombre": " Extra "}]})
+    assert client.get("/api/backup").json()["categorias"] == [{"tipo": "gasto", "nombre": "Extra"}]

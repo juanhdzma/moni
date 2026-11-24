@@ -4,8 +4,7 @@ from fastapi import APIRouter
 
 from ..calculos import listados
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
-from ..calculos.numeros import pesos
-from ..calculos.errores import ErrorDeDominio
+from ..calculos.operaciones import tarjetas
 from ..core.db import conexion
 from ..core import estado as store
 from ..core.estado import coleccion
@@ -28,9 +27,7 @@ def ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
     if tarjeta is None:
         logger.warning("tx apunta a tarjeta %s inexistente; se ignora el ajuste de saldo", tarjeta_id)
         return
-    if not tarjeta["es_tarjeta"]:
-        raise ErrorDeDominio(f"La tarjeta {tarjeta_id} no es válida")
-    nuevo_saldo = pesos(tarjeta["saldo_actual"] + delta)
+    nuevo_saldo = tarjetas.saldo_tras_delta(dict(tarjeta), delta)
     fijar_saldo(conn, tarjeta_id, nuevo_saldo)
     logger.info(
         "tarjeta %s: saldo_actual %.2f -> %.2f (delta %.2f)",
@@ -39,13 +36,11 @@ def ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
 
 
 def _deshacer_efecto_en_tarjeta(conn, tx):
-    if tx["tipo"] == "gasto":
-        ajustar_saldo_tarjeta(conn, tx["tarjeta_id"], -tx["monto"])
+    ajustar_saldo_tarjeta(conn, tx["tarjeta_id"], tarjetas.delta_saldo_tarjeta(tx, deshacer=True))
 
 
 def _aplicar_efecto_en_tarjeta(conn, tx):
-    if tx["tipo"] == "gasto":
-        ajustar_saldo_tarjeta(conn, tx["tarjeta_id"], tx["monto"])
+    ajustar_saldo_tarjeta(conn, tx["tarjeta_id"], tarjetas.delta_saldo_tarjeta(tx))
 
 
 @router.post("/api/tx", name="create_tx")
@@ -54,8 +49,7 @@ def create_tx(body: TxIn):
         data = body.model_dump()
         new_id = insert_row(conn, "transacciones", TX_COLS, data)
         _aplicar_efecto_en_tarjeta(conn, data)
-        if data["op_clave"]:
-            ocultar_op(conn, data["op_clave"])
+        ocultar_op(conn, data["op_clave"])
         return guardar_y_leer(conn, "transacciones", new_id)
 
 

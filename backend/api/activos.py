@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from ..calculos import operaciones
 from ..calculos.operaciones import asientos, movimientos
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
+from ..calculos.operaciones.defaults import fecha_o_ahora
 from ..core.actualizar import actualizar_columnas
 from ..core.db import conexion
 from ..core.estado import coleccion
@@ -43,7 +44,7 @@ def actualizar_activo(activo_id: int, body: ActivoIn):
 def actualizar_valor(activo_id: int, body: ActivoValor):
     with conexion() as conn:
         get_row(conn, "activos", activo_id)
-        actualizar_columnas(conn, "activos", activo_id, movimientos.aplicar_valor(body.nuevo_valor, body.fecha or ahora_bogota_iso()))
+        actualizar_columnas(conn, "activos", activo_id, movimientos.aplicar_valor(body.nuevo_valor, fecha_o_ahora(body.fecha)))
         return guardar_y_leer(conn, "activos", activo_id)
 
 
@@ -53,7 +54,7 @@ def vender_activo(activo_id: int, body: ActivoVenta):
         activo = get_row(conn, "activos", activo_id)
         delete_row(conn, "activos", activo_id)
         if body.registrar_tx:
-            insert_tx(conn, **asientos.tx_venta_activo(activo["nombre"], body.precio, body.fecha or ahora_bogota_iso(), body.notas))
+            insert_tx(conn, **asientos.tx_venta_activo(activo["nombre"], body.precio, fecha_o_ahora(body.fecha), body.notas))
         conn.commit()
         return {"ok": True}
 
@@ -75,5 +76,4 @@ def activo_venta_preview(activo_id: int, body: PrecioPreview):
 def activos_resumen():
     with conexion() as conn:
         activos = coleccion(conn, "activos", hoy_bogota())
-    resumen = operaciones.resumen_activos(activos)
-    return {**resumen, **operaciones.texto_activos(resumen, len(activos))}
+    return operaciones.resumen_activos(activos)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from ..calculos import operaciones
+from ..calculos.operaciones import movimientos
 from ..calculos.fechas import hoy_bogota
 from ..core.db import conexion
 from ..core.estado import categorias, coleccion, detalle, simbolo
@@ -17,7 +18,7 @@ register_borrado(router, "rec", "recurrentes")
 def leer_rec(row_id: int):
     with conexion() as conn:
         rec = detalle(conn, "recurrentes", row_id, hoy_bogota())
-        return {**rec, "categoria_sugerida": operaciones.categoria_sugerida(rec, categorias(conn))}
+        return operaciones.con_categoria_sugerida(rec, categorias(conn))
 
 
 @router.post("/api/rec", name="create_rec")
@@ -42,7 +43,7 @@ def actualizar_rec(row_id: int, body: RecIn):
 def pausar_rec(row_id: int):
     with conexion() as conn:
         actual = get_row(conn, "recurrentes", row_id)
-        activo = not actual["activo"]
+        activo = movimientos.alternar_activo(actual)
         conn.execute("UPDATE recurrentes SET activo = ? WHERE id = ?", (int(activo), row_id))
         conn.commit()
         return {"id": row_id, "activo": activo}
@@ -51,8 +52,4 @@ def pausar_rec(row_id: int):
 @router.get("/api/rec/resumen")
 def rec_resumen():
     with conexion() as conn:
-        resumen = operaciones.resumen_recurrentes(coleccion(conn, "recurrentes", hoy_bogota()), simbolo(conn))
-        cats = categorias(conn)
-    for lista in ("ingresos", "gastos"):
-        resumen[lista] = [{**r, "categoria_sugerida": operaciones.categoria_sugerida(r, cats)} for r in resumen[lista]]
-    return resumen
+        return operaciones.resumen_recurrentes(coleccion(conn, "recurrentes", hoy_bogota()), categorias(conn), simbolo(conn))

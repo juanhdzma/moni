@@ -60,5 +60,5 @@ def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
 
 
 @router.get("/api/calc/tasa")
-def calc_tasa(valor: float, tipo: Literal["ea", "mv"] = "ea"):
+def calc_tasa(valor: Annotated[float, Query(ge=-1000, le=1000, allow_inf_nan=False)], tipo: Literal["ea", "mv"] = "ea"):
     return equivalencia_tasa(valor, tipo)

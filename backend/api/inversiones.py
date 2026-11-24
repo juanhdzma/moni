@@ -18,9 +18,6 @@ router = APIRouter()
 register_lectura(router, "inv", "inversiones")
 register_borrado(router, "inv", "inversiones")
 
-DESCRIPCION_RENDIMIENTO = "Un rendimiento cuenta de un solo lado: si capitaliza sube valor_actual sin transacción; si se paga, es un ingreso y el valor no cambia."
-
-
 def _datos_inversion(body: InvIn, anterior: dict | None) -> dict:
     data = operaciones.normalizar_tasa(body.model_dump())
     return operaciones.completar_inversion(data, anterior, hoy_bogota())
@@ -55,15 +52,14 @@ def _persistir(conn, inv_id: int, cambio: CambioInversion) -> None:
         insert_tx(conn, **cambio.tx)
 
 
-@router.post("/api/inv/{inv_id}/rendimiento", description=DESCRIPCION_RENDIMIENTO)
+@router.post("/api/inv/{inv_id}/rendimiento", description=textos.DESCRIPCION_RENDIMIENTO)
 def registrar_rendimiento(inv_id: int, body: InvRendimiento):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
         _persistir(conn, inv_id, movimientos.aplicar_rendimiento(
             inv, body.monto, body.fecha, body.notas, body.capitaliza, body.registrar_tx
         ))
-        if body.op_clave:
-            ocultar_op(conn, body.op_clave)
+        ocultar_op(conn, body.op_clave)
         return guardar_y_leer(conn, "inversiones", inv_id)
 
 
@@ -118,6 +114,4 @@ def inv_aporte_preview(inv_id: int, body: MontoPreview):
 @router.get("/api/inv/resumen")
 def inv_resumen():
     with conexion() as conn:
-        resumen = operaciones.resumen_inversiones(coleccion(conn, "inversiones", hoy_bogota()), simbolo(conn))
-    resumen["texto_posiciones"] = operaciones.texto_posiciones(resumen)
-    return resumen
+        return operaciones.resumen_inversiones(coleccion(conn, "inversiones", hoy_bogota()), simbolo(conn))

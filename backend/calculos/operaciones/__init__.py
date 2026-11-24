@@ -20,6 +20,7 @@ from .proximas import (
     claves_vigentes,
 )
 from .resumenes import (
+    con_categoria_sugerida,
     preview_venta_activo,
     resumen_activos,
     resumen_deudas,

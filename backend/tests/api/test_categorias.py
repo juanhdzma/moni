@@ -35,3 +35,8 @@ def test_nombre_de_categoria_de_sistema_se_rechaza_en_cualquier_tipo(client):
     for tipo, nombre in [("gasto", "Intereses"), ("ingreso", "Inversión"), ("gasto", "Pago deuda"), ("transfer", "Dividendos")]:
         r = client.post("/api/categorias", json={"tipo": tipo, "nombre": nombre})
         assert (r.status_code, r.json()) == (409, {"detail": "Categoría repetida"}), (tipo, nombre)
+
+
+def test_categoria_demasiado_larga_es_422(client):
+    r = client.post("/api/categorias", json={"tipo": "gasto", "nombre": "x" * 26})
+    assert (r.status_code, r.json()) == (422, {"detail": "Nombre demasiado largo (máximo 25 caracteres)"})

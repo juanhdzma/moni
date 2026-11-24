@@ -42,3 +42,9 @@ def test_validar_simbolo():
     for malo in ["", "   ", "12345", "a\nb", None]:
         with pytest.raises(ValueError):
             C.validar_simbolo(malo)
+
+
+def test_validar_categoria_largo_maximo():
+    assert C.validar_categoria("gasto", "x" * C.CATEGORIA_LARGO_MAX, []) == "x" * C.CATEGORIA_LARGO_MAX
+    with pytest.raises(C.CategoriaInvalida):
+        C.validar_categoria("gasto", "x" * (C.CATEGORIA_LARGO_MAX + 1), [])

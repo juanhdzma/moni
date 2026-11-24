@@ -159,3 +159,7 @@ def aplicar_retiro(
         }
     tx = asientos.tx_retiro(prefijo, inv["nombre"], monto, fecha, notas) if registrar_tx else None
     return CambioInversion(cambios, tx, borrar)
+
+
+def alternar_activo(rec: dict) -> bool:
+    return not rec["activo"]

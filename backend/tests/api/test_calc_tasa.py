@@ -15,3 +15,9 @@ def test_calc_tasa_ida_y_vuelta_no_acumula_error_de_float(client):
     ea = client.get("/api/calc/tasa", params={"valor": 0.1, "tipo": "mv"}).json()["ea"]
     mv = client.get("/api/calc/tasa", params={"valor": ea, "tipo": "ea"}).json()["mv"]
     assert mv == pytest.approx(0.1, abs=1e-12)
+
+
+@pytest.mark.parametrize("valor", ["nan", "inf", "-inf", "1e308", "1001"])
+def test_calc_tasa_rechaza_valores_fuera_de_rango(client, valor):
+    r = client.get("/api/calc/tasa", params={"valor": valor, "tipo": "mv"})
+    assert r.status_code == 422
