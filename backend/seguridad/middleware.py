@@ -4,6 +4,8 @@ import os
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from ..core.ruta import ruta_de
+
 from .bloqueo import fallo_generico, lock_ip, respuesta_si_bloqueada
 from .ip import client_ip, es_https
 from .password import configurado
@@ -32,39 +34,25 @@ def _push_token_valido(request: Request) -> bool | None:
     return hmac.compare_digest(cabecera[7:].strip().encode(), esperado.encode())
 
 
-def _ruta_normalizada(path: str) -> str:
-    partes = []
-    for seg in path.split("/"):
-        if seg in ("", "."):
-            continue
-        if seg == "..":
-            if partes:
-                partes.pop()
-            continue
-        partes.append(seg)
-    return "/" + "/".join(partes).lower()
-
-
 def _no_autenticado() -> JSONResponse:
     return JSONResponse({"detail": "No autenticado"}, status_code=401)
 
 
 async def middleware_auth(request: Request, call_next):
-    raw = request.scope["path"]
-    ruta = _ruta_normalizada(raw)
+    ruta = ruta_de(request)
     if not ruta.startswith("/api"):
         return await call_next(request)
-    bloqueada = respuesta_si_bloqueada(client_ip(request))
+    if requiere_sesion(request) is not None:
+        return await call_next(request)
+    ip = client_ip(request)
+    bloqueada = respuesta_si_bloqueada(ip)
     if bloqueada:
         return bloqueada
-    if (request.method, raw) in PUBLICAS:
+    if (request.method, ruta) in PUBLICAS:
         return await call_next(request)
     if not configurado():
         return _no_autenticado()
-    if requiere_sesion(request) is not None:
-        return await call_next(request)
     if request.method == "POST" and ruta == PUSH_ENVIAR:
-        ip = client_ip(request)
         async with lock_ip(ip):
             bloqueada = respuesta_si_bloqueada(ip)
             if bloqueada:
@@ -85,9 +73,11 @@ async def middleware_headers(request: Request, call_next):
     h["X-Frame-Options"] = "DENY"
     h["X-Content-Type-Options"] = "nosniff"
     h["Referrer-Policy"] = "no-referrer"
+    h["Cross-Origin-Opener-Policy"] = "same-origin"
+    h["Cross-Origin-Resource-Policy"] = "same-origin"
     h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
     if es_https(request):
         h["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    if _ruta_normalizada(request.scope["path"]).startswith("/api"):
+    if ruta_de(request).startswith("/api"):
         h["Cache-Control"] = "no-store"
     return response

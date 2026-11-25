@@ -1,3 +1,4 @@
+from backend.tests.conftest import CLAVE_TEST
 from webauthn.helpers import bytes_to_base64url
 from backend.tests.seguridad.passkeys.helpers import Autenticador, alta, OPCIONES_REGISTRO, VERIFICAR_REGISTRO, RP_ID
 
@@ -10,7 +11,7 @@ def test_registro_sin_sesion_rechazado(anon_client):
 
 
 def test_opciones_registro_exigen_platform_y_uv(client):
-    o = client.post(OPCIONES_REGISTRO, json={"nombre": "iPhone"}).json()
+    o = client.post(OPCIONES_REGISTRO, json={"clave": CLAVE_TEST}).json()
     assert o["authenticatorSelection"]["authenticatorAttachment"] == "platform"
     assert o["authenticatorSelection"]["userVerification"] == "required"
     assert o["rp"]["id"] == RP_ID
@@ -18,7 +19,7 @@ def test_opciones_registro_exigen_platform_y_uv(client):
 
 def test_registro_challenge_reusado_o_origin_malo(client):
     auten = Autenticador()
-    opciones = client.post(OPCIONES_REGISTRO, json={"nombre": "x"}).json()
+    opciones = client.post(OPCIONES_REGISTRO, json={"clave": CLAVE_TEST}).json()
     r = client.post(VERIFICAR_REGISTRO, json={**auten.registrar(opciones, origin="https://evil.example"), "nombre": "x"})
     assert r.status_code == 400
     r = client.post(VERIFICAR_REGISTRO, json={**auten.registrar(opciones), "nombre": "x"})
@@ -28,14 +29,14 @@ def test_registro_challenge_reusado_o_origin_malo(client):
 
 def test_registro_sin_uv_rechazado(client):
     auten = Autenticador()
-    opciones = client.post(OPCIONES_REGISTRO, json={"nombre": "x"}).json()
+    opciones = client.post(OPCIONES_REGISTRO, json={"clave": CLAVE_TEST}).json()
     r = client.post(VERIFICAR_REGISTRO, json={**auten.registrar(opciones, uv=False), "nombre": "x"})
     assert r.status_code == 400
 
 
 def test_registro_duplicado_y_exclude_credentials(client):
     auten, _ = alta(client)
-    o = client.post(OPCIONES_REGISTRO, json={"nombre": "otra"}).json()
+    o = client.post(OPCIONES_REGISTRO, json={"clave": CLAVE_TEST}).json()
     assert [c["id"] for c in o["excludeCredentials"]] == [bytes_to_base64url(auten.credential_id)]
     r = client.post(VERIFICAR_REGISTRO, json={**auten.registrar(o), "nombre": "otra"})
     assert r.status_code == 409
@@ -43,7 +44,7 @@ def test_registro_duplicado_y_exclude_credentials(client):
 
 def test_nombre_invalido(client):
     auten = Autenticador()
-    opciones = client.post(OPCIONES_REGISTRO).json()
+    opciones = client.post(OPCIONES_REGISTRO, json={"clave": CLAVE_TEST}).json()
     for nombre in ("", "   ", "x" * 41):
         r = client.post(VERIFICAR_REGISTRO, json={**auten.registrar(opciones), "nombre": nombre})
         assert r.status_code == 422
@@ -52,7 +53,7 @@ def test_nombre_invalido(client):
 def test_limite_de_10_passkeys(client):
     for i in range(10):
         assert alta(client, nombre=f"d{i}")[1].status_code == 200
-    assert client.post(OPCIONES_REGISTRO, json={"nombre": "once"}).status_code == 409
+    assert client.post(OPCIONES_REGISTRO, json={"clave": CLAVE_TEST}).status_code == 409
 
 
 def test_borrar_passkey(client):

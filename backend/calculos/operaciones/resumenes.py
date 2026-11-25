@@ -1,7 +1,7 @@
 from ..formato import cop_corto, frase_flujo, porcentaje_texto, top_segmentos
 from ..numeros import porcentaje
 from .finanzas import intereses_pagados
-from .textos import categoria_sugerida, texto_activos, texto_posiciones, texto_vacio_inversiones
+from .textos import categoria_sugerida, texto_activos, texto_posiciones, texto_vacio_activos, texto_vacio_inversiones, texto_vacio_recurrentes
 
 
 def _segmentos(filas: list, campo: str) -> list[dict]:
@@ -61,7 +61,7 @@ def resumen_activos(filas: list[dict]) -> dict:
         "segmentos": _segmentos(filas, "valor_actual"),
         "items": filas,
     }
-    return {**resumen, **texto_activos(resumen, inicial, len(filas))}
+    return {**resumen, **texto_activos(resumen, inicial, len(filas)), "texto_vacio": texto_vacio_activos()}
 
 
 def preview_venta_activo(fila: dict, precio: float) -> dict:
@@ -88,4 +88,6 @@ def resumen_recurrentes(filas: list[dict], categorias: dict, simbolo: str = "$")
         "segmentos": _segmentos(gastos_activos, "mensual"),
         "ingresos": _ordenadas(filas, lambda r: r["tipo"] == "ingreso", categorias),
         "gastos": _ordenadas(filas, lambda r: r["tipo"] != "ingreso", categorias),
+        "texto_vacio_ingresos": texto_vacio_recurrentes("ingresos"),
+        "texto_vacio_gastos": texto_vacio_recurrentes("gastos"),
     }

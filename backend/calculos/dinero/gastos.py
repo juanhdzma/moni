@@ -1,7 +1,8 @@
 import datetime
 
 from ..fechas import parse_fecha_hora, restar_meses
-from ..formato import frase, porcentaje_texto
+from ..formato import frase, pct_barra, porcentaje_texto
+from ..listados import atributos_visuales_tx, texto_vacio_movimientos
 from ..numeros import monto_firmado
 
 PERIODOS_GASTOS = ("1W", "1M", "3M", "6M", "1Y", "ALL")
@@ -67,7 +68,11 @@ def agrupar_gastos(txs) -> list[dict]:
                 "restantes_texto": f"y {restantes} más en Transacciones" if restantes else None,
             }
         )
-    return sorted(filas, key=lambda f: f["valor"], reverse=True)
+    filas.sort(key=lambda f: f["valor"], reverse=True)
+    maximo = max((f["valor"] for f in filas), default=0)
+    for f in filas:
+        f["pct"] = pct_barra(f["valor"], maximo)
+    return filas
 
 
 def _frase_top(top: dict, nombre_periodo: str) -> dict:
@@ -104,6 +109,11 @@ def movimientos_recientes(txs, n: int = 5) -> list[dict]:
         {
             **{k: t[k] for k in ("id", "fecha", "tipo", "categoria", "descripcion", "monto")},
             "monto_firmado": monto_firmado(t["tipo"], t["monto"]),
+            **atributos_visuales_tx(t),
         }
         for t in orden
     ]
+
+
+def movimientos_dashboard(txs, n: int = 5) -> dict:
+    return {"items": movimientos_recientes(txs, n), "texto_vacio": texto_vacio_movimientos()}

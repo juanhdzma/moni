@@ -2,10 +2,12 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, computed_field, model_validator
 
-from ..calculos.constantes import CLASES_DEUDA, valores
-from .validadores import MontoPesos, MontoCero, Nombre, Tasa, clave_opcional, fecha_opcional
+from ..calculos.constantes import CLASES_DEUDA, FRANQUICIAS, MODOS_PAGO, valores
+from .validadores import (
+    Descripcion, MontoCero, MontoPesos, Nombre, Notas, Tasa, clave_opcional, fecha_opcional,
+)
 
-Franquicia = Literal["Visa", "Mastercard", "Amex", "Otra", ""]
+Franquicia = Literal[valores(FRANQUICIAS)]
 ClaseDeuda = Literal[valores(CLASES_DEUDA)]
 
 
@@ -76,8 +78,8 @@ class _SaldoTrasAdelanto(BaseModel):
 class DeudaAdelanto(_SaldoTrasAdelanto):
     monto: MontoPesos
     fecha: str = ""
-    descripcion: str = ""
-    notas: str = ""
+    descripcion: Descripcion = ""
+    notas: Notas = ""
     registrar_tx: bool = True
 
     _v_fecha = fecha_opcional("fecha")
@@ -87,7 +89,7 @@ class AdelantoPreview(_SaldoTrasAdelanto):
     monto: MontoCero
 
 
-ModoPago = Literal["cuota", "abono", "liquidar"]
+ModoPago = Literal[valores(MODOS_PAGO)]
 
 
 class DeudaPago(BaseModel):
@@ -96,8 +98,8 @@ class DeudaPago(BaseModel):
     total_pagado: MontoPesos
     intereses: Optional[MontoCero] = None
     fecha: str = ""
-    descripcion: str = ""
-    notas: str = ""
+    descripcion: Descripcion = ""
+    notas: Notas = ""
     registrar_tx: bool = True
     op_clave: Optional[str] = None
 

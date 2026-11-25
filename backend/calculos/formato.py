@@ -25,6 +25,16 @@ def porcentaje_texto(n: float, decimales: int = 1) -> str:
     return f"{n or 0:,.{decimales}f}".translate({ord(","): ".", ord("."): ","})
 
 
+def tono_de_valor(valor: float) -> str:
+    return "positivo" if valor > 0 else "negativo" if valor < 0 else "neutro"
+
+
+def pct_barra(valor: float, maximo: float, minimo: float = 2) -> float:
+    if maximo <= 0:
+        return 0
+    return max(abs(valor) / maximo * 100, minimo if valor else 0)
+
+
 def plural(n: int, singular: str, plural_: str) -> str:
     return f"{n} {singular if n == 1 else plural_}"
 

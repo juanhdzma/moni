@@ -25,3 +25,10 @@ def test_derivar_inversion_ganancia():
     assert i["ganancia"] == 100_000 and i["ganancia_pct"] == pytest.approx(10)
     assert i["proximo_pago"] is None and "tasa_mv" not in i
     assert i["rendimiento_esperado"] == op.rendimiento_mensual_fija(1_100_000, 12)
+
+
+def test_deuda_trae_tono_de_nivel():
+    d = op.derivar_deuda(deuda(es_tarjeta=1, saldo_actual=950, cupo=1000))
+    assert (d["nivel_uso"], d["tono_uso"]) == ("alto", "negativo")
+    assert op.derivar_deuda(deuda(es_tarjeta=1, saldo_actual=0, cupo=1000))["tono_uso"] == "positivo"
+    assert op.derivar_deuda(deuda(saldo_actual=250))["tono_progreso"] == "positivo"

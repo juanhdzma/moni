@@ -1,11 +1,10 @@
 import datetime
 
 from ..fechas import mes_de
-from ..constantes import tiene_saldo
 from ..numeros import porcentaje
 from .flujos import es_gasto_cartera, flujo_cartera, net_worth
-from ..formato import cop, cop_corto, frase, plural, porcentaje_texto
-from .gastos import PERIODOS_GASTOS
+from ..formato import cop, cop_corto, frase, plural, porcentaje_texto, tono_de_valor
+from .gastos import PERIODOS_EVOLUCION_VISIBLES
 from .series import (
     _clave_mes,
     etiquetas_meses,
@@ -18,7 +17,7 @@ from .series import (
     serie_mensual,
 )
 
-PERIODOS_EVOLUCION = PERIODOS_GASTOS[1:]
+PERIODOS_EVOLUCION = PERIODOS_EVOLUCION_VISIBLES
 MESES_ESTE_MES = 6
 MESES_PROYECCION = 12
 
@@ -47,10 +46,12 @@ def _ingresos_gastos(txs) -> tuple[float, float]:
 def _balance_mes(txs, hoy: datetime.date) -> dict:
     mes = _del_mes(txs, hoy)
     ingresos, gastos = _ingresos_gastos(mes)
-    ahorro_pct = porcentaje(flujo_cartera(mes), ingresos)
+    quedo = flujo_cartera(mes)
+    ahorro_pct = porcentaje(quedo, ingresos)
     return {
         "ingresos": ingresos,
         "gastos": gastos,
+        "quedo": quedo,
         "ahorro_pct": ahorro_pct,
         "frase": frase_mes(ahorro_pct, ingresos),
     }
@@ -62,11 +63,11 @@ def resumen_dashboard(estado, hoy: datetime.date) -> dict:
     inversiones = estado["inversiones"]
     activos = estado["activos"]
 
-    total_deuda = sum(d["saldo_actual"] for d in deudas)
+    vigentes = [d for d in deudas if d["vigente"]]
+    total_deuda = sum(d["saldo_actual"] for d in vigentes)
     total_inv = sum(i["valor_actual"] for i in inversiones)
     total_activos = sum(a["valor_actual"] for a in activos)
     ultimos12 = monthly_patrimonio(txs, 12, hoy)
-    activas = [d for d in deudas if tiene_saldo(d)]
     total_invertido = sum(i["monto_invertido"] for i in inversiones)
     ganancia = total_inv - total_invertido
     efectivo = flujo_cartera(txs)
@@ -79,8 +80,8 @@ def resumen_dashboard(estado, hoy: datetime.date) -> dict:
         "total_activos": total_activos,
         "proy_delta": sum(ultimos12) / len(ultimos12) * MESES_PROYECCION,
         "texto_proyeccion": f"proyectados en {MESES_PROYECCION} meses",
-        "cuota_total": sum(d["cuota_mensual"] for d in activas),
-        "deudas_activas": len(activas),
+        "cuota_total": sum(d["cuota_mensual"] for d in vigentes),
+        "deudas_activas": len(vigentes),
         "total_invertido": total_invertido,
         "ganancia_inv": ganancia,
         "ganancia_inv_pct": porcentaje(ganancia, total_invertido),
@@ -88,9 +89,17 @@ def resumen_dashboard(estado, hoy: datetime.date) -> dict:
     }
 
 
-def _parte(id: str, nombre: str, valor: float, negativo: bool, detalle: str) -> dict:
+def _parte(id: str, nombre: str, valor: float, negativo: bool, detalle: str, tono: str) -> dict:
     firmado = -abs(valor) if negativo else abs(valor)
-    return {"id": id, "nombre": nombre, "valor": valor, "valor_firmado": firmado, "negativo": negativo, "detalle": detalle}
+    return {
+        "id": id,
+        "nombre": nombre,
+        "valor": valor,
+        "valor_firmado": firmado,
+        "negativo": negativo,
+        "detalle": detalle,
+        "tono": tono,
+    }
 
 
 def _detalle_ganancia(resumen: dict, simbolo: str) -> str:
@@ -108,10 +117,10 @@ def partes_patrimonio(resumen: dict, conteos: dict, simbolo: str = "$") -> list[
     )
     detalle_deudas = f"{cop(resumen['cuota_total'], simbolo)}/mes · {plural(resumen['deudas_activas'], 'deuda', 'deudas')}"
     return [
-        _parte("activos", "Activos", resumen["total_activos"], False, plural(conteos["activos"], "activo", "activos")),
-        _parte("inversiones", "Inversiones", resumen["total_inv"], False, detalle_inversiones),
-        _parte("balance", "Cartera", resumen["efectivo"], resumen["efectivo"] < 0, "Efectivo y cuentas"),
-        _parte("deudas", "Deudas", resumen["total_deuda"], True, detalle_deudas),
+        _parte("activos", "Activos", resumen["total_activos"], False, plural(conteos["activos"], "activo", "activos"), "activos"),
+        _parte("inversiones", "Inversiones", resumen["total_inv"], False, detalle_inversiones, "inversiones"),
+        _parte("balance", "Cartera", resumen["efectivo"], resumen["efectivo"] < 0, "Efectivo y cuentas", "deudas" if resumen["efectivo"] < 0 else "cartera"),
+        _parte("deudas", "Deudas", resumen["total_deuda"], True, detalle_deudas, "deudas"),
     ]
 
 
@@ -155,6 +164,7 @@ def evolucion(estado, serie: str, periodo: str, hoy: datetime.date, simbolo: str
         "desde": desde,
         "cambio": cambio,
         "nombre_serie": serie.capitalize(),
+        "tono": "inversiones" if inv else "cartera",
         "descripcion_grafico": f"Evolución mensual de {serie}",
         "frase": _frase_evolucion(verbo, sujeto, puntos[0]["mes"], desde, hasta, simbolo),
     }
@@ -169,7 +179,11 @@ def este_mes(estado, hoy: datetime.date) -> dict:
     return {
         "ingresos": mes["ingresos"],
         "gastos": mes["gastos"],
-        "quedo": mes["ingresos"] - mes["gastos"],
+        "gastos_firmado": -mes["gastos"],
+        "quedo": mes["quedo"],
+        "tono_ingresos": tono_de_valor(mes["ingresos"]),
+        "tono_gastos": "deudas",
+        "tono_quedo": tono_de_valor(mes["quedo"]),
         "titulo_quedo": "Te quedó",
         "texto_tarjeta": "Lo pagado con tarjeta no sale de la cartera.",
         "frase": mes["frase"],

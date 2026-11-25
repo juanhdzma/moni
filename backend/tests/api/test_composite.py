@@ -210,10 +210,12 @@ def test_saldar_la_deuda_deja_el_saldo_exacto_en_cero(client, prestamo):
     assert d["saldo_actual"] == 0
 
 
-def test_el_modo_liquidar_no_corre_el_vencimiento_si_deja_saldo(client, prestamo):
+def test_el_modo_liquidar_exige_saldo_cero(client, prestamo):
     client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-08-05"})
     r = _pago(client, prestamo["id"], modo="liquidar")
-    assert r.json()["proxima_cuota"] == "2026-08-05"
+    assert r.status_code == 400 and "liquidar" in r.json()["detail"]
+    assert client.get(f"/api/deuda/{prestamo['id']}").json()["saldo_actual"] == prestamo["saldo_actual"]
+    assert _pago(client, prestamo["id"], modo="liquidar", nuevo_saldo=0).json()["saldo_actual"] == 0
 
 
 def test_el_pago_exige_modo(client, prestamo):

@@ -1,3 +1,6 @@
+from backend.core.db import conexion
+
+
 def _gasto(client, tarjeta_id, monto, **kw):
     body = {"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": monto}
     if tarjeta_id is not None:
@@ -116,3 +119,28 @@ def test_no_se_cambia_el_tipo_de_una_deuda_con_movimientos_ligados(client, tarje
 def test_se_cambia_el_tipo_de_una_deuda_sin_movimientos(client, tarjeta):
     cuerpo = {"nombre": "Visa", "saldo_actual": 500, "monto_inicial": 500, "clase_deuda": "prestamo"}
     assert client.put(f"/api/deuda/{tarjeta['id']}", json=cuerpo).status_code == 200
+
+
+def test_gasto_con_tarjeta_inexistente_es_400(client):
+    r = _gasto(client, 999, 500)
+    assert r.status_code == 400 and r.json()["detail"] == "La tarjeta indicada no existe"
+    assert client.get("/api/backup").json()["transacciones"] == []
+
+
+def test_gasto_con_deuda_que_no_es_tarjeta_es_400(client, prestamo):
+    assert _gasto(client, prestamo["id"], 500).status_code == 400
+
+
+def test_editar_hacia_tarjeta_inexistente_es_400_y_no_toca_el_saldo(client, tarjeta):
+    tx = _gasto(client, tarjeta["id"], 500).json()
+    cuerpo = {"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": 500, "tarjeta_id": 999}
+    assert client.put(f"/api/tx/{tx['id']}", json=cuerpo).status_code == 400
+    assert _saldo(client, tarjeta["id"]) == 500
+
+
+def test_borrar_tx_con_tarjeta_huerfana_sigue_funcionando(client, tarjeta):
+    tx = _gasto(client, tarjeta["id"], 500).json()
+    with conexion() as conn:
+        conn.execute("DELETE FROM deudas WHERE id = ?", (tarjeta["id"],))
+        conn.commit()
+    assert client.delete(f"/api/tx/{tx['id']}").status_code == 204

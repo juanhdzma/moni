@@ -1,5 +1,7 @@
 from fastapi import Request, Response
 
+from .ruta import ruta_de
+
 HEADER_AFECTADAS = "X-Moni-Afectadas"
 
 TRANSACCIONES = "transacciones"
@@ -30,7 +32,7 @@ def con_op_oculta(entidades: tuple[str, ...], op_clave: str | None) -> tuple[str
 
 
 def _muta_datos(request: Request) -> bool:
-    path = request.url.path
+    path = ruta_de(request)
     return (
         request.method in METODOS_QUE_MUTAN
         and path.startswith("/api/")

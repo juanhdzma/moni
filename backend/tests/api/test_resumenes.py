@@ -44,7 +44,7 @@ def test_inv_resumen(client):
 def test_activos_resumen(client):
     sembrar(client)
     r = client.get("/api/activos/resumen").json()
-    assert set(r) == {"total_actual", "variacion", "mostrar_variacion", "segmentos", "items", "texto_variacion", "texto_conteo"}
+    assert set(r) == {"total_actual", "variacion", "mostrar_variacion", "segmentos", "items", "texto_variacion", "texto_conteo", "texto_vacio"}
     assert (r["total_actual"], r["variacion"]) == (3_500_000, 500_000)
     assert r["mostrar_variacion"] is True and r["texto_variacion"] == "16,7% sobre lo pagado"
     assert r["segmentos"][0]["label"] == "Casa" and len(r["items"]) == 1
@@ -55,8 +55,9 @@ def test_rec_resumen(client):
     client.post("/api/rec", json={"nombre": "Sueldo", "tipo": "ingreso", "monto": 4_000_000, "frecuencia": "mensual", "fecha_inicio": "2026-01-01"})
     client.post("/api/rec", json={"nombre": "Pausada", "tipo": "gasto", "monto": 10, "frecuencia": "mensual", "activo": False})
     r = client.get("/api/rec/resumen").json()
-    assert set(r) == {"neto_mensual", "dato", "segmentos", "ingresos", "gastos"}
+    assert set(r) == {"neto_mensual", "dato", "segmentos", "ingresos", "gastos", "texto_vacio_ingresos", "texto_vacio_gastos"}
     assert r["neto_mensual"] == 3_200_000
+    assert r["texto_vacio_gastos"]["titulo"] == "Sin gastos recurrentes" and r["texto_vacio_ingresos"]["titulo"] == "Sin ingresos recurrentes"
     assert r["dato"]["texto"] == "entran $4.000.000 · salen $800.000 en fijos"
     assert [x["nombre"] for x in r["ingresos"]] == ["Sueldo"]
     assert [x["nombre"] for x in r["gastos"]] == ["Arriendo", "Pausada"]

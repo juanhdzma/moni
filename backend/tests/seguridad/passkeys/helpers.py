@@ -1,3 +1,4 @@
+from backend.tests.conftest import CLAVE_TEST
 import hashlib
 import json
 import os
@@ -76,7 +77,7 @@ class Autenticador:
 
 def alta(client, nombre="iPhone", auten=None):
     auten = auten or Autenticador()
-    opciones = client.post(OPCIONES_REGISTRO, json={"nombre": nombre}).json()
+    opciones = client.post(OPCIONES_REGISTRO, json={"clave": CLAVE_TEST}).json()
     r = client.post(VERIFICAR_REGISTRO, json={**auten.registrar(opciones), "nombre": nombre})
     return auten, r
 

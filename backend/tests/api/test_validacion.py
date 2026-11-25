@@ -1,5 +1,6 @@
 import pytest
 
+INV_OK = {"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "tasa_ea": 10, "fecha_inicio": "2026-01-01"}
 TX_OK = {"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": 100}
 
 
@@ -180,3 +181,43 @@ def test_accion_compuesta_con_monto_que_redondea_a_cero_es_422(client):
     inv = client.post("/api/inv", json={"nombre": "F", "tipo": "variable", "monto_invertido": 1000}).json()
     r = client.post(f"/api/inv/{inv['id']}/aporte", json={"monto": 0.3, "fecha": "2026-07-01"})
     assert r.status_code == 422
+
+
+def test_fecha_con_espacio_se_guarda_normalizada(client):
+    r = client.post("/api/tx", json={**TX_OK, "fecha": "2026-07-01 14:30:59"})
+    assert r.status_code == 200 and r.json()["fecha"] == "2026-07-01T14:30"
+
+
+@pytest.mark.parametrize(
+    "campo,largo",
+    [("descripcion", 121), ("notas", 201), ("categoria", 26)],
+)
+def test_textos_de_tx_tienen_tope(client, campo, largo):
+    r = client.post("/api/tx", json={**TX_OK, campo: "x" * largo})
+    assert r.status_code == 422 and "demasiado largo" in r.json()["detail"][0]["msg"]
+    assert client.post("/api/tx", json={**TX_OK, campo: "x" * (largo - 1)}).status_code == 200
+
+
+def test_nombre_tiene_tope(client):
+    r = client.post("/api/activo", json={"nombre": "x" * 41, "valor_inicial": 1000})
+    assert r.status_code == 422 and "máximo 40" in r.json()["detail"][0]["msg"]
+
+
+def test_dia_de_pago_tiene_el_tope_de_meta(client):
+    tope = client.get("/api/meta").json()["limites"]["dia_pago_max"]
+    base = {**INV_OK, "pago": "mensual"}
+    assert client.post("/api/inv", json={**base, "dia_pago": tope}).status_code == 200
+    assert client.post("/api/inv", json={**base, "dia_pago": tope + 1}).status_code == 422
+
+
+@pytest.mark.parametrize("cuerpo", [[], {"monto": []}, {**TX_OK, "monto": None}, {**TX_OK, "notas": 5}])
+def test_422_nunca_deja_mensajes_en_ingles(client, cuerpo):
+    r = client.post("/api/tx", json=cuerpo)
+    assert r.status_code == 422
+    for e in r.json()["detail"]:
+        assert "Input should" not in e["msg"] and "Field required" not in e["msg"] and "valid" not in e["msg"]
+
+
+def test_simbolo_fuera_de_monedas_es_422(client):
+    assert client.put("/api/ajustes", json={"moneda_simbolo": "COP"}).status_code == 422
+    assert client.put("/api/ajustes", json={"moneda_simbolo": "€"}).status_code == 200

@@ -39,7 +39,7 @@ def test_validar_categoria():
 
 def test_validar_simbolo():
     assert C.validar_simbolo(" US$ ") == "US$"
-    for malo in ["", "   ", "12345", "a\nb", None]:
+    for malo in ["", "   ", "12345", "a\nb", None, "EUR", "COP"]:
         with pytest.raises(ValueError):
             C.validar_simbolo(malo)
 

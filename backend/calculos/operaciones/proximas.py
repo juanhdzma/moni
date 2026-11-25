@@ -4,10 +4,10 @@ import re
 from ..fechas import mes_corto, parse_fecha, texto_dias
 from ..constantes import tiene_saldo
 from ..formato import cop, frase, plural
-from .finanzas import proxima_fecha_inversion, rendimiento_mensual_fija
+from .finanzas import proxima_fecha_inversion, rendimiento_esperado
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente
 
-PROX_OP_OVERDUE_DAYS = 10
+PROX_OP_DEUDA_VENCIDA_DIAS = 10
 PROX_OP_ADELANTE_DIAS = 45
 PROX_OP_MAX_ITEMS = 20
 PROX_OP_VISIBLES = 5
@@ -43,7 +43,7 @@ def _candidato(fecha: datetime.date, etiqueta: str, sub: str, monto: float, tipo
 
 
 def calcular_proximas_operaciones(deudas: list, inversiones: list, recurrentes: list, hoy: datetime.date) -> list[dict]:
-    pasado = hoy - datetime.timedelta(days=PROX_OP_OVERDUE_DAYS)
+    pasado = hoy - datetime.timedelta(days=PROX_OP_DEUDA_VENCIDA_DIAS)
     limite = hoy + datetime.timedelta(days=PROX_OP_ADELANTE_DIAS)
     ops = []
 
@@ -60,14 +60,14 @@ def calcular_proximas_operaciones(deudas: list, inversiones: list, recurrentes: 
         f = proxima_fecha_inversion(i["dia_pago"], hoy)
         if f <= limite:
             ops.append(
-                _candidato(f, i["nombre"], "Rendimiento", rendimiento_mensual_fija(i["monto_invertido"], i["tasa_ea"]), "inversion", i["id"])
+                _candidato(f, i["nombre"], "Rendimiento", rendimiento_esperado(i), "inversion", i["id"])
             )
 
     for r in recurrentes:
         if not (r["activo"] and r.get("fecha_inicio")):
             continue
         f = proxima_fecha_recurrente(r["fecha_inicio"], r["frecuencia"], hoy)
-        if f and pasado <= f <= limite:
+        if f and f <= limite:
             monto = r["monto"] if r["tipo"] == "ingreso" else -r["monto"]
             ops.append(_candidato(f, r["nombre"], frecuencia_label(r["frecuencia"]), monto, "recurrente", r["id"]))
 

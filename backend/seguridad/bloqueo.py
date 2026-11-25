@@ -71,11 +71,13 @@ def registrar_fallo(request: Request, motivo: str) -> bool:
     return bloquear
 
 
-async def fallo_generico(request: Request, motivo: str) -> JSONResponse:
+async def fallo_generico(
+    request: Request, motivo: str, status: int = 401, detalle: str = "Credenciales inválidas"
+) -> JSONResponse:
     registrar_fallo(request, motivo)
     if RETRASO_FALLO:
         await asyncio.sleep(RETRASO_FALLO)
-    return JSONResponse({"detail": "Credenciales inválidas"}, status_code=401)
+    return JSONResponse({"detail": detalle}, status_code=status)
 
 
 def _duracion(segundos: int) -> str:

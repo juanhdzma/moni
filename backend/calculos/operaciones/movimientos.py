@@ -1,10 +1,9 @@
-import datetime
 from dataclasses import dataclass
 from typing import Optional
 
 from ..constantes import CATEGORIAS_SISTEMA
 from ..errores import ErrorDeDominio
-from ..fechas import sumar_meses
+from ..fechas import parse_fecha, sumar_meses
 from ..numeros import pesos
 from . import asientos
 from .finanzas import desglose_pago
@@ -35,9 +34,11 @@ def valor_estimado_tras_aporte(valor_actual: float, monto: float) -> float:
     return valor_actual + monto
 
 
-def validar_pago(saldo_actual: float, nuevo_saldo: float) -> None:
+def validar_pago(saldo_actual: float, nuevo_saldo: float, liquidar: bool = False) -> None:
     if nuevo_saldo > saldo_actual:
         raise ErrorDeDominio("El saldo después del pago no puede superar el saldo actual")
+    if liquidar and nuevo_saldo != 0:
+        raise ErrorDeDominio("Para liquidar, el saldo después del pago debe ser 0")
 
 
 def validar_adelanto(es_tarjeta: bool, saldo_actual: float, nuevo_saldo: float) -> None:
@@ -48,7 +49,9 @@ def validar_adelanto(es_tarjeta: bool, saldo_actual: float, nuevo_saldo: float) 
 
 
 def sumar_un_mes(fecha: str) -> str:
-    d = datetime.date.fromisoformat(fecha[:10])
+    d = parse_fecha(fecha)
+    if d is None:
+        raise ErrorDeDominio(f"Fecha inválida: {fecha}")
     return sumar_meses(d, 1, d.day).isoformat()
 
 
@@ -72,9 +75,9 @@ class PagoAplicado:
 
 def aplicar_pago(
     deuda: dict, *, total_pagado: float, nuevo_saldo: float, intereses: Optional[float], avanzar_cuota: bool,
-    fecha: str, descripcion: str, notas: str, simbolo: str,
+    fecha: str, descripcion: str, notas: str, simbolo: str, liquidar: bool = False,
 ) -> PagoAplicado:
-    validar_pago(deuda["saldo_actual"], nuevo_saldo)
+    validar_pago(deuda["saldo_actual"], nuevo_saldo, liquidar)
     desglose = desglose_pago(deuda["saldo_actual"], total_pagado, nuevo_saldo)
     intereses_pago = desglose["intereses"] if intereses is None else intereses
     return PagoAplicado(

@@ -2,16 +2,36 @@ SALDO_MINIMO = 1
 DIAS_DESACTUALIZADO = 30
 TEXTO_DESACTUALIZADO = "Valor sin actualizar hace más de 1 mes"
 
+TIPOS_TX = [
+    {"value": "ingreso", "label": "Ingreso"},
+    {"value": "gasto", "label": "Gasto"},
+    {"value": "transfer", "label": "Auto"},
+]
 TIPOS_INVERSION = [
-    {"value": "fija", "label": "Fija", "tono": "ingreso"},
-    {"value": "variable", "label": "Variable", "tono": "gasto"},
+    {"value": "fija", "label": "Fija", "tono": "ingreso", "campos": ["tasa", "pago"]},
+    {"value": "variable", "label": "Variable", "tono": "gasto", "campos": []},
 ]
 PAGOS_INVERSION = [
-    {"value": "mensual", "label": "Mensual", "tono": "ingreso"},
-    {"value": "vencimiento", "label": "Al vencimiento"},
+    {"value": "mensual", "label": "Mensual", "tono": "ingreso", "requiere_dia": True},
+    {"value": "vencimiento", "label": "Al vencimiento", "requiere_dia": False},
 ]
 TIPOS_TASA = [{"value": "ea", "label": "EA"}, {"value": "mv", "label": "MV"}]
-CLASES_DEUDA = [{"value": "prestamo", "label": "Préstamo"}, {"value": "tarjeta", "label": "Tarjeta"}]
+CLASES_DEUDA = [
+    {"value": "prestamo", "label": "Préstamo", "es_tarjeta": False},
+    {"value": "tarjeta", "label": "Tarjeta", "es_tarjeta": True},
+]
+FRANQUICIAS = [
+    {"value": "Visa", "label": "Visa"},
+    {"value": "Mastercard", "label": "Mastercard"},
+    {"value": "Amex", "label": "Amex"},
+    {"value": "Otra", "label": "Otra"},
+    {"value": "", "label": "Ninguna"},
+]
+MODOS_PAGO = [
+    {"value": "cuota", "label": "Pagar cuota", "placeholder_notas": "Ej. Cuota #14"},
+    {"value": "abono", "label": "Abonar", "placeholder_notas": "Ej. Abono extraordinario"},
+    {"value": "liquidar", "label": "Liquidar", "placeholder_notas": "Liquidar la deuda"},
+]
 TIPOS_RETIRO = [{"value": "total", "label": "Total", "tono": "ingreso"}, {"value": "parcial", "label": "Parcial"}]
 DESTINOS_RENDIMIENTO = [
     {
@@ -33,7 +53,10 @@ MONEDAS = [
     {"value": "MX$", "label": "Peso mexicano (MX$)"},
     {"value": "£", "label": "Libra esterlina (£)"},
 ]
-SERIES_EVOLUCION = [{"value": "patrimonio", "label": "Patrimonio"}, {"value": "inversiones", "label": "Inversiones"}]
+SERIES_EVOLUCION = [
+    {"value": "patrimonio", "label": "Patrimonio", "tono": "cartera"},
+    {"value": "inversiones", "label": "Inversiones", "tono": "inversiones"},
+]
 ETIQUETAS_TIPO_CATEGORIA = [
     {"value": "ingreso", "label": "Ingresos"},
     {"value": "gasto", "label": "Gastos"},
@@ -48,7 +71,25 @@ DEFAULTS_FORMULARIOS = {
     "tipo_tasa": "ea",
     "clase_deuda": "prestamo",
     "franquicia": "Visa",
+    "tipo_retiro": "total",
+    "periodo_gastos": "1M",
+    "periodo_evolucion": "6M",
+    "serie_evolucion": "patrimonio",
+    "orden_tx": {"col": "fecha", "dir": -1},
 }
+
+NOMBRE_LARGO_MAX = 40
+DESCRIPCION_LARGO_MAX = 120
+NOTAS_LARGO_MAX = 200
+DIA_PAGO_MAX = 31
+LIMITES = {
+    "nombre": NOMBRE_LARGO_MAX,
+    "descripcion": DESCRIPCION_LARGO_MAX,
+    "notas": NOTAS_LARGO_MAX,
+    "dia_pago_max": DIA_PAGO_MAX,
+}
+
+PALABRA_TRUNCATE = "BORRAR"
 TEXTO_VENTANA_AVISO = "hoy o mañana"
 
 

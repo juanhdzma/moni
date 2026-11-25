@@ -1,4 +1,4 @@
-from .constantes import CATEGORIA_LARGO_MAX, CATEGORIAS_SISTEMA
+from .constantes import CATEGORIA_LARGO_MAX, CATEGORIAS_SISTEMA, MONEDAS, valores
 from .errores import ErrorDeDominio
 
 TIPOS = tuple(CATEGORIAS_SISTEMA)
@@ -44,6 +44,6 @@ def validar_categoria(tipo, nombre, existentes):
 
 def validar_simbolo(simbolo):
     limpio = (simbolo or "").strip()
-    if not 1 <= len(limpio) <= 4 or "\n" in limpio or "\r" in limpio:
+    if limpio not in valores(MONEDAS):
         raise ValueError("símbolo inválido")
     return limpio

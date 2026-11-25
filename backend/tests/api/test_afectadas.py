@@ -159,10 +159,16 @@ def test_categorias_ajustes_y_ops_ocultas(client):
     assert afectadas(client.delete("/api/ops-ocultas")) == ["opsOcultas"]
 
 
+from backend.tests.api.test_backup import importar, truncar
+
+
+from backend.tests.api.test_backup import importar, truncar
+
+
 def test_import_y_truncate_afectan_todo(client):
-    assert afectadas(client.post("/api/truncate")) == list(TODAS)
+    assert afectadas(truncar(client)) == list(TODAS)
     backup = client.get("/api/backup").json()
-    assert afectadas(client.post("/api/import", json=backup)) == list(TODAS)
+    assert afectadas(importar(client, backup)) == list(TODAS)
 
 
 def test_error_no_trae_header(client):

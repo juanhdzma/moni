@@ -12,3 +12,8 @@ def saldo_tras_delta(tarjeta: dict, delta: float) -> float:
     if not tarjeta["es_tarjeta"]:
         raise ErrorDeDominio(f"La tarjeta {tarjeta['id']} no es válida")
     return pesos(tarjeta["saldo_actual"] + delta)
+
+
+def validar_tarjeta(tarjeta: dict | None) -> None:
+    if tarjeta is None or not tarjeta["es_tarjeta"]:
+        raise ErrorDeDominio("La tarjeta indicada no existe")

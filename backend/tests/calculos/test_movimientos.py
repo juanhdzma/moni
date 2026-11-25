@@ -122,3 +122,20 @@ def test_saldo_tras_adelanto():
 def test_tx_credito_recibido_cae_al_saldo_sin_monto_inicial():
     tx = tx_credito_recibido({"nombre": "X", "fecha_inicio": "2026-01-01", "monto_inicial": 0, "saldo_actual": 700})
     assert tx["monto"] == 700 and tx["descripcion"] == "Crédito · X" and tx["fecha"] == "2026-01-01"
+
+
+def test_sumar_un_mes_con_fecha_invalida_es_error_de_dominio():
+    for mala in ["", "nope", "2026-13-45"]:
+        with pytest.raises(ErrorDeDominio):
+            sumar_un_mes(mala)
+
+
+def test_sumar_un_mes_acepta_formato_legacy():
+    assert sumar_un_mes("31/1/2025") == "2025-02-28"
+
+
+def test_validar_pago_liquidar_exige_saldo_cero():
+    validar_pago(1000, 0, liquidar=True)
+    with pytest.raises(ErrorDeDominio):
+        validar_pago(1000, 1, liquidar=True)
+    validar_pago(1000, 1)

@@ -11,6 +11,7 @@ from .. import tiempo
 from ..bloqueo import fallo_generico, lock_ip, respuesta_si_bloqueada
 from ...core.db import conexion
 from ..ip import client_ip
+from ..step_up import ConClave, exigir_clave
 from . import servicio
 from .challenges import consumir_challenge
 
@@ -55,8 +56,11 @@ async def login_verificar(request: Request, credencial: Credencial):
 
 
 @router.post("/passkey/registro/opciones")
-def registro_opciones(request: Request):
+async def registro_opciones(request: Request, body: ConClave | None = None):
     sesiones.sesion_obligatoria(request)
+    rechazo = await exigir_clave(request, body.clave if body else None)
+    if rechazo:
+        return rechazo
     if servicio.contar() >= servicio.MAX_PASSKEYS:
         raise HTTPException(status_code=409, detail="Límite de passkeys alcanzado")
     return _json(servicio.opciones_registro(client_ip(request)))
@@ -67,7 +71,10 @@ def registro_verificar(request: Request, credencial: Credencial):
     sesiones.sesion_obligatoria(request)
     nombre = credencial.pop("nombre", None)
     if not isinstance(nombre, str) or not 1 <= len(nombre.strip()) <= 40:
-        raise HTTPException(status_code=422, detail="Nombre inválido")
+        raise HTTPException(
+            status_code=422,
+            detail=[{"loc": ["body", "nombre"], "msg": "Nombre inválido", "type": "value_error"}],
+        )
     challenge = consumir_challenge(credencial, "registro", client_ip(request))
     if challenge is None:
         raise HTTPException(status_code=400, detail="Registro inválido")

@@ -44,3 +44,10 @@ def test_resumenes_incluyen_textos():
     assert resumen_activos([])["texto_conteo"] == "0 activos"
     cats = {"gasto": [{"nombre": "Z"}]}
     assert con_categoria_sugerida({"tipo": "gasto", "nombre": "Q"}, cats)["categoria_sugerida"] == "Z"
+
+
+def test_validar_tarjeta_exige_una_tarjeta_existente():
+    tarjetas.validar_tarjeta({"es_tarjeta": 1})
+    for mala in (None, {"es_tarjeta": 0}):
+        with pytest.raises(ErrorDeDominio):
+            tarjetas.validar_tarjeta(mala)

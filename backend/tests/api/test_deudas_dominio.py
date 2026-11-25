@@ -27,9 +27,9 @@ def test_pago_respeta_descripcion_y_fecha_enviadas(client, prestamo):
 
 
 def test_pago_usa_el_simbolo_de_moneda_de_ajustes(client, prestamo):
-    client.put("/api/ajustes", json={"moneda_simbolo": "COP"})
+    client.put("/api/ajustes", json={"moneda_simbolo": "US$"})
     client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000})
-    assert _tx(client)[0]["descripcion"] == "Cuota · Credito (capital COP100.000, intereses COP0)"
+    assert _tx(client)[0]["descripcion"] == "Cuota · Credito (capital US$100.000, intereses US$0)"
 
 
 def test_pago_que_sube_el_saldo_se_rechaza(client, prestamo):

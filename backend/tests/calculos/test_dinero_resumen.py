@@ -95,3 +95,37 @@ def test_cartera_negativa_se_firma_negativa_y_deudas_siempre_negativas():
     e = estado(transacciones=[tx("gasto", "Mercado", 300_000, fecha="2026-08-02")], deudas=[deuda(500_000, 50_000)])
     por_id = {p["id"]: p for p in partes_patrimonio(resumen_dashboard(e, HOY), {"activos": 0, "inversiones": 0})}
     assert por_id["balance"]["negativo"] is True and por_id["balance"]["valor_firmado"] == -300_000
+
+
+def test_quedo_del_mes_descuenta_transfers_igual_que_el_porcentaje():
+    e = estado(
+        transacciones=[
+            tx("ingreso", "Salario", 1_000, fecha="2026-08-02"),
+            tx("gasto", "Mercado", 200, fecha="2026-08-03"),
+            tx("gasto", "Ropa", 300, fecha="2026-08-04", tarjeta_id=1),
+            tx("transfer", "Pago deuda", 100, fecha="2026-08-05"),
+        ]
+    )
+    r = este_mes(e, HOY)
+    assert r["quedo"] == 700 and r["frase"]["pct"] == 70
+    assert r["gastos_firmado"] == -200
+    assert (r["tono_ingresos"], r["tono_gastos"], r["tono_quedo"]) == ("positivo", "deudas", "positivo")
+
+
+def test_deudas_vigentes_unico_predicado_en_dashboard():
+    e = estado(deudas=[deuda(0, 0, es_tarjeta=True), deuda(0.2, 9), deuda(500, 50)])
+    r = resumen_dashboard(e, HOY)
+    assert r["deudas_activas"] == 2 and r["cuota_total"] == 50 and r["total_deuda"] == 500
+
+
+def test_partes_patrimonio_traen_tono_de_dominio():
+    ok = {p["id"]: p["tono"] for p in partes_patrimonio(resumen_dashboard(estado(), HOY), {"activos": 0, "inversiones": 0})}
+    assert ok == {"activos": "activos", "inversiones": "inversiones", "balance": "cartera", "deudas": "deudas"}
+    e = estado(transacciones=[tx("gasto", "Mercado", 300, fecha="2026-08-02")])
+    neg = {p["id"]: p["tono"] for p in partes_patrimonio(resumen_dashboard(e, HOY), {"activos": 0, "inversiones": 0})}
+    assert neg["balance"] == "deudas"
+
+
+def test_evolucion_trae_tono_de_serie():
+    assert evolucion(estado(), "patrimonio", "3M", HOY)["tono"] == "cartera"
+    assert evolucion(estado(), "inversiones", "3M", HOY)["tono"] == "inversiones"

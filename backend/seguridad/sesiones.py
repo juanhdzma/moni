@@ -18,6 +18,13 @@ INACTIVIDAD_DIAS = 7
 REFRESCO_USO_S = 60
 
 
+VIGENTE_SQL = "expira > ? AND ultimo_uso > ?"
+
+
+def limites_vigencia(t: datetime.datetime) -> tuple[str, str]:
+    return tiempo.iso(t), tiempo.iso(t - datetime.timedelta(days=INACTIVIDAD_DIAS))
+
+
 def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
@@ -32,15 +39,17 @@ def requiere_sesion(request: Request):
         return None
     t = tiempo.ahora()
     with conexion() as conn:
-        fila = conn.execute("SELECT * FROM sesiones WHERE token_hash = ?", (hash_token(token),)).fetchone()
+        fila = conn.execute(
+            f"SELECT *, ({VIGENTE_SQL}) AS vigente FROM sesiones WHERE token_hash = ?",
+            (*limites_vigencia(t), hash_token(token)),
+        ).fetchone()
         if fila is None:
             return None
-        inactiva_desde = t - datetime.timedelta(days=INACTIVIDAD_DIAS)
-        if fila["expira"] <= tiempo.iso(t) or fila["ultimo_uso"] <= tiempo.iso(inactiva_desde):
+        if not fila["vigente"]:
             conn.execute("DELETE FROM sesiones WHERE id = ?", (fila["id"],))
             conn.commit()
             return None
-        sesion = dict(fila)
+        sesion = {k: v for k, v in dict(fila).items() if k != "vigente"}
         if fila["ultimo_uso"] <= tiempo.iso(t - datetime.timedelta(seconds=REFRESCO_USO_S)):
             conn.execute("UPDATE sesiones SET ultimo_uso = ? WHERE id = ?", (tiempo.iso(t), fila["id"]))
             conn.commit()
@@ -62,7 +71,7 @@ def crear_sesion(request: Request, response, metodo: str) -> int:
     expira = t + datetime.timedelta(days=SESION_DIAS)
     ip = client_ip(request)
     with conexion() as conn:
-        conn.execute("DELETE FROM sesiones WHERE expira <= ?", (tiempo.iso(t),))
+        conn.execute(f"DELETE FROM sesiones WHERE NOT ({VIGENTE_SQL})", limites_vigencia(t))
         cur = conn.execute(
             "INSERT INTO sesiones (token_hash, creada, expira, ultimo_uso, ip, user_agent, metodo) VALUES (?, ?, ?, ?, ?, ?, ?)",
             (hash_token(token), tiempo.iso(t), tiempo.iso(expira), tiempo.iso(t), ip, request.headers.get("user-agent", "")[:200], metodo),

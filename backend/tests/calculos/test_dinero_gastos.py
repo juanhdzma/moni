@@ -49,3 +49,20 @@ def test_gastos_periodo_top_y_total():
     assert r["top"] == {"categoria": "A", "valor": 30, "pct": 75}
     vacio = gastos_periodo([], "ALL", HOY)
     assert vacio["top"] is None and vacio["total"] == 0 and vacio["max"] == 0
+
+
+def test_agrupar_gastos_pct_por_fila_con_piso():
+    txs = [
+        {"id": 1, "fecha": "2026-08-01", "descripcion": "", "categoria": "A", "monto": 1000},
+        {"id": 2, "fecha": "2026-08-01", "descripcion": "", "categoria": "B", "monto": 5},
+    ]
+    filas = agrupar_gastos(txs)
+    assert [f["pct"] for f in filas] == [100, 2]
+
+
+def test_movimientos_dashboard_trae_atributos_y_texto_vacio():
+    from backend.calculos.dinero import movimientos_dashboard
+
+    r = movimientos_dashboard([{"id": 1, "fecha": "2026-08-01", "tipo": "transfer", "categoria": "Pago deuda", "descripcion": "", "monto": 5}])
+    assert (r["items"][0]["editable"], r["items"][0]["tono"], r["items"][0]["icono_metodo"]) == (False, "neutro", "efectivo")
+    assert movimientos_dashboard([])["texto_vacio"]["titulo"] == "Sin transacciones"

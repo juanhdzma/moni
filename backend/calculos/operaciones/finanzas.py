@@ -26,6 +26,11 @@ def rendimiento_mensual_fija(monto: float, tasa_ea: float) -> int:
     return redondear_js(monto * ea_a_mv(tasa_ea) / 100)
 
 
+def rendimiento_esperado(inv: dict) -> int | None:
+    tasa = inv.get("tasa_ea")
+    return rendimiento_mensual_fija(inv["valor_actual"], tasa) if tasa else None
+
+
 def cambio_valor(nuevo: float, anterior: float, base: float) -> dict:
     total = nuevo - base
     return {"delta": nuevo - anterior, "total": total, "total_pct": porcentaje(total, base)}

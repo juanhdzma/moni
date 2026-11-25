@@ -58,9 +58,26 @@ def _peer(request: Request) -> str:
     return request.client.host if request.client else ""
 
 
+_xff_avisado = False
+
+
+def _avisar_xff_de_peer_no_confiable(request: Request) -> None:
+    global _xff_avisado
+    if _xff_avisado or "MONI_TRUSTED_PROXIES" in os.environ or not request.headers.getlist("x-forwarded-for"):
+        return
+    _xff_avisado = True
+    logger.warning(
+        "llega X-Forwarded-For desde peer=%s que no es proxy confiable; "
+        "si hay un reverse proxy, definí MONI_TRUSTED_PROXIES o todos los clientes comparten una IP",
+        _peer(request),
+    )
+
+
 def client_ip(request: Request) -> str:
     peer = _peer(request)
     redes = _proxies_confiables()
+    if peer and not _es_confiable(peer, redes):
+        _avisar_xff_de_peer_no_confiable(request)
     if peer and _es_confiable(peer, redes):
         xff = ",".join(request.headers.getlist("x-forwarded-for"))
         partes = [p.strip() for p in xff.split(",") if _es_ip(p.strip())]

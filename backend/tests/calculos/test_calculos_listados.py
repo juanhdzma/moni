@@ -131,3 +131,32 @@ def test_alertas():
     assert L.alertas([{"valor_actualizado_en": nuevo}], inv, HOY) == {"activos": False, "inversiones": False}
     inv.append({"tipo": "variable", "valor_actualizado_en": viejo})
     assert L.alertas([], inv, HOY)["inversiones"] is True
+
+
+def test_atributos_visuales_tx():
+    deudas = {7: {"nombre": "Visa", "franquicia": "Mastercard"}}
+    gasto_tarjeta = L.derivar_tx(tx("gasto", "A", 5, tarjeta_id=7), deudas)
+    assert (gasto_tarjeta["editable"], gasto_tarjeta["tono"], gasto_tarjeta["icono_metodo"]) == (True, "gasto", "Mastercard")
+    ingreso = L.derivar_tx(tx("ingreso", "A", 5), deudas)
+    assert (ingreso["editable"], ingreso["tono"], ingreso["icono_metodo"]) == (True, "ingreso", "efectivo")
+    transfer = L.derivar_tx(tx("transfer", "Pago deuda", 5), deudas)
+    assert (transfer["editable"], transfer["tono"]) == (False, "neutro")
+    huerfano = L.derivar_tx(tx("gasto", "A", 5, tarjeta_id=99), deudas)
+    assert huerfano["icono_metodo"] == "efectivo"
+
+
+def test_resumen_tx_firma_gastos_y_rotula_segun_tarjeta():
+    deudas = {7: {"nombre": "Visa", "franquicia": "Visa"}}
+    efectivo = [L.derivar_tx(tx("gasto", "A", 5), deudas), L.derivar_tx(tx("ingreso", "S", 20), deudas)]
+    r = L.listar_transacciones(efectivo, hoy=HOY)["resumen"]
+    assert r["titulo"] == "Te quedó" and r["gastos_firmado"] == -5
+    con_tarjeta = efectivo + [L.derivar_tx(tx("gasto", "B", 3, tarjeta_id=7), deudas)]
+    assert L.listar_transacciones(con_tarjeta, hoy=HOY)["resumen"]["titulo"] == "Ingresos menos gastos"
+    assert L.listar_transacciones(con_tarjeta, cat="B", hoy=HOY)["resumen"]["titulo"] == "Ingresos menos gastos con estos filtros"
+
+
+def test_columnas_transaccion_marcan_ordenable_y_oculta_en_movil():
+    por_col = {c["col"]: c for c in L.columnas_transaccion()}
+    assert por_col["tipo"]["oculta_en_movil"] and por_col["categoria"]["oculta_en_movil"]
+    assert not por_col["fecha"]["oculta_en_movil"] and por_col["fecha"]["ordenable"]
+    assert por_col["metodo_pago"]["ordenable"] is False

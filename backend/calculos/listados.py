@@ -13,10 +13,38 @@ ETIQUETAS_COLUMNA = {
     "descripcion": "Descripción",
     "monto": "Monto",
 }
+OCULTAS_EN_MOVIL = ("tipo", "categoria")
 DIRECCION_INICIAL = {"fecha": -1, "tipo": 1, "categoria": 1, "descripcion": 1, "monto": -1}
 ETIQUETAS_TIPO = {"ingreso": "Ingresos", "gasto": "Gastos"}
 ETIQUETAS_TIPO_FILA = {"ingreso": "Ingreso", "gasto": "Gasto", "transfer": "Auto"}
+TONO_TX = {"ingreso": "ingreso", "gasto": "gasto", "transfer": "neutro"}
 EFECTIVO_DEBITO = "Efectivo / Débito"
+
+
+def columnas_transaccion():
+    columnas = [
+        {
+            "col": c,
+            "label": ETIQUETAS_COLUMNA[c],
+            "dir_defecto": DIRECCION_INICIAL[c],
+            "ordenable": True,
+            "oculta_en_movil": c in OCULTAS_EN_MOVIL,
+        }
+        for c in COLUMNAS_ORDEN
+    ]
+    columnas.append(
+        {"col": "metodo_pago", "label": "Método de pago", "dir_defecto": 1, "ordenable": False, "oculta_en_movil": False}
+    )
+    return columnas
+
+
+def atributos_visuales_tx(tx):
+    tarjeta = tx.get("tarjeta_nombre") is not None
+    return {
+        "editable": tx["tipo"] != "transfer",
+        "tono": TONO_TX[tx["tipo"]],
+        "icono_metodo": (tx.get("tarjeta_franquicia") or "Otra") if tarjeta else "efectivo",
+    }
 
 
 def alertas(activos, inversiones, hoy):
@@ -42,7 +70,7 @@ def derivar_tx(fila, deudas_por_id):
         tx["metodo_pago"] = nombre[:20] + "…" if len(nombre) > 20 else nombre
     else:
         tx["metodo_pago"] = EFECTIVO_DEBITO
-    return tx
+    return {**tx, **atributos_visuales_tx(tx)}
 
 
 def etiqueta_mes(mes):
@@ -82,6 +110,10 @@ def grupo_fecha(fecha, hoy):
 TEXTO_VACIO_TX = {"titulo": "Sin movimientos", "texto": "Agregá un ingreso o gasto con el botón de arriba."}
 
 
+def texto_vacio_movimientos():
+    return {"titulo": "Sin transacciones", "texto": "Registrá un ingreso o gasto y aparece acá."}
+
+
 def resumen_tx(txs, simbolo="$"):
     ingresos = 0
     gastos = 0
@@ -96,10 +128,16 @@ def resumen_tx(txs, simbolo="$"):
     return {
         "ingresos": ingresos,
         "gastos": gastos,
+        "gastos_firmado": -gastos,
         "neto": ingresos - gastos,
         "dato": frase_flujo("entró", "salió", ingresos, gastos, simbolo),
         "segmentos": top_segmentos(segmentos),
     }
+
+
+def _titulo_resumen(items, filtrado):
+    base = "Ingresos menos gastos" if any(t.get("tarjeta_nombre") is not None for t in items) else "Te quedó"
+    return f"{base} con estos filtros" if filtrado else base
 
 
 def _clave_texto(v):
@@ -156,7 +194,7 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
             "tipos": [{"value": k, "label": v} for k, v in ETIQUETAS_TIPO.items()],
         },
         "pills": pills,
-        "resumen": {**resumen_tx(items, simbolo), "titulo": "Te quedó con estos filtros" if pills else "Te quedó"},
+        "resumen": {**resumen_tx(items, simbolo), "titulo": _titulo_resumen(items, bool(pills))},
         "texto_vacio": TEXTO_VACIO_TX,
     }
 

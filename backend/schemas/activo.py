@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .validadores import MontoPesos, MontoCero, Nombre, fecha_opcional
+from .validadores import MontoCero, MontoPesos, Nombre, Notas, fecha_opcional
 
 
 class ActivoIn(BaseModel):
@@ -17,7 +17,7 @@ class ActivoIn(BaseModel):
 class ActivoVenta(BaseModel):
     precio: MontoPesos
     fecha: str = ""
-    notas: str = ""
+    notas: Notas = ""
     registrar_tx: bool = True
 
     _v_fecha = fecha_opcional("fecha")

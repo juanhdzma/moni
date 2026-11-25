@@ -13,16 +13,33 @@ MENSAJES = {
     "enum": lambda e: "Opción inválida",
     "finite_number": lambda e: "Debe ser un número finito",
     "float_parsing": lambda e: "Debe ser un número",
+    "float_type": lambda e: "Debe ser un número",
+    "int_type": lambda e: "Debe ser un número entero",
+    "int_from_float": lambda e: "Debe ser un número entero",
+    "bool_type": lambda e: "Debe ser verdadero o falso",
+    "list_type": lambda e: "Debe ser una lista",
+    "dict_type": lambda e: "Debe ser un objeto",
+    "model_type": lambda e: "Debe ser un objeto",
+    "model_attributes_type": lambda e: "Debe ser un objeto",
+    "decimal_type": lambda e: "Debe ser un número",
+    "decimal_parsing": lambda e: "Debe ser un número",
+    "extra_forbidden": lambda e: "Campo no permitido",
+    "too_short": lambda e: f"Debe tener al menos {e['ctx']['min_length']} elementos",
+    "too_long": lambda e: f"Debe tener como máximo {e['ctx']['max_length']} elementos",
     "int_parsing": lambda e: "Debe ser un número entero",
     "bool_parsing": lambda e: "Debe ser verdadero o falso",
     "string_type": lambda e: "Debe ser texto",
     "json_invalid": lambda e: "El cuerpo de la solicitud no es un JSON válido",
 }
 PREFIJO_VALOR = "Value error, "
+TIPOS_CON_MENSAJE_PROPIO = frozenset({"value_error"})
+MENSAJE_GENERICO = "Valor inválido"
 
 
 def mensaje_en_espanol(error: dict) -> str:
     traductor = MENSAJES.get(error["type"])
     if traductor:
         return traductor(error)
-    return error["msg"].removeprefix(PREFIJO_VALOR)
+    if error["type"] in TIPOS_CON_MENSAJE_PROPIO:
+        return error["msg"].removeprefix(PREFIJO_VALOR)
+    return MENSAJE_GENERICO

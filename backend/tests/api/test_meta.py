@@ -18,11 +18,12 @@ def test_meta_listas_de_dominio(client):
     assert body["monedas"][0] == {"value": "$", "label": "Peso colombiano ($)"} and len(body["monedas"]) == 5
     assert [s["value"] for s in body["series_evolucion"]] == ["patrimonio", "inversiones"]
     assert body["columnas_transaccion"] == [
-        {"col": "fecha", "label": "Fecha", "dir_defecto": -1},
-        {"col": "tipo", "label": "Tipo", "dir_defecto": 1},
-        {"col": "categoria", "label": "Categoría", "dir_defecto": 1},
-        {"col": "descripcion", "label": "Descripción", "dir_defecto": 1},
-        {"col": "monto", "label": "Monto", "dir_defecto": -1},
+        {"col": "fecha", "label": "Fecha", "dir_defecto": -1, "ordenable": True, "oculta_en_movil": False},
+        {"col": "tipo", "label": "Tipo", "dir_defecto": 1, "ordenable": True, "oculta_en_movil": True},
+        {"col": "categoria", "label": "Categoría", "dir_defecto": 1, "ordenable": True, "oculta_en_movil": True},
+        {"col": "descripcion", "label": "Descripción", "dir_defecto": 1, "ordenable": True, "oculta_en_movil": False},
+        {"col": "monto", "label": "Monto", "dir_defecto": -1, "ordenable": True, "oculta_en_movil": False},
+        {"col": "metodo_pago", "label": "Método de pago", "dir_defecto": 1, "ordenable": False, "oculta_en_movil": False},
     ]
 
 
@@ -39,6 +40,12 @@ def test_meta_defaults_y_push(client):
         "tipo_tasa": "ea",
         "clase_deuda": "prestamo",
         "franquicia": "Visa",
+        "tipo_retiro": "total",
+        "periodo_gastos": "1M",
+        "periodo_evolucion": "6M",
+        "serie_evolucion": "patrimonio",
+        "orden_tx": {"col": "fecha", "dir": -1},
+        "etiqueta_efectivo": "Efectivo / Débito",
     }
     assert body["push"] == {
         "hora": "8:00",
@@ -66,3 +73,47 @@ def test_meta_tonos_y_tipos_tasa(client):
     assert tonos("tipos_retiro") == {"total": "ingreso", "parcial": None}
     assert tonos("destinos_rendimiento") == {"cuenta": "ingreso", "capitaliza": None}
     assert body["tipos_tasa"] == [{"value": "ea", "label": "EA"}, {"value": "mv", "label": "MV"}]
+
+
+def test_meta_defaults_de_ui_existen_en_sus_listas(client):
+    body = client.get("/api/meta").json()
+    d = body["defaults"]
+    assert d["tipo_retiro"] in [o["value"] for o in body["tipos_retiro"]]
+    assert d["periodo_gastos"] in [o["value"] for o in body["periodos"]["gastos"]]
+    assert d["periodo_evolucion"] in [o["value"] for o in body["periodos"]["evolucion"]]
+    assert d["serie_evolucion"] in [o["value"] for o in body["series_evolucion"]]
+    assert d["orden_tx"]["col"] in [c["col"] for c in body["columnas_transaccion"] if c["ordenable"]]
+
+
+def test_meta_campos_por_tipo_y_pago(client):
+    body = client.get("/api/meta").json()
+    assert {t["value"]: t["campos"] for t in body["tipos_inversion"]} == {"fija": ["tasa", "pago"], "variable": []}
+    assert {p["value"]: p["requiere_dia"] for p in body["pagos_inversion"]} == {"mensual": True, "vencimiento": False}
+    assert {c["value"]: c["es_tarjeta"] for c in body["clases_deuda"]} == {"prestamo": False, "tarjeta": True}
+
+
+def test_meta_modos_de_pago(client):
+    modos = client.get("/api/meta").json()["modos_pago"]
+    assert modos == [
+        {"value": "cuota", "label": "Pagar cuota", "placeholder_notas": "Ej. Cuota #14"},
+        {"value": "abono", "label": "Abonar", "placeholder_notas": "Ej. Abono extraordinario"},
+        {"value": "liquidar", "label": "Liquidar", "placeholder_notas": "Liquidar la deuda"},
+    ]
+
+
+def test_meta_series_con_tono_limites_y_truncate(client):
+    body = client.get("/api/meta").json()
+    assert {s["value"]: s["tono"] for s in body["series_evolucion"]} == {"patrimonio": "cartera", "inversiones": "inversiones"}
+    assert body["limites"] == {"nombre": 40, "descripcion": 120, "notas": 200, "dia_pago_max": 31}
+    assert body["truncate"]["palabra"] == "BORRAR"
+    assert set(body["truncate"]["entidades"]) == {
+        "deudas", "inversiones", "activos", "recurrentes", "transacciones", "categorías", "operaciones ocultas",
+    }
+    assert body["truncate"]["texto"].startswith("Esto borra permanentemente todas las deudas, inversiones")
+    assert body["truncate"]["texto"].endswith("Se conservan los ajustes y las suscripciones push.")
+
+
+def test_meta_franquicias_y_tipos_manuales_salen_de_constantes(client):
+    body = client.get("/api/meta").json()
+    assert [f["value"] for f in body["franquicias"]] == ["Visa", "Mastercard", "Amex", "Otra", ""]
+    assert body["tipos_manuales"] == [{"value": "ingreso", "label": "Ingreso"}, {"value": "gasto", "label": "Gasto"}]

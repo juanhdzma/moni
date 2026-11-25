@@ -17,7 +17,7 @@ def test_dashboard_resumen(client):
 def test_dashboard_evolucion(client):
     sembrar(client)
     r = client.get("/api/dashboard/evolucion").json()
-    assert set(r) == {"serie", "periodo", "meses", "puntos", "desde", "cambio", "nombre_serie", "descripcion_grafico", "frase"}
+    assert set(r) == {"serie", "periodo", "meses", "puntos", "desde", "cambio", "nombre_serie", "tono", "descripcion_grafico", "frase"}
     assert r["serie"] == "patrimonio" and r["periodo"] == "6M" and r["meses"] == 6 and len(r["puntos"]) == 6
     assert set(r["puntos"][0]) == {"mes", "valor"}
     inv = client.get("/api/dashboard/evolucion", params={"serie": "inversiones", "periodo": "3M"}).json()
@@ -32,9 +32,10 @@ def test_dashboard_evolucion_rechaza_parametros(client, params):
 def test_dashboard_este_mes(client):
     sembrar(client)
     r = client.get("/api/dashboard/este-mes").json()
-    assert set(r) == {"ingresos", "gastos", "quedo", "titulo_quedo", "texto_tarjeta", "frase", "descripcion_grafico", "meses"}
+    assert set(r) == {"ingresos", "gastos", "gastos_firmado", "quedo", "tono_ingresos", "tono_gastos", "tono_quedo", "titulo_quedo", "texto_tarjeta", "frase", "descripcion_grafico", "meses"}
     assert (r["ingresos"], r["gastos"], r["quedo"], r["frase"]["pct"]) == (4_000_000, 1_000_000, 3_000_000, 75.0)
     assert r["titulo_quedo"] == "Te quedó"
+    assert (r["gastos_firmado"], r["tono_ingresos"], r["tono_gastos"], r["tono_quedo"]) == (-1_000_000, "positivo", "deudas", "positivo")
     assert r["texto_tarjeta"] == "Lo pagado con tarjeta no sale de la cartera."
     assert len(r["meses"]) == 6 and set(r["meses"][-1]) == {"mes", "entro", "salio"}
     assert r["meses"][-1]["entro"] == 4_000_000 and r["meses"][-1]["salio"] == 1_000_000
@@ -48,8 +49,9 @@ def test_dashboard_gastos(client):
     assert "la última semana" in r["frase"]["texto"] and r["total"] == 1_000_000 and r["max"] == 900_000
     assert r["top"] == {"categoria": "Comida", "valor": 900_000, "pct": 90.0}
     assert [c["categoria"] for c in r["categorias"]] == ["Comida", "Transporte"]
-    assert set(r["categorias"][0]) == {"categoria", "valor", "n", "detalle", "restantes_texto"}
+    assert set(r["categorias"][0]) == {"categoria", "valor", "n", "detalle", "restantes_texto", "pct"}
     assert r["categorias"][0]["restantes_texto"] is None
+    assert r["categorias"][0]["pct"] == 100 and r["categorias"][1]["pct"] == pytest.approx(100 / 9)
     assert set(r["categorias"][0]["detalle"][0]) == {"id", "fecha", "descripcion", "categoria", "monto"}
     assert r["frase"]["texto"] == "Comida se lleva el 90% de lo que gastaste en la última semana."
     assert client.get("/api/dashboard/gastos").json()["periodo"] == "1M"
@@ -65,8 +67,10 @@ def test_dashboard_movimientos(client):
     for i in range(7):
         tx(client, descripcion=f"t{i}", fecha=f"2026-01-0{i + 1}")
     r = client.get("/api/dashboard/movimientos").json()
-    assert set(r) == {"items"} and len(r["items"]) == 5
-    assert set(r["items"][0]) == {"id", "fecha", "tipo", "categoria", "descripcion", "monto", "monto_firmado"}
+    assert set(r) == {"items", "texto_vacio"} and len(r["items"]) == 5
+    assert r["texto_vacio"] == {"titulo": "Sin transacciones", "texto": "Registrá un ingreso o gasto y aparece acá."}
+    assert set(r["items"][0]) == {"id", "fecha", "tipo", "categoria", "descripcion", "monto", "monto_firmado", "editable", "tono", "icono_metodo"}
+    assert (r["items"][0]["editable"], r["items"][0]["tono"], r["items"][0]["icono_metodo"]) == (True, "gasto", "efectivo")
     assert r["items"][0]["descripcion"] == "t6"
     assert r["items"][0]["monto_firmado"] == -r["items"][0]["monto"]
     assert len(client.get("/api/dashboard/movimientos", params={"n": 2}).json()["items"]) == 2
@@ -75,10 +79,10 @@ def test_dashboard_movimientos(client):
 
 def test_dashboard_frases_usan_el_simbolo_de_moneda(client):
     sembrar(client)
-    client.put("/api/ajustes", json={"moneda_simbolo": "COP "})
+    client.put("/api/ajustes", json={"moneda_simbolo": "US$"})
     r = client.get("/api/dashboard/resumen").json()
-    assert r["partes"][3]["detalle"] == "COP100.000/mes · 1 deuda"
-    assert "COP" in client.get("/api/dashboard/evolucion").json()["frase"]["texto"]
+    assert r["partes"][3]["detalle"] == "US$100.000/mes · 1 deuda"
+    assert "US$" in client.get("/api/dashboard/evolucion").json()["frase"]["texto"]
 
 
 def test_dashboard_gastos_restantes_texto(client):
@@ -86,3 +90,7 @@ def test_dashboard_gastos_restantes_texto(client):
         tx(client, categoria="Comida", monto=10 + i)
     cat = client.get("/api/dashboard/gastos", params={"periodo": "1W"}).json()["categorias"][0]
     assert cat["restantes_texto"] == "y 2 más en Transacciones"
+
+
+def test_dashboard_evolucion_rechaza_1m(client):
+    assert client.get("/api/dashboard/evolucion", params={"periodo": "1M"}).status_code == 422

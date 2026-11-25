@@ -1,11 +1,11 @@
 import sqlite3
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError, field_validator
 
 from ..calculos import operaciones
 from ..calculos.categorias import validar_categoria, validar_simbolo
-from ..calculos.constantes import clase_deuda_de
+from ..calculos.constantes import PALABRA_TRUNCATE, clase_deuda_de
 from ..calculos.errores import ErrorDeDominio
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..calculos.formato import plural
@@ -16,6 +16,7 @@ from ..schemas.deuda import DeudaIn
 from ..schemas.inversion import InvIn
 from ..schemas.recurrente import RecIn
 from ..schemas.transaccion import TxIn
+from ..schemas.validadores import MontoCero
 from . import estado as store
 from .mensajes import mensaje_en_espanol
 from .tablas import ACTIVO_COLS, DEUDA_COLS, INV_COLS, REC_COLS, TX_COLS
@@ -71,8 +72,25 @@ NORMALIZADORES = {"deudas": _normalizar_deuda, "inversiones": _normalizar_invers
 PRENORMALIZADORES = {"deudas": _clase_desde_es_tarjeta}
 
 
+def _mensajes(error):
+    return "; ".join(mensaje_en_espanol(e) for e in error.errors())
+
+
 def _errores_en_espanol(error):
     return "; ".join(f"{'.'.join(map(str, e['loc']))}: {mensaje_en_espanol(e)}" for e in error.errors())
+
+
+CAMPOS_EXTRA = {
+    "id": TypeAdapter(Annotated[int, Field(gt=0, strict=True)]),
+    "total_intereses": TypeAdapter(Annotated[MontoCero, Field(strict=True)]),
+}
+
+
+def _validar_extra(table, idx, campo, validador, valor):
+    try:
+        return validador.validate_python(valor)
+    except ValidationError as e:
+        raise ErrorDeDominio(f"Fila {table}[{idx}] inválida: {campo}: {_mensajes(e)}")
 
 
 def _validar_fila(table, model, row, idx):
@@ -82,11 +100,9 @@ def _validar_fila(table, model, row, idx):
         limpia = model.model_validate(PRENORMALIZADORES.get(table, lambda r: r)(row)).model_dump()
     except ValidationError as e:
         raise ErrorDeDominio(f"Fila {table}[{idx}] inválida: {_errores_en_espanol(e)}")
-    for extra in ("id", "total_intereses"):
-        if extra in row and row[extra] is not None:
-            if not isinstance(row[extra], (int, float)) or isinstance(row[extra], bool):
-                raise ErrorDeDominio(f"Fila {table}[{idx}]: {extra} debe ser numérico")
-            limpia[extra] = row[extra]
+    for campo, validador in CAMPOS_EXTRA.items():
+        if row.get(campo) is not None:
+            limpia[campo] = _validar_extra(table, idx, campo, validador, row[campo])
     if table in NORMALIZADORES:
         NORMALIZADORES[table](limpia)
     return limpia
@@ -147,3 +163,12 @@ def insertar_import(conn, validadas):
         conn.rollback()
         raise ErrorDeDominio(_mensaje_integridad(e))
     return {"counts": counts, "texto": _texto_importado(counts)}
+
+
+def aviso_truncate() -> dict:
+    entidades = [nombres[1] for _t, _c, _m, nombres in IMPORT_TABLES]
+    texto = (
+        f"Esto borra permanentemente todas las {', '.join(entidades[:-1])} y {entidades[-1]}. "
+        "Se conservan los ajustes y las suscripciones push."
+    )
+    return {"palabra": PALABRA_TRUNCATE, "texto": texto, "entidades": entidades}

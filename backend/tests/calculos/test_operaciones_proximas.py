@@ -112,3 +112,16 @@ def test_armar_proximas_marca_sin_monto_y_oculta_ver_menos_si_no_hay_extra():
     r = op.armar_proximas(ops, set(), HOY)
     assert r["items"][0]["sin_monto"] is True
     assert r["texto_ver_menos"] is None
+
+
+def test_rendimiento_proximo_usa_valor_actual_igual_que_la_ficha():
+    inv = inversion(5, monto_invertido=1_000_000, valor_actual=1_200_000)
+    ops = op.calcular_proximas_operaciones([], [inv], [], HOY)
+    assert ops[0]["monto"] == 11_387 == op.derivar_inversion(inv, HOY)["rendimiento_esperado"]
+
+
+def test_recurrente_sin_limite_de_vencida_y_deuda_vieja_fuera():
+    ops = op.calcular_proximas_operaciones(
+        [deuda(1, proxima_cuota="2026-08-04"), deuda(2, proxima_cuota="2026-08-05")], [], [recurrente(3, fecha_inicio="2020-01-01")], HOY
+    )
+    assert [o["clave"] for o in ops] == ["deuda:2:2026-08-05", "recurrente:3:2026-09-01"]

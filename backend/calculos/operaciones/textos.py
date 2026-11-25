@@ -41,3 +41,11 @@ def texto_vacio_inversiones(nombre_plural: str) -> dict:
 
 def texto_posiciones(resumen: dict) -> str:
     return plural(len(resumen["fijas"]) + len(resumen["variables"]), "posición", "posiciones")
+
+
+def texto_vacio_activos() -> dict:
+    return {"titulo": "Sin activos", "texto": "Registrá propiedades, vehículos u otros bienes con el botón Nuevo activo."}
+
+
+def texto_vacio_recurrentes(nombre_plural: str) -> dict:
+    return {"titulo": f"Sin {nombre_plural} recurrentes", "texto": "Agregá uno con el botón Nuevo."}

@@ -17,7 +17,7 @@ def test_listar_tx(client):
     assert set(r["opciones"]) == {"meses", "categorias", "tipos"}
     assert r["opciones"]["categorias"] == ["Comida", "Pago deuda", "Salario"]
     assert set(r["opciones"]["meses"][0]) == {"value", "label"}
-    assert set(r["resumen"]) == {"ingresos", "gastos", "neto", "dato", "segmentos", "titulo"}
+    assert set(r["resumen"]) == {"ingresos", "gastos", "gastos_firmado", "neto", "dato", "segmentos", "titulo"}
     assert (r["resumen"]["ingresos"], r["resumen"]["gastos"], r["resumen"]["neto"]) == (500, 200, 300)
     assert r["resumen"]["titulo"] == "Te quedó"
     assert r["texto_vacio"]["titulo"] == "Sin movimientos"

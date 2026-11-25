@@ -1,3 +1,4 @@
+from backend.tests.conftest import CLAVE_TEST
 from backend.core import db
 from backend.tests.seguridad.passkeys.helpers import alta, fallos, OPCIONES_REGISTRO, OPCIONES_LOGIN, VERIFICAR_LOGIN
 
@@ -37,7 +38,7 @@ def test_challenge_de_otra_ip_falla(client, monkeypatch):
 
 def test_challenge_de_registro_no_sirve_para_login(client):
     auten, _ = alta(client)
-    opciones = client.post(OPCIONES_REGISTRO, json={"nombre": "otro"}).json()
+    opciones = client.post(OPCIONES_REGISTRO, json={"clave": CLAVE_TEST}).json()
     client.cookies.clear()
     assert client.post(VERIFICAR_LOGIN, json=auten.firmar(opciones, 1)).status_code == 401
 

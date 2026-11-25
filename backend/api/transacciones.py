@@ -24,16 +24,26 @@ register_lectura(router, "tx", "transacciones")
 def ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
     if tarjeta_id is None or delta == 0:
         return
-    tarjeta = conn.execute("SELECT * FROM deudas WHERE id = ?", (tarjeta_id,)).fetchone()
+    tarjeta = _leer_tarjeta(conn, tarjeta_id)
     if tarjeta is None:
         logger.warning("tx apunta a tarjeta %s inexistente; se ignora el ajuste de saldo", tarjeta_id)
         return
-    nuevo_saldo = tarjetas.saldo_tras_delta(dict(tarjeta), delta)
+    nuevo_saldo = tarjetas.saldo_tras_delta(tarjeta, delta)
     fijar_saldo(conn, tarjeta_id, nuevo_saldo)
     logger.info(
         "tarjeta %s: saldo_actual %.2f -> %.2f (delta %.2f)",
         tarjeta_id, tarjeta["saldo_actual"], nuevo_saldo, delta,
     )
+
+
+def _leer_tarjeta(conn, tarjeta_id):
+    fila = conn.execute("SELECT * FROM deudas WHERE id = ?", (tarjeta_id,)).fetchone()
+    return None if fila is None else dict(fila)
+
+
+def _exigir_tarjeta(conn, tarjeta_id):
+    if tarjeta_id is not None:
+        tarjetas.validar_tarjeta(_leer_tarjeta(conn, tarjeta_id))
 
 
 def _deshacer_efecto_en_tarjeta(conn, tx):
@@ -57,6 +67,7 @@ def afectar_tx(response: Response, tarjetas: tuple, op_clave: Optional[str] = No
 def create_tx(body: TxIn, response: Response):
     with conexion() as conn:
         data = body.model_dump()
+        _exigir_tarjeta(conn, data["tarjeta_id"])
         new_id = insert_row(conn, "transacciones", TX_COLS, data)
         _aplicar_efecto_en_tarjeta(conn, data)
         ocultar_op(conn, data["op_clave"])
@@ -68,8 +79,9 @@ def create_tx(body: TxIn, response: Response):
 def update_tx(row_id: int, body: TxIn, response: Response):
     with conexion() as conn:
         anterior = get_row(conn, "transacciones", row_id)
-        _deshacer_efecto_en_tarjeta(conn, anterior)
         data = body.model_dump()
+        _exigir_tarjeta(conn, data["tarjeta_id"])
+        _deshacer_efecto_en_tarjeta(conn, anterior)
         update_row(conn, "transacciones", TX_COLS, row_id, data)
         _aplicar_efecto_en_tarjeta(conn, data)
         afectar_tx(response, (anterior["tarjeta_id"], data["tarjeta_id"]))

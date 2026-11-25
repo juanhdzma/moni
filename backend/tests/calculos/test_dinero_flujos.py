@@ -118,7 +118,6 @@ def test_net_worth_suma_activos_y_resta_deudas():
 
 
 def test_meses_periodo_fijos_y_todo_desde_la_fecha_mas_antigua():
-    assert meses_periodo("1M", [], HOY) == 2
     assert meses_periodo("3M", [], HOY) == 3
     assert meses_periodo("6M", [], HOY) == 6
     assert meses_periodo("1Y", [], HOY) == 12

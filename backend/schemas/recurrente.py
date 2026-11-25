@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from ..calculos.operaciones.frecuencias import FRECUENCIAS
-from .validadores import MontoPesos, Nombre, fecha_opcional
+from .validadores import MontoPesos, Nombre, Notas, fecha_opcional
 
 Frecuencia = Literal[tuple(FRECUENCIAS)]
 
@@ -15,6 +15,6 @@ class RecIn(BaseModel):
     frecuencia: Frecuencia
     activo: bool = True
     fecha_inicio: str = ""
-    notas: str = ""
+    notas: Notas = ""
 
     _v_fecha = fecha_opcional("fecha_inicio")

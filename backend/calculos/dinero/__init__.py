@@ -5,6 +5,7 @@ from .gastos import (
     agrupar_gastos,
     gastos_en_periodo,
     gastos_periodo,
+    movimientos_dashboard,
     movimientos_recientes,
     opciones_periodo,
 )

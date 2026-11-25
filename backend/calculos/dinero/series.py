@@ -53,7 +53,7 @@ def fechas_inversiones(inversiones) -> list[str | None]:
 
 
 def meses_periodo(periodo: str, fechas, hoy: datetime.date) -> int:
-    fijos = {"1M": 2, "3M": 3, "6M": 6, "1Y": 12}
+    fijos = {"3M": 3, "6M": 6, "1Y": 12}
     if periodo in fijos:
         return fijos[periodo]
     validas = sorted(f for f in fechas if f)

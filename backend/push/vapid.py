@@ -18,8 +18,11 @@ def clave_privada() -> Vapid02:
             return Vapid02.from_file(str(path))
         v = Vapid02()
         v.generate_keys()
-        v.save_key(str(path))
-        path.chmod(0o600)
+        anterior = os.umask(0o077)
+        try:
+            v.save_key(str(path))
+        finally:
+            os.umask(anterior)
         return v
 
 

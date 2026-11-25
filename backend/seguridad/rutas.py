@@ -60,8 +60,8 @@ def listar_sesiones(request: Request):
     actual = sesiones.sesion_obligatoria(request)
     with conexion() as conn:
         filas = conn.execute(
-            "SELECT id, creada, ultimo_uso, ip, user_agent, metodo FROM sesiones WHERE expira > ? ORDER BY ultimo_uso DESC",
-            (tiempo.iso(tiempo.ahora()),),
+            f"SELECT id, creada, ultimo_uso, ip, user_agent, metodo FROM sesiones WHERE {sesiones.VIGENTE_SQL} ORDER BY ultimo_uso DESC",
+            sesiones.limites_vigencia(tiempo.ahora()),
         ).fetchall()
     return [
         {

@@ -68,7 +68,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
         deuda = get_row(conn, "deudas", deuda_id)
         pago = movimientos.aplicar_pago(
             deuda, total_pagado=body.total_pagado, nuevo_saldo=body.nuevo_saldo, intereses=body.intereses,
-            avanzar_cuota=body.modo == "cuota", fecha=fecha_o_ahora(body.fecha), descripcion=body.descripcion,
+            avanzar_cuota=body.modo == "cuota", liquidar=body.modo == "liquidar", fecha=fecha_o_ahora(body.fecha), descripcion=body.descripcion,
             notas=body.notas, simbolo=simbolo(conn),
         )
         conn.execute(
@@ -107,6 +107,8 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto, response: Response):
 def pago_preview(deuda_id: int, body: PagoPreview):
     with conexion() as conn:
         deuda = get_row(conn, "deudas", deuda_id)
+        if not body.total_pagado or body.nuevo_saldo is None:
+            return None
         return operaciones.desglose_pago(deuda["saldo_actual"], body.total_pagado, body.nuevo_saldo)
 
 

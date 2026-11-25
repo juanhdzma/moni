@@ -26,3 +26,10 @@ def test_previews_de_activo(client):
     assert client.post("/api/activo/999/venta/preview", json={"precio": 1}).status_code == 404
     assert client.get("/api/activos/resumen").json()["items"][0]["valor_actual"] == 1200
 
+
+
+def test_pago_preview_sin_datos_para_calcular_responde_null(client, prestamo):
+    url = f"/api/deuda/{prestamo['id']}/pago/preview"
+    assert client.post(url, json={"modo": "abono", "total_pagado": 0, "nuevo_saldo": 900_000}).json() is None
+    assert client.post(url, json={"modo": "abono", "total_pagado": 100}).json() is None
+    assert client.post(url, json={"modo": "abono", "total_pagado": 100, "nuevo_saldo": None}).json() is None

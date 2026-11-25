@@ -2,17 +2,18 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from ..calculos.constantes import CATEGORIA_LARGO_MAX
 from ..calculos.fechas import ahora_bogota_iso
-from .validadores import MontoPesos, TipoTx, clave_opcional, validar_fecha
+from .validadores import Descripcion, MontoPesos, Notas, TipoTx, clave_opcional, validar_fecha
 
 
 class TxIn(BaseModel):
     fecha: Optional[str] = Field(default=None, validate_default=True)
     tipo: TipoTx
-    categoria: str = Field(min_length=1)
-    descripcion: str = ""
+    categoria: str = Field(min_length=1, max_length=CATEGORIA_LARGO_MAX)
+    descripcion: Descripcion = ""
     monto: MontoPesos
-    notas: str = ""
+    notas: Notas = ""
     tarjeta_id: Optional[int] = None
     op_clave: Optional[str] = None
 

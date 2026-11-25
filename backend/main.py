@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -17,7 +18,13 @@ from .core import db
 from .core.afectadas import afectadas_por_defecto
 from .core.csrf import require_csrf_header
 from .core.ops_ocultas import podar_ocultas
+from .seguridad.limite_body import LimiteBody
 
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    format='ts=%(asctime)s level=%(levelname)s logger=%(name)s msg="%(message)s"',
+)
 logger = logging.getLogger("moni")
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "web" / "dist"
@@ -41,6 +48,7 @@ app.middleware("http")(afectadas_por_defecto)
 app.middleware("http")(require_csrf_header)
 app.middleware("http")(seguridad.middleware_auth)
 app.middleware("http")(seguridad.middleware_headers)
+app.add_middleware(LimiteBody)
 app.include_router(seguridad.router)
 app.include_router(push.router)
 app.include_router(api_router)
