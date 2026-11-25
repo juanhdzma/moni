@@ -1,5 +1,5 @@
-from ..formato import cop_corto, frase_flujo, porcentaje_texto, top_segmentos
-from ..numeros import porcentaje
+from ..base.formato import cop_corto, frase_flujo, porcentaje_texto, top_segmentos
+from ..base.numeros import porcentaje
 from .finanzas import intereses_pagados
 from .textos import categoria_sugerida, texto_activos, texto_posiciones, texto_vacio_activos, texto_vacio_inversiones, texto_vacio_recurrentes
 

@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from ..constantes import CATEGORIAS_SISTEMA
-from ..errores import ErrorDeDominio
-from ..fechas import parse_fecha, sumar_meses
-from ..numeros import pesos
+from ..catalogo.constantes import CATEGORIAS_SISTEMA
+from ..base.errores import ErrorDeDominio
+from ..base.fechas import parse_fecha, sumar_meses
+from ..base.numeros import pesos
 from . import asientos
 from .finanzas import desglose_pago
 from .frases_deuda import descripcion_credito, descripcion_pago

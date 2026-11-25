@@ -2,8 +2,8 @@ import logging
 from typing import Literal, Optional
 from fastapi import APIRouter, Response
 
-from ..calculos import listados
-from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
+from ..calculos.operaciones import listados
+from ..calculos.base.fechas import ahora_bogota_iso, hoy_bogota
 from ..calculos.operaciones import tarjetas
 from ..core.afectadas import DEUDAS, OPS_OCULTAS, TRANSACCIONES, afectar
 from ..core.db import conexion
@@ -11,7 +11,7 @@ from ..core import estado as store
 from ..core.estado import coleccion
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import delete_row, get_row, guardar_y_leer, insert_row, iniciar_escritura, sumar_al_saldo, update_row
-from ..core.tablas import TX_COLS
+from ..core.sql import TX_COLS
 from ..schemas.respuestas.transacciones import ListadoTx, OpcionesTx, Tx, TxCruda
 from ..schemas.transaccion import TxIn
 from ..schemas.validadores import ColumnaTx, TipoTx

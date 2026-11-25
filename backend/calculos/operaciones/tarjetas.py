@@ -1,5 +1,5 @@
-from ..errores import ErrorDeDominio
-from ..numeros import pesos
+from ..base.errores import ErrorDeDominio
+from ..base.numeros import pesos
 
 
 def delta_saldo_tarjeta(tx: dict, deshacer: bool = False) -> float:

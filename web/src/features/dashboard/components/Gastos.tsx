@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cargarGastos } from '@/lib/api'
 import { fmtDateShort } from '@/lib/format'
-import { useMoneda } from '@/shell/hooks/useMoneda'
+import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { cn } from '@/lib/utils'
-import { useMeta } from '@/shell/hooks/useMeta'
-import { useVista } from '@/shell/hooks/useVista'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
+import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import type { PeriodoGastos } from '@/types'
 import { Skeleton } from '@/components/Skeleton'
-import { Barra, FraseTexto, Panel, Periodos, Total } from '@/components/panel'
+import { Barra, FraseTexto, Panel, Periodos, Total } from '@/components/Panel'
 
 export function Gastos() {
   const { cop, copShort } = useMoneda()

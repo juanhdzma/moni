@@ -1,6 +1,6 @@
 import pytest
 
-from backend.calculos.errores import ErrorDeDominio
+from backend.calculos.base.errores import ErrorDeDominio
 from backend.calculos.operaciones.movimientos import (
     CambioInversion,
     alternar_activo,

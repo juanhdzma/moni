@@ -4,11 +4,11 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError, field_validator
 
 from ..calculos import operaciones
-from ..calculos.categorias import validar_categoria, validar_simbolo
-from ..calculos.constantes import PALABRA_TRUNCATE, clase_deuda_de
-from ..calculos.errores import ErrorDeDominio
-from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
-from ..calculos.formato import plural
+from ..calculos.catalogo.categorias import validar_categoria, validar_simbolo
+from ..calculos.catalogo.constantes import PALABRA_TRUNCATE, clase_deuda_de
+from ..calculos.base.errores import ErrorDeDominio
+from ..calculos.base.fechas import ahora_bogota_iso, hoy_bogota
+from ..calculos.base.formato import plural
 from ..calculos.operaciones.proximas import parse_clave
 from ..schemas.activo import ActivoIn
 from ..schemas.ajustes import CategoriaIn, OpOcultaBackup
@@ -19,7 +19,7 @@ from ..schemas.transaccion import TxIn
 from ..schemas.validadores import MontoCero
 from . import estado as store
 from .mensajes import mensaje_en_espanol
-from .tablas import ACTIVO_COLS, DEUDA_COLS, INV_COLS, REC_COLS, TX_COLS
+from .sql import ACTIVO_COLS, DEUDA_COLS, INV_COLS, REC_COLS, TX_COLS
 
 
 class AjusteBackup(BaseModel):

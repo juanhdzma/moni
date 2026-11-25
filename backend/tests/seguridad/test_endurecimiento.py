@@ -9,7 +9,7 @@ import pytest
 
 from backend import main
 from backend.core import db
-from backend.push import envio, envio_rutas, vapid
+from backend.push import envio, rutas, vapid
 from backend.seguridad import ip, sesiones, tiempo
 from backend.tests.conftest import CLAVE_TEST, IP_TEST
 from backend.tests.seguridad.helpers import cliente, login
@@ -215,15 +215,15 @@ def test_rate_limit_push_es_seguro_entre_hilos(entorno, monkeypatch):
         client = type("C", (), {"host": "203.0.113.5"})()
         headers = type("H", (), {"getlist": lambda self, k: []})()
 
-    envio_rutas._envios.clear()
+    rutas._envios.clear()
 
     def intento(_):
         try:
-            envio_rutas._limitar(Req())
+            rutas._limitar(Req())
             return 1
         except HTTPException:
             return 0
 
     with ThreadPoolExecutor(16) as ex:
         aceptados = sum(ex.map(intento, range(100)))
-    assert aceptados == envio_rutas.MAX_ENVIOS
+    assert aceptados == rutas.MAX_ENVIOS

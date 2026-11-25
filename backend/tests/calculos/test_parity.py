@@ -4,8 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from backend.calculos import fechas, listados, operaciones
-from backend.calculos.constantes import tiene_saldo
+from backend.calculos import operaciones
+from backend.calculos.base import fechas
+from backend.calculos.operaciones import listados
+from backend.calculos.catalogo.constantes import tiene_saldo
 from backend.calculos.dinero import flujos, gastos, resumen, series
 from backend.calculos.operaciones.finanzas import rendimiento_esperado
 

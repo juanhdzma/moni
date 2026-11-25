@@ -1,7 +1,7 @@
 import math
 from typing import Optional
 
-from ..formato import cop, porcentaje_texto
+from ..base.formato import cop, porcentaje_texto
 from .finanzas import intereses_pagados
 
 SIMBOLO_POR_DEFECTO = "$"

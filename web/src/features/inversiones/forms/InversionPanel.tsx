@@ -1,5 +1,5 @@
-import { ModalPanel } from '@/controls/ModalPanel'
-import { useMoneda } from '@/shell/hooks/useMoneda'
+import { ModalPanel } from '@/controls/forms/ModalPanel'
+import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import type { Inversion } from '@/types'
 
 export function InversionPanel({ inv }: { inv: Inversion }) {

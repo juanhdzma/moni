@@ -1,10 +1,10 @@
 import { X } from 'lucide-react'
-import { Panel } from '@/components/panel'
+import { Panel } from '@/components/Panel'
 import { claseDeTono } from '@/components/tono'
-import { IconButton } from '@/controls/IconButton'
-import { useCategorias } from '@/shell/hooks/useCategorias'
+import { IconButton } from '@/controls/forms/IconButton'
+import { useCategorias } from '@/shell/hooks/datos/useCategorias'
 import { CategoriaInput } from '@/features/transacciones'
-import { useMeta } from '@/shell/hooks/useMeta'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
 import type { TipoTx } from '@/types'
 
 function CategoriaGroup({ tipo, label, tono }: { tipo: TipoTx; label: string; tono: string }) {

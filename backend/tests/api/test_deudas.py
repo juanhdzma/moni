@@ -88,7 +88,7 @@ def test_clase_deuda_sale_en_las_filas_y_progreso_no_pasa_de_100(client, prestam
 
 
 def test_credito_con_crear_tx_sin_fecha_usa_hoy_y_el_listado_responde(client):
-    from backend.calculos.fechas import hoy_bogota
+    from backend.calculos.base.fechas import hoy_bogota
 
     deuda = client.post(
         "/api/deuda", json={"nombre": "Libre", "monto_inicial": 500_000, "saldo_actual": 500_000, "crear_tx": True}

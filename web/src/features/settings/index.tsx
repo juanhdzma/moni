@@ -1,4 +1,4 @@
-import { Panel } from '@/components/panel'
+import { Panel } from '@/components/Panel'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { BackupPanel } from './Backup'
 import { Categorias } from './Categorias'

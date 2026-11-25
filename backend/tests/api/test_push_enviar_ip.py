@@ -1,6 +1,6 @@
 import pytest
 
-from backend.push import envio, envio_rutas
+from backend.push import envio, rutas
 from backend.tests.conftest import IP_TEST
 
 BODY = {"title": "Hola", "body": "Mundo"}
@@ -9,10 +9,10 @@ LIMITE = 20
 
 @pytest.fixture(autouse=True)
 def limpio(monkeypatch):
-    envio_rutas._envios.clear()
+    rutas._envios.clear()
     monkeypatch.setattr(envio, "webpush", lambda info, data, **kw: None)
     yield
-    envio_rutas._envios.clear()
+    rutas._envios.clear()
 
 
 def _enviar(client, ip_real):
@@ -23,7 +23,7 @@ def test_el_limite_se_cuenta_por_ip_del_xff_cuando_el_peer_es_proxy_confiable(cl
     monkeypatch.setenv("MONI_TRUSTED_PROXIES", IP_TEST[0])
     assert [_enviar(client, "203.0.113.1") for _ in range(LIMITE + 1)] == [200] * LIMITE + [429]
     assert _enviar(client, "203.0.113.2") == 200
-    assert sorted(envio_rutas._envios) == ["203.0.113.1", "203.0.113.2"]
+    assert sorted(rutas._envios) == ["203.0.113.1", "203.0.113.2"]
 
 
 def test_el_429_trae_retry_after(client, monkeypatch):
@@ -37,4 +37,4 @@ def test_el_429_trae_retry_after(client, monkeypatch):
 def test_un_peer_no_confiable_no_puede_rotar_ip_con_xff(client):
     codigos = [_enviar(client, f"203.0.113.{n}") for n in range(1, LIMITE + 2)]
     assert codigos == [200] * LIMITE + [429]
-    assert list(envio_rutas._envios) == [IP_TEST[0]]
+    assert list(rutas._envios) == [IP_TEST[0]]

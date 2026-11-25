@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useMeta } from '@/shell/hooks/useMeta'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { cn } from '@/lib/utils'
 
 interface Props {

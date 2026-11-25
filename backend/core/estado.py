@@ -1,5 +1,6 @@
-from ..calculos import listados, operaciones
-from ..calculos.categorias import categorias_con_custom
+from ..calculos import operaciones
+from ..calculos.operaciones import listados
+from ..calculos.catalogo.categorias import categorias_con_custom
 from .sql import get_row
 
 

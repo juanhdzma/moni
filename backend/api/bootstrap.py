@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from ..calculos.listados import alertas
-from ..calculos.constantes import TEXTO_DESACTUALIZADO
-from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
+from ..calculos.operaciones.listados import alertas
+from ..calculos.catalogo.constantes import TEXTO_DESACTUALIZADO
+from ..calculos.base.fechas import ahora_bogota_iso, hoy_bogota
 from ..core import estado as store
 from ..core.db import conexion
 from ..schemas.respuestas.sistema import Bootstrap

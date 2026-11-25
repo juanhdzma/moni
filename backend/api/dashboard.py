@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Query
 
 from ..calculos import dinero
-from ..calculos.fechas import hoy_bogota
+from ..calculos.base.fechas import hoy_bogota
 from ..calculos.operaciones.tasas import equivalencia_tasa
 from ..core import estado as store
 from ..core.db import conexion

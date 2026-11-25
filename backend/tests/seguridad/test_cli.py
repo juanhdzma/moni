@@ -1,7 +1,7 @@
 import pytest
 
 from backend.core import db
-from backend.seguridad import cli, password
+from backend.seguridad import __main__ as cli, password
 from backend.seguridad.password import MIN_CLAVE
 from backend.tests.conftest import IP_TEST
 from backend.tests.seguridad.helpers import login

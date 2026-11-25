@@ -2,7 +2,7 @@ import datetime
 import math
 from typing import Optional
 
-from ..fechas import parse_fecha, sumar_meses
+from ..base.fechas import parse_fecha, sumar_meses
 
 FRECUENCIAS = {
     "semanal": {"label": "Semanal", "factor": 52 / 12, "dias": 7},

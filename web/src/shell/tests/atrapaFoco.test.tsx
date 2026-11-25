@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react'
 import { useRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { enfocables, useAtrapaFoco } from '@/controls/useAtrapaFoco'
+import { enfocables, useAtrapaFoco } from '@/controls/forms/useAtrapaFoco'
 
 describe('useAtrapaFoco con listas vacías', () => {
   function Hueco({ activo }: { activo: boolean }) {

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { categoriasBase, estado } from '@/test/factories'
 import { conAfectadas, failure, mockFetch } from '@/test/mockFetch'
 import { renderWithProviders } from '@/test/render'
-import { useCategorias } from '@/shell/hooks/useCategorias'
+import { useCategorias } from '@/shell/hooks/datos/useCategorias'
 import { useData } from '@/shell/providers/DataProvider'
 
 function Harness() {

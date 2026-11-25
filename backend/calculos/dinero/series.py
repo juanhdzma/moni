@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from ..fechas import mes_corto, mes_de, normalizar_fecha
+from ..base.fechas import mes_corto, mes_de, normalizar_fecha
 from .flujos import flujo_inversiones, flujo_patrimonio
 
 

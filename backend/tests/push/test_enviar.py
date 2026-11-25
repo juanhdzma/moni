@@ -1,7 +1,7 @@
 import pytest
 
 from backend.core import db
-from backend.push import envio, envio_rutas
+from backend.push import envio, rutas
 
 TOKEN = "t" * 40
 OK = {"title": "Hola", "body": "Mundo", "url": "/deudas", "tag": "aviso"}
@@ -9,9 +9,9 @@ OK = {"title": "Hola", "body": "Mundo", "url": "/deudas", "tag": "aviso"}
 
 @pytest.fixture(autouse=True)
 def limpio():
-    envio_rutas._envios.clear()
+    rutas._envios.clear()
     yield
-    envio_rutas._envios.clear()
+    rutas._envios.clear()
 
 
 @pytest.fixture
@@ -94,11 +94,11 @@ def test_limitar_purga_ips_vencidas(monkeypatch):
         client = type("C", (), {"host": "9.9.9.9"})()
         headers = {}
 
-    envio_rutas._envios["1.1.1.1"].append(0.0)
-    monkeypatch.setattr(envio_rutas.time, "monotonic", lambda: 1000.0)
-    monkeypatch.setattr(envio_rutas, "client_ip", lambda r: "9.9.9.9")
-    envio_rutas._limitar(Req())
-    assert list(envio_rutas._envios) == ["9.9.9.9"]
+    rutas._envios["1.1.1.1"].append(0.0)
+    monkeypatch.setattr(rutas.time, "monotonic", lambda: 1000.0)
+    monkeypatch.setattr(rutas, "client_ip", lambda r: "9.9.9.9")
+    rutas._limitar(Req())
+    assert list(rutas._envios) == ["9.9.9.9"]
 
 
 def test_push_test_comparte_rate_limit(client, enviados):

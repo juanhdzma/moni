@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Response
 
-from ..calculos.fechas import hoy_bogota
+from ..calculos.base.fechas import hoy_bogota
 from ..core.afectadas import afectar
 from ..core.db import conexion
 from ..core.estado import detalle

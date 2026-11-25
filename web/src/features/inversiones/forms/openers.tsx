@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { openConFila, useCerrarYAbrir, type OpenerCtx } from '@/shell/hooks/openers'
+import { openConFila, useCerrarYAbrir, type OpenerCtx } from '@/shell/hooks/acciones/openers'
 import { cargarInversion } from '@/lib/api'
 import type { Inversion } from '@/types'
 import { AporteForm } from './AporteForm'

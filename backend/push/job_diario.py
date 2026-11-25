@@ -3,8 +3,8 @@ import datetime
 import logging
 from typing import Optional
 
-from ..calculos.fechas import ahora_bogota, hoy_bogota, texto_dias
-from ..calculos.formato import cop
+from ..calculos.base.fechas import ahora_bogota, hoy_bogota, texto_dias
+from ..calculos.base.formato import cop
 from ..calculos.operaciones.proximas import en_ventana
 from ..core import db
 from ..core.estado import ajustes

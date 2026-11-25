@@ -1,5 +1,5 @@
 from ..calculos import operaciones
-from ..calculos.fechas import ahora_bogota_iso
+from ..calculos.base.fechas import ahora_bogota_iso
 from ..calculos.operaciones.proximas import FUENTES_OPS, parse_clave, sin_ocultas
 from .estado import filas
 

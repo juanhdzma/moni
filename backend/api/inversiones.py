@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
-from ..calculos.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
+from ..calculos.base.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
 from ..calculos.operaciones import asientos, movimientos, textos
 from ..calculos.operaciones.movimientos import CambioInversion
 from ..core.afectadas import INVERSIONES, afectar, con_movimiento, con_op_oculta
@@ -9,7 +9,7 @@ from ..core.db import conexion
 from ..core.estado import coleccion, simbolo
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row, iniciar_escritura
-from ..core.tablas import INV_COLS
+from ..core.sql import INV_COLS
 from ..schemas.inversion import InvAporte, InvIn, InvRendimiento, InvRetiro, InvValor
 from ..schemas.previews import MontoPreview, NuevoValor
 from ..schemas.respuestas.comun import Ok, PreviewValor

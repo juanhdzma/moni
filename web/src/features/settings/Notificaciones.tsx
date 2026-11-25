@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { StatusMessage } from '@/controls/FormStatus'
-import { Hint } from '@/controls/Hint'
-import { useMeta } from '@/shell/hooks/useMeta'
-import { useStatus } from '@/shell/hooks/useStatus'
+import { Hint, StatusMessage } from '@/controls/forms/FormStatus'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
+import { useStatus } from '@/shell/hooks/formulario/useStatus'
 import { activarPush, desactivarPush, probarPush, pushSoportado, suscripcionActual } from '@/lib/seguridad/push'
 
 export function Notificaciones() {

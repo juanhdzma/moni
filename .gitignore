@@ -4,6 +4,12 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+mutants/
+.coverage
+htmlcov/
+coverage/
 
 # Estado local de Moni
 data/
@@ -14,6 +20,9 @@ backend/data/
 
 # Entorno
 .env
+.env.*
+!.env.example
+datos-locales.md
 .DS_Store
 ._*
 *.swp
@@ -25,9 +34,11 @@ backend/data/
 # Frontend React (web/)
 web/node_modules/
 web/dist/
+web/coverage/
+*.tsbuildinfo
 
 # Impeccable: screenshots y logs de cada sesión de diseño
-.impeccable/review/
-.impeccable/questions/
-.impeccable/mocks/
-.impeccable/build/
+docs/design/.impeccable/review/
+docs/design/.impeccable/questions/
+docs/design/.impeccable/mocks/
+docs/design/.impeccable/build/

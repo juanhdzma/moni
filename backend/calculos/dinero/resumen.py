@@ -1,9 +1,9 @@
 import datetime
 
-from ..fechas import mes_de
-from ..numeros import porcentaje
+from ..base.fechas import mes_de
+from ..base.numeros import porcentaje
 from .flujos import es_gasto_cartera, flujo_cartera, net_worth
-from ..formato import cop, cop_corto, frase, plural, porcentaje_texto, tono_de_valor
+from ..base.formato import cop, cop_corto, frase, plural, porcentaje_texto, tono_de_valor
 from .gastos import PERIODOS_EVOLUCION_VISIBLES
 from .series import (
     clave_mes,

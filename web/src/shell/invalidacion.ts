@@ -1,4 +1,4 @@
-import { cargarMetaUnaVez } from '@/shell/hooks/useMeta'
+import { cargarMetaUnaVez } from '@/shell/hooks/datos/useMeta'
 import type { Entidad } from '@/types'
 
 export type { Entidad }

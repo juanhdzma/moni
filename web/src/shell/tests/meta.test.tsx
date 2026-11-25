@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { failure, mockFetch } from '@/test/mockFetch'
 import { META } from '@/test/meta'
 
-type ModuloMeta = typeof import('@/shell/hooks/useMeta')
+type ModuloMeta = typeof import('@/shell/hooks/datos/useMeta')
 
 async function modulo(): Promise<ModuloMeta> {
   vi.resetModules()
-  return import('@/shell/hooks/useMeta')
+  return import('@/shell/hooks/datos/useMeta')
 }
 
 beforeEach(() => vi.resetModules())

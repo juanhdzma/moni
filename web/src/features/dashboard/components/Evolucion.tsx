@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { cargarEvolucion } from '@/lib/api'
-import { useMoneda } from '@/shell/hooks/useMoneda'
-import { useMeta } from '@/shell/hooks/useMeta'
-import { useVista } from '@/shell/hooks/useVista'
+import { useMoneda } from '@/shell/hooks/datos/useMoneda'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
+import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import type { PeriodoEvolucion, SerieEvolucion } from '@/types'
 import { Skeleton } from '@/components/Skeleton'
-import { FraseTexto, Panel, Periodos } from '@/components/panel'
+import { FraseTexto, Panel, Periodos } from '@/components/Panel'
 
 export function Evolucion() {
   const { cop, copShort } = useMoneda()

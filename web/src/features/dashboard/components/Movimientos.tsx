@@ -1,10 +1,10 @@
 import { cargarMovimientos } from '@/lib/api'
 import { fmtDateShort } from '@/lib/format'
-import { useVista } from '@/shell/hooks/useVista'
+import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { EmptyCard } from '@/components/EmptyCard'
-import { Monto } from '@/components/monto'
-import { Panel } from '@/components/panel'
+import { Monto } from '@/components/Monto'
+import { Panel } from '@/components/Panel'
 
 export function Movimientos() {
   const { data } = useVista('movimientos', () => cargarMovimientos(), DEPENDENCIAS_DE_VISTA.movimientos)

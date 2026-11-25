@@ -1,5 +1,5 @@
-import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
-import { cargarMetaUnaVez } from '@/shell/hooks/useMeta'
+import { openConFila, type OpenerCtx } from '@/shell/hooks/acciones/openers'
+import { cargarMetaUnaVez } from '@/shell/hooks/datos/useMeta'
 import { cargarDeuda } from '@/lib/api'
 import type { Deuda, ModoPago } from '@/types'
 import { AdelantoForm } from './AdelantoForm'

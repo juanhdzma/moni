@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
-from ..calculos.errores import ErrorDeDominio
+from ..calculos.base.errores import ErrorDeDominio
 from ..core.mensajes import mensaje_en_espanol
 
 async def errores_de_dominio(request: Request, exc: ErrorDeDominio):

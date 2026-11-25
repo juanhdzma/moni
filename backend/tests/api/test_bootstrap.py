@@ -1,6 +1,6 @@
 import datetime
 
-from backend.calculos.constantes import DIAS_DESACTUALIZADO, TEXTO_DESACTUALIZADO
+from backend.calculos.catalogo.constantes import DIAS_DESACTUALIZADO, TEXTO_DESACTUALIZADO
 
 from .builders_api import HOY, sembrar
 

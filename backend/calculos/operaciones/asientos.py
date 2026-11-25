@@ -1,4 +1,4 @@
-from ..constantes import CATEGORIAS_SISTEMA
+from ..catalogo.constantes import CATEGORIAS_SISTEMA
 from .frases_deuda import descripcion_adelanto
 from .textos import descripcion_tx
 

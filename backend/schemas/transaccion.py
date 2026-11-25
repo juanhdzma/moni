@@ -2,8 +2,8 @@ from typing import Optional
 
 from pydantic import Field, field_validator, model_validator
 
-from ..calculos.constantes import CATEGORIA_LARGO_MAX
-from ..calculos.fechas import ahora_bogota_iso
+from ..calculos.catalogo.constantes import CATEGORIA_LARGO_MAX
+from ..calculos.base.fechas import ahora_bogota_iso
 from .validadores import Descripcion, Entrada, MontoPesos, Notas, TipoTx, clave_opcional, validar_fecha
 
 

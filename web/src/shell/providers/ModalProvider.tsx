@@ -12,9 +12,9 @@ import {
   type ReactNode,
 } from 'react'
 import { useData } from '@/shell/providers/DataProvider'
-import { IconButton } from '@/controls/IconButton'
-import { closeAnyOpenPopup, usePopupOutsideClick } from '@/controls/popups'
-import { enfocables, useAtrapaFoco } from '@/controls/useAtrapaFoco'
+import { IconButton } from '@/controls/forms/IconButton'
+import { closeAnyOpenPopup, usePopupOutsideClick } from '@/controls/inputs/popups'
+import { enfocables, useAtrapaFoco } from '@/controls/forms/useAtrapaFoco'
 
 export interface ModalApi {
   openModal: (title: string, content: ReactNode) => void

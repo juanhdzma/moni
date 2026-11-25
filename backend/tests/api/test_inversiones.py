@@ -1,6 +1,6 @@
 import pytest
 
-from backend.calculos.fechas import hoy_bogota
+from backend.calculos.base.fechas import hoy_bogota
 
 
 def _crear(client, **extra):
@@ -172,7 +172,7 @@ def test_valor_con_fecha_y_hora_o_solo_fecha_se_guarda_tal_cual(client):
 def test_es_desactualizado_acepta_fecha_sola_y_con_hora():
     from datetime import date
 
-    from backend.calculos.fechas import es_desactualizado
+    from backend.calculos.base.fechas import es_desactualizado
 
     hoy = date(2026, 7, 1)
     assert es_desactualizado("2026-05-01", hoy) and es_desactualizado("2026-05-01T09:30", hoy)

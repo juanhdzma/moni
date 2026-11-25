@@ -6,7 +6,7 @@ import { cargarMovimientos, cargarResumenDeudas, cargarResumenRecurrentes } from
 import { TabActivaProvider } from '@/shell/layout/TabActiva'
 import { failure, mockFetch } from '@/test/mockFetch'
 import { DataProvider, ESTADO_VACIO, useData } from '@/shell/providers/DataProvider'
-import { useVista } from '@/shell/hooks/useVista'
+import { useVista } from '@/shell/hooks/datos/useVista'
 
 function Harness({ clave }: { clave: string | null }) {
   const { data, loading, error } = useVista(clave, cargarMovimientos, ['transacciones'])

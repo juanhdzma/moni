@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from backend.calculos.fechas import TZ
+from backend.calculos.base.fechas import TZ
 from backend.core import db
 from backend.core.ops_ocultas import candidatas
 from backend.push import envio, job_diario

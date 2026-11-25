@@ -1,5 +1,5 @@
-import { Monto } from '@/components/monto'
-import { useMoneda } from '@/shell/hooks/useMoneda'
+import { Monto } from '@/components/Monto'
+import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { Skeleton } from '@/components/Skeleton'
 import { claseDeTono } from '@/components/tono'
 import { cn } from '@/lib/utils'

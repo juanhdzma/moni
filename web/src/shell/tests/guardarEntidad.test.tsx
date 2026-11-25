@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { mockFetch } from '@/test/mockFetch'
 import { renderWithProviders } from '@/test/render'
-import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
+import { useGuardarEntidad } from '@/shell/hooks/acciones/useGuardarEntidad'
 import type { Recurrente } from '@/types'
 import { recurrente } from '@/test/factories'
 

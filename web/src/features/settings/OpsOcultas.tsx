@@ -1,8 +1,8 @@
-import { Cargando } from '@/components/Cargando'
-import { Panel } from '@/components/panel'
+import { Cargando } from '@/components/Skeleton'
+import { Panel } from '@/components/Panel'
 import { cargarOpsOcultas, restaurarOp } from '@/lib/api'
 import { useData } from '@/shell/providers/DataProvider'
-import { useVista } from '@/shell/hooks/useVista'
+import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 
 export function OpsOcultas() {

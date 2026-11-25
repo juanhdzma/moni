@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
-from ..calculos.constantes import clase_deuda_de
-from ..calculos.fechas import fecha_o_ahora, hoy_bogota
+from ..calculos.catalogo.constantes import clase_deuda_de
+from ..calculos.base.fechas import fecha_o_ahora, hoy_bogota
 from ..calculos.operaciones import asientos, frases_deuda as frases, movimientos
 from ..core.afectadas import DEUDAS, TRANSACCIONES, afectar, con_movimiento, con_op_oculta
 from ..core.db import conexion
@@ -14,7 +14,7 @@ from ..core.sql import (
     iniciar_escritura,
     aplicar_pago_deuda, desligar_tx, fijar_saldo, get_row, guardar_y_leer, insert_row, insert_tx, tiene_tx_ligadas, update_row,
 )
-from ..core.tablas import DEUDA_COLS
+from ..core.sql import DEUDA_COLS
 from ..schemas.deuda import AdelantoPreview, DeudaAdelanto, DeudaCrear, DeudaIn, DeudaPago
 from ..schemas.previews import PagoPreview
 from ..schemas.respuestas.deudas import Deuda, DeudaCruda, PreviewAdelanto, PreviewPago, ResumenDeudas

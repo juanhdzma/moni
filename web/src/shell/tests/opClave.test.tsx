@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ESTADO_INICIAL, failure, mockFetch } from '@/test/mockFetch'
 import { renderWithProviders } from '@/test/render'
 import { useModal } from '@/shell/providers/ModalProvider'
-import { useMutations } from '@/shell/hooks/useMutations'
+import { useMutations } from '@/shell/hooks/acciones/useMutations'
 
 afterEach(() => vi.unstubAllGlobals())
 

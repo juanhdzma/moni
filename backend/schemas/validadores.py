@@ -2,7 +2,7 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
-from ..calculos.constantes import (
+from ..calculos.catalogo.constantes import (
     DESCRIPCION_LARGO_MAX,
     NOMBRE_LARGO_MAX,
     NOTAS_LARGO_MAX,
@@ -12,9 +12,9 @@ from ..calculos.constantes import (
     valores,
 )
 from ..calculos.dinero import PERIODOS_EVOLUCION, PERIODOS_GASTOS
-from ..calculos.fechas import es_fecha_iso, normalizar_fecha
-from ..calculos.listados import COLUMNAS_ORDEN
-from ..calculos.numeros import pesos
+from ..calculos.base.fechas import es_fecha_iso, normalizar_fecha
+from ..calculos.operaciones.listados import COLUMNAS_ORDEN
+from ..calculos.base.numeros import pesos
 from ..calculos.operaciones.proximas import parse_clave
 
 TipoTx = Literal[valores(TIPOS_TX)]

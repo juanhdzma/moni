@@ -1,7 +1,7 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { EmptyCard } from '@/components/EmptyCard'
 import { IconoMetodo } from '@/components/IconoMetodo'
-import { Monto } from '@/components/monto'
+import { Monto } from '@/components/Monto'
 import { cn } from '@/lib/utils'
 import { fmtDate } from '@/lib/format'
 import type { ColumnaTransaccion, FilaTx, TextoVacio } from '@/types'

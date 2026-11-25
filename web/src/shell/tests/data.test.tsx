@@ -1,11 +1,11 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useMoneda } from '@/shell/hooks/useMoneda'
+import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { guardarAjustes } from '@/lib/api'
 import { conAfectadas, ESTADO_INICIAL, failure, json, mockFetch } from '@/test/mockFetch'
 import { estado as estadoFactory } from '@/test/factories'
-import { cargarMetaUnaVez } from '@/shell/hooks/useMeta'
+import { cargarMetaUnaVez } from '@/shell/hooks/datos/useMeta'
 import { DataProvider, ESTADO_VACIO, useData } from '@/shell/providers/DataProvider'
 
 function Harness() {

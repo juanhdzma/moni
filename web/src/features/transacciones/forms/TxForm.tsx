@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { Cargando } from '@/components/Cargando'
-import { FormFooter } from '@/controls/FormFooter'
-import { Select } from '@/controls/Select'
-import { TipoToggle } from '@/controls/TipoToggle'
+import { Cargando } from '@/components/Skeleton'
+import { FormFooter } from '@/controls/forms/FormFooter'
+import { Select } from '@/controls/inputs/Select'
+import { TipoToggle } from '@/controls/inputs/TipoToggle'
 import { entero } from '@/lib/format'
-import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
-import { useMeta } from '@/shell/hooks/useMeta'
+import { useGuardarEntidad } from '@/shell/hooks/acciones/useGuardarEntidad'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
 import type { OpcionesTx, TipoRec, Transaccion } from '@/types'
 import { CamposTx, cuerpoTx, useOpcionesTx, type ValoresTx } from './CamposTx'
-import { FormModal } from '@/controls/FormModal'
+import { FormModal } from '@/controls/forms/FormModal'
 
 export function TxForm({ tx }: { tx: Transaccion | null }) {
   const opciones = useOpcionesTx(tx?.id)

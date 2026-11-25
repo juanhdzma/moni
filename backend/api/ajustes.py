@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response
 
-from ..calculos.categorias import es_categoria_sistema, validar_categoria
-from ..calculos.errores import ErrorDeDominio
+from ..calculos.catalogo.categorias import es_categoria_sistema, validar_categoria
+from ..calculos.base.errores import ErrorDeDominio
 from ..core import estado as store
 from ..core.afectadas import AJUSTES, CATEGORIAS, afectar
 from ..core.db import conexion

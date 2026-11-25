@@ -1,9 +1,9 @@
 import datetime
 
-from ..fechas import parse_fecha_hora, restar_meses
-from ..formato import frase, pct_barra, porcentaje_texto
-from ..listados import atributos_visuales_tx, texto_vacio_movimientos
-from ..numeros import monto_firmado
+from ..base.fechas import parse_fecha_hora, restar_meses
+from ..base.formato import frase, pct_barra, porcentaje_texto
+from ..operaciones.listados import atributos_visuales_tx, texto_vacio_movimientos
+from ..base.numeros import monto_firmado
 
 PERIODOS_GASTOS = ("1W", "1M", "3M", "6M", "1Y", "ALL")
 NOMBRE_PERIODO_GASTOS = {

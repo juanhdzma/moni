@@ -162,7 +162,7 @@ def _ledger(client):
 
 
 def test_acciones_compuestas_redondean_el_monto_con_pesos(client, prestamo):
-    from backend.calculos.numeros import pesos
+    from backend.calculos.base.numeros import pesos
 
     inv = client.post("/api/inv", json={"nombre": "F", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 1000}).json()
     activo = client.post("/api/activo", json={"nombre": "Moto", "valor_inicial": 5000, "valor_actual": 4000}).json()

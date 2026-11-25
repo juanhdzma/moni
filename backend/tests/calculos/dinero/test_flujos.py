@@ -8,7 +8,7 @@ from backend.calculos.dinero.series import (
     monthly_patrimonio,
     serie_hacia_atras,
 )
-from backend.calculos.constantes import tiene_saldo
+from backend.calculos.catalogo.constantes import tiene_saldo
 
 from ..builders_calculos import HOY, activo, deuda, estado, inversion, tx
 

@@ -1,9 +1,9 @@
 import datetime
 
-from ..fechas import es_desactualizado, texto_dias_corto
-from ..constantes import clase_deuda_de, tiene_saldo
-from ..formato import porcentaje_texto
-from ..numeros import porcentaje
+from ..base.fechas import es_desactualizado, texto_dias_corto
+from ..catalogo.constantes import clase_deuda_de, tiene_saldo
+from ..base.formato import porcentaje_texto
+from ..base.numeros import porcentaje
 from .finanzas import ea_a_mv, proxima_fecha_inversion, rendimiento_esperado
 from .sugerencias_pago import sugerencia_pago
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente, to_mensual

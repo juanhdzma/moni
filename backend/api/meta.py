@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from ..calculos import dinero
-from ..calculos.constantes import (
+from ..calculos.catalogo.constantes import (
     CATEGORIA_LARGO_MAX,
     CLASES_DEUDA,
     DEFAULTS_FORMULARIOS,
@@ -19,7 +19,7 @@ from ..calculos.constantes import (
     TIPOS_TX,
     frase_aviso_diario,
 )
-from ..calculos.listados import EFECTIVO_DEBITO, columnas_transaccion
+from ..calculos.operaciones.listados import EFECTIVO_DEBITO, columnas_transaccion
 from ..calculos.operaciones.frecuencias import opciones_frecuencia
 from ..push.job_diario import HORA_AVISO
 from ..core.afectadas import DEL_BOOTSTRAP, TODAS

@@ -1,4 +1,4 @@
-import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
+import { openConFila, type OpenerCtx } from '@/shell/hooks/acciones/openers'
 import { cargarActivo } from '@/lib/api'
 import type { Activo } from '@/types'
 import { ActivoForm } from './ActivoForm'

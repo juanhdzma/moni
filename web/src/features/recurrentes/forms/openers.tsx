@@ -1,4 +1,4 @@
-import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
+import { openConFila, type OpenerCtx } from '@/shell/hooks/acciones/openers'
 import { cargarRecurrente } from '@/lib/api'
 import type { Recurrente } from '@/types'
 import { MaterializeForm } from './MaterializeForm'

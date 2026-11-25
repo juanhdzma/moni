@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { AdvancedToggle } from '@/controls/AdvancedToggle'
-import { FechaField } from '@/controls/FormFields'
-import { FormFooter } from '@/controls/FormFooter'
-import { MoneyField } from '@/controls/MoneyField'
-import { NombreField } from '@/controls/NombreField'
+import { AdvancedToggle } from '@/controls/inputs/AdvancedToggle'
+import { FechaField } from '@/controls/forms/FormFields'
+import { FormFooter } from '@/controls/forms/FormFooter'
+import { MoneyField } from '@/controls/inputs/MoneyField'
+import { NombreField } from '@/controls/inputs/NombreField'
 import { entero, parseMoney, soloFecha } from '@/lib/format'
-import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
+import { useGuardarEntidad } from '@/shell/hooks/acciones/useGuardarEntidad'
 import { useData } from '@/shell/providers/DataProvider'
 import type { Activo, ActivoIn } from '@/types'
-import { FormModal } from '@/controls/FormModal'
+import { FormModal } from '@/controls/forms/FormModal'
 
 export function ActivoForm({ activo }: { activo: Activo | null }) {
   const { hoy } = useData().estado

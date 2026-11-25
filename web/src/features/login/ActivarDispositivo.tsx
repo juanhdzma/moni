@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Bell, ScanFace } from 'lucide-react'
-import { Campo } from '@/controls/Campo'
-import { useAtrapaFoco } from '@/controls/useAtrapaFoco'
+import { Campo } from '@/controls/inputs/Campo'
+import { useAtrapaFoco } from '@/controls/forms/useAtrapaFoco'
 import { ApiError } from '@/lib/api'
 import {
   dispositivoTienePasskey,

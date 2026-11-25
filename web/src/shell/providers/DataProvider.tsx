@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ApiError, cargarBootstrap } from '@/lib/api'
 import { errMsg } from '@/lib/format'
-import { cargarMetaUnaVez } from '@/shell/hooks/useMeta'
+import { cargarMetaUnaVez } from '@/shell/hooks/datos/useMeta'
 import { afectaAlBootstrap, entidadesDeHeader, subirVersiones, VERSIONES_INICIALES, type Entidad, type Versiones } from '@/shell/invalidacion'
 import type { Estado } from '@/types'
 

@@ -1,10 +1,10 @@
 import datetime
 import re
 
-from ..fechas import mes_corto, parse_fecha, texto_dias
-from ..constantes import tiene_saldo
-from ..errores import ErrorDeDominio
-from ..formato import cop, frase, plural
+from ..base.fechas import mes_corto, parse_fecha, texto_dias
+from ..catalogo.constantes import tiene_saldo
+from ..base.errores import ErrorDeDominio
+from ..base.formato import cop, frase, plural
 from .finanzas import proxima_fecha_inversion, rendimiento_esperado
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente
 

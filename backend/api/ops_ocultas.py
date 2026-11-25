@@ -3,8 +3,8 @@ from typing import Optional
 from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
-from ..calculos.errores import ErrorDeDominio
-from ..calculos.fechas import hoy_bogota
+from ..calculos.base.errores import ErrorDeDominio
+from ..calculos.base.fechas import hoy_bogota
 from ..core.afectadas import OPS_OCULTAS, afectar
 from ..core.db import conexion
 from ..core.estado import simbolo

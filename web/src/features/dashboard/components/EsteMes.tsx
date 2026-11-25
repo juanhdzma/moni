@@ -1,11 +1,11 @@
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { cargarEsteMes } from '@/lib/api'
-import { useMoneda } from '@/shell/hooks/useMoneda'
-import { useVista } from '@/shell/hooks/useVista'
+import { useMoneda } from '@/shell/hooks/datos/useMoneda'
+import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
-import { Monto } from '@/components/monto'
-import { FraseTexto, Panel, Total } from '@/components/panel'
+import { Monto } from '@/components/Monto'
+import { FraseTexto, Panel, Total } from '@/components/Panel'
 
 const config = {
   entro: { label: 'Entró', color: 'var(--cartera)' },

@@ -1,5 +1,5 @@
-from ..fechas import redondear_js
-from ..formato import porcentaje_texto
+from ..base.fechas import redondear_js
+from ..base.formato import porcentaje_texto
 from .finanzas import convertir_tasa, ea_a_mv
 
 

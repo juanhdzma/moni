@@ -3,7 +3,7 @@ import datetime
 import pytest
 
 from backend.calculos import operaciones as op
-from backend.calculos.errores import ErrorDeDominio
+from backend.calculos.base.errores import ErrorDeDominio
 from backend.calculos.operaciones.proximas import sin_ocultas
 
 from ..helpers_operaciones import D, deuda, inversion, recurrente

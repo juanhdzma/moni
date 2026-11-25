@@ -2,12 +2,12 @@ from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
 from ..calculos.operaciones import asientos, movimientos
-from ..calculos.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
+from ..calculos.base.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
 from ..core.afectadas import ACTIVOS, afectar, con_movimiento
 from ..core.db import conexion
 from ..core.estado import coleccion
 from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row, iniciar_escritura
-from ..core.tablas import ACTIVO_COLS
+from ..core.sql import ACTIVO_COLS
 from ..schemas.activo import ActivoIn, ActivoValor, ActivoVenta
 from ..schemas.previews import NuevoValor, PrecioPreview
 from ..schemas.respuestas.activos import Activo, ActivoCrudo, PreviewVenta, ResumenActivos

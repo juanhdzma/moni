@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { usePreview } from '@/shell/hooks/usePreview'
+import { usePreview } from '@/shell/hooks/datos/usePreview'
 
 function Harness({ clave, cargar }: { clave: string | null; cargar: () => Promise<string> }) {
   return <output data-testid="p">{usePreview(clave, cargar) ?? '-'}</output>

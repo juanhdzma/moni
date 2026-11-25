@@ -1,9 +1,9 @@
-import { Monto } from '@/components/monto'
-import { Desactualizado } from '@/components/panel'
+import { Monto } from '@/components/Monto'
+import { Desactualizado } from '@/components/Panel'
 import { fmtDate, pct } from '@/lib/format'
-import { useMoneda } from '@/shell/hooks/useMoneda'
+import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
-import { useOpenerCtx } from '@/shell/hooks/openers'
+import { useOpenerCtx } from '@/shell/hooks/acciones/openers'
 import type { Activo } from '@/types'
 import { openActivoFormById, openActivoSellFormById, openActivoUpdateFormById } from './forms'
 

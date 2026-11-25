@@ -1,4 +1,4 @@
-from ..numeros import pesos
+from ..base.numeros import pesos
 
 HINT_CUOTA = "Pre-llenado con la cuota mensual — ajustá si aplica."
 HINT_CUOTA_SIN_MONTO = "Ingresá el monto de la cuota."

@@ -1,8 +1,8 @@
 import datetime
 from typing import Optional
 
-from ..fechas import redondear_js, sumar_meses
-from ..numeros import porcentaje
+from ..base.fechas import redondear_js, sumar_meses
+from ..base.numeros import porcentaje
 
 
 def ea_a_mv(ea: float) -> float:

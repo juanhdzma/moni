@@ -2,7 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, computed_field, model_validator
 
-from ..calculos.constantes import CLASES_DEUDA, FRANQUICIAS, MODOS_PAGO, valores
+from ..calculos.catalogo.constantes import CLASES_DEUDA, FRANQUICIAS, MODOS_PAGO, valores
 from .validadores import (
     ConOpClave, Descripcion, Entrada, MontoCero, MontoPesos, Nombre, Notas, Tasa, TasaTipo, fecha_opcional,
 )

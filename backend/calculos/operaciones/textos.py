@@ -1,5 +1,5 @@
-from ..formato import cop, plural, porcentaje_texto
-from ..numeros import porcentaje
+from ..base.formato import cop, plural, porcentaje_texto
+from ..base.numeros import porcentaje
 
 DESCRIPCION_RENDIMIENTO = "Un rendimiento cuenta de un solo lado: si capitaliza sube valor_actual sin transacción; si se paga, es un ingreso y el valor no cambia."
 

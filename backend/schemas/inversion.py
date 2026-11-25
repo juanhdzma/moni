@@ -2,7 +2,7 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import Field, field_validator, model_validator
 
-from ..calculos.constantes import DIA_PAGO_MAX, PAGOS_INVERSION, TIPOS_INVERSION, TIPOS_RETIRO, valores
+from ..calculos.catalogo.constantes import DIA_PAGO_MAX, PAGOS_INVERSION, TIPOS_INVERSION, TIPOS_RETIRO, valores
 from .validadores import (
     ConOpClave, Entrada, MontoCero, MontoPesos, Nombre, Notas, Tasa, TasaTipo, fecha_opcional,
 )

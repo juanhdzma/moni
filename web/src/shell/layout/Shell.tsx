@@ -10,7 +10,7 @@ import { Activos, openActivoForm } from '@/features/activos'
 import { Recurrentes, openRecurrenteForm } from '@/features/recurrentes'
 import { Settings } from '@/features/settings'
 import { useData } from '@/shell/providers/DataProvider'
-import { useOpenerCtx, type OpenerCtx } from '@/shell/hooks/openers'
+import { useOpenerCtx, type OpenerCtx } from '@/shell/hooks/acciones/openers'
 import { TabBoundary } from './TabBoundary'
 import type { TabProps } from '@/shell/layout/TabContent'
 

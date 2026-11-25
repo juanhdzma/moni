@@ -2,12 +2,12 @@ from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
 from ..calculos.operaciones import movimientos
-from ..calculos.fechas import hoy_bogota
+from ..calculos.base.fechas import hoy_bogota
 from ..core.afectadas import RECURRENTES, afectar
 from ..core.db import conexion
 from ..core.estado import categorias, coleccion, detalle, simbolo
 from ..core.sql import actualizar_columnas, get_row, guardar_y_leer, insert_row, update_row
-from ..core.tablas import REC_COLS
+from ..core.sql import REC_COLS
 from ..schemas.recurrente import RecIn
 from ..schemas.respuestas.recurrentes import Pausa, RecCruda, Recurrente, ResumenRecurrentes
 from .lecturas import register_borrado

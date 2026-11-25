@@ -1,4 +1,4 @@
-from ..constantes import CATEGORIAS_SISTEMA
+from ..catalogo.constantes import CATEGORIAS_SISTEMA
 from ..operaciones.derivados import es_vigente
 
 _INGRESO = CATEGORIAS_SISTEMA["ingreso"]

@@ -5,7 +5,7 @@ import { conAfectadas, failure, mockFetch } from '@/test/mockFetch'
 import { renderWithProviders } from '@/test/render'
 import { useData } from '@/shell/providers/DataProvider'
 import { useModal } from '@/shell/providers/ModalProvider'
-import { useMutations } from '@/shell/hooks/useMutations'
+import { useMutations } from '@/shell/hooks/acciones/useMutations'
 import { deuda } from '@/test/factories'
 
 function Harness() {

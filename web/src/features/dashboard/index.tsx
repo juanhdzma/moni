@@ -1,7 +1,7 @@
 import { cargarResumenDashboard } from '@/lib/api'
 import { useData } from '@/shell/providers/DataProvider'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
-import { useVista } from '@/shell/hooks/useVista'
+import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { EsteMes } from './components/EsteMes'
 import { Evolucion } from './components/Evolucion'

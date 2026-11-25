@@ -1,9 +1,9 @@
-import { Panel } from '@/components/panel'
-import { Campo } from '@/controls/Campo'
-import { Hint } from '@/controls/Hint'
-import { Select } from '@/controls/Select'
+import { Panel } from '@/components/Panel'
+import { Campo } from '@/controls/inputs/Campo'
+import { Hint } from '@/controls/forms/FormStatus'
+import { Select } from '@/controls/inputs/Select'
 import { guardarAjustes } from '@/lib/api'
-import { useMeta } from '@/shell/hooks/useMeta'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { useData } from '@/shell/providers/DataProvider'
 
 export function Moneda() {

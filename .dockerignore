@@ -4,6 +4,12 @@ venv/
 **/__pycache__/
 **/*.pyc
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+mutants/
+.coverage
+htmlcov/
+coverage/
 
 # Estado local: la db de dev NO va dentro de la imagen
 data/
@@ -11,6 +17,11 @@ backend/data/
 *.db
 *.db-wal
 *.db-shm
+
+# Secretos y notas locales
+.env
+.env.*
+datos-locales.md
 
 # Repo / tooling
 .git/
@@ -23,10 +34,11 @@ backend/data/
 # Frontend: la etapa de build parte de web/ sin node_modules ni dist
 web/node_modules/
 web/dist/
+web/coverage/
 
 # Docs y tests: no se sirven ni se corren en runtime
 docs/
 backend/tests/
 *.md
 LICENSE
-.impeccable/
+docs/design/.impeccable/

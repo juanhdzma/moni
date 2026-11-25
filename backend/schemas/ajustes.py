@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from ..calculos.categorias import validar_simbolo
+from ..calculos.catalogo.categorias import validar_simbolo
 from .validadores import Entrada, TipoTx, clave_opcional
 
 

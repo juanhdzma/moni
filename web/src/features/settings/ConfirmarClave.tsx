@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { ApiError } from '@/lib/api'
 import { errMsg } from '@/lib/format'
-import { Campo } from '@/controls/Campo'
-import { FormFooter } from '@/controls/FormFooter'
-import { FormModal } from '@/controls/FormModal'
+import { Campo } from '@/controls/inputs/Campo'
+import { FormFooter } from '@/controls/forms/FormFooter'
+import { FormModal } from '@/controls/forms/FormModal'
 import { useModal } from '@/shell/providers/ModalProvider'
 
 interface Props {
