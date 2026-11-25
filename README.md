@@ -1,184 +1,148 @@
+<div align="center">
+
+<img src="docs/img/logo.png" width="72" alt="">
+
 # Moni
 
-Personal finance tracker for a single household: spending, credit cards, loans, investments, other assets, and recurring income/expenses — one dashboard instead of five spreadsheets. Spanish UI, Colombian peso (COP).
+**Personal finance tracker for one household, in Colombian pesos**
 
-![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue) ![Python](https://img.shields.io/badge/backend-FastAPI%20%2B%20SQLite-009688) ![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20TypeScript-3178c6)
+<img src="https://cdn.simpleicons.org/react" height="14" alt=""> React &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/typescript" height="14" alt=""> TypeScript &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/tailwindcss" height="14" alt=""> Tailwind CSS &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/fastapi" height="14" alt=""> FastAPI &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/sqlite" height="14" alt=""> SQLite &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/docker" height="14" alt=""> Docker
+
+[Features](#features) · [Docs](docs/ARCHITECTURE.md) · [License](LICENSE)
+
+</div>
+
+**The problem:** spending lives in one spreadsheet, the credit cards in another, the CDTs and the loan schedule in a third, and none of them agree on how much you are worth or how much cash is actually free this month.
+
+**What Moni does:** keeps spending, cards, loans, investments, assets and recurring items in a single ledger, so net worth and available cash are computed from the same rows. A loan payment, an investment contribution or an asset sale can drop a linked entry into the ledger, and the dashboard projects the installments, yields and charges coming up. The interface is in Spanish.
+
+<!-- demo-video:start -->
+<!-- Pending: run /brag-slim, drag brag-output/brag.mp4 (<10 MB) into a GitHub issue comment,
+     paste the user-attachments URL on its own line here, then remove this comment. -->
+<!-- demo-video:end -->
 
 ![Dashboard](docs/img/dashboard.png)
 
-> ## Single-owner login
-> Every `/api/*` route requires a session; with no `MONI_PASSWORD_HASH` set nothing can sign in and the API answers 401 (fail closed). There is no user registration. Passkey sign-in is an optional WebAuthn credential registered from Ajustes after signing in with the password. Three failures from one IP within an hour block that IP for `MONI_BLOCK_HOURS` (default 24); a blocked client gets a `403` with a ready-to-show Spanish `texto` and a `Retry-After` header.
+> [!WARNING]
+> Moni stores your whole financial life in one SQLite file and has a single owner login. Without `MONI_PASSWORD_HASH` nobody can sign in, and the port should not be exposed to the internet without HTTPS. Details in [Security](#security).
 
-## Contents
-
-- [Features](#features)
-- [How it fits together](#how-it-fits-together)
-- [Running locally](#running-locally)
-- [Running via Docker](#running-via-docker)
-- [Security configuration](#security-configuration)
-- [Notifications](#notifications)
-- [Deploying](#deploying)
-- [Testing](#testing)
-- [License](#license)
+[Features](#features) · [How do I…](#how-do-i) · [Running](#running) · [Configuration](#configuration) · [Documentation](#documentation) · [Security](#security)
 
 ## Features
 
-Six data tabs plus Ajustes (custom categories, currency symbol, push notifications, backup import/export), all reading from and writing to the same dataset — a debt payment, an investment contribution, or an asset sale can each optionally drop a linked entry into the transaction ledger, so the numbers stay consistent everywhere.
+**Dashboard**
 
-**Dashboard** — compact cards that each open with one plain sentence: net worth with a composition bar (activos, inversiones, cartera, deudas), how it moved over time (area chart), where the money goes by category for a chosen period (tap one to see its movements), this month's cash as a sum (in − out = left) with six months of bars, recent transactions, and a "próximas operaciones" list that projects upcoming debt installments, investment yields, and recurring charges so you can confirm or skip them before they happen.
+- Net worth with its composition (assets, investments, cash, debts) and how it moved over time
+- Spending by category for a chosen period, and this month's cash as in minus out
+- Upcoming debt installments, investment yields and recurring charges to confirm or skip
 
-**Transacciones** — the income/expense ledger, filterable by month, type, and category, grouped by date (ayer / este mes / …), tracking payment method (cash/debit vs. a specific card).
+<table><tr>
+<td width="74%"><img src="docs/img/dashboard.png" alt="Dashboard, desktop"></td>
+<td><img src="docs/img/mobile-dashboard.png" width="48%" alt="Dashboard, mobile"> <img src="docs/img/mobile-menu.png" width="48%" alt="Navigation drawer, mobile"></td>
+</tr></table>
+
+**Transacciones**
+
+- Income, expenses and transfers filtered by month, type and category
+- Grouped by date, with the payment method (cash or a specific card)
+- A card expense raises that card's balance automatically
 
 ![Transacciones](docs/img/transacciones.png)
 
-**Deudas** — two columns, créditos and tarjetas (`es_tarjeta`), each with pending balance, monthly installment, interest paid, per-debt cuota payments, card advances (adelanto), and payoff (liquidar); settled loans drop into a "terminados" section below. Registering the monthly cuota rolls the due date forward a month and clears it once the debt is settled; an extraordinary abono pays down the balance without moving the date.
+**Deudas**
+
+- Loans and credit cards side by side, with balance, installment and interest paid
+- Pay the monthly cuota, make an extra abono, take a card advance or pay it off
+- Settled debts move to a "terminados" section
 
 ![Deudas](docs/img/deudas.png)
 
-**Inversiones** — fixed-rate (CDT-style, with EA/MV rate conversion and yield tracking) and variable investments (funds, crypto), each with capital invested, current value, gain/loss, and contribution/withdrawal actions. A yield is recorded as either capitalizing (raises the investment's value, no ledger entry) or paid out (income in the ledger, investment value unchanged) — never both, since counting it twice would inflate net worth.
+**Inversiones**
+
+- Fixed-rate (CDT style, EA and MV conversion) and variable investments
+- Contributions, withdrawals and manual revaluations
+- A yield either capitalizes or is paid out, never both
 
 ![Inversiones](docs/img/inversiones.png)
 
-**Activos** — physical/other assets (real estate, vehicles, …) with purchase cost vs. current value, value updates, and sale tracking.
+**Activos**
+
+- Real estate, vehicles and other assets with cost versus current value
+- Value updates and sales, with an optional ledger entry
 
 ![Activos](docs/img/activos.png)
 
-**Recurrentes** — recurring incomes and fixed expenses (subscriptions, salary, …), with monthly income/expense/net totals and pause/resume.
+**Recurrentes**
+
+- Recurring income and fixed expenses with monthly totals
+- Pause and resume without deleting
 
 ![Recurrentes](docs/img/recurrentes.png)
 
-Screenshots use dummy data inserted directly via the API for illustration, not real figures.
+Screenshots use fictional data.
 
-### Mobile
+## How do I…
 
-Below 1024px the header nav collapses into a menu button and a slide-out drawer.
+### Register the monthly payment of a loan
+Deudas, then the payment action on the loan, with mode `cuota`. The balance drops, interest paid accumulates and the due date moves forward one month. The form can also log the payment in the ledger. Mode `abono` pays down the balance without moving the date; `liquidar` pays it off.
 
-<table>
-<tr>
-<td><img src="docs/img/mobile-dashboard.png" width="260" alt="Dashboard, mobile"></td>
-<td><img src="docs/img/mobile-menu.png" width="260" alt="Nav drawer, mobile"></td>
-</tr>
-</table>
+### Confirm or skip an upcoming operation
+On the dashboard, "próximas operaciones": the check opens the matching form already filled in and hides the operation once you save; the X hides it without registering anything. Hidden ones are listed in Ajustes.
 
-## How it fits together
+### Record a yield on an investment
+Inversiones, the yield action. Choose whether it capitalizes (raises the investment's value, no ledger entry) or is paid out (an `Intereses` income in the ledger).
 
-FastAPI (`backend/main.py`) serves a small REST API over SQLite (`backend/core/db.py`) and, at the same time, serves the built frontend (`web/dist`) as static files: one process, one port in production.
+### Get notified before something is due
+Ajustes, Notificaciones, activate. At 8:00 (Bogota) Moni sends what is due today and tomorrow. Needs HTTPS and, on iOS, the PWA installed to the home screen.
 
-All business logic lives in the backend: the money definitions (cash flow vs. net worth), date handling in the `America/Bogota` time zone, derived fields and the upcoming-operations projection are pure functions in `backend/calculos/`, exposed through read endpoints that return data ready to render (`/api/bootstrap`, `/api/meta`, `/api/dashboard/*`, `/api/tx`, `/api/*/resumen`, `/api/proximas-operaciones`, and `GET /api/<resource>/<id>` for edit forms). `/api/meta` serves every option list the forms use (frequencies, card networks, investment and debt types, currencies, sortable columns, periods), so the frontend hard-codes none. Validation errors are returned as `422` with Spanish messages. `GET /api/backup` exports the raw rows (the format `POST /api/import` takes back). Domain errors raised from the calculation layer (`ErrorDeDominio`) are answered by one global handler with their status and a Spanish message. Custom categories, hidden operations and the currency symbol are stored in SQLite too, not in the browser.
+### Back up or move your data
+Ajustes, Backup, "Exportar JSON". Import adds the file's rows to the existing data and asks for your password. For the whole database use the volume backup in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-The frontend (`web/`) is React + TypeScript built with Vite, and only fetches and paints. Every tab is one folder under `web/src/features/` that owns its own component and modal forms; the shared session context (today, categories, currency symbol, alerts) comes from `GET /api/bootstrap` through a `DataProvider`, static form options from `GET /api/meta`, and each view refetches its own calculated endpoint when its filters change or when a mutation touches an entity it depends on. Each feature keeps its modal forms in a `forms/` folder. There's no optimistic UI and no partial state patching by design; the tradeoff is simplicity over snappiness, which is fine at personal-finance data volumes.
+## Running
 
-Styling is Tailwind CSS + shadcn/ui with Recharts charts; Recharts and the Archivo webfont are bundled from npm, so the app works on a LAN with no internet access. Only `web/dist` is reachable over HTTP; the backend code, the SQLite file and the frontend sources are not.
+| I want to… | Run |
+|---|---|
+| Try it | `docker compose up --build`, then open `http://localhost:8080` |
+| Work on the backend | `uvicorn backend.main:app --reload --port 8080` (Python 3.12, venv with `backend/requirements.txt`) |
+| Work on the frontend | `cd web && npm ci && npm run dev` (Node 22, backend on 8080) |
+| See it with fictional data | `python -m backend.scripts.seed_demo --db /tmp/moni_demo.db --password demo-password-123` |
+| Deploy | Image on GHCR plus a compose file, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 
-See `CLAUDE.md` for the full architecture rundown (schema/migrations, composite money-moving actions, per-tab conventions).
+To sign in you need a password hash: `python -m backend.seguridad hash`, then set it as `MONI_PASSWORD_HASH`.
 
-## Running locally
+## Configuration
 
-Needs Python 3.12 and Node 22. No installed venv/conda env in the repo, set one up ad hoc:
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r backend/requirements.txt
-uvicorn backend.main:app --reload --port 8080
-```
-
-Then, in another terminal, the frontend dev server (proxies `/api` to the backend on 8080):
+Copy `.env.example` to `.env`. Only `MONI_PASSWORD_HASH` is required; the rest matter behind a reverse proxy or with passkeys and push.
 
 ```bash
-cd web
-npm ci
-npm run dev
+MONI_PASSWORD_HASH=                       # owner password hash (python -m backend.seguridad hash), single-quoted because it contains "$"; empty means every /api route answers 401
+MONI_RP_ID=moni.nufi.com.co               # WebAuthn relying party id for passkeys; use your domain, or localhost for local
+MONI_ORIGIN=https://moni.nufi.com.co      # WebAuthn origin; http://localhost:8080 for local
+MONI_TRUSTED_PROXIES=127.0.0.0/8,::1/128  # CIDRs allowed to set X-Forwarded-For/Proto; set the exact reverse proxy address, never a whole private range
+MONI_BLOCK_HOURS=24                       # how long an IP stays blocked after 3 failed logins in an hour
+MONI_PUSH_TOKEN=                          # optional bearer token (32+ chars) for POST /api/push/enviar without a session
+VAPID_SUBJECT=https://moni.nufi.com.co    # contact (https: or mailto:) sent in the Web Push VAPID claim; set your own domain
 ```
 
-Open `http://localhost:5173`. To check what production serves, run `npm run build` in `web/` and open `http://localhost:8080`: FastAPI serves `web/dist`. Without a build the API still works, but `/` answers 404.
+## Documentation
 
-## Running via Docker
+| Doc | Read it when |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | You want to know how it works and why it's built this way |
+| [Deployment](docs/DEPLOYMENT.md) | You're running it on a server, upgrading or backing it up |
+| [Development](docs/DEVELOPMENT.md) | You're changing code: setup, tests, conventions |
 
-```bash
-docker compose up --build
-```
+## Security
 
-Serves on port 8080 (mapped to container port 80). The image is built in two stages: Node builds `web/`, and the final Python image carries only `backend/` and `web/dist`. SQLite file persists in the `moni-data` named volume at `/app/backend/data`.
+Built for one owner on a home server or a private domain, not for multiple users.
 
-## Security configuration
+- **One password, no registration.** Without `MONI_PASSWORD_HASH` the API fails closed (401). Passkeys are an optional second way in, registered from Ajustes after signing in.
+- **Sessions expire.** 30 days, or 7 days without use.
+- **Failed logins block the IP.** Three failures in an hour block it for `MONI_BLOCK_HOURS`. Manage with `python -m backend.seguridad blocked` and `unblock <ip>`.
+- **Destructive actions ask for the password again.** Importing, wiping the data and registering a passkey require it.
+- **Only `web/dist` is public.** Backend code, the SQLite file and the frontend sources are not reachable over HTTP.
+- **Port 8080 listens on all interfaces by default.** If a reverse proxy is the only entry point, publish `127.0.0.1:8080:80` and set `MONI_TRUSTED_PROXIES` to its address; otherwise every client shares the proxy's IP and three failures block everyone.
 
-| Variable | Purpose |
-| --- | --- |
-| `MONI_PASSWORD_HASH` | Owner password hash. Generate with `python -m backend.seguridad hash` and quote it (it contains `$`). |
-| `MONI_RP_ID`, `MONI_ORIGIN` | WebAuthn relying party (default `moni.nufi.com.co`, `https://moni.nufi.com.co`). |
-| `MONI_TRUSTED_PROXIES` | CIDRs allowed to set `X-Forwarded-For`/`X-Forwarded-Proto`. Default is loopback only; set the exact reverse proxy address. |
-| `MONI_BLOCK_HOURS` | Block duration after 3 failures in 1 hour (default 24). |
-| `MONI_PUSH_TOKEN` | Optional bearer token (32+ chars) for `POST /api/push/enviar` without a session. |
+---
 
-Manage blocked IPs with `python -m backend.seguridad blocked` and `python -m backend.seguridad unblock <ip>`. Port 8080 is published on all interfaces by default; if a reverse proxy is the only entry point, publish `127.0.0.1:8080:80` instead.
-
-## Notifications
-
-Moni can send a push notification at 8:00 (America/Bogota) with the operations due today and tomorrow (debt installments, investment yields, recurring charges), minus the ones you already skipped or confirmed in the dashboard. The job runs inside the backend process, so run a single instance.
-
-To enable them, open Ajustes, go to Notificaciones, tap activate and accept the browser permission. "Probar" sends a test notification. Each browser or device subscribes on its own.
-
-- **HTTPS is required.** Service workers and the Notification API only work on a secure origin (or `localhost`), so serve the app behind an HTTPS reverse proxy, for example `https://moni.nufi.com.co`. Over plain HTTP on the LAN the panel can't subscribe.
-- **iOS:** push only works from the installed PWA (Safari, Share, Add to Home Screen) and on iOS 16.4 or later; open Moni from the home screen icon and enable notifications from there.
-- **`VAPID_SUBJECT`:** optional env var with the contact (`https://...` or `mailto:...`) sent to the push service in the VAPID claim. Defaults to `https://moni.nufi.com.co`; set your own domain.
-- **VAPID keys** are generated on first start and saved as `vapid_private.pem` in the data volume (`/app/backend/data`). Keep the volume: if the key is lost, every device has to subscribe again.
-- Subscriptions are only accepted for the browsers' push services (FCM, Apple, Mozilla, Windows) and are deleted automatically when the service reports them expired.
-
-```yaml
-    environment:
-      VAPID_SUBJECT: "https://moni.example.com"
-```
-
-## Deploying
-
-`.github/workflows/build-push.yml` runs lint, typecheck, tests and the frontend build, then the backend tests, and, if all pass, builds and pushes the image to `ghcr.io/<owner>/moni` (tags `latest` and the commit SHA) on every push to `main`. In production, point `docker-compose.yml` at that image instead of `build: .`:
-
-```yaml
-services:
-  moni-page:
-    image: ghcr.io/juanhdzma/moni:latest
-    ports:
-      - "8080:80"
-    restart: unless-stopped
-    volumes:
-      - moni-data:/app/backend/data
-
-volumes:
-  moni-data:
-```
-
-## Testing
-
-The backend has a pytest suite covering the money-moving paths (card balance adjustments, the composite actions: payment, contribution, withdrawal, sale), the `calculos` modules and the calculated endpoints, push, input validation, the export/import round-trip and the static docroot. `test_parity.py` checks the Python money and date math against fixtures captured from the original TypeScript implementation. `seguridad/test_csrf.py` derives the list of mutating routes from the OpenAPI schema, so every new `POST`/`PUT`/`DELETE` is checked for the `X-Moni-Request` header automatically. `test_static.py` reads `web/dist`, so build the frontend first.
-
-```bash
-cd web && npm ci && npm run build && cd ..
-pip install -r backend/requirements-dev.txt
-python -m pytest backend/tests -q
-```
-
-The frontend runs on Vitest + Testing Library. It covers formatting helpers, the shared components and controls, the data and view providers and each tab's key flows, asserting the exact request sent to a mocked `fetch`; the calculations themselves are tested in the backend. The test script pins the timezone to `America/Bogota`, so date bugs don't depend on where you run it.
-
-```bash
-cd web
-npm run lint
-npm run typecheck
-npm test
-```
-
-CI runs all of the above before building the image. Each backend test gets a throwaway SQLite file, so runs never touch your real data. jsdom has no layout, so verify visual changes by exercising the app.
-
-### Calling the API by hand
-
-Mutating requests need an `X-Moni-Request` header. Without it the backend answers `403`; this is what stops a cross-origin `<form>` from hitting a destructive endpoint (see `require_csrf_header` in `backend/core/csrf.py`). Reads need nothing.
-
-```bash
-curl localhost:8080/api/bootstrap
-curl 'localhost:8080/api/dashboard/gastos?periodo=3M'
-curl -X POST localhost:8080/api/tx -H 'X-Moni-Request: 1' -H 'Content-Type: application/json' \
-  -d '{"fecha":"2026-07-31","tipo":"gasto","categoria":"Mercado","monto":50000}'
-```
-
-## License
-
-[AGPL-3.0](LICENSE)
+AGPL-3.0 · [LICENSE](LICENSE)
