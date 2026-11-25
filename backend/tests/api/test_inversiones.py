@@ -187,3 +187,82 @@ def test_montos_de_inversion_se_redondean_a_pesos(client, campo):
 
 def test_tasa_se_guarda_como_ea_con_dos_decimales(client):
     assert _crear(client, tasa_ea=12.3456)["tasa_ea"] == 12.35
+
+
+def _cdt(client):
+    return client.post(
+        "/api/inv",
+        json={"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 1000, "tasa_ea": 12},
+    ).json()
+
+
+def test_aporte_suma_a_invertido_y_fija_el_valor(client):
+    inv = client.post(
+        "/api/inv",
+        json={"nombre": "Fondo", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 1000},
+    ).json()
+    client.post(
+        f"/api/inv/{inv['id']}/aporte",
+        json={"monto": 500, "nuevo_valor": 1600, "fecha": "2026-07-05"},
+    )
+    i = _inv(client, inv["id"])
+    assert (i["monto_invertido"], i["valor_actual"]) == (1500, 1600)
+    assert i["valor_actualizado_en"] == "2026-07-05"
+
+
+def test_rendimiento_pagado_entra_al_ledger_y_no_toca_el_valor(client):
+    inv = _cdt(client)
+    client.post(f"/api/inv/{inv['id']}/rendimiento", json={"monto": 95, "fecha": "2026-07-01"})
+    assert _inv(client, inv["id"])["valor_actual"] == 1000
+    tx = client.get("/api/backup").json()["transacciones"]
+    assert len(tx) == 1
+    assert (tx[0]["tipo"], tx[0]["monto"], tx[0]["categoria"]) == ("ingreso", 95, "Intereses")
+
+
+def test_el_rendimiento_nunca_cuenta_de_los_dos_lados(client):
+    inv = _cdt(client)
+    for capitaliza in (True, False):
+        client.post(
+            f"/api/inv/{inv['id']}/rendimiento",
+            json={"monto": 95, "fecha": "2026-07-01", "capitaliza": capitaliza},
+        )
+    valor = _inv(client, inv["id"])["valor_actual"]
+    ledger = sum(t["monto"] for t in client.get("/api/backup").json()["transacciones"])
+    assert (valor, ledger) == (1095, 95)
+
+
+def test_rendimiento_pagado_sin_registrar_no_cambia_nada(client):
+    inv = _cdt(client)
+    client.post(
+        f"/api/inv/{inv['id']}/rendimiento",
+        json={"monto": 95, "fecha": "2026-07-01", "registrar_tx": False},
+    )
+    assert _inv(client, inv["id"])["valor_actual"] == 1000
+    assert client.get("/api/backup").json()["transacciones"] == []
+
+
+def test_retiro_parcial_reduce_capital_a_prorrata(client):
+    inv = client.post(
+        "/api/inv",
+        json={"nombre": "Fondo", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 2000},
+    ).json()
+    client.post(
+        f"/api/inv/{inv['id']}/retiro",
+        json={"tipo": "parcial", "monto": 1000, "saldo_queda": 1000, "fecha": "2026-07-01"},
+    )
+    i = _inv(client, inv["id"])
+    assert (i["monto_invertido"], i["valor_actual"]) == (500, 1000)
+
+
+def test_el_retiro_parcial_deja_el_capital_en_pesos_enteros(client):
+    inv = client.post(
+        "/api/inv",
+        json={"nombre": "Fondo", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 3000},
+    ).json()
+    client.post(
+        f"/api/inv/{inv['id']}/retiro",
+        json={"tipo": "parcial", "monto": 1000, "saldo_queda": 2000, "fecha": "2026-07-01"},
+    )
+    i = _inv(client, inv["id"])
+    assert i["monto_invertido"] == 667
+    assert i["monto_invertido"] == int(i["monto_invertido"])

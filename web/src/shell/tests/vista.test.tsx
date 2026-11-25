@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useState } from 'react'
@@ -20,6 +20,13 @@ function Harness({ clave }: { clave: string | null }) {
       <button onClick={() => void reload(['transacciones'])}>recargar</button>
     </>
   )
+}
+
+async function entregar(fn: () => void) {
+  await act(async () => {
+    fn()
+    await Promise.resolve()
+  })
 }
 
 afterEach(() => vi.unstubAllGlobals())
@@ -163,5 +170,95 @@ describe('useVista', () => {
     await user.click(screen.getByText('alternar'))
     await user.click(screen.getByText('alternar'))
     expect(f.callsTo('GET', '/api/deudas/resumen')).toHaveLength(1)
+  })
+
+  describe('respuestas viejas con dos fetches en vuelo', () => {
+    function pendientes<T>() {
+      const cola: { resolver: (v: T) => void; rechazar: (e: Error) => void }[] = []
+      const cargar = () => new Promise<T>((resolver, rechazar) => cola.push({ resolver, rechazar }))
+      return { cola, cargar }
+    }
+
+    function Lista({ clave, cargar }: { clave: string; cargar: () => Promise<string> }) {
+      const { data, loading, error } = useVista(clave, cargar, ['transacciones'])
+      const { reload, banner } = useData()
+      return (
+        <>
+          <output data-testid="data">{data ?? '-'}</output>
+          <output data-testid="loading">{String(loading)}</output>
+          <output data-testid="error">{error}</output>
+          <output data-testid="banner">{banner}</output>
+          <button onClick={() => void reload(['transacciones'])}>recargar</button>
+        </>
+      )
+    }
+
+    const montar = (clave: string, cargar: () => Promise<string>) =>
+      render(
+        <DataProvider initialEstado={ESTADO_VACIO}>
+          <Lista clave={clave} cargar={cargar} />
+        </DataProvider>,
+      )
+
+    it('al recargar con la misma clave, la respuesta vieja que llega tarde no pisa la nueva', async () => {
+      const user = userEvent.setup()
+      mockFetch()
+      const { cola, cargar } = pendientes<string>()
+      montar('k', cargar)
+      await waitFor(() => expect(cola).toHaveLength(1))
+      await user.click(screen.getByText('recargar'))
+      await waitFor(() => expect(cola).toHaveLength(2))
+      await entregar(() => cola[1]?.resolver('nueva'))
+      expect(screen.getByTestId('data')).toHaveTextContent('nueva')
+      await entregar(() => cola[0]?.resolver('vieja'))
+      expect(screen.getByTestId('data')).toHaveTextContent('nueva')
+      expect(screen.getByTestId('loading')).toHaveTextContent('false')
+    })
+
+    it('un error viejo que llega tarde no pone banner ni error sobre una carga nueva exitosa', async () => {
+      const user = userEvent.setup()
+      mockFetch()
+      const { cola, cargar } = pendientes<string>()
+      montar('k', cargar)
+      await waitFor(() => expect(cola).toHaveLength(1))
+      await user.click(screen.getByText('recargar'))
+      await waitFor(() => expect(cola).toHaveLength(2))
+      await entregar(() => cola[1]?.resolver('nueva'))
+      await entregar(() => cola[0]?.rechazar(new Error('viejo')))
+      expect(screen.getByTestId('data')).toHaveTextContent('nueva')
+      expect(screen.getByTestId('error')).toBeEmptyDOMElement()
+      expect(screen.getByTestId('banner')).toBeEmptyDOMElement()
+    })
+
+    it('al cambiar de clave, la respuesta de la anterior no reemplaza la actual ni la deja cargando', async () => {
+      const { cola, cargar } = pendientes<string>()
+      const r = montar('a', cargar)
+      await waitFor(() => expect(cola).toHaveLength(1))
+      r.rerender(
+        <DataProvider initialEstado={ESTADO_VACIO}>
+          <Lista clave="b" cargar={cargar} />
+        </DataProvider>,
+      )
+      await waitFor(() => expect(cola).toHaveLength(2))
+      await entregar(() => cola[1]?.resolver('de b'))
+      await entregar(() => cola[0]?.resolver('de a'))
+      expect(screen.getByTestId('data')).toHaveTextContent('de b')
+      expect(screen.getByTestId('loading')).toHaveTextContent('false')
+    })
+
+    it('si falla la recarga, los datos anteriores de la misma clave se conservan junto al error', async () => {
+      const user = userEvent.setup()
+      mockFetch()
+      const { cola, cargar } = pendientes<string>()
+      montar('k', cargar)
+      await waitFor(() => expect(cola).toHaveLength(1))
+      await entregar(() => cola[0]?.resolver('primera'))
+      await user.click(screen.getByText('recargar'))
+      await waitFor(() => expect(cola).toHaveLength(2))
+      await entregar(() => cola[1]?.rechazar(new Error('se cayó')))
+      expect(screen.getByTestId('data')).toHaveTextContent('primera')
+      expect(screen.getByTestId('error')).toHaveTextContent('se cayó')
+      expect(screen.getByTestId('banner')).toHaveTextContent('se cayó')
+    })
   })
 })

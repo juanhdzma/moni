@@ -176,6 +176,7 @@ def test_error_no_trae_header(client):
 def test_preview_y_lecturas_no_traen_header(client, prestamo):
     r = client.post(f"/api/deuda/{prestamo['id']}/pago/preview", json={"modo": "abono", "total_pagado": 100_000, "nuevo_saldo": 900_000})
     assert r.status_code == 200 and HEADER_AFECTADAS not in r.headers
+    assert r.json() == {"capital": 100_000, "intereses": 0}
     assert HEADER_AFECTADAS not in client.get("/api/meta").headers
 
 

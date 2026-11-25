@@ -1,6 +1,8 @@
+import pytest
+
 from backend.calculos import operaciones as op
 
-from .helpers_operaciones import D, fecha, recurrente
+from ..helpers_operaciones import D, fecha, recurrente
 
 
 def proxima(inicio, frec, hoy):
@@ -53,3 +55,26 @@ def test_derivar_recurrente():
     pausada = op.derivar_recurrente(recurrente(activo=0), D(2026, 8, 1))
     assert pausada["proximo_pago"] is None and pausada["activo"] is False
     assert op.derivar_recurrente(recurrente(frecuencia="x"), D(2026, 8, 1))["frecuencia_label"] == "x"
+
+
+def test_opciones_frecuencia_en_orden_con_value_y_label():
+    assert op.frecuencias.opciones_frecuencia() == [
+        {"value": "semanal", "label": "Semanal"}, {"value": "quincenal", "label": "Quincenal"},
+        {"value": "mensual", "label": "Mensual"}, {"value": "bimestral", "label": "Bimestral"},
+        {"value": "trimestral", "label": "Trimestral"}, {"value": "semestral", "label": "Semestral"},
+        {"value": "anual", "label": "Anual"},
+    ]
+
+
+def test_to_mensual_por_frecuencia():
+    m = op.frecuencias.to_mensual
+    assert m(1200, "mensual") == 1200 and m(1200, "anual") == 100 and m(600, "bimestral") == 300
+    assert m(900, "trimestral") == 300 and m(600, "semestral") == 100 and m(100, "quincenal") == 200
+    assert m(12, "semanal") == pytest.approx(52) and m(100, "desconocida") == 100
+
+
+def test_proxima_trimestral_y_semestral_con_inicio_en_el_pasado():
+    assert proxima("2026-01-31", "trimestral", "2026-08-01") == D(2026, 10, 31)
+    assert proxima("2026-01-15", "semestral", "2026-07-15") == D(2026, 7, 15)
+    assert proxima("2026-01-15", "semestral", "2026-07-16") == D(2027, 1, 15)
+    assert proxima("2025-12-01", "bimestral", "2026-08-01") == D(2026, 8, 1)

@@ -49,7 +49,7 @@ def test_opciones_tx_inexistente(client):
 def test_fecha_omitida_toma_ahora_de_bogota(client):
     r = client.post("/api/tx", json={"tipo": "gasto", "categoria": "Comida", "monto": 10})
     assert r.status_code == 200
-    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}", r.json()["fecha"])
+    assert r.json()["fecha"] == "2026-07-15T10:30" and r.json()["monto"] == 10
 
 
 def test_listado_trae_etiquetas_de_tipo(client):

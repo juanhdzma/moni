@@ -160,3 +160,130 @@ def test_columnas_transaccion_marcan_ordenable_y_oculta_en_movil():
     assert por_col["tipo"]["oculta_en_movil"] and por_col["categoria"]["oculta_en_movil"]
     assert not por_col["fecha"]["oculta_en_movil"] and por_col["fecha"]["ordenable"]
     assert por_col["metodo_pago"]["ordenable"] is False
+
+
+CATEGORIAS = {
+    "ingreso": [{"nombre": "Salario"}, {"nombre": "Extra"}],
+    "gasto": [{"nombre": "Comida"}, {"nombre": "Ocio"}],
+}
+DEUDAS = [
+    {"id": 1, "nombre": "Visa", "es_tarjeta": 1},
+    {"id": 2, "nombre": "Préstamo", "es_tarjeta": 0},
+    {"id": 3, "nombre": "Master", "es_tarjeta": True},
+]
+
+
+def test_opciones_tx_nueva_ofrece_gasto_y_la_fecha_de_ahora():
+    assert L.opciones_tx(CATEGORIAS, DEUDAS, None, "2026-08-20T10:30") == {
+        "tarjetas": [{"id": 1, "nombre": "Visa"}, {"id": 3, "nombre": "Master"}],
+        "categorias": {"ingreso": ["Salario", "Extra"], "gasto": ["Comida", "Ocio"]},
+        "categoria_default": {"ingreso": "Salario", "gasto": "Comida"},
+        "inicial": {"tipo": "gasto", "categoria": "Comida", "tarjeta_id": None, "fecha": "2026-08-20T10:30"},
+    }
+
+
+def test_opciones_tx_edicion_de_ingreso_conserva_categoria_y_fecha():
+    r = L.opciones_tx(CATEGORIAS, DEUDAS, tx("ingreso", "Extra", 5, fecha="2026-03-04T08:15"), "ahora")
+    assert r["inicial"] == {"tipo": "ingreso", "categoria": "Extra", "tarjeta_id": None, "fecha": "2026-03-04T08:15"}
+
+
+def test_opciones_tx_edicion_de_gasto_con_tarjeta_conserva_la_tarjeta():
+    r = L.opciones_tx(CATEGORIAS, DEUDAS, tx("gasto", "Ocio", 5, tarjeta_id=3, fecha="2026-03-04"), "ahora")
+    assert r["inicial"] == {"tipo": "gasto", "categoria": "Ocio", "tarjeta_id": 3, "fecha": "2026-03-04T00:00"}
+
+
+def test_opciones_tx_tarjeta_que_ya_no_existe_o_no_es_tarjeta_se_descarta():
+    assert L.opciones_tx(CATEGORIAS, DEUDAS, tx("gasto", "Ocio", 5, tarjeta_id=99), "a")["inicial"]["tarjeta_id"] is None
+    assert L.opciones_tx(CATEGORIAS, DEUDAS, tx("gasto", "Ocio", 5, tarjeta_id=2), "a")["inicial"]["tarjeta_id"] is None
+    assert L.opciones_tx(CATEGORIAS, DEUDAS, tx("gasto", "Ocio", 5, tarjeta_id=1), "a")["inicial"]["tarjeta_id"] == 1
+
+
+def test_opciones_tx_agrega_la_categoria_borrada_del_tx_solo_a_su_tipo():
+    r = L.opciones_tx(CATEGORIAS, DEUDAS, tx("gasto", "Vieja", 5), "a")
+    assert r["categorias"] == {"ingreso": ["Salario", "Extra"], "gasto": ["Comida", "Ocio", "Vieja"]}
+    assert r["categoria_default"]["gasto"] == "Comida" and r["inicial"]["categoria"] == "Vieja"
+    assert CATEGORIAS["gasto"] == [{"nombre": "Comida"}, {"nombre": "Ocio"}]
+    r = L.opciones_tx(CATEGORIAS, DEUDAS, tx("ingreso", "Vieja", 5), "a")
+    assert r["categorias"]["ingreso"] == ["Salario", "Extra", "Vieja"] and r["categorias"]["gasto"] == ["Comida", "Ocio"]
+
+
+def test_opciones_tx_sin_categorias_usa_cadena_vacia():
+    r = L.opciones_tx({"ingreso": [], "gasto": []}, [], None, "a")
+    assert r["categoria_default"] == {"ingreso": "", "gasto": ""} and r["inicial"]["categoria"] == "" and r["tarjetas"] == []
+    r = L.opciones_tx({"ingreso": [], "gasto": []}, [], tx("gasto", "", 5), "a")
+    assert r["inicial"]["categoria"] == ""
+
+
+def test_opciones_tx_normaliza_la_fecha_del_tx():
+    for fecha, esperado in [("2026-03-04", "2026-03-04T00:00"), ("2026-03-04T08:15", "2026-03-04T08:15"),
+                            ("4/3/2026 08:15", "2026-03-04T08:15"), ("2026-03-04T08:15:30", "2026-03-04T08:15"),
+                            ("basura", ""), ("", "")]:
+        assert L.opciones_tx(CATEGORIAS, [], tx("gasto", "Ocio", 1, fecha=fecha), "a")["inicial"]["fecha"] == esperado
+
+
+def test_columnas_transaccion_completas():
+    assert L.columnas_transaccion() == [
+        {"col": "fecha", "label": "Fecha", "dir_defecto": -1, "ordenable": True, "oculta_en_movil": False},
+        {"col": "tipo", "label": "Tipo", "dir_defecto": 1, "ordenable": True, "oculta_en_movil": True},
+        {"col": "categoria", "label": "Categoría", "dir_defecto": 1, "ordenable": True, "oculta_en_movil": True},
+        {"col": "descripcion", "label": "Descripción", "dir_defecto": 1, "ordenable": True, "oculta_en_movil": False},
+        {"col": "monto", "label": "Monto", "dir_defecto": -1, "ordenable": True, "oculta_en_movil": False},
+        {"col": "metodo_pago", "label": "Método de pago", "dir_defecto": 1, "ordenable": False, "oculta_en_movil": False},
+    ]
+
+
+def test_texto_vacio_movimientos():
+    assert L.texto_vacio_movimientos() == {"titulo": "Sin transacciones", "texto": "Registrá un ingreso o gasto y aparece acá."}
+
+
+def test_listar_devuelve_la_estructura_completa():
+    txs = [tx("gasto", "Comida", 30, fecha="2026-08-20", id=1), tx("ingreso", "Salario", 100, fecha="2026-07-01", id=2)]
+    r = L.listar_transacciones(txs, hoy=HOY)
+    assert r["items"] == [
+        {**txs[0], "tipo_label": "Gasto", "grupo": "Hoy"},
+        {**txs[1], "tipo_label": "Ingreso", "grupo": "Julio - 2026"},
+    ]
+    assert r["filtros"] == {"tipo": "", "mes": "", "cat": ""} and r["pills"] == []
+    assert r["opciones"] == {
+        "meses": [{"value": "2026-08", "label": "agosto de 2026"}, {"value": "2026-07", "label": "julio de 2026"}],
+        "categorias": ["Comida", "Salario"],
+        "tipos": [{"value": "ingreso", "label": "Ingresos"}, {"value": "gasto", "label": "Gastos"}],
+    }
+    assert r["texto_vacio"] == {"titulo": "Sin movimientos", "texto": "Agregá un ingreso o gasto con el botón de arriba."}
+    assert r["resumen"]["titulo"] == "Te quedó" and r["resumen"]["dato"]["texto"] == "entró $100 · salió $30"
+
+
+def test_listar_usa_el_simbolo_en_el_resumen_y_los_defaults_de_orden():
+    txs = [tx("gasto", "A", 10, fecha="2026-08-01", id=1), tx("gasto", "A", 20, fecha="2026-08-02", id=2)]
+    r = L.listar_transacciones(txs, hoy=HOY, simbolo="US$")
+    assert [t["id"] for t in r["items"]] == [2, 1]
+    assert r["resumen"]["dato"]["texto"] == "entró US$0 · salió US$30"
+    assert L.listar_transacciones(txs, hoy=HOY)["filtros"] == {"tipo": "", "mes": "", "cat": ""}
+
+
+def test_grupo_fecha_invalida_es_cadena_vacia():
+    assert L.grupo_fecha("basura", HOY) == "" and L.grupo_fecha("", HOY) == ""
+
+
+def test_columna_invalida_mensaje_exacto():
+    try:
+        L.listar_transacciones([], "otra", hoy=HOY)
+    except Exception as e:
+        assert str(e) == "columna inválida" and e.status == 400
+    else:
+        raise AssertionError("debia fallar")
+
+
+def test_derivar_tx_firma_el_monto_y_trunca_el_metodo_de_pago_en_el_borde():
+    deudas = {7: {"nombre": "x" * 20, "franquicia": "Visa"}, 8: {"nombre": "y" * 21, "franquicia": None}}
+    assert L.derivar_tx(tx("gasto", "A", 5, tarjeta_id=7), deudas)["metodo_pago"] == "x" * 20
+    assert L.derivar_tx(tx("gasto", "A", 5, tarjeta_id=8), deudas)["metodo_pago"] == "y" * 20 + "…"
+    assert L.derivar_tx(tx("gasto", "A", 5, tarjeta_id=8), deudas)["icono_metodo"] == "Otra"
+    assert L.derivar_tx(tx("gasto", "A", 5), deudas)["monto_firmado"] == -5
+    assert L.derivar_tx(tx("ingreso", "A", 5), deudas)["monto_firmado"] == 5
+    assert L.derivar_tx(tx("transfer", "A", 5), deudas)["monto_firmado"] == -5
+
+
+def test_resumen_tx_suma_varios_ingresos_y_gastos():
+    r = L.resumen_tx([tx("ingreso", "S", 100), tx("ingreso", "S", 50), tx("gasto", "A", 10), tx("gasto", "A", 5), tx("transfer", "P", 999)])
+    assert (r["ingresos"], r["gastos"], r["neto"], r["gastos_firmado"]) == (150, 15, 135, -15)

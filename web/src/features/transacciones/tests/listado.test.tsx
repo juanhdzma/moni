@@ -16,15 +16,15 @@ describe('Transacciones tab', () => {
   it('pide GET /api/tx con orden y filtros por defecto y pinta lo devuelto', async () => {
     const f = mockFetch()
     ui()
-    expect(await screen.findByText('Abril - 2026')).toBeTruthy()
+    expect(await screen.findByText('Abril - 2026')).toBeInTheDocument()
     expect(f.callsTo('GET', URL_BASE)).toHaveLength(1)
-    expect(screen.getByText('+$900.000')).toBeTruthy()
-    expect(screen.getByText('Marzo - 2026')).toBeTruthy()
+    expect(screen.getByText('+$900.000')).toBeInTheDocument()
+    expect(screen.getByText('Marzo - 2026')).toBeInTheDocument()
     expect(screen.getAllByText('Visa Oro').length).toBeGreaterThan(0)
     expect(screen.getAllByTitle('Visa Oro').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Efectivo / Débito').length).toBeGreaterThan(0)
-    expect(document.querySelector('img[src="/assets/franquicias/visa.svg"]')).toBeTruthy()
-    expect(screen.getByText('Te quedó')).toBeTruthy()
+    expect(document.querySelector('img[src="/assets/franquicias/visa.svg"]')).toBeInTheDocument()
+    expect(screen.getByText('Te quedó')).toBeInTheDocument()
   })
 
   it('shows the loading row until the first load finishes', () => {
@@ -37,7 +37,7 @@ describe('Transacciones tab', () => {
   it('shows empty state', async () => {
     mockFetch({ 'GET /api/tx': listado({ items: [], opciones: { meses: [], categorias: [], tipos: [] } }) })
     ui(estado())
-    expect(await screen.findByText('Sin movimientos')).toBeTruthy()
+    expect(await screen.findByText('Sin movimientos')).toBeInTheDocument()
   })
 
   it('ordena por header con click y teclado pidiendo col y dir al backend', async () => {
@@ -93,14 +93,14 @@ describe('Transacciones tab', () => {
     await user.click(screen.getByRole('option', { name: 'Gastos' }))
     await waitFor(() => expect(f.callsTo('GET', '/api/tx?col=fecha&dir=-1&tipo=gasto&mes=&cat=')).toHaveLength(1))
     await waitFor(() => expect(screen.queryByText('Salario', { selector: 'td' })).toBeNull())
-    expect(screen.getByText('Comida', { selector: 'td' })).toBeTruthy()
+    expect(screen.getByText('Comida', { selector: 'td' })).toBeInTheDocument()
     const pills = document.getElementById('tx-filter-pills') as HTMLElement
     expect(pills.textContent).toContain('Gastos')
     expect(document.getElementById('filter-toggle-btn')?.className).toContain('has-filters')
-    expect(screen.getByText('Te quedó con estos filtros')).toBeTruthy()
+    expect(screen.getByText('Te quedó con estos filtros')).toBeInTheDocument()
     await user.click(within(pills).getByRole('button', { name: 'Quitar filtro' }))
     await waitFor(() => expect(f.callsTo('GET', URL_BASE).length).toBeGreaterThan(1))
-    expect(await screen.findByText('Salario', { selector: 'td' })).toBeTruthy()
+    expect(await screen.findByText('Salario', { selector: 'td' })).toBeInTheDocument()
   })
 
   it('manda mes y cat elegidos a las opciones devueltas por el backend', async () => {
@@ -129,8 +129,8 @@ describe('Transacciones tab', () => {
     expect(row.getAttribute('tabindex')).toBe('0')
     row.focus()
     await user.keyboard('{Enter}')
-    expect(await screen.findByText('Editar movimiento')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Eliminar' })).toBeTruthy()
+    expect(await screen.findByText('Editar movimiento')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Eliminar' })).toBeInTheDocument()
   })
 })
 
@@ -157,7 +157,7 @@ describe('fila y columnas desde el backend', () => {
     mockFetch({ 'GET /api/tx': listado({ items: [salario, mercado, transfer] }) })
     ui()
     await screen.findByText('Abril - 2026'.replace('Abril', 'Marzo'))
-    expect(screen.getByRole('button', { name: 'Editar Mercado' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Editar Mercado' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Editar Pago deuda' })).toBeNull()
     const montos = [...document.querySelectorAll('td[data-label="Monto"] span')]
     expect(montos.map((m) => m.className)).toEqual(['text-inversiones-text', 'text-foreground', 'text-muted-foreground'])

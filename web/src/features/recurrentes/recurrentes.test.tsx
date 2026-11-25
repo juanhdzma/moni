@@ -79,14 +79,14 @@ describe('render', () => {
   it('renders the next payment text and the monthly amount from the backend', async () => {
     view()
     const ing = document.getElementById('rec-ingresos') as HTMLElement
-    await waitFor(() => expect(within(ing).getByText('hoy')).toBeTruthy())
+    await waitFor(() => expect(within(ing).getByText('hoy')).toBeInTheDocument())
     const gas = document.getElementById('rec-gastos') as HTMLElement
-    expect(within(gas).getByText('en 5d')).toBeTruthy()
+    expect(within(gas).getByText('en 5d')).toBeInTheDocument()
     expect(gas.querySelectorAll('[data-rec-next]')).toHaveLength(1)
     expect(gas.querySelector('[data-rec][data-inactive]')?.textContent).toContain('Gym')
     expect(gas.querySelector('[data-rec][data-inactive]')?.textContent).toContain('Trimestral')
     expect(gas.querySelector('[data-rec][data-inactive] [data-rec-amount]')?.textContent).toContain('40.000')
-    expect(within(gas).getByText('plan')).toBeTruthy()
+    expect(within(gas).getByText('plan')).toBeInTheDocument()
   })
 
   it('keeps the backend order and shows empty states', async () => {
@@ -96,9 +96,9 @@ describe('render', () => {
     expect(names).toEqual(['Gym', 'Netflix'])
     document.body.innerHTML = ''
     view([], resumen({ ingresos: [], gastos: [] }))
-    expect(await screen.findByText('Sin ingresos recurrentes')).toBeTruthy()
-    expect(screen.getByText('Agregá un sueldo o ingreso fijo con el botón Nuevo.')).toBeTruthy()
-    expect(screen.getByText('Sin gastos recurrentes')).toBeTruthy()
+    expect(await screen.findByText('Sin ingresos recurrentes')).toBeInTheDocument()
+    expect(screen.getByText('Agregá un sueldo o ingreso fijo con el botón Nuevo.')).toBeInTheDocument()
+    expect(screen.getByText('Sin gastos recurrentes')).toBeInTheDocument()
   })
 
   it('shows a skeleton and no empty state until the summary arrives', async () => {
@@ -118,7 +118,7 @@ describe('render', () => {
     await user.tab()
     expect(document.activeElement?.tagName).toBe('BUTTON')
     await user.click(screen.getAllByText('Editar')[0] as HTMLElement)
-    expect(screen.getByText('Editar recurrente')).toBeTruthy()
+    expect(screen.getByText('Editar recurrente')).toBeInTheDocument()
   })
 })
 
@@ -150,7 +150,7 @@ describe('create / edit / delete', () => {
   it('create posts the payload', async () => {
     const f = view(items, resumen(), { 'POST /api/rec': {} })
     await userEvent.click(screen.getByText('Nuevo'))
-    expect(screen.getByText('Nuevo recurrente')).toBeTruthy()
+    expect(screen.getByText('Nuevo recurrente')).toBeInTheDocument()
     expect(document.querySelector('.tipo-btn.sel')).toBe(document.getElementById('rt-gasto'))
     await userEvent.type(screen.getByPlaceholderText('Ej. Netflix'), '  Spotify ')
     await userEvent.type(document.getElementById('m-monto') as HTMLElement, '25000')
@@ -181,7 +181,7 @@ describe('create / edit / delete', () => {
     const f = view(items, resumen(), { 'PUT /api/rec/3': {} })
     const row = (await screen.findByText('Gym')).closest('[data-rec]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
-    expect(screen.getByText('Editar recurrente')).toBeTruthy()
+    expect(screen.getByText('Editar recurrente')).toBeInTheDocument()
     expect((screen.getByPlaceholderText<HTMLInputElement>('Ej. Netflix')).value).toBe('Gym')
     expect((document.getElementById('m-monto') as HTMLInputElement).value).toBe('120.000')
     await userEvent.click(screen.getByText('Guardar cambios'))
@@ -208,7 +208,7 @@ describe('create / edit / delete', () => {
     view()
     await userEvent.click(screen.getByText('Nuevo'))
     await userEvent.click(document.getElementById('m-frecuencia') as HTMLElement)
-    expect(await screen.findByText('Trimestral', { selector: '[class*=cdd]' })).toBeTruthy()
+    expect(await screen.findByText('Trimestral', { selector: '[class*=cdd]' })).toBeInTheDocument()
   })
 
   it('save error shows inline', async () => {
@@ -259,7 +259,7 @@ describe('materialize', () => {
     const f = mockFetch({ 'POST /api/tx': {} })
     renderWithProviders(<Harness id={2} />, { estado: estado({ recurrentes: items }) })
     act(() => screen.getByText('open').click())
-    expect(await screen.findByText('Registrar · Netflix')).toBeTruthy()
+    expect(await screen.findByText('Registrar · Netflix')).toBeInTheDocument()
     await waitFor(() => expect(document.getElementById('m-desc')).not.toBeNull())
     expect((document.getElementById('m-desc') as HTMLInputElement).value).toBe('Netflix')
     expect((document.getElementById('m-monto') as HTMLInputElement).value).toBe('30.000')

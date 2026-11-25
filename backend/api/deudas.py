@@ -11,6 +11,7 @@ from ..core.db import conexion
 from ..core.estado import coleccion, detalle, simbolo
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import (
+    iniciar_escritura,
     aplicar_pago_deuda, desligar_tx, fijar_saldo, get_row, guardar_y_leer, insert_row, insert_tx, tiene_tx_ligadas, update_row,
 )
 from ..core.tablas import DEUDA_COLS
@@ -66,6 +67,7 @@ def _saldo_tras_adelanto(tarjeta: dict, body: DeudaAdelanto | AdelantoPreview) -
 @router.post("/api/deuda/{deuda_id:int}/pago", response_model=DeudaCruda)
 def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         deuda = get_row(conn, "deudas", deuda_id)
         pago = movimientos.aplicar_pago(
             deuda, total_pagado=body.total_pagado, nuevo_saldo=body.nuevo_saldo, intereses=body.intereses,
@@ -83,6 +85,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
 @router.post("/api/deuda/{deuda_id:int}/adelanto", response_model=DeudaCruda)
 def pedir_adelanto(deuda_id: int, body: DeudaAdelanto, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         tarjeta = get_row(conn, "deudas", deuda_id)
         nuevo_saldo = _saldo_tras_adelanto(tarjeta, body)
         movimientos.validar_adelanto(bool(tarjeta["es_tarjeta"]), tarjeta["saldo_actual"], nuevo_saldo)

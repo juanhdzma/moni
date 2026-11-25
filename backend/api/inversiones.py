@@ -8,7 +8,7 @@ from ..core.afectadas import INVERSIONES, afectar, con_movimiento, con_op_oculta
 from ..core.db import conexion
 from ..core.estado import coleccion, simbolo
 from ..core.ops_ocultas import ocultar_op
-from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row
+from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row, iniciar_escritura
 from ..core.tablas import INV_COLS
 from ..schemas.inversion import InvAporte, InvIn, InvRendimiento, InvRetiro, InvValor
 from ..schemas.previews import MontoPreview, NuevoValor
@@ -58,6 +58,7 @@ def _persistir(conn, inv_id: int, cambio: CambioInversion) -> tuple[str, ...]:
 @router.post("/api/inv/{inv_id:int}/rendimiento", description=textos.DESCRIPCION_RENDIMIENTO, response_model=InvCruda)
 def registrar_rendimiento(inv_id: int, body: InvRendimiento, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         inv = get_row(conn, "inversiones", inv_id)
         afectadas = _persistir(conn, inv_id, movimientos.aplicar_rendimiento(
             inv, body.monto, fecha_o_ahora(body.fecha), body.notas, body.capitaliza, body.registrar_tx
@@ -70,6 +71,7 @@ def registrar_rendimiento(inv_id: int, body: InvRendimiento, response: Response)
 @router.post("/api/inv/{inv_id:int}/aporte", response_model=InvCruda)
 def aportar_inv(inv_id: int, body: InvAporte, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         inv = get_row(conn, "inversiones", inv_id)
         afectar(response, *_persistir(conn, inv_id, movimientos.aplicar_aporte(
             inv, body.monto, body.nuevo_valor, fecha_o_ahora(body.fecha), body.notas, body.registrar_tx
@@ -80,6 +82,7 @@ def aportar_inv(inv_id: int, body: InvAporte, response: Response):
 @router.post("/api/inv/{inv_id:int}/retiro", response_model=Ok)
 def retirar_inv(inv_id: int, body: InvRetiro, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         inv = get_row(conn, "inversiones", inv_id)
         afectar(response, *_persistir(conn, inv_id, movimientos.aplicar_retiro(
             inv, body.tipo, body.monto, body.saldo_queda, fecha_o_ahora(body.fecha), body.notas, body.registrar_tx
@@ -91,6 +94,7 @@ def retirar_inv(inv_id: int, body: InvRetiro, response: Response):
 @router.post("/api/inv/{inv_id:int}/valor", response_model=InvCruda)
 def actualizar_valor_inv(inv_id: int, body: InvValor, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         get_row(conn, "inversiones", inv_id)
         cambios = movimientos.aplicar_valor(body.nuevo_valor, fecha_o_ahora(body.fecha))
         actualizar_columnas(conn, "inversiones", inv_id, cambios)

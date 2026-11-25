@@ -47,7 +47,11 @@ def test_import_rechaza_filas_corruptas(client):
 
 
 def test_import_viejo_sin_categorias_ni_ops_entra(client):
-    assert importar(client, {"transacciones": [TX_OK]}).status_code == 200
+    r = importar(client, {"transacciones": [TX_OK]})
+    assert r.status_code == 200 and r.json()["counts"]["transacciones"] == 1
+    estado = client.get("/api/backup").json()
+    assert [(t["fecha"], t["tipo"], t["categoria"], t["monto"]) for t in estado["transacciones"]] == [("2026-07-01", "gasto", "Mercado", 100)]
+    assert estado["categorias"] == [] and estado["ops_ocultas"] == []
 
 
 def test_import_corrupto_no_deja_nada_a_medias(client):
@@ -76,7 +80,8 @@ def test_truncate_reinicia_ids_y_vacia_categorias_y_ops_pero_no_ajustes(client):
     client.post("/api/categorias", json={"tipo": "gasto", "nombre": "Extra"})
     client.post("/api/ops-ocultas", json={"clave": "deuda:1:2026-01-01"})
     client.put("/api/ajustes", json={"moneda_simbolo": "US$"})
-    assert truncar(client).status_code == 200
+    r = truncar(client)
+    assert (r.status_code, r.json()) == (200, {"ok": True})
     assert client.get("/api/bootstrap").json()["categorias"]["gasto"] == [
         {"nombre": "Inversión", "sistema": True},
         {"nombre": "Compra activos", "sistema": True},
@@ -88,7 +93,10 @@ def test_truncate_reinicia_ids_y_vacia_categorias_y_ops_pero_no_ajustes(client):
 
 def test_lectura_no_necesita_header_csrf(client):
     client.headers.pop("x-moni-request")
-    assert client.get("/api/backup").status_code == 200
+    r = client.get("/api/backup")
+    assert r.status_code == 200 and set(r.json()) == {
+        "transacciones", "deudas", "inversiones", "activos", "recurrentes", "categorias", "ops_ocultas", "ajustes",
+    }
 
 
 def test_import_restaura_ajustes_y_rechaza_simbolo_invalido(client):
@@ -148,7 +156,8 @@ def test_import_rechaza_total_intereses_invalido(client, valor):
     fila = {"nombre": "D", "saldo_actual": 1000, "total_intereses": valor}
     r = importar(client, {"deudas": [fila]})
     assert r.status_code == 400 and "total_intereses" in r.json()["detail"]
-    assert client.get("/api/deudas/resumen").status_code == 200
+    resumen = client.get("/api/deudas/resumen").json()
+    assert resumen["creditos"] == [] and resumen["tarjetas"] == []
 
 
 def test_import_acepta_id_y_total_intereses_validos(client):
@@ -162,7 +171,8 @@ def test_import_rechaza_total_intereses_infinito(client):
     cuerpo = '{"clave": "%s", "deudas": [{"nombre": "D", "saldo_actual": 1000, "total_intereses": 1e999}]}' % CLAVE_TEST
     r = client.post("/api/import", content=cuerpo, headers={"content-type": "application/json"})
     assert r.status_code == 400 and "total_intereses" in r.json()["detail"]
-    assert client.get("/api/deudas/resumen").status_code == 200
+    resumen = client.get("/api/deudas/resumen").json()
+    assert resumen["creditos"] == [] and resumen["tarjetas"] == []
 
 
 def test_import_tope_de_filas_por_coleccion(client):
@@ -184,3 +194,4 @@ def test_import_texto_mas_largo_que_el_tope_falla_con_fila_y_campo(client):
 def test_import_op_oculta_con_columnas_derivadas_sigue_entrando(client):
     fila = {"clave": "deuda:1:2026-01-01", "tipo": "deuda", "fuente_id": 1, "fecha": "2026-01-01", "creada_en": ""}
     assert importar(client, {"ops_ocultas": [fila]}).status_code == 200
+    assert [o["clave"] for o in client.get("/api/ops-ocultas").json()["items"]] == ["deuda:1:2026-01-01"]

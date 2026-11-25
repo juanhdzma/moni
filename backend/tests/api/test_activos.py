@@ -106,3 +106,13 @@ def test_montos_de_activo_se_redondean_a_pesos(client):
     a = client.post("/api/activo", json={"nombre": "Moto", "valor_inicial": 100.5, "valor_actual": 200.5}).json()
     assert (a["valor_inicial"], a["valor_actual"]) == (101, 201)
     assert client.post("/api/activo", json={"nombre": "x", "valor_inicial": 0.4}).status_code == 422
+
+
+def test_venta_borra_el_activo_y_registra_ingreso(client):
+    a = client.post(
+        "/api/activo", json={"nombre": "Moto", "valor_inicial": 5000, "valor_actual": 4000}
+    ).json()
+    client.post(f"/api/activo/{a['id']}/venta", json={"precio": 4200, "fecha": "2026-07-01"})
+    assert client.get("/api/backup").json()["activos"] == []
+    tx = client.get("/api/backup").json()["transacciones"][0]
+    assert (tx["tipo"], tx["monto"], tx["categoria"]) == ("ingreso", 4200, "Venta activos")

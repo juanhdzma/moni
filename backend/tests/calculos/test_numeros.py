@@ -1,6 +1,6 @@
 import pytest
 
-from backend.calculos.numeros import pesos
+from backend.calculos.numeros import monto_firmado, porcentaje, pesos
 
 
 @pytest.mark.parametrize("entrada,esperado", [
@@ -10,3 +10,18 @@ from backend.calculos.numeros import pesos
 def test_pesos_half_up(entrada, esperado):
     assert pesos(entrada) == esperado
     assert isinstance(pesos(entrada), float)
+
+
+def test_porcentaje():
+    assert porcentaje(50, 200) == 25
+    assert porcentaje(-50, 200) == -25
+    assert porcentaje(1, 1) == 100
+    assert porcentaje(5, 0) == 0
+    assert porcentaje(5, -10) == 0
+    assert porcentaje(0, 10) == 0
+
+
+def test_monto_firmado_solo_el_ingreso_suma():
+    assert monto_firmado("ingreso", 10) == 10
+    assert monto_firmado("gasto", 10) == -10
+    assert monto_firmado("transfer", 10) == -10

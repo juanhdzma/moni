@@ -28,7 +28,8 @@ def test_fecha_opcional_en_rendimiento_aporte_y_retiro(client):
         ("retiro", {"tipo": "parcial", "monto": 10, "saldo_queda": 500}),
     ]:
         assert client.post(f"/api/inv/{inv['id']}/{accion}", json=cuerpo).status_code == 200, accion
-    assert all(t["fecha"] for t in client.get("/api/backup").json()["transacciones"])
+    fechas = [t["fecha"] for t in client.get("/api/backup").json()["transacciones"]]
+    assert fechas == ["2026-07-15T10:30"] * 3
 
 
 def _acciones(client):

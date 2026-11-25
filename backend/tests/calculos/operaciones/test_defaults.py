@@ -45,3 +45,22 @@ def test_textos():
 def test_recurrente_sin_activo_conserva_el_anterior():
     assert operaciones.completar_recurrente({"activo": True}, {"activo": 0}, False)["activo"] == 0
     assert operaciones.completar_recurrente({"activo": True}, {"activo": 0}, True)["activo"] is True
+
+
+def test_valor_actualizado_en_explicito_manda_sobre_todo():
+    anterior = {"valor_actual": 500, "valor_actualizado_en": "2026-01-05"}
+    inv = operaciones.completar_inversion(_inv(valor_actualizado_en="2026-03-03T09:00"), anterior, HOY, AHORA)
+    assert inv["valor_actualizado_en"] == "2026-03-03T09:00"
+    act = operaciones.completar_activo(_activo(valor_actualizado_en="2026-04-04"), None, HOY, AHORA)
+    assert act["valor_actualizado_en"] == "2026-04-04"
+
+
+def _deuda(**kw):
+    return {"es_tarjeta": False, "fecha_inicio": "", **kw}
+
+
+def test_completar_deuda_pone_hoy_solo_a_prestamos_sin_fecha():
+    assert operaciones.completar_deuda(_deuda(), HOY)["fecha_inicio"] == "2026-07-01"
+    assert operaciones.completar_deuda(_deuda(fecha_inicio="2026-02-02"), HOY)["fecha_inicio"] == "2026-02-02"
+    assert operaciones.completar_deuda(_deuda(es_tarjeta=True), HOY)["fecha_inicio"] == ""
+    assert operaciones.completar_deuda(_deuda(es_tarjeta=True, fecha_inicio="2026-02-02"), HOY)["fecha_inicio"] == "2026-02-02"

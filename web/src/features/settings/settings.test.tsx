@@ -32,7 +32,7 @@ describe('categorias', () => {
     renderWithProviders(<Settings active />)
     await waitFor(() => expect(document.getElementById('settings-new-cat-gasto')).not.toBeNull())
     await userEvent.type(document.getElementById('settings-new-cat-gasto') as HTMLInputElement, 'Mascotas{Enter}')
-    expect(await screen.findByText('Mascotas')).toBeTruthy()
+    expect(await screen.findByText('Mascotas')).toBeInTheDocument()
     expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1)
     expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/categorias', headers: { 'X-Moni-Request': '1' }, body: { tipo: 'gasto', nombre: 'Mascotas' } })
     expect((document.getElementById('settings-new-cat-gasto') as HTMLInputElement).value).toBe('')
@@ -50,7 +50,7 @@ describe('categorias', () => {
 
   it('las categorias de sistema no tienen boton de eliminar', () => {
     renderWithProviders(<Settings active />)
-    expect(screen.getByText('Intereses')).toBeTruthy()
+    expect(screen.getByText('Intereses')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Eliminar Intereses' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Eliminar Pago deuda' })).toBeNull()
   })
@@ -60,8 +60,8 @@ describe('operaciones ocultas', () => {
   it('lista lo que devuelve el backend y restaura una', async () => {
     const f = mockFetch({ 'GET /api/ops-ocultas': OPS, 'DELETE /api/ops-ocultas': {} })
     renderWithProviders(<Settings active />)
-    expect(await screen.findByText('deuda:1:2026-01-01')).toBeTruthy()
-    expect(screen.getByText(/Moto/)).toBeTruthy()
+    expect(await screen.findByText('deuda:1:2026-01-01')).toBeInTheDocument()
+    expect(screen.getByText(/Moto/)).toBeInTheDocument()
     await userEvent.click(screen.getAllByRole('button', { name: 'Restaurar' })[0] as HTMLElement)
     await waitFor(() => expect(screen.queryByText('Mascotas')).toBeNull())
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/ops-ocultas?clave=deuda%3A1%3A2026-01-01', headers: { 'X-Moni-Request': '1' } })
@@ -79,7 +79,7 @@ describe('operaciones ocultas', () => {
   it('sin ocultas muestra el vacio', async () => {
     mockFetch({})
     renderWithProviders(<Settings active />)
-    expect(await screen.findByText('Ninguna operación oculta.')).toBeTruthy()
+    expect(await screen.findByText('Ninguna operación oculta.')).toBeInTheDocument()
   })
 })
 
@@ -197,7 +197,7 @@ describe('zona de peligro', () => {
     expect(card.textContent).not.toMatch(/Borra Esto borra/)
     await userEvent.click(screen.getByRole('button', { name: 'Borrar todos los datos' }))
     await userEvent.click(screen.getByRole('button', { name: 'Borrar todo' }))
-    expect(screen.getByText('Escribí BORRAR (en mayúsculas) para confirmar')).toBeTruthy()
+    expect(screen.getByText('Escribí BORRAR (en mayúsculas) para confirmar')).toBeInTheDocument()
     await userEvent.type(screen.getByPlaceholderText('BORRAR'), 'borrar')
     await userEvent.type(screen.getByLabelText('Clave'), 'secreta')
     await userEvent.click(screen.getByRole('button', { name: 'Borrar todo' }))

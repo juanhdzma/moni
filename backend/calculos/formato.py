@@ -6,7 +6,8 @@ def _miles(n: int) -> str:
 
 
 def cop(n: float, simbolo: str = "$") -> str:
-    return simbolo + ("-" if n < 0 else "") + _miles(redondear_js(abs(n)))
+    redondeado = redondear_js(abs(n))
+    return simbolo + ("-" if n < 0 and redondeado else "") + _miles(redondeado)
 
 
 def cop_corto(n: float, simbolo: str = "$") -> str:

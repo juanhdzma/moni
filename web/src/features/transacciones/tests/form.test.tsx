@@ -34,7 +34,7 @@ describe('tx form: edición de datos atípicos', () => {
       }),
     })
     const user = await editar(t)
-    expect(await screen.findByRole('button', { name: 'Guardar cambios' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Guardar cambios' })).toBeInTheDocument()
     expect(f.callsTo('GET', '/api/tx/opciones?tx_id=9')).toHaveLength(1)
     expect(document.getElementById('m-cat')).toHaveTextContent('Categoría vieja')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
@@ -159,7 +159,7 @@ describe('tx form', () => {
     ui()
     await user.click(await screen.findByRole('button', { name: 'Editar Mercado' }))
     await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
-    expect(screen.getByText('¿Eliminar este movimiento?')).toBeTruthy()
+    expect(screen.getByText('¿Eliminar este movimiento?')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Eliminar' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/tx/1', headers: { 'X-Moni-Request': '1' } })
@@ -184,7 +184,7 @@ describe('tx form', () => {
     await user.click(await screen.findByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(document.getElementById('m-status')?.textContent).toBe('monto inválido'))
     expect(document.getElementById('m-status')?.className).toContain('err')
-    expect(screen.getByText('Editar movimiento')).toBeTruthy()
+    expect(screen.getByText('Editar movimiento')).toBeInTheDocument()
   })
 
   it('does not open the form for transfers', () => {

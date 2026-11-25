@@ -39,3 +39,15 @@ def test_passkeys_sin_uso_dicen_nunca(client):
     fila = client.get("/api/auth/passkeys").json()[0]
     assert fila["creada_texto"] == "2026-03-10 10:30"
     assert fila["ultimo_uso_texto"] == "nunca"
+
+
+def test_texto_bogota_no_depende_de_la_zona_del_proceso(monkeypatch):
+    import time
+
+    monkeypatch.setenv("TZ", "Asia/Tokyo")
+    time.tzset()
+    try:
+        assert tiempo.texto_bogota("2026-03-10T15:30:45") == "2026-03-10 10:30"
+    finally:
+        monkeypatch.undo()
+        time.tzset()

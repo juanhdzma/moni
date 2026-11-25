@@ -20,9 +20,9 @@ def test_detalle_devuelve_la_fila_con_derivados(client):
 
 
 def test_detalle_no_pisa_rutas_fijas(client):
-    assert client.get("/api/inv/resumen").status_code == 200
-    assert client.get("/api/rec/resumen").status_code == 200
-    assert client.get("/api/tx/opciones").status_code == 200
+    assert "texto_posiciones" in client.get("/api/inv/resumen").json()
+    assert "neto_mensual" in client.get("/api/rec/resumen").json()
+    assert {"categorias", "inicial"} <= set(client.get("/api/tx/opciones").json())
 
 
 def test_detalle_tx_trae_la_tarjeta(client):

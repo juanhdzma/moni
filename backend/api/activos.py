@@ -6,7 +6,7 @@ from ..calculos.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
 from ..core.afectadas import ACTIVOS, afectar, con_movimiento
 from ..core.db import conexion
 from ..core.estado import coleccion
-from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row
+from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row, iniciar_escritura
 from ..core.tablas import ACTIVO_COLS
 from ..schemas.activo import ActivoIn, ActivoValor, ActivoVenta
 from ..schemas.previews import NuevoValor, PrecioPreview
@@ -47,6 +47,7 @@ def actualizar_activo(activo_id: int, body: ActivoIn, response: Response):
 @router.post("/api/activo/{activo_id:int}/valor", response_model=ActivoCrudo)
 def actualizar_valor(activo_id: int, body: ActivoValor, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         get_row(conn, "activos", activo_id)
         actualizar_columnas(conn, "activos", activo_id, movimientos.aplicar_valor(body.nuevo_valor, fecha_o_ahora(body.fecha)))
         afectar(response, ACTIVOS)
@@ -56,6 +57,7 @@ def actualizar_valor(activo_id: int, body: ActivoValor, response: Response):
 @router.post("/api/activo/{activo_id:int}/venta", response_model=Ok)
 def vender_activo(activo_id: int, body: ActivoVenta, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         activo = get_row(conn, "activos", activo_id)
         delete_row(conn, "activos", activo_id)
         if body.registrar_tx:

@@ -10,6 +10,7 @@ from backend.calculos.operaciones.movimientos import (
     retiro_parcial,
     sumar_un_mes,
     validar_adelanto,
+    validar_cambio_de_tipo,
     validar_pago,
     valor_estimado_tras_aporte,
 )
@@ -162,3 +163,70 @@ def test_parse_clave_invalida_es_error_de_dominio():
 
     with pytest.raises(ErrorDeDominio):
         parse_clave("mal")
+
+
+def _mensaje(fn, *args, **kw):
+    with pytest.raises(ErrorDeDominio) as e:
+        fn(*args, **kw)
+    return e.value.mensaje, e.value.status
+
+
+def test_mensajes_exactos_de_validaciones():
+    assert _mensaje(retiro_parcial, 1000, 800, 250, 1001) == ("El saldo que queda no puede superar el valor actual", 400)
+    assert _mensaje(validar_pago, 100, 101) == ("El saldo después del pago no puede superar el saldo actual", 400)
+    assert _mensaje(validar_pago, 100, 5, True) == ("Para liquidar, el saldo después del pago debe ser 0", 400)
+    assert _mensaje(validar_adelanto, False, 1, 2) == ("Solo las tarjetas admiten adelantos", 400)
+    assert _mensaje(validar_adelanto, True, 100, 99) == ("El saldo después del adelanto no puede ser menor al saldo actual", 400)
+    assert _mensaje(sumar_un_mes, "nope") == ("Fecha inválida: nope", 400)
+    assert _mensaje(saldo_tras_adelanto, None, None, 5) == ("La tarjeta no tiene cupo definido", 400)
+    assert _mensaje(validar_cambio_de_tipo, True, False, True) == (
+        "No se puede cambiar el tipo de una deuda que tiene movimientos ligados", 400,
+    )
+
+
+def test_validar_cambio_de_tipo_solo_falla_si_cambia_y_hay_tx():
+    validar_cambio_de_tipo(True, True, True)
+    validar_cambio_de_tipo(False, False, True)
+    validar_cambio_de_tipo(True, False, False)
+    validar_cambio_de_tipo(False, True, False)
+    assert _mensaje(validar_cambio_de_tipo, False, True, True)[1] == 400
+
+
+def test_retiro_parcial_prorratea_con_valor_actual_de_un_peso():
+    r = retiro_parcial(1, 100, 1, 0)
+    assert (r.valor_actual, r.monto_invertido) == (0, 0.0)
+    assert retiro_parcial(1, 100, 0.5, 0).monto_invertido == 50.0
+
+
+def test_aplicar_pago_con_saldo_residual_de_un_peso_no_liquida_la_cuota():
+    p = _pago(_deuda(), total_pagado=999_999, nuevo_saldo=1)
+    assert p.saldo_actual == 1 and p.proxima_cuota == "2026-02-28"
+    assert _pago(_deuda(), total_pagado=1_000_000, nuevo_saldo=0).proxima_cuota == ""
+
+
+def test_aplicar_pago_de_tarjeta_no_toca_la_fecha_y_deja_la_tx_exacta():
+    p = _pago(_deuda(es_tarjeta=1), notas="n", simbolo="US$")
+    assert p.proxima_cuota is None
+    assert p.tx == {
+        "fecha": "2026-02-01", "tipo": "transfer", "categoria": "Pago deuda",
+        "descripcion": "Cuota · Credito (capital US$80.000, intereses US$20.000)", "monto": 100_000, "notas": "n",
+    }
+
+
+def test_aplicar_pago_redondea_saldo_e_intereses():
+    p = _pago(_deuda(), nuevo_saldo=920_000.4, intereses=10.5)
+    assert (p.saldo_actual, p.intereses) == (920_000.0, 11.0)
+
+
+def test_tx_credito_recibido_completa():
+    d = {"nombre": "Banco", "fecha_inicio": "2026-01-02", "monto_inicial": 5000, "saldo_actual": 700}
+    assert tx_credito_recibido(d) == {
+        "fecha": "2026-01-02", "tipo": "ingreso", "categoria": "Crédito recibido",
+        "descripcion": "Crédito · Banco", "monto": 5000, "notas": "",
+    }
+
+
+def test_aplicar_pago_propaga_la_bandera_liquidar():
+    assert _pago(_deuda(), total_pagado=1_000_000, nuevo_saldo=0, liquidar=True).saldo_actual == 0
+    assert _mensaje(_pago, _deuda(), nuevo_saldo=5, liquidar=True)[0] == "Para liquidar, el saldo después del pago debe ser 0"
+    assert _pago(_deuda(), nuevo_saldo=5).saldo_actual == 5

@@ -2,7 +2,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend import main
-from backend.seguridad import middleware, sesiones
+from backend.core import db
+from backend.seguridad import bloqueo, middleware, sesiones
 from backend.tests.conftest import IP_TEST
 PUBLICAS = {("GET", "/api/auth/estado"), ("POST", "/api/auth/login"),
             ("POST", "/api/auth/passkey/login/opciones"), ("POST", "/api/auth/passkey/login/verificar")}
@@ -144,3 +145,37 @@ def test_headers_de_seguridad(client, anon_client):
     assert client.get("/api/meta").headers["cache-control"] == "no-store"
     assert anon_client.get("/api/meta").headers["cache-control"] == "no-store"
     assert anon_client.get("/").headers.get("cache-control") != "no-store"
+
+
+def test_401_del_middleware_trae_el_cuerpo_exacto(anon_client):
+    r = anon_client.get("/api/backup")
+    assert r.status_code == 401 and r.json() == {"detail": "No autenticado"}
+    assert anon_client.post("/api/push/enviar", json={"title": "a", "body": ""}).json() == {"detail": "No autenticado"}
+
+
+def test_bearer_sin_token_configurado_es_401_y_cuenta_fallo(anon_client):
+    r = anon_client.post("/api/push/enviar", json={"title": "a", "body": ""}, headers={"Authorization": "Bearer " + "x" * 40})
+    assert r.status_code == 401 and r.json() == {"detail": "Credenciales inválidas"}
+    conn = db.get_conn()
+    assert conn.execute("SELECT motivo FROM intentos_fallidos").fetchall()[0][0] == "push_token"
+    conn.close()
+
+
+def test_rafaga_concurrente_de_bearer_malos_evalua_solo_3_antes_de_bloquear(entorno, monkeypatch):
+    import asyncio
+
+    import httpx
+
+    from backend.core.csrf import CSRF_HEADER
+
+    monkeypatch.setenv("MONI_PUSH_TOKEN", "t" * 40)
+    monkeypatch.setattr(bloqueo, "RETRASO_FALLO", 0.01)
+
+    async def rafaga():
+        transport = httpx.ASGITransport(app=main.app, client=("203.0.113.50", 1))
+        async with httpx.AsyncClient(transport=transport, base_url="http://t", headers={CSRF_HEADER: "1"}) as c:
+            envios = [c.post("/api/push/enviar", json={"title": "a", "body": ""}, headers={"Authorization": "Bearer " + "x" * 40}) for _ in range(30)]
+            return [r.status_code for r in await asyncio.gather(*envios)]
+
+    codigos = asyncio.run(rafaga())
+    assert codigos.count(401) == 3 and codigos.count(403) == 27

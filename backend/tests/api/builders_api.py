@@ -1,9 +1,9 @@
 import datetime
 
-from backend.calculos.fechas import hoy_bogota
 from backend.schemas.deuda import DeudaIn
 
-HOY = hoy_bogota()
+HOY = datetime.date(2026, 7, 15)
+AHORA = datetime.datetime(2026, 7, 15, 10, 30, tzinfo=datetime.timezone(datetime.timedelta(hours=-5)))
 HOY_ISO = HOY.isoformat()
 MES = HOY_ISO[:7]
 

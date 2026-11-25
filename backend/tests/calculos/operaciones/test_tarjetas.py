@@ -51,3 +51,18 @@ def test_validar_tarjeta_exige_una_tarjeta_existente():
     for mala in (None, {"es_tarjeta": 0}):
         with pytest.raises(ErrorDeDominio):
             tarjetas.validar_tarjeta(mala)
+
+
+def test_mensajes_de_error_de_tarjeta():
+    with pytest.raises(ErrorDeDominio) as e:
+        tarjetas.saldo_tras_delta({"id": 7, "es_tarjeta": 0, "saldo_actual": 0}, 5)
+    assert str(e.value) == "La tarjeta 7 no es válida" and e.value.status == 400
+    with pytest.raises(ErrorDeDominio) as e:
+        tarjetas.validar_tarjeta(None)
+    assert str(e.value) == "La tarjeta indicada no existe" and e.value.status == 400
+
+
+def test_saldo_tras_delta_suma_el_delta():
+    tarjeta = {"id": 1, "es_tarjeta": 1, "saldo_actual": 1000}
+    assert tarjetas.saldo_tras_delta(tarjeta, 250) == 1250
+    assert tarjetas.saldo_tras_delta(tarjeta, -250) == 750

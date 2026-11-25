@@ -82,6 +82,7 @@ def test_tx_huerfana_se_puede_editar_y_borrar(client, tarjeta):
         json={"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": 600, "tarjeta_id": None},
     )
     assert edit.status_code == 200
+    assert (edit.json()["monto"], edit.json()["tarjeta_id"]) == (600, None)
     assert client.delete(f"/api/tx/{tx['id']}").status_code == 204
 
 
@@ -118,7 +119,8 @@ def test_no_se_cambia_el_tipo_de_una_deuda_con_movimientos_ligados(client, tarje
 
 def test_se_cambia_el_tipo_de_una_deuda_sin_movimientos(client, tarjeta):
     cuerpo = {"nombre": "Visa", "saldo_actual": 500, "monto_inicial": 500, "clase_deuda": "prestamo"}
-    assert client.put(f"/api/deuda/{tarjeta['id']}", json=cuerpo).status_code == 200
+    r = client.put(f"/api/deuda/{tarjeta['id']}", json=cuerpo)
+    assert (r.status_code, r.json()["clase_deuda"]) == (200, "prestamo")
 
 
 def test_gasto_con_tarjeta_inexistente_es_400(client):

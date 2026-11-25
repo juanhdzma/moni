@@ -147,3 +147,71 @@ describe('calendario', () => {
     expect(sumarDias({ y: 2026, m: 11, d: 31 }, 1)).toEqual({ y: 2027, m: 0, d: 1 })
   })
 })
+
+describe('DatePicker: celdas y navegación', () => {
+  function H({ initial, type = 'date' }: { initial: string; type?: 'date' | 'datetime-local' }) {
+    const [v, setV] = useState(initial)
+    return <DatePicker value={v} onChange={setV} type={type} />
+  }
+  const dias = () => [...document.querySelectorAll<HTMLElement>('.cdp-day')]
+
+  it('febrero 2026: 42 celdas, enero atenuado al inicio, solo el 20 es sel y solo el 14 es today', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H initial="2026-02-20" />, { estado: estado({ hoy: '2026-02-14' }) })
+    await user.click(screen.getByRole('button', { name: /20\/02\/2026/ }))
+    expect(dias()).toHaveLength(42)
+    expect(dias().slice(0, 6).map((d) => d.textContent)).toEqual(['26', '27', '28', '29', '30', '31'])
+    expect(dias().slice(0, 6).every((d) => d.classList.contains('dim'))).toBe(true)
+    expect(dias()[6]).toHaveTextContent('1')
+    expect(dias()[6]).not.toHaveClass('dim')
+    expect(dias().filter((d) => d.classList.contains('sel')).map((d) => d.textContent)).toEqual(['20'])
+    expect(dias().filter((d) => d.classList.contains('today')).map((d) => d.textContent)).toEqual(['14'])
+    expect(dias().filter((d) => !d.classList.contains('dim'))).toHaveLength(28)
+  })
+
+  it('Mes anterior en enero cae en diciembre del año anterior y Mes siguiente en diciembre en enero', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H initial="2026-01-31" />)
+    await user.click(screen.getByRole('button', { name: /31\/01\/2026/ }))
+    await user.click(screen.getByLabelText('Mes anterior'))
+    expect(document.querySelector('.cdp-month')).toHaveTextContent('Diciembre de 2025')
+    await user.click(screen.getByLabelText('Mes siguiente'))
+    await user.click(screen.getByLabelText('Mes siguiente'))
+    expect(document.querySelector('.cdp-month')).toHaveTextContent('Febrero de 2026')
+    expect(dias().filter((d) => !d.classList.contains('dim'))).toHaveLength(28)
+  })
+
+  it('diciembre pasa a enero del año siguiente', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H initial="2026-12-10" />)
+    await user.click(screen.getByRole('button', { name: /10\/12\/2026/ }))
+    await user.click(screen.getByLabelText('Mes siguiente'))
+    expect(document.querySelector('.cdp-month')).toHaveTextContent('Enero de 2027')
+  })
+
+  it('hora 24 se limita a 23 y minuto 60 a 59, con Enter en el campo', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H type="datetime-local" initial="2026-08-05T07:09" />)
+    await user.click(screen.getByRole('button', { name: /05\/08\/2026 07:09/ }))
+    const hh = screen.getByLabelText('Hora')
+    const mm = screen.getByLabelText('Minutos')
+    await user.clear(hh)
+    await user.type(hh, '24{Enter}')
+    expect(hh).toHaveValue('23')
+    await user.clear(mm)
+    await user.type(mm, '60{Enter}')
+    expect(mm).toHaveValue('59')
+    await user.click(screen.getByText('Aceptar'))
+    expect(screen.getByRole('button', { name: /05\/08\/2026 23:59/ })).toBeInTheDocument()
+  })
+
+  it('hora vacía o no numérica queda en 00', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<H type="datetime-local" initial="2026-08-05T07:09" />)
+    await user.click(screen.getByRole('button', { name: /05\/08\/2026 07:09/ }))
+    const hh = screen.getByLabelText('Hora')
+    await user.clear(hh)
+    await user.type(hh, 'ab{Enter}')
+    expect(hh).toHaveValue('00')
+  })
+})

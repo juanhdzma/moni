@@ -29,15 +29,15 @@ describe('notificaciones', () => {
   it('sin soporte muestra el aviso para iPhone', () => {
     mockFetch()
     renderWithProviders(<Notificaciones />)
-    expect(screen.getByText(/no soporta notificaciones/)).toBeTruthy()
+    expect(screen.getByText(/no soporta notificaciones/)).toBeInTheDocument()
   })
 
   it('explica como funciona el aviso', async () => {
     stubPush()
     mockFetch()
     renderWithProviders(<Notificaciones />)
-    expect(screen.getByText(/Cómo funciona/)).toBeTruthy()
-    expect(await screen.findByText('Aviso diario a las 8:00 de las cuotas, rendimientos y recurrentes que vencen hoy o mañana.')).toBeTruthy()
+    expect(screen.getByText(/Cómo funciona/)).toBeInTheDocument()
+    expect(await screen.findByText('Aviso diario a las 8:00 de las cuotas, rendimientos y recurrentes que vencen hoy o mañana.')).toBeInTheDocument()
   })
 
   it('probar manda el test', async () => {
@@ -46,7 +46,7 @@ describe('notificaciones', () => {
     renderWithProviders(<Notificaciones />)
     await userEvent.click(await screen.findByRole('button', { name: 'Enviar prueba' }))
     await waitFor(() => expect(api.callsTo('POST', '/api/push/test')).toHaveLength(1))
-    expect(await screen.findByText('Notificación enviada')).toBeTruthy()
+    expect(await screen.findByText('Notificación enviada')).toBeInTheDocument()
   })
 
   it('activar pide la clave y manda la suscripcion', async () => {
@@ -59,7 +59,7 @@ describe('notificaciones', () => {
     const call = api.callsTo('POST', '/api/push/subscribe')[0]
     expect(call?.headers['X-Moni-Request']).toBe('1')
     expect(call?.body).toEqual({ endpoint: subscription.endpoint, keys: { p256dh: 'p', auth: 'a' } })
-    expect(await screen.findByRole('button', { name: 'Desactivar' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Desactivar' })).toBeInTheDocument()
   })
 
   it('desactivar borra la suscripcion en el backend y en el navegador', async () => {
@@ -69,6 +69,6 @@ describe('notificaciones', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Desactivar' }))
     await waitFor(() => expect(api.callsTo('POST', '/api/push/unsubscribe')[0]?.body).toEqual({ endpoint: subscription.endpoint }))
     expect(subscription.unsubscribe).toHaveBeenCalled()
-    expect(await screen.findByRole('button', { name: 'Activar en este dispositivo' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Activar en este dispositivo' })).toBeInTheDocument()
   })
 })

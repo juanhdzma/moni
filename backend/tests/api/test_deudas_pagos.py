@@ -9,6 +9,19 @@ def _uno(client, entidad, id_):
     return next(x for x in client.get("/api/backup").json()[entidad] if x["id"] == id_)
 
 
+def _deuda(client, id_):
+    return _uno(client, "deudas", id_)
+
+
+def _pago(client, deuda_id, **extra):
+    body = {
+        "modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "intereses": 0,
+        "fecha": "2026-08-01", "descripcion": "Cuota", "registrar_tx": False,
+    }
+    body.update(extra)
+    return client.post(f"/api/deuda/{deuda_id}/pago", json=body)
+
+
 def test_pago_baja_saldo_acumula_intereses_y_deja_rastro(client, prestamo):
     client.post(
         f"/api/deuda/{prestamo['id']}/pago",
@@ -53,107 +66,6 @@ def test_adelanto_sube_la_deuda_y_registra_ingreso(client, tarjeta):
     assert _tx(client)[0]["tipo"] == "ingreso"
 
 
-def test_aporte_suma_a_invertido_y_fija_el_valor(client):
-    inv = client.post(
-        "/api/inv",
-        json={"nombre": "Fondo", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 1000},
-    ).json()
-    client.post(
-        f"/api/inv/{inv['id']}/aporte",
-        json={"monto": 500, "nuevo_valor": 1600, "fecha": "2026-07-05"},
-    )
-    i = _uno(client, "inversiones", inv["id"])
-    assert (i["monto_invertido"], i["valor_actual"]) == (1500, 1600)
-    assert i["valor_actualizado_en"] == "2026-07-05"
-
-
-def _cdt(client):
-    return client.post(
-        "/api/inv",
-        json={"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 1000, "tasa_ea": 12},
-    ).json()
-
-
-def test_rendimiento_pagado_entra_al_ledger_y_no_toca_el_valor(client):
-    inv = _cdt(client)
-    client.post(f"/api/inv/{inv['id']}/rendimiento", json={"monto": 95, "fecha": "2026-07-01"})
-    assert _uno(client, "inversiones", inv["id"])["valor_actual"] == 1000
-    tx = _tx(client)
-    assert len(tx) == 1
-    assert (tx[0]["tipo"], tx[0]["monto"], tx[0]["categoria"]) == ("ingreso", 95, "Intereses")
-
-
-def test_el_rendimiento_nunca_cuenta_de_los_dos_lados(client):
-    inv = _cdt(client)
-    for capitaliza in (True, False):
-        client.post(
-            f"/api/inv/{inv['id']}/rendimiento",
-            json={"monto": 95, "fecha": "2026-07-01", "capitaliza": capitaliza},
-        )
-    valor = _uno(client, "inversiones", inv["id"])["valor_actual"]
-    ledger = sum(t["monto"] for t in _tx(client))
-    assert (valor, ledger) == (1095, 95)
-
-
-def test_rendimiento_pagado_sin_registrar_no_cambia_nada(client):
-    inv = _cdt(client)
-    client.post(
-        f"/api/inv/{inv['id']}/rendimiento",
-        json={"monto": 95, "fecha": "2026-07-01", "registrar_tx": False},
-    )
-    assert _uno(client, "inversiones", inv["id"])["valor_actual"] == 1000
-    assert _tx(client) == []
-
-
-def test_retiro_parcial_reduce_capital_a_prorrata(client):
-    inv = client.post(
-        "/api/inv",
-        json={"nombre": "Fondo", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 2000},
-    ).json()
-    client.post(
-        f"/api/inv/{inv['id']}/retiro",
-        json={"tipo": "parcial", "monto": 1000, "saldo_queda": 1000, "fecha": "2026-07-01"},
-    )
-    i = _uno(client, "inversiones", inv["id"])
-    assert (i["monto_invertido"], i["valor_actual"]) == (500, 1000)
-
-
-def test_venta_borra_el_activo_y_registra_ingreso(client):
-    a = client.post(
-        "/api/activo", json={"nombre": "Moto", "valor_inicial": 5000, "valor_actual": 4000}
-    ).json()
-    client.post(f"/api/activo/{a['id']}/venta", json={"precio": 4200, "fecha": "2026-07-01"})
-    assert client.get("/api/backup").json()["activos"] == []
-    tx = _tx(client)[0]
-    assert (tx["tipo"], tx["monto"], tx["categoria"]) == ("ingreso", 4200, "Venta activos")
-
-
-def test_crear_deuda_con_crear_tx_registra_el_credito(client):
-    client.post(
-        "/api/deuda",
-        json={"nombre": "Credito", "monto_inicial": 500_000, "saldo_actual": 500_000, "crear_tx": True},
-    )
-    tx = _tx(client)[0]
-    assert (tx["tipo"], tx["monto"], tx["categoria"]) == ("ingreso", 500_000, "Crédito recibido")
-
-
-def test_crear_tarjeta_nunca_registra_tx(client):
-    client.post(
-        "/api/deuda",
-        json={"nombre": "Visa", "monto_inicial": 0, "saldo_actual": 0, "clase_deuda": "tarjeta", "crear_tx": True},
-    )
-    assert _tx(client) == []
-
-
-def _pago(client, deuda_id, **extra):
-    body = {
-        "modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "intereses": 0,
-        "fecha": "2026-08-01", "descripcion": "Cuota", "registrar_tx": False,
-    }
-    body.update(extra)
-    return client.post(f"/api/deuda/{deuda_id}/pago", json=body)
-
-
 def test_pagar_la_cuota_corre_el_vencimiento_un_mes(client, prestamo):
     client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-08-05"})
     r = _pago(client, prestamo["id"], modo="cuota")
@@ -181,21 +93,7 @@ def test_saldar_la_deuda_limpia_el_vencimiento(client, prestamo):
 def test_la_tarjeta_no_tiene_vencimiento_que_correr(client, tarjeta):
     r = _pago(client, tarjeta["id"], nuevo_saldo=0, total_pagado=50_000, modo="cuota")
     assert r.status_code == 200
-    assert r.json()["proxima_cuota"] == ""
-
-
-def test_el_retiro_parcial_deja_el_capital_en_pesos_enteros(client):
-    inv = client.post(
-        "/api/inv",
-        json={"nombre": "Fondo", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 3000},
-    ).json()
-    client.post(
-        f"/api/inv/{inv['id']}/retiro",
-        json={"tipo": "parcial", "monto": 1000, "saldo_queda": 2000, "fecha": "2026-07-01"},
-    )
-    i = _uno(client, "inversiones", inv["id"])
-    assert i["monto_invertido"] == 667
-    assert i["monto_invertido"] == int(i["monto_invertido"])
+    assert (r.json()["proxima_cuota"], r.json()["saldo_actual"]) == ("", 0)
 
 
 def test_saldar_la_deuda_deja_el_saldo_exacto_en_cero(client, prestamo):
@@ -230,3 +128,71 @@ def test_el_preview_exige_modo_y_rechaza_uno_desconocido(client, prestamo):
     url = f"/api/deuda/{prestamo['id']}/pago/preview"
     assert client.post(url, json={"total_pagado": 1, "nuevo_saldo": 0}).status_code == 422
     assert client.post(url, json={"modo": "x", "total_pagado": 1, "nuevo_saldo": 0}).status_code == 422
+
+
+def test_pago_deriva_intereses_y_arma_la_descripcion(client, prestamo):
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 920_000, "total_pagado": 100_000})
+    assert r.status_code == 200
+    assert (r.json()["saldo_actual"], r.json()["total_intereses"]) == (920_000, 20_000)
+    assert _deuda(client, prestamo["id"])["total_intereses"] == 20_000
+    tx = _tx(client)[0]
+    assert tx["descripcion"] == "Cuota · Credito (capital $80.000, intereses $20.000)"
+    assert len(tx["fecha"]) == 16 and tx["fecha"][10] == "T"
+
+
+def test_pago_respeta_descripcion_y_fecha_enviadas(client, prestamo):
+    client.post(
+        f"/api/deuda/{prestamo['id']}/pago",
+        json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "descripcion": "Mia", "fecha": "2026-07-01"},
+    )
+    assert (_tx(client)[0]["descripcion"], _tx(client)[0]["fecha"]) == ("Mia", "2026-07-01")
+
+
+def test_pago_usa_el_simbolo_de_moneda_de_ajustes(client, prestamo):
+    client.put("/api/ajustes", json={"moneda_simbolo": "US$"})
+    client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000})
+    assert _tx(client)[0]["descripcion"] == "Cuota · Credito (capital US$100.000, intereses US$0)"
+
+
+def test_pago_que_sube_el_saldo_se_rechaza(client, prestamo):
+    r = client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 1_100_000, "total_pagado": 100})
+    assert r.status_code == 400 and "no puede superar" in r.json()["detail"]
+
+
+def test_pago_avanza_la_cuota_en_un_solo_update(client, prestamo):
+    client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "proxima_cuota": "2026-01-31"})
+    client.post(
+        f"/api/deuda/{prestamo['id']}/pago",
+        json={"modo": "cuota", "nuevo_saldo": 900_000, "total_pagado": 100_000},
+    )
+    assert _deuda(client, prestamo["id"])["proxima_cuota"] == "2026-02-28"
+    client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 800_000, "total_pagado": 100_000})
+    assert _deuda(client, prestamo["id"])["proxima_cuota"] == "2026-02-28"
+
+
+def test_adelanto_deriva_saldo_desde_el_disponible(client, tarjeta):
+    r = client.post(
+        f"/api/deuda/{tarjeta['id']}/adelanto/preview", json={"monto": 100_000, "disponible_nuevo": 890_000}
+    )
+    assert r.json() == {"nuevo_saldo": 110_000, "comision": 10_000}
+    r = client.post(f"/api/deuda/{tarjeta['id']}/adelanto", json={"monto": 100_000, "disponible_nuevo": 890_000})
+    assert r.status_code == 200 and r.json()["saldo_actual"] == 110_000
+    assert _deuda(client, tarjeta["id"])["saldo_actual"] == 110_000
+    tx = _tx(client)[0]
+    assert tx["descripcion"] == "Adelanto · Visa" and tx["tipo"] == "ingreso"
+
+
+def test_adelanto_sin_saldo_ni_disponible_es_422(client, tarjeta):
+    r = client.post(f"/api/deuda/{tarjeta['id']}/adelanto", json={"monto": 100})
+    assert r.status_code == 422
+
+
+def test_adelanto_por_disponible_exige_cupo(client):
+    t = client.post("/api/deuda", json={"nombre": "Sin cupo", "clase_deuda": "tarjeta"}).json()
+    r = client.post(f"/api/deuda/{t['id']}/adelanto", json={"monto": 100, "disponible_nuevo": 50})
+    assert r.status_code == 400
+
+
+def test_adelanto_a_un_prestamo_se_rechaza(client, prestamo):
+    r = client.post(f"/api/deuda/{prestamo['id']}/adelanto", json={"monto": 100, "nuevo_saldo": 2_000_000})
+    assert r.status_code == 400 and "tarjetas" in r.json()["detail"]

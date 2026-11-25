@@ -73,3 +73,79 @@ describe('Tendencia', () => {
     expect(screen.getByText('$5k (1,0%) perdido')).toHaveClass('text-deudas')
   })
 })
+
+describe('Monto: cada "cuando" con cero, positivo y negativo', () => {
+  const ROJO = 'text-deudas'
+  const VERDE = 'text-inversiones-text'
+  const NEUTRO = 'text-muted-foreground'
+
+  it.each([
+    [0, 'siempre', '$0'],
+    [0, 'negativo', '$0'],
+    [0, 'ninguno', '$0'],
+    [10, 'siempre', '+$10'],
+    [10, 'negativo', '$10'],
+    [10, 'ninguno', '$10'],
+    [-10, 'siempre', '−$10'],
+    [-10, 'negativo', '−$10'],
+    [-10, 'ninguno', '$10'],
+  ] as const)('signo: valor %d con signo=%s se pinta %s', (valor, signo, texto) => {
+    renderWithProviders(<Monto valor={valor} signo={signo} color="ninguno" />)
+    expect(screen.getByText(texto)).toBeInTheDocument()
+  })
+
+  it.each([
+    [0, 'siempre', NEUTRO],
+    [0, 'negativo', null],
+    [0, 'ninguno', null],
+    [10, 'siempre', VERDE],
+    [10, 'negativo', null],
+    [10, 'ninguno', null],
+    [-10, 'siempre', ROJO],
+    [-10, 'negativo', ROJO],
+    [-10, 'ninguno', null],
+  ] as const)('color: valor %d con color=%s aplica %s', (valor, color, clase) => {
+    renderWithProviders(<Monto valor={valor} signo="ninguno" color={color} className="base" />)
+    const el = screen.getByText(valor === 0 ? '$0' : '$10')
+    if (clase === null) expect(el.className).toBe('base')
+    else expect(el).toHaveClass('base', clase)
+  })
+
+  it('el tono del backend negativo activa color=negativo aunque el valor sea positivo', () => {
+    renderWithProviders(<Monto valor={10} tono="negativo" color="negativo" signo="negativo" />)
+    const el = screen.getByText('$10')
+    expect(el).toHaveClass(ROJO)
+  })
+
+  it('el tono del backend no negativo no activa color=negativo aunque el valor sea negativo', () => {
+    renderWithProviders(<Monto valor={-10} tono="gasto" color="negativo" signo="negativo" />)
+    const el = screen.getByText('−$10')
+    expect(el.className).toBe('')
+  })
+
+  it('flecha: sube con positivo, baja con negativo y no hay con cero', () => {
+    const { container, rerender } = renderWithProviders(<Monto valor={10} flecha />)
+    expect(container.querySelector('span svg')).toHaveClass('lucide-arrow-up')
+    rerender(<Monto valor={-10} flecha />)
+    expect(container.querySelector('span svg')).toHaveClass('lucide-arrow-down')
+    rerender(<Monto valor={0} flecha />)
+    expect(container.querySelector('span svg')).toBeNull()
+  })
+
+  it('por defecto no dibuja flecha', () => {
+    const { container } = renderWithProviders(<Monto valor={10} />)
+    expect(container.querySelector('span svg')).toBeNull()
+  })
+
+  it('sin chip el color es solo texto, sin fondo; con chip lleva el fondo', () => {
+    const { rerender } = renderWithProviders(<Monto valor={-10} />)
+    expect(screen.getByText('−$10').className).toBe(ROJO)
+    rerender(<Monto valor={-10} chip />)
+    expect(screen.getByText('−$10').className).toBe('bg-deudas/15 text-deudas')
+  })
+
+  it('sufijo y formato propio se aplican al valor absoluto', () => {
+    renderWithProviders(<Monto valor={-3} formato={(n) => `<${n}>`} sufijo=" pts" />)
+    expect(screen.getByText('−<3> pts')).toBeInTheDocument()
+  })
+})

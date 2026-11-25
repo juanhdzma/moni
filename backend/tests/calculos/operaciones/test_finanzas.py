@@ -2,7 +2,7 @@ import pytest
 
 from backend.calculos import operaciones as op
 
-from .helpers_operaciones import D, inversion
+from ..helpers_operaciones import D, inversion
 
 
 def test_ea_y_mv_son_inversas():
@@ -91,3 +91,69 @@ def test_equivalencia_tasa():
     assert ea["ea"] == 12 and ea["texto"].startswith("Equivale a ") and ea["texto"].endswith("% MV")
     mv = op.tasas.equivalencia_tasa(1, "mv")
     assert mv["mv"] == 1 and mv["texto"].endswith("% EA")
+
+
+def test_estimar_intereses_sin_cuota_con_monto_inicial_no_amortiza():
+    assert op.finanzas.estimar_intereses_pagados(1_000_000, 500_000, 24, 0) is None
+    assert op.finanzas.estimar_intereses_pagados(1_000_000, 500_000, 24, None) is None
+
+
+def test_estimar_intereses_tope_de_600_meses():
+    # 1M al 0,001% mensual aprox con cuota de $1: no termina nunca, corta en 600 iteraciones
+    tasa_ea = 12.0
+    total = op.finanzas.estimar_intereses_pagados(10_000_000_000, 1, tasa_ea, 100_000_000)
+    tasa_mv = op.finanzas.ea_a_mv(tasa_ea) / 100
+    saldo, esperado = 10_000_000_000.0, 0.0
+    for _ in range(600):
+        if saldo <= 2:
+            break
+        interes = saldo * tasa_mv
+        esperado += interes
+        saldo -= 100_000_000 - interes
+    assert total == round(esperado)
+
+
+def test_estimar_intereses_se_detiene_a_un_peso_del_saldo_actual():
+    interes = 1000 * op.finanzas.ea_a_mv(12) / 100
+    tras_primera_cuota = 1000 - (100 - interes)
+    assert op.finanzas.estimar_intereses_pagados(1000, tras_primera_cuota - 0.5, 12, 100) == 9
+    assert op.finanzas.estimar_intereses_pagados(1000, tras_primera_cuota - 1.5, 12, 100) == 18
+
+
+def test_estimar_intereses_con_cuota_igual_al_interes_no_suma():
+    tasa_mv = op.finanzas.ea_a_mv(12) / 100
+    assert op.finanzas.estimar_intereses_pagados(1_000_000, 900_000, 12, 1_000_000 * tasa_mv) == 0
+
+
+def test_rendimiento_esperado_solo_con_tasa():
+    assert op.finanzas.rendimiento_esperado({"tasa_ea": 12, "valor_actual": 1_000_000}) == 9_489
+    assert op.finanzas.rendimiento_esperado({"tasa_ea": 0, "valor_actual": 1_000_000}) is None
+    assert op.finanzas.rendimiento_esperado({"valor_actual": 1_000_000}) is None
+
+
+def test_intereses_pagados_ignora_total_cero_o_ausente():
+    base = {"monto_inicial": 1_000_000, "saldo_actual": 500_000, "tasa_ea": 24, "cuota_mensual": 100_000}
+    assert op.finanzas.intereses_pagados({**base, "total_intereses": 1}) == {"valor": 1, "exacto": True}
+    assert op.finanzas.intereses_pagados(base)["exacto"] is False
+    assert op.finanzas.intereses_pagados({**base, "tasa_ea": None}) is None
+
+
+def test_estimar_intereses_tope_exacto_de_600_meses():
+    tasa_mv = op.finanzas.ea_a_mv(12) / 100
+    saldo, esperado = 1_000_000_000.0, 0.0
+    for _ in range(600):
+        interes = saldo * tasa_mv
+        esperado += interes
+        saldo -= 9_500_000 - interes
+    assert saldo > 2
+    assert op.finanzas.estimar_intereses_pagados(1_000_000_000, 1, 12, 9_500_000) == round(esperado)
+
+
+def test_estimar_intereses_con_saldo_justo_un_peso_sobre_el_actual_se_detiene():
+    tras_primera = 1000 - (100 - 1000 * op.finanzas.ea_a_mv(12) / 100)
+    assert op.finanzas.estimar_intereses_pagados(1000, tras_primera - 1, 12, 100) == 9
+
+
+def test_estimar_intereses_con_capital_menor_a_un_peso_igual_suma():
+    interes = 1000 * op.finanzas.ea_a_mv(12) / 100
+    assert op.finanzas.estimar_intereses_pagados(1000, 990, 12, interes + 0.5) > 9

@@ -196,3 +196,35 @@ describe('AdvancedToggle', () => {
     expect(box).not.toBeChecked()
   })
 })
+
+describe('Select: teclado y select nativo', () => {
+  it('Space elige la opción activa y cierra', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SelectHarness />)
+    const trigger = screen.getByRole('button', { name: /Alfa/ })
+    await user.click(trigger)
+    await user.keyboard('{ArrowDown} ')
+    expect(screen.getByTestId('v')).toHaveTextContent('b')
+    expect(document.querySelector('.cdd-menu')).not.toHaveClass('open')
+  })
+
+  it('End salta a la última, Home a la primera y Enter elige', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SelectHarness />)
+    await user.click(screen.getByRole('button', { name: /Alfa/ }))
+    await user.keyboard('{End}')
+    expect(document.querySelector('.cdd-option.active')).toHaveTextContent('Beta')
+    await user.keyboard('{Home}{Enter}')
+    expect(screen.getByTestId('v')).toHaveTextContent('a')
+  })
+
+  it('el select nativo oculto notifica el cambio con el valor elegido', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SelectHarness />)
+    const nativo = document.querySelector<HTMLSelectElement>('select.cdd-native')!
+    expect(nativo).toHaveAttribute('aria-hidden', 'true')
+    await user.selectOptions(nativo, 'b')
+    expect(screen.getByTestId('v')).toHaveTextContent('b')
+    expect(screen.getByRole('button', { name: /Beta/ })).toBeInTheDocument()
+  })
+})
