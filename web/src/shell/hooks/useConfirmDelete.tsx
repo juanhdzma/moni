@@ -5,11 +5,11 @@ import { useMutations } from './useMutations'
 
 export function useConfirmDelete(entidad: CrudEntity, fila: { id: number } | null, mensaje: string): (() => void) | undefined {
   const { crudOpOrBanner } = useMutations()
-  const { openModal, closeModal } = useModal()
+  const { pushModal, popModal, closeModal } = useModal()
   if (!fila) return undefined
   const borrar = () => {
     closeModal()
     void crudOpOrBanner(entidad, 'delete', { id: fila.id })
   }
-  return () => openModal('Confirmar eliminación', <ConfirmModal mensaje={mensaje} onConfirmar={borrar} onCancelar={closeModal} />)
+  return () => pushModal('Confirmar eliminación', <ConfirmModal mensaje={mensaje} onConfirmar={borrar} onCancelar={popModal} />)
 }

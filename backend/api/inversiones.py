@@ -60,7 +60,7 @@ def registrar_rendimiento(inv_id: int, body: InvRendimiento, response: Response)
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
         afectadas = _persistir(conn, inv_id, movimientos.aplicar_rendimiento(
-            inv, body.monto, body.fecha, body.notas, body.capitaliza, body.registrar_tx
+            inv, body.monto, fecha_o_ahora(body.fecha), body.notas, body.capitaliza, body.registrar_tx
         ))
         ocultar_op(conn, body.op_clave)
         afectar(response, *con_op_oculta(afectadas, body.op_clave))
@@ -72,7 +72,7 @@ def aportar_inv(inv_id: int, body: InvAporte, response: Response):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
         afectar(response, *_persistir(conn, inv_id, movimientos.aplicar_aporte(
-            inv, body.monto, body.nuevo_valor, body.fecha, body.notas, body.registrar_tx
+            inv, body.monto, body.nuevo_valor, fecha_o_ahora(body.fecha), body.notas, body.registrar_tx
         )))
         return guardar_y_leer(conn, "inversiones", inv_id)
 
@@ -82,7 +82,7 @@ def retirar_inv(inv_id: int, body: InvRetiro, response: Response):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
         afectar(response, *_persistir(conn, inv_id, movimientos.aplicar_retiro(
-            inv, body.tipo, body.monto, body.saldo_queda, body.fecha, body.notas, body.registrar_tx
+            inv, body.tipo, body.monto, body.saldo_queda, fecha_o_ahora(body.fecha), body.notas, body.registrar_tx
         )))
         conn.commit()
         return {"ok": True}

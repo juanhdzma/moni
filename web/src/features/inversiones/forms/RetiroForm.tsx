@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { MoneyField } from '@/controls/MoneyField'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { entero, parseMoney } from '@/lib/format'
-import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRetiro, Inversion } from '@/types'
 import { FechaNotas, RegistrarToggle } from '@/controls/FormFields'
@@ -11,11 +10,11 @@ import { TipoToggle } from '@/controls/TipoToggle'
 import { InversionPanel } from './InversionPanel'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
+import { FormModal } from '@/controls/FormModal'
 
 const TIPO_PARCIAL = 'parcial'
 
 export function RetiroForm({ inv }: { inv: Inversion }) {
-  const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()
   const meta = useMeta()
@@ -25,10 +24,10 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
   const [montoTotal, setMontoTotal] = useState(entero(inv.valor_actual))
   const [montoParcial, setMontoParcial] = useState('')
   const [saldoQueda, setSaldoQueda] = useState('')
-  const campos = useCamposMovimiento(estado.hoy)
+  const campos = useCamposMovimiento()
 
   const buildBody = (): InvRetiro => {
-    const comun = { tipo: tipo as InvRetiro['tipo'], ...campos.cuerpoConFecha() }
+    const comun = { tipo: tipo as InvRetiro['tipo'], ...campos.cuerpo() }
     if (!parcial) return { monto: parseMoney(montoTotal), ...comun }
     return {
       monto: parseMoney(montoParcial),
@@ -43,7 +42,7 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
   }
 
   return (
-    <>
+    <FormModal>
       <InversionPanel inv={inv} />
       <TipoToggle label="Tipo de retiro" value={tipo} opciones={meta?.tipos_retiro ?? []} onChange={setTipo} />
 
@@ -76,7 +75,7 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
         fechaType="date"
         fechaId="m-fecha-retiro"
         notasId="m-notas-retiro"
-        fechaLabel="Fecha"
+        fechaLabel="Fecha (hoy si se omite)"
         fecha={campos.fecha}
         onFecha={campos.setFecha}
         notas={campos.notas}
@@ -85,6 +84,6 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
       />
       <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} />
       <FormFooter saveLabel="Confirmar retiro" onSave={() => void save()} />
-    </>
+    </FormModal>
   )
 }

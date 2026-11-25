@@ -10,6 +10,7 @@ import { entero, parseMoney, soloFecha } from '@/lib/format'
 import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
 import type { RecIn, Recurrente, TipoRec } from '@/types'
+import { FormModal } from '@/controls/FormModal'
 
 export function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const meta = useMeta()
@@ -34,7 +35,7 @@ export function RecurrenteForm({ item }: { item: Recurrente | null }) {
   }
 
   return (
-    <>
+    <FormModal>
       <NombreField value={nombre} onChange={setNombre} placeholder="Ej. Netflix" />
       <TipoToggle
         value={tipo}
@@ -50,6 +51,6 @@ export function RecurrenteForm({ item }: { item: Recurrente | null }) {
       </div>
       <FechaNotas fechaType="date" fechaLabel="Fecha inicio (opcional)" fecha={fecha} onFecha={setFecha} notas={notas} onNotas={setNotas} notasPlaceholder="" />
       <FormFooter saveLabel={etiquetaGuardar()} onSave={() => void save()} onDelete={eliminar} cancelClassName="ml-auto" />
-    </>
+    </FormModal>
   )
 }

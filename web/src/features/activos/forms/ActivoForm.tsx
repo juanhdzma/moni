@@ -8,6 +8,7 @@ import { entero, parseMoney, soloFecha } from '@/lib/format'
 import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useData } from '@/shell/providers/DataProvider'
 import type { Activo, ActivoIn } from '@/types'
+import { FormModal } from '@/controls/FormModal'
 
 export function ActivoForm({ activo }: { activo: Activo | null }) {
   const { hoy } = useData().estado
@@ -30,7 +31,7 @@ export function ActivoForm({ activo }: { activo: Activo | null }) {
   }
 
   return (
-    <>
+    <FormModal>
       <NombreField value={nombre} onChange={setNombre} placeholder="Ej. Apartamento Bogotá" />
       <div className="form-row-2">
         <MoneyField id="m-val-ini" label={`${esEdicion ? 'Valor inicial' : 'Precio de compra'} (COP)`} value={valIni} onChange={setValIni} />
@@ -39,6 +40,6 @@ export function ActivoForm({ activo }: { activo: Activo | null }) {
       <FechaField id="m-fecha-adq" label="Fecha de adquisición" value={fechaAdq} onChange={setFechaAdq} type="date" />
       {!esEdicion && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
       <FormFooter saveLabel={etiquetaGuardar('Agregar activo')} onSave={() => void save()} onDelete={eliminar} cancelClassName="sm:ml-auto" />
-    </>
+    </FormModal>
   )
 }

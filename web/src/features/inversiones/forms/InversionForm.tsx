@@ -12,6 +12,7 @@ import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { useData } from '@/shell/providers/DataProvider'
 import type { InvIn, Inversion, Meta } from '@/types'
+import { FormModal } from '@/controls/FormModal'
 
 export function InversionForm({ inv }: { inv: Inversion | null }) {
   const meta = useMeta()
@@ -62,7 +63,7 @@ function InversionCampos({ inv, meta }: { inv: Inversion | null; meta: Meta }) {
   }
 
   return (
-    <>
+    <FormModal>
       <NombreField value={nombre} onChange={setNombre} placeholder="Ej. CDT Bancolombia" />
       {isEdit ? (
         <div className="form-group">
@@ -94,6 +95,6 @@ function InversionCampos({ inv, meta }: { inv: Inversion | null; meta: Meta }) {
       </Campo>
       {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
       <FormFooter saveLabel={etiquetaGuardar('Agregar inversión')} onSave={() => void save()} onDelete={eliminar} />
-    </>
+    </FormModal>
   )
 }

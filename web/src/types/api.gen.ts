@@ -1170,6 +1170,8 @@ export interface components {
         };
         /** ActivoValor */
         ActivoValor: {
+            /** Op Clave */
+            op_clave?: string | null;
             /** Nuevo Valor */
             nuevo_valor: number;
             /**
@@ -1180,6 +1182,8 @@ export interface components {
         };
         /** ActivoVenta */
         ActivoVenta: {
+            /** Op Clave */
+            op_clave?: string | null;
             /** Precio */
             precio: number;
             /**
@@ -1494,6 +1498,8 @@ export interface components {
             nuevo_saldo?: number | null;
             /** Disponible Nuevo */
             disponible_nuevo?: number | null;
+            /** Op Clave */
+            op_clave?: string | null;
             /** Monto */
             monto: number;
             /**
@@ -1563,6 +1569,12 @@ export interface components {
              * @default 0
              */
             tasa_ea: number;
+            /**
+             * Tasa Tipo
+             * @default ea
+             * @enum {string}
+             */
+            tasa_tipo: "ea" | "mv";
             /**
              * Cuota Mensual
              * @default 0
@@ -1654,6 +1666,12 @@ export interface components {
              */
             tasa_ea: number;
             /**
+             * Tasa Tipo
+             * @default ea
+             * @enum {string}
+             */
+            tasa_tipo: "ea" | "mv";
+            /**
              * Cuota Mensual
              * @default 0
              */
@@ -1688,6 +1706,8 @@ export interface components {
         };
         /** DeudaPago */
         DeudaPago: {
+            /** Op Clave */
+            op_clave?: string | null;
             /**
              * Modo
              * @enum {string}
@@ -1719,8 +1739,6 @@ export interface components {
              * @default true
              */
             registrar_tx: boolean;
-            /** Op Clave */
-            op_clave?: string | null;
         };
         /** EquivalenciaTasa */
         EquivalenciaTasa: {
@@ -2011,11 +2029,16 @@ export interface components {
         };
         /** InvAporte */
         InvAporte: {
+            /** Op Clave */
+            op_clave?: string | null;
             /** Monto */
             monto: number;
             /** Nuevo Valor */
             nuevo_valor?: number | null;
-            /** Fecha */
+            /**
+             * Fecha
+             * @default
+             */
             fecha: string;
             /**
              * Notas
@@ -2095,9 +2118,14 @@ export interface components {
         };
         /** InvRendimiento */
         InvRendimiento: {
+            /** Op Clave */
+            op_clave?: string | null;
             /** Monto */
             monto: number;
-            /** Fecha */
+            /**
+             * Fecha
+             * @default
+             */
             fecha: string;
             /**
              * Notas
@@ -2114,11 +2142,11 @@ export interface components {
              * @default false
              */
             capitaliza: boolean;
-            /** Op Clave */
-            op_clave?: string | null;
         };
         /** InvRetiro */
         InvRetiro: {
+            /** Op Clave */
+            op_clave?: string | null;
             /**
              * Tipo
              * @enum {string}
@@ -2128,7 +2156,10 @@ export interface components {
             monto: number;
             /** Saldo Queda */
             saldo_queda?: number | null;
-            /** Fecha */
+            /**
+             * Fecha
+             * @default
+             */
             fecha: string;
             /**
              * Notas
@@ -2143,6 +2174,8 @@ export interface components {
         };
         /** InvValor */
         InvValor: {
+            /** Op Clave */
+            op_clave?: string | null;
             /** Nuevo Valor */
             nuevo_valor: number;
             /**

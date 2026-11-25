@@ -51,7 +51,7 @@ describe('aporte', () => {
       method: 'POST',
       url: '/api/inv/6/aporte',
       headers: H,
-      body: { monto: 50000, fecha: '2026-08-20', notas: '', registrar_tx: true },
+      body: { monto: 50000, notas: '', registrar_tx: true },
     })
     expect(reales(f)[0]?.body).not.toHaveProperty('nuevo_valor')
   })

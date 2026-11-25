@@ -8,6 +8,7 @@ import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
 import type { OpcionesTx, TipoRec, Transaccion } from '@/types'
 import { CamposTx, cuerpoTx, useOpcionesTx, type ValoresTx } from './CamposTx'
+import { FormModal } from '@/controls/FormModal'
 
 export function TxForm({ tx }: { tx: Transaccion | null }) {
   const opciones = useOpcionesTx(tx?.id)
@@ -38,7 +39,7 @@ function TxFormCampos({ tx, opciones }: { tx: Transaccion | null; opciones: Opci
   const save = () => guardar(cuerpoTx(tipo, valores, tarjeta ? Number(tarjeta) : null))
 
   return (
-    <>
+    <FormModal>
       <TipoToggle value={tipo} opciones={meta?.tipos_manuales ?? []} onChange={cambiarTipo} />
       <CamposTx tipo={tipo} categorias={opciones.categorias[tipo]} valores={valores} onCambio={(p) => setValores((v) => ({ ...v, ...p }))}>
         {tipo === 'gasto' && (
@@ -55,6 +56,6 @@ function TxFormCampos({ tx, opciones }: { tx: Transaccion | null; opciones: Opci
         )}
       </CamposTx>
       <FormFooter saveLabel={etiquetaGuardar()} onSave={() => void save()} onDelete={eliminar} cancelClassName="ml-auto" />
-    </>
+    </FormModal>
   )
 }

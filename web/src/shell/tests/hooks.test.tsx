@@ -28,8 +28,10 @@ describe('useStatus', () => {
 
 describe('useCamposMovimiento', () => {
   it('arma el cuerpo con notas recortadas y registrar por defecto', () => {
-    const { result } = renderHook(() => useCamposMovimiento('2026-08-20'))
+    const { result } = renderHook(() => useCamposMovimiento())
     act(() => result.current.setNotas('  Cuota #1 '))
+    expect(result.current.cuerpo()).toEqual({ notas: 'Cuota #1', registrar_tx: true })
+    act(() => result.current.setFecha('2026-08-20'))
     expect(result.current.cuerpo()).toEqual({ fecha: '2026-08-20', notas: 'Cuota #1', registrar_tx: true })
     act(() => result.current.setRegistrar(false))
     expect(result.current.cuerpo().registrar_tx).toBe(false)

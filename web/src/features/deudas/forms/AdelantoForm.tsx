@@ -12,6 +12,7 @@ import { useMutations } from '@/shell/hooks/useMutations'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from '@/shell/hooks/usePreview'
 import type { Deuda, DeudaAdelanto } from '@/types'
+import { FormModal } from '@/controls/FormModal'
 
 export function AdelantoForm({ d }: { d: Deuda }) {
   const { cop } = useMoneda()
@@ -44,7 +45,7 @@ export function AdelantoForm({ d }: { d: Deuda }) {
   }
 
   return (
-    <>
+    <FormModal>
       <ModalPanel
         izquierda={{ label: 'Debes', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
         derecha={d.frases.disponible_texto ? { label: 'Disponible', valor: d.frases.disponible_texto } : undefined}
@@ -87,6 +88,6 @@ export function AdelantoForm({ d }: { d: Deuda }) {
       />
       <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} label="Registrar como ingreso" />
       <FormFooter saveLabel="Pedir adelanto" onSave={() => void save()} />
-    </>
+    </FormModal>
   )
 }

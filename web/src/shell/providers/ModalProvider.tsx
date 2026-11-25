@@ -8,27 +8,29 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
 } from 'react'
 import { useData } from '@/shell/providers/DataProvider'
+import { IconButton } from '@/controls/IconButton'
 import { closeAnyOpenPopup, usePopupOutsideClick } from '@/controls/popups'
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+import { enfocables, useAtrapaFoco } from '@/controls/useAtrapaFoco'
 
 export interface ModalApi {
   openModal: (title: string, content: ReactNode) => void
+  pushModal: (title: string, content: ReactNode) => void
+  popModal: () => void
   closeModal: () => void
   setModalStatus: (cls: string, msg: string) => void
   setPendingProxOp: (key: string | null) => void
   pendingOpClave: () => string | null
 }
 
-interface ModalState {
+interface Capa {
+  id: number
   title: string
   content: ReactNode
+  focoPrevio: HTMLElement | null
 }
 
 interface Status {
@@ -62,55 +64,75 @@ class ContentBoundary extends Component<{ onFail: (err: unknown) => void; childr
   }
 }
 
+const enfocadoActual = () => (document.activeElement instanceof HTMLElement ? document.activeElement : null)
+
 export function ModalProvider({ children }: { children: ReactNode }) {
-  const [modal, setModal] = useState<ModalState | null>(null)
+  const [pila, setPila] = useState<Capa[]>([])
   const [status, setStatus] = useState<Status>({ cls: '', msg: '' })
-  const overlayRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const topeRef = useRef<HTMLDivElement>(null)
+  const pilaRef = useRef<Capa[]>([])
+  const siguienteId = useRef(0)
   const prevFocus = useRef<HTMLElement | null>(null)
-  const isOpen = useRef(false)
+  const volverA = useRef<HTMLElement | null>(null)
   const justClosed = useRef<HTMLElement | null>(null)
   const pending = useRef<string | null>(null)
-  const [boundaryKey, setBoundaryKey] = useState(0)
   const { showBanner } = useData()
 
   usePopupOutsideClick()
 
-  const focusables = useCallback(
-    () =>
-      [...(overlayRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])].filter(
-        (el) => el.offsetParent !== null && el.getAttribute('tabindex') !== '-1',
-      ),
-    [],
-  )
-
-  const openModal = useCallback((title: string, content: ReactNode) => {
-    if (!isOpen.current) {
-      prevFocus.current = justClosed.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null)
-      justClosed.current = null
-      isOpen.current = true
-    }
-    setStatus({ cls: '', msg: '' })
-    setModal({ title, content })
+  const fijarPila = useCallback((nueva: Capa[]) => {
+    pilaRef.current = nueva
+    setPila(nueva)
   }, [])
 
+  const nuevaCapa = useCallback((title: string, content: ReactNode): Capa => ({ id: siguienteId.current++, title, content, focoPrevio: enfocadoActual() }), [])
+
+  const openModal = useCallback(
+    (title: string, content: ReactNode) => {
+      if (pilaRef.current.length === 0) {
+        prevFocus.current = justClosed.current ?? enfocadoActual()
+        justClosed.current = null
+      }
+      setStatus({ cls: '', msg: '' })
+      fijarPila([nuevaCapa(title, content)])
+    },
+    [fijarPila, nuevaCapa],
+  )
+
+  const pushModal = useCallback(
+    (title: string, content: ReactNode) => {
+      if (pilaRef.current.length === 0) return openModal(title, content)
+      closeAnyOpenPopup()
+      fijarPila([...pilaRef.current, nuevaCapa(title, content)])
+    },
+    [fijarPila, nuevaCapa, openModal],
+  )
+
   const closeModal = useCallback(() => {
-    isOpen.current = false
     justClosed.current = prevFocus.current
     queueMicrotask(() => {
       justClosed.current = null
     })
-    setModal(null)
+    fijarPila([])
     pending.current = null
     closeAnyOpenPopup()
     prevFocus.current?.focus()
     prevFocus.current = null
-  }, [])
+  }, [fijarPila])
+
+  const popModal = useCallback(() => {
+    const actual = pilaRef.current
+    if (actual.length <= 1) return closeModal()
+    closeAnyOpenPopup()
+    volverA.current = actual[actual.length - 1]?.focoPrevio ?? null
+    fijarPila(actual.slice(0, -1))
+  }, [closeModal, fijarPila])
 
   const onContentFail = useCallback(
     (err: unknown) => {
       console.error('formulario del modal falló:', err)
       closeModal()
-      setBoundaryKey((k) => k + 1)
       showBanner('No se pudo abrir el formulario. Mirá la consola.')
     },
     [closeModal, showBanner],
@@ -123,56 +145,45 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const pendingOpClave = useCallback(() => pending.current, [])
 
   useEffect(() => {
-    if (modal) focusables()[0]?.focus()
-  }, [modal, focusables])
+    if (pila.length === 0) return
+    const volver = volverA.current
+    volverA.current = null
+    if (volver?.isConnected) volver.focus()
+    else enfocables(pila.length > 1 ? topeRef.current : dialogRef.current)[0]?.focus()
+  }, [pila])
 
-  const trapFocus = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'Tab') return
-    const list = focusables()
-    const primero = list[0]
-    const ultimo = list[list.length - 1]
-    if (!primero || !ultimo) return
-    if (e.shiftKey && document.activeElement === primero) {
-      e.preventDefault()
-      ultimo.focus()
-    } else if (!e.shiftKey && document.activeElement === ultimo) {
-      e.preventDefault()
-      primero.focus()
-    }
-  }
+  useAtrapaFoco(dialogRef, pila.length > 0, popModal)
 
   const onBackdrop = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) closeModal()
+    if (e.target === e.currentTarget) popModal()
   }
 
   const api = useMemo(
-    () => ({ openModal, closeModal, setModalStatus, setPendingProxOp, pendingOpClave }),
-    [openModal, closeModal, setModalStatus, setPendingProxOp, pendingOpClave],
+    () => ({ openModal, pushModal, popModal, closeModal, setModalStatus, setPendingProxOp, pendingOpClave }),
+    [openModal, pushModal, popModal, closeModal, setModalStatus, setPendingProxOp, pendingOpClave],
   )
+
+  const tope = pila[pila.length - 1]
 
   return (
     <ModalContext.Provider value={api}>
       <StatusContext.Provider value={status}>
-        <div
-          id="modal-overlay"
-          ref={overlayRef}
-          className={'modal-overlay' + (modal ? ' open' : '')}
-          onClick={onBackdrop}
-          onKeyDown={modal ? trapFocus : undefined}
-        >
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
+        <div id="modal-overlay" className={'modal-overlay' + (tope ? ' open' : '')} onClick={onBackdrop}>
+          <div ref={dialogRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
             <div className="modal-header">
               <h2 className="modal-title" id="modal-title">
-                {modal?.title}
+                {tope?.title}
               </h2>
-              <button className="icon-btn" onClick={closeModal} aria-label="Cerrar">
+              <IconButton label="Cerrar" onClick={popModal}>
                 <X className="size-4" />
-              </button>
+              </IconButton>
             </div>
             <div id="modal-body">
-              <ContentBoundary key={boundaryKey} onFail={onContentFail}>
-                {modal?.content}
-              </ContentBoundary>
+              {pila.map((capa) => (
+                <div key={capa.id} ref={capa === tope ? topeRef : undefined} hidden={capa !== tope}>
+                  <ContentBoundary onFail={onContentFail}>{capa.content}</ContentBoundary>
+                </div>
+              ))}
             </div>
           </div>
         </div>

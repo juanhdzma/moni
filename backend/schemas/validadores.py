@@ -71,3 +71,9 @@ def fecha_opcional(*fields: str):
 
 def clave_opcional(*fields: str):
     return field_validator(*fields)(_check_clave)
+
+
+class ConOpClave(Entrada):
+    op_clave: Optional[str] = None
+
+    _v_clave = clave_opcional("op_clave")

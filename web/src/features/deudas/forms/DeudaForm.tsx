@@ -12,6 +12,7 @@ import { entero, parseMoney, soloFecha } from '@/lib/format'
 import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
 import type { Deuda, DeudaIn } from '@/types'
+import { FormModal } from '@/controls/FormModal'
 
 export function DeudaForm({ d }: { d: Deuda | null }) {
   const meta = useMeta()
@@ -50,13 +51,13 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
       clase_deuda: clase as DeudaIn['clase_deuda'],
       cupo: parseMoney(cupo),
       franquicia: franquiciaActual as DeudaIn['franquicia'],
-      ...(tasaNoDefault && { tasa_tipo: tipoTasa }),
+      ...(tasaNoDefault && { tasa_tipo: tipoTasa as DeudaIn['tasa_tipo'] }),
     }
     await guardar(data)
   }
 
   return (
-    <>
+    <FormModal>
       <TipoToggle value={clase} opciones={meta?.clases_deuda ?? []} onChange={setClaseSel} />
       <NombreField value={nombre} onChange={setNombre} placeholder={esTarjeta ? 'Ej. Tarjeta Visa' : 'Ej. Crédito de consumo'} />
       {!esTarjeta && (
@@ -95,6 +96,6 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
       )}
       {!esTarjeta && <div id="wrap-advanced">{!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}</div>}
       <FormFooter saveLabel={etiquetaGuardar('Agregar deuda')} onSave={() => void save()} onDelete={eliminar} />
-    </>
+    </FormModal>
   )
 }

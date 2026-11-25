@@ -16,9 +16,9 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
   return (
     <section id="dash-patrimonio" aria-labelledby="patrimonio-titulo" className="rounded-xl border bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <h1 id="patrimonio-titulo" className="text-sm font-semibold text-muted-foreground">
+        <h2 id="patrimonio-titulo" className="text-sm font-semibold text-muted-foreground">
           Patrimonio
-        </h1>
+        </h2>
         {loading || !r ? (
           <Skeleton className="h-9 w-40" aria-label="Cargando" />
         ) : (

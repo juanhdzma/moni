@@ -27,15 +27,18 @@ const siguienteOrden = (actual: Orden, { col, dir_defecto }: ColumnaOrdenable): 
 export function Transacciones({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { loaded } = useData()
-  const columnas = useMeta()?.columnas_transaccion ?? []
-  const [sort, setSort] = useState<Orden>({ col: 'fecha', dir: -1 })
+  const meta = useMeta()
+  const columnas = meta?.columnas_transaccion ?? []
+  const [sortElegido, setSort] = useState<Orden | null>(null)
+  const ordenInicial = meta ? ({ col: meta.defaults.orden_tx.col, dir: meta.defaults.orden_tx.dir } as Orden) : null
+  const sort = sortElegido ?? ordenInicial
   const [panelOpen, setPanelOpen] = useState(false)
   const [mesSel, setMesSel] = useState('')
   const [tipoSel, setTipoSel] = useState<FiltrosTx['tipo']>('')
   const [catSel, setCatSel] = useState('')
 
-  const params: FiltrosTx = { col: sort.col, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel }
-  const { data, loading } = useVista(loaded ? JSON.stringify(params) : null, () => cargarListadoTx(params), DEPENDENCIAS_DE_VISTA.listadoTransacciones)
+  const params: FiltrosTx | null = sort ? { col: sort.col, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel } : null
+  const { data, loading } = useVista(loaded && params ? JSON.stringify(params) : null, () => cargarListadoTx(params as FiltrosTx), DEPENDENCIAS_DE_VISTA.listadoTransacciones)
 
   const filtros = data && !loading ? data.filtros : null
   const mes = filtros?.mes ?? mesSel
@@ -130,9 +133,9 @@ export function Transacciones({ active }: TabProps) {
               <tr className="border-b">
                 {columnas.map((columna) => {
                   const { col, label, ordenable } = columna
-                  const activo = ordenable && sort.col === col
+                  const activo = ordenable && sort?.col === col
                   const go = () => {
-                    if (columna.ordenable) setSort((s) => siguienteOrden(s, columna))
+                    if (columna.ordenable && sort) setSort(siguienteOrden(sort, columna))
                   }
                   return (
                     <th
@@ -142,13 +145,13 @@ export function Transacciones({ active }: TabProps) {
                         'px-2 py-3 text-xs font-semibold sm:py-2',
                         col === 'monto' ? 'text-right' : 'text-left',
                         ordenable && 'th-sort cursor-pointer select-none hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
-                        activo ? `active ${sort.dir === 1 ? 'asc' : 'desc'} text-foreground` : 'text-muted-foreground',
+                        activo ? `active ${sort?.dir === 1 ? 'asc' : 'desc'} text-foreground` : 'text-muted-foreground',
                         claseOculta(columna),
                       )}
                       data-col={col}
                       {...(ordenable && {
                         tabIndex: 0,
-                        'aria-sort': activo ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none',
+                        'aria-sort': activo ? (sort?.dir === 1 ? 'ascending' : 'descending') : 'none',
                         onClick: go,
                         onKeyDown: (e: KeyboardEvent) => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -159,13 +162,13 @@ export function Transacciones({ active }: TabProps) {
                       })}
                     >
                       {label}
-                      {activo && (sort.dir === 1 ? <ArrowUp className="ml-1 inline size-3" aria-hidden="true" /> : <ArrowDown className="ml-1 inline size-3" aria-hidden="true" />)}
+                      {activo && (sort?.dir === 1 ? <ArrowUp className="ml-1 inline size-3" aria-hidden="true" /> : <ArrowDown className="ml-1 inline size-3" aria-hidden="true" />)}
                     </th>
                   )
                 })}
               </tr>
             </thead>
-            <tbody id="tx-tbody"><FilasTx items={data ? list : null} columnas={columnas} textoVacio={data?.texto_vacio} agrupar={sort.col === 'fecha'} onEdit={onEdit} /></tbody>
+            <tbody id="tx-tbody"><FilasTx items={data ? list : null} columnas={columnas} textoVacio={data?.texto_vacio} agrupar={sort?.col === 'fecha'} onEdit={onEdit} /></tbody>
           </table>
         </div>
       </Panel>

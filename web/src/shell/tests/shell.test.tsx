@@ -24,6 +24,13 @@ describe('Shell', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Moni, finanzas personales' })).toBeInTheDocument()
   })
 
+  it('es el único h1 aunque todas las pestañas estén montadas', async () => {
+    mockFetch()
+    renderWithProviders(<Shell />)
+    await screen.findByRole('heading', { level: 2, name: 'Patrimonio' })
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+  })
+
   it('nav de escritorio y drawer con sus etiquetas', () => {
     renderWithProviders(<Shell />)
     expect(within(nav()).getAllByRole('button').map((b) => b.textContent)).toEqual([

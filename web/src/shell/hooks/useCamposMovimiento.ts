@@ -8,14 +8,12 @@ export interface CamposMovimiento {
   registrar: boolean
   setRegistrar: (v: boolean) => void
   cuerpo: () => { fecha?: string; notas: string; registrar_tx: boolean }
-  cuerpoConFecha: () => { fecha: string; notas: string; registrar_tx: boolean }
 }
 
-export function useCamposMovimiento(fechaInicial = ''): CamposMovimiento {
-  const [fecha, setFecha] = useState(fechaInicial)
+export function useCamposMovimiento(): CamposMovimiento {
+  const [fecha, setFecha] = useState('')
   const [notas, setNotas] = useState('')
   const [registrar, setRegistrar] = useState(true)
-  const cuerpoConFecha = () => ({ fecha, notas: notas.trim(), registrar_tx: registrar })
   return {
     fecha,
     setFecha,
@@ -24,6 +22,5 @@ export function useCamposMovimiento(fechaInicial = ''): CamposMovimiento {
     registrar,
     setRegistrar,
     cuerpo: () => ({ ...(fecha && { fecha }), notas: notas.trim(), registrar_tx: registrar }),
-    cuerpoConFecha,
   }
 }

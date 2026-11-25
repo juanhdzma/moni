@@ -2,6 +2,9 @@ import { useEffect, type RefObject } from 'react'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
+export const enfocables = (raiz: HTMLElement | null): HTMLElement[] =>
+  [...(raiz?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])].filter((el) => el.offsetParent !== null && !el.closest('[hidden]'))
+
 export function useAtrapaFoco(ref: RefObject<HTMLElement | null>, activo: boolean, onEscape: () => void): void {
   useEffect(() => {
     if (!activo) return
@@ -11,7 +14,7 @@ export function useAtrapaFoco(ref: RefObject<HTMLElement | null>, activo: boolea
         return
       }
       if (e.key !== 'Tab' || !ref.current) return
-      const lista = [...ref.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
+      const lista = enfocables(ref.current)
       const primero = lista[0]
       const ultimo = lista[lista.length - 1]
       if (!primero || !ultimo) return

@@ -1,6 +1,4 @@
-from pydantic import BaseModel
-
-from .validadores import Entrada, MontoCero, MontoPesos, Nombre, Notas, fecha_opcional
+from .validadores import ConOpClave, Entrada, MontoCero, MontoPesos, Nombre, Notas, fecha_opcional
 
 
 class ActivoIn(Entrada):
@@ -14,7 +12,7 @@ class ActivoIn(Entrada):
     _v_fecha = fecha_opcional("fecha_adquisicion", "valor_actualizado_en")
 
 
-class ActivoVenta(BaseModel):
+class ActivoVenta(ConOpClave):
     precio: MontoPesos
     fecha: str = ""
     notas: Notas = ""
@@ -23,7 +21,7 @@ class ActivoVenta(BaseModel):
     _v_fecha = fecha_opcional("fecha")
 
 
-class ActivoValor(BaseModel):
+class ActivoValor(ConOpClave):
     nuevo_valor: MontoPesos
     fecha: str = ""
 

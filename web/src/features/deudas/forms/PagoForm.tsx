@@ -15,6 +15,7 @@ import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from '@/shell/hooks/usePreview'
 import type { Deuda, DeudaPago, ModoPago } from '@/types'
 import { openDeudaFormById } from './openers'
+import { FormModal } from '@/controls/FormModal'
 
 export function PagoForm({ d, modo }: { d: Deuda; modo: ModoPago }) {
   const { cop } = useMoneda()
@@ -47,7 +48,7 @@ export function PagoForm({ d, modo }: { d: Deuda; modo: ModoPago }) {
   }
 
   return (
-    <>
+    <FormModal>
       <ModalPanel
         izquierda={{ label: 'Saldo pendiente', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
         derecha={{ label: 'Cuota mensual', valor: cop(d.cuota_mensual) }}
@@ -73,6 +74,6 @@ export function PagoForm({ d, modo }: { d: Deuda; modo: ModoPago }) {
         onEdit={editar}
         editLabel="Editar deuda"
       />
-    </>
+    </FormModal>
   )
 }

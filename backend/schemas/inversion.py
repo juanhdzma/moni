@@ -1,10 +1,10 @@
 from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from ..calculos.constantes import DIA_PAGO_MAX, PAGOS_INVERSION, TIPOS_INVERSION, TIPOS_RETIRO, valores
 from .validadores import (
-    Entrada, MontoCero, MontoPesos, Nombre, Notas, Tasa, TasaTipo, clave_opcional, fecha_opcional, fecha_requerida,
+    ConOpClave, Entrada, MontoCero, MontoPesos, Nombre, Notas, Tasa, TasaTipo, fecha_opcional,
 )
 
 
@@ -43,40 +43,38 @@ class InvIn(Entrada):
         return self
 
 
-class InvRendimiento(BaseModel):
+class InvRendimiento(ConOpClave):
     monto: MontoPesos
-    fecha: str
+    fecha: str = ""
     notas: Notas = ""
     registrar_tx: bool = True
     capitaliza: bool = False
-    op_clave: Optional[str] = None
 
-    _v_fecha = fecha_requerida("fecha")
-    _v_clave = clave_opcional("op_clave")
+    _v_fecha = fecha_opcional("fecha")
 
 
-class InvAporte(BaseModel):
+class InvAporte(ConOpClave):
     monto: MontoPesos
     nuevo_valor: Optional[MontoCero] = None
-    fecha: str
+    fecha: str = ""
     notas: Notas = ""
     registrar_tx: bool = True
 
-    _v_fecha = fecha_requerida("fecha")
+    _v_fecha = fecha_opcional("fecha")
 
 
-class InvRetiro(BaseModel):
+class InvRetiro(ConOpClave):
     tipo: TipoRetiro
     monto: MontoPesos
     saldo_queda: Optional[MontoCero] = None
-    fecha: str
+    fecha: str = ""
     notas: Notas = ""
     registrar_tx: bool = True
 
-    _v_fecha = fecha_requerida("fecha")
+    _v_fecha = fecha_opcional("fecha")
 
 
-class InvValor(BaseModel):
+class InvValor(ConOpClave):
     nuevo_valor: MontoPesos
     fecha: str = ""
 

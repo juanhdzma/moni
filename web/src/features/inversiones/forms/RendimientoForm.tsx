@@ -3,7 +3,6 @@ import { MoneyField } from '@/controls/MoneyField'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { entero, parseMoney } from '@/lib/format'
 import { useMoneda } from '@/shell/hooks/useMoneda'
-import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
 import type { InvRendimiento, Inversion } from '@/types'
 import { FechaNotas, RegistrarToggle } from '@/controls/FormFields'
@@ -13,10 +12,10 @@ import { TipoToggle } from '@/controls/TipoToggle'
 import { useEditarInversion } from './openers'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
+import { FormModal } from '@/controls/FormModal'
 
 export function RendimientoForm({ inv }: { inv: Inversion }) {
   const { cop } = useMoneda()
-  const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()
   const editar = useEditarInversion(inv)
@@ -26,19 +25,19 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
   const [monto, setMonto] = useState(expected ? entero(expected) : '')
   const [eleccion, setCapitaliza] = useState<boolean | null>(null)
   const capitaliza = eleccion ?? inv.capitaliza_default
-  const campos = useCamposMovimiento(estado.hoy)
+  const campos = useCamposMovimiento()
 
   const save = async () => {
     const body: InvRendimiento = {
       monto: parseMoney(monto),
       capitaliza,
-      ...campos.cuerpoConFecha(),
+      ...campos.cuerpo(),
     }
     await guardar(() => apiAction(`/api/inv/${inv.id}/rendimiento`, body))
   }
 
   return (
-    <>
+    <FormModal>
       <ModalPanel
         izquierda={{ label: 'Valor actual', valor: cop(inv.valor_actual), clase: 'text-inversiones-text' }}
         derecha={
@@ -68,13 +67,13 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
         hint={destinos.find((d) => d.value === (capitaliza ? 'capitaliza' : 'cuenta'))?.hint}
         onChange={(v) => setCapitaliza(v === 'capitaliza')}
       />
-      <FechaNotas fechaType="date" fechaLabel="Fecha" fecha={campos.fecha} onFecha={campos.setFecha} notas={campos.notas} onNotas={campos.setNotas} notasPlaceholder="Ej. Intereses mes de junio" />
+      <FechaNotas fechaType="date" fechaLabel="Fecha (hoy si se omite)" fecha={campos.fecha} onFecha={campos.setFecha} notas={campos.notas} onNotas={campos.setNotas} notasPlaceholder="Ej. Intereses mes de junio" />
       {!capitaliza && (
         <div id="wrap-rend-advanced">
           <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} />
         </div>
       )}
       <FormFooter saveLabel="Registrar" onSave={() => void save()} onEdit={editar} editLabel="Editar inversión" />
-    </>
+    </FormModal>
   )
 }

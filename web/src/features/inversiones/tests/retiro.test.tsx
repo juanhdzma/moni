@@ -24,7 +24,7 @@ describe('retiro', () => {
       method: 'POST',
       url: '/api/inv/5/retiro',
       headers: H,
-      body: { tipo: 'total', monto: 1010000, fecha: '2026-08-20', notas: '', registrar_tx: true },
+      body: { tipo: 'total', monto: 1010000, notas: '', registrar_tx: true },
     })
     expect(f.mutations()[0]?.body).not.toHaveProperty('saldo_queda')
   })
@@ -44,7 +44,6 @@ describe('retiro', () => {
       tipo: 'parcial',
       monto: 200000,
       saldo_queda: 810000,
-      fecha: '2026-08-20',
       notas: 'parte',
       registrar_tx: true,
     })

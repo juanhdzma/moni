@@ -4,7 +4,7 @@ from pydantic import BaseModel, computed_field, model_validator
 
 from ..calculos.constantes import CLASES_DEUDA, FRANQUICIAS, MODOS_PAGO, valores
 from .validadores import (
-    Descripcion, Entrada, MontoCero, MontoPesos, Nombre, Notas, Tasa, clave_opcional, fecha_opcional,
+    ConOpClave, Descripcion, Entrada, MontoCero, MontoPesos, Nombre, Notas, Tasa, TasaTipo, fecha_opcional,
 )
 
 Franquicia = Literal[valores(FRANQUICIAS)]
@@ -16,6 +16,7 @@ class DeudaIn(Entrada):
     monto_inicial: MontoCero = 0
     saldo_actual: MontoCero = 0
     tasa_ea: Tasa = 0
+    tasa_tipo: TasaTipo = "ea"
     cuota_mensual: MontoCero = 0
     fecha_inicio: str = ""
     proxima_cuota: str = ""
@@ -75,7 +76,7 @@ class _SaldoTrasAdelanto(Entrada):
         return self
 
 
-class DeudaAdelanto(_SaldoTrasAdelanto):
+class DeudaAdelanto(ConOpClave, _SaldoTrasAdelanto):
     monto: MontoPesos
     fecha: str = ""
     descripcion: Descripcion = ""
@@ -92,7 +93,7 @@ class AdelantoPreview(_SaldoTrasAdelanto):
 ModoPago = Literal[valores(MODOS_PAGO)]
 
 
-class DeudaPago(Entrada):
+class DeudaPago(ConOpClave):
     modo: ModoPago
     nuevo_saldo: MontoCero
     total_pagado: MontoPesos
@@ -101,7 +102,5 @@ class DeudaPago(Entrada):
     descripcion: Descripcion = ""
     notas: Notas = ""
     registrar_tx: bool = True
-    op_clave: Optional[str] = None
 
     _v_fecha = fecha_opcional("fecha")
-    _v_clave = clave_opcional("op_clave")

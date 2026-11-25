@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from 'react'
+import { useState, type ComponentType } from 'react'
 import { Menu, Plus, TriangleAlert, X } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
@@ -10,7 +10,6 @@ import { Activos, openActivoForm } from '@/features/activos'
 import { Recurrentes, openRecurrenteForm } from '@/features/recurrentes'
 import { Settings } from '@/features/settings'
 import { useData } from '@/shell/providers/DataProvider'
-import { useModal } from '@/shell/providers/ModalProvider'
 import { useOpenerCtx, type OpenerCtx } from '@/shell/hooks/openers'
 import { TabBoundary } from './TabBoundary'
 import type { TabProps } from '@/shell/layout/TabContent'
@@ -48,16 +47,7 @@ export function Shell() {
   const [tab, setTab] = useState<TabId>('dashboard')
   const [drawer, setDrawer] = useState(false)
   const { estado, banner, cerrarBanner, reportRenderFailure } = useData()
-  const { closeModal } = useModal()
   const openerCtx = useOpenerCtx()
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeModal()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [closeModal])
 
   const goTo = (id: TabId) => {
     setTab(id)

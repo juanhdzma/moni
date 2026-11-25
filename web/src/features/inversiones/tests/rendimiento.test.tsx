@@ -26,7 +26,7 @@ describe('rendimiento', () => {
       method: 'POST',
       url: '/api/inv/5/rendimiento',
       headers: H,
-      body: { monto: 9584, fecha: '2026-08-20', notas: 'nota', capitaliza: true, registrar_tx: true },
+      body: { monto: 9584, notas: 'nota', capitaliza: true, registrar_tx: true },
     })
   })
 

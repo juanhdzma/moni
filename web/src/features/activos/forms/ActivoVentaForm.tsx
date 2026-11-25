@@ -13,6 +13,7 @@ import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { usePreview } from '@/shell/hooks/usePreview'
 import type { Activo, ActivoVenta } from '@/types'
+import { FormModal } from '@/controls/FormModal'
 
 export function ActivoVentaForm({ activo: a }: { activo: Activo }) {
   const { cop } = useMoneda()
@@ -31,7 +32,7 @@ export function ActivoVentaForm({ activo: a }: { activo: Activo }) {
   }
 
   return (
-    <>
+    <FormModal>
       <ModalPanel izquierda={{ label: 'Valor actual', valor: cop(a.valor_actual) }} derecha={{ label: 'Precio inicial', valor: cop(a.valor_inicial) }} />
       <MoneyField id="m-precio" label="Precio de venta (COP)" value={precioTxt} onChange={setPrecioTxt} />
       <Breakdown id="activo-sell-preview" visible={prev !== null}>
@@ -44,6 +45,6 @@ export function ActivoVentaForm({ activo: a }: { activo: Activo }) {
       </Breakdown>
       <MovimientoCampos campos={campos} fechaLabel="Fecha de venta (hoy si se omite)" notasPlaceholder="Ej. Vendido a tercero" />
       <FormFooter saveLabel="Confirmar venta" onSave={() => void save()} cancelClassName="sm:ml-auto" />
-    </>
+    </FormModal>
   )
 }

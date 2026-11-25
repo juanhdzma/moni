@@ -6,6 +6,7 @@ import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
 import { CamposTx, cuerpoTx, useOpcionesTx } from '@/features/transacciones'
 import type { Recurrente } from '@/types'
+import { FormModal } from '@/controls/FormModal'
 
 export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
   const opciones = useOpcionesTx()
@@ -25,7 +26,7 @@ export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string
   const save = () => guardar(() => crudOp('tx', 'add', cuerpoTx(tipo, valores, null)))
 
   return (
-    <>
+    <FormModal>
       <CamposTx
         tipo={tipo}
         categorias={opciones.categorias[tipo]}
@@ -35,6 +36,6 @@ export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string
         ayudaMonto="Pre-llenado con el monto recurrente — ajustá si difiere."
       />
       <FormFooter saveLabel="Registrar" onSave={() => void save()} cancelClassName="ml-auto" />
-    </>
+    </FormModal>
   )
 }

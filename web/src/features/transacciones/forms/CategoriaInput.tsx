@@ -33,7 +33,9 @@ export function CategoriaInput({ id, etiqueta, onAgregar, autoFocus, botonClassN
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') agregar()
+          if (e.key !== 'Enter') return
+          e.preventDefault()
+          agregar()
         }}
       />
       <button type="button" className={cn('btn btn-dim', botonClassName)} onClick={agregar}>
