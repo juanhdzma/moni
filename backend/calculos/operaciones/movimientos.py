@@ -25,7 +25,7 @@ def retiro_parcial(
         raise ErrorDeDominio("El saldo que queda no puede superar el valor actual")
     pct_retiro = (monto / valor_actual) if valor_actual > 0 else 0
     return RetiroParcial(
-        valor_actual=pesos(saldo_queda),
+        valor_actual=saldo_queda,
         monto_invertido=pesos(max(0.0, monto_invertido * (1 - pct_retiro))),
     )
 
@@ -125,14 +125,14 @@ class CambioInversion:
 
 
 def aplicar_valor(nuevo_valor: float, fecha: str) -> dict:
-    return {"valor_actual": pesos(nuevo_valor), "valor_actualizado_en": fecha}
+    return {"valor_actual": nuevo_valor, "valor_actualizado_en": fecha}
 
 
 def aplicar_rendimiento(
     inv: dict, monto: float, fecha: str, notas: str, capitaliza: bool, registrar_tx: bool
 ) -> CambioInversion:
     if capitaliza:
-        return CambioInversion(aplicar_valor(inv["valor_actual"] + monto, fecha))
+        return CambioInversion(aplicar_valor(pesos(inv["valor_actual"] + monto), fecha))
     tx = asientos.tx_rendimiento(inv["nombre"], monto, fecha, notas) if registrar_tx else None
     return CambioInversion({}, tx)
 
@@ -141,7 +141,7 @@ def aplicar_aporte(
     inv: dict, monto: float, nuevo_valor: Optional[float], fecha: str, notas: str, registrar_tx: bool
 ) -> CambioInversion:
     if nuevo_valor is None:
-        nuevo_valor = valor_estimado_tras_aporte(inv["valor_actual"], monto)
+        nuevo_valor = pesos(valor_estimado_tras_aporte(inv["valor_actual"], monto))
     cambios = {"monto_invertido": pesos(inv["monto_invertido"] + monto), **aplicar_valor(nuevo_valor, fecha)}
     tx = asientos.tx_aporte(inv["nombre"], monto, fecha, notas) if registrar_tx else None
     return CambioInversion(cambios, tx)

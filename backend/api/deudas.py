@@ -16,6 +16,7 @@ from ..core.sql import (
 from ..core.tablas import DEUDA_COLS
 from ..schemas.deuda import AdelantoPreview, DeudaAdelanto, DeudaCrear, DeudaIn, DeudaPago
 from ..schemas.previews import PagoPreview
+from ..schemas.respuestas.deudas import Deuda, DeudaCruda, PreviewAdelanto, PreviewPago, ResumenDeudas
 from .lecturas import register_borrado
 
 logger = logging.getLogger("moni")
@@ -29,14 +30,14 @@ def _guardar_y_leer_deuda(conn, deuda_id: int) -> dict:
     return {**fila, "es_tarjeta": bool(fila["es_tarjeta"]), "clase_deuda": clase_deuda_de(fila["es_tarjeta"])}
 
 
-@router.get("/api/deuda/{deuda_id:int}", name="get_deuda")
+@router.get("/api/deuda/{deuda_id:int}", name="get_deuda", response_model=Deuda)
 def leer_deuda(deuda_id: int):
     with conexion() as conn:
         deuda = detalle(conn, "deudas", deuda_id, hoy_bogota())
         return {**deuda, "frases": frases.frases_deuda(deuda, simbolo(conn))}
 
 
-@router.post("/api/deuda", name="create_deuda")
+@router.post("/api/deuda", name="create_deuda", response_model=DeudaCruda)
 def crear_deuda(body: DeudaCrear, response: Response):
     with conexion() as conn:
         data = operaciones.completar_deuda(operaciones.normalizar_tasa(body.model_dump(exclude={"crear_tx"})), hoy_bogota())
@@ -47,7 +48,7 @@ def crear_deuda(body: DeudaCrear, response: Response):
         return _guardar_y_leer_deuda(conn, deuda_id)
 
 
-@router.put("/api/deuda/{deuda_id:int}", name="update_deuda")
+@router.put("/api/deuda/{deuda_id:int}", name="update_deuda", response_model=DeudaCruda)
 def actualizar_deuda(deuda_id: int, body: DeudaIn, response: Response):
     with conexion() as conn:
         data = operaciones.normalizar_tasa(body.model_dump())
@@ -62,7 +63,7 @@ def _saldo_tras_adelanto(tarjeta: dict, body: DeudaAdelanto | AdelantoPreview) -
     return movimientos.saldo_tras_adelanto(tarjeta["cupo"], body.nuevo_saldo, body.disponible_nuevo)
 
 
-@router.post("/api/deuda/{deuda_id}/pago")
+@router.post("/api/deuda/{deuda_id:int}/pago", response_model=DeudaCruda)
 def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
     with conexion() as conn:
         deuda = get_row(conn, "deudas", deuda_id)
@@ -79,7 +80,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
         return _guardar_y_leer_deuda(conn, deuda_id)
 
 
-@router.post("/api/deuda/{deuda_id}/adelanto")
+@router.post("/api/deuda/{deuda_id:int}/adelanto", response_model=DeudaCruda)
 def pedir_adelanto(deuda_id: int, body: DeudaAdelanto, response: Response):
     with conexion() as conn:
         tarjeta = get_row(conn, "deudas", deuda_id)
@@ -99,7 +100,7 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto, response: Response):
         return deuda
 
 
-@router.post("/api/deuda/{deuda_id}/pago/preview")
+@router.post("/api/deuda/{deuda_id:int}/pago/preview", response_model=PreviewPago | None)
 def pago_preview(deuda_id: int, body: PagoPreview):
     with conexion() as conn:
         deuda = get_row(conn, "deudas", deuda_id)
@@ -108,7 +109,7 @@ def pago_preview(deuda_id: int, body: PagoPreview):
         return operaciones.desglose_pago(deuda["saldo_actual"], body.total_pagado, body.nuevo_saldo)
 
 
-@router.post("/api/deuda/{deuda_id}/adelanto/preview")
+@router.post("/api/deuda/{deuda_id:int}/adelanto/preview", response_model=PreviewAdelanto)
 def adelanto_preview(deuda_id: int, body: AdelantoPreview):
     with conexion() as conn:
         deuda = get_row(conn, "deudas", deuda_id)
@@ -119,7 +120,7 @@ def adelanto_preview(deuda_id: int, body: AdelantoPreview):
         }
 
 
-@router.get("/api/deudas/resumen")
+@router.get("/api/deudas/resumen", response_model=ResumenDeudas)
 def deudas_resumen():
     with conexion() as conn:
         resumen = operaciones.resumen_deudas(coleccion(conn, "deudas", hoy_bogota()))

@@ -12,10 +12,12 @@ from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer,
 from ..core.tablas import INV_COLS
 from ..schemas.inversion import InvAporte, InvIn, InvRendimiento, InvRetiro, InvValor
 from ..schemas.previews import MontoPreview, NuevoValor
+from ..schemas.respuestas.comun import Ok, PreviewValor
+from ..schemas.respuestas.inversiones import InvCruda, Inversion, PreviewAporte, ResumenInversiones
 from .lecturas import register_borrado, register_lectura
 
 router = APIRouter()
-register_lectura(router, "inv", "inversiones")
+register_lectura(router, "inv", "inversiones", Inversion)
 register_borrado(router, "inv", "inversiones", (INVERSIONES,))
 
 def _datos_inversion(body: InvIn, anterior: dict | None) -> dict:
@@ -23,7 +25,7 @@ def _datos_inversion(body: InvIn, anterior: dict | None) -> dict:
     return operaciones.completar_inversion(data, anterior, hoy_bogota(), ahora_bogota_iso())
 
 
-@router.post("/api/inv", name="create_inv")
+@router.post("/api/inv", name="create_inv", response_model=InvCruda)
 def crear_inv(body: InvIn, response: Response):
     with conexion() as conn:
         data = _datos_inversion(body, None)
@@ -34,7 +36,7 @@ def crear_inv(body: InvIn, response: Response):
         return guardar_y_leer(conn, "inversiones", new_id)
 
 
-@router.put("/api/inv/{row_id}", name="update_inv")
+@router.put("/api/inv/{row_id:int}", name="update_inv", response_model=InvCruda)
 def actualizar_inv(row_id: int, body: InvIn, response: Response):
     with conexion() as conn:
         data = _datos_inversion(body, get_row(conn, "inversiones", row_id))
@@ -53,7 +55,7 @@ def _persistir(conn, inv_id: int, cambio: CambioInversion) -> tuple[str, ...]:
     return con_movimiento(INVERSIONES, cambio.tx is not None)
 
 
-@router.post("/api/inv/{inv_id}/rendimiento", description=textos.DESCRIPCION_RENDIMIENTO)
+@router.post("/api/inv/{inv_id:int}/rendimiento", description=textos.DESCRIPCION_RENDIMIENTO, response_model=InvCruda)
 def registrar_rendimiento(inv_id: int, body: InvRendimiento, response: Response):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
@@ -65,7 +67,7 @@ def registrar_rendimiento(inv_id: int, body: InvRendimiento, response: Response)
         return guardar_y_leer(conn, "inversiones", inv_id)
 
 
-@router.post("/api/inv/{inv_id}/aporte")
+@router.post("/api/inv/{inv_id:int}/aporte", response_model=InvCruda)
 def aportar_inv(inv_id: int, body: InvAporte, response: Response):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
@@ -75,7 +77,7 @@ def aportar_inv(inv_id: int, body: InvAporte, response: Response):
         return guardar_y_leer(conn, "inversiones", inv_id)
 
 
-@router.post("/api/inv/{inv_id}/retiro")
+@router.post("/api/inv/{inv_id:int}/retiro", response_model=Ok)
 def retirar_inv(inv_id: int, body: InvRetiro, response: Response):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
@@ -86,7 +88,7 @@ def retirar_inv(inv_id: int, body: InvRetiro, response: Response):
         return {"ok": True}
 
 
-@router.post("/api/inv/{inv_id}/valor")
+@router.post("/api/inv/{inv_id:int}/valor", response_model=InvCruda)
 def actualizar_valor_inv(inv_id: int, body: InvValor, response: Response):
     with conexion() as conn:
         get_row(conn, "inversiones", inv_id)
@@ -96,7 +98,7 @@ def actualizar_valor_inv(inv_id: int, body: InvValor, response: Response):
         return guardar_y_leer(conn, "inversiones", inv_id)
 
 
-@router.post("/api/inv/{inv_id}/valor/preview")
+@router.post("/api/inv/{inv_id:int}/valor/preview", response_model=PreviewValor | None)
 def inv_valor_preview(inv_id: int, body: NuevoValor):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
@@ -105,7 +107,7 @@ def inv_valor_preview(inv_id: int, body: NuevoValor):
         return operaciones.cambio_valor(body.nuevo_valor, inv["valor_actual"], inv["monto_invertido"])
 
 
-@router.post("/api/inv/{inv_id}/aporte/preview")
+@router.post("/api/inv/{inv_id:int}/aporte/preview", response_model=PreviewAporte | None)
 def inv_aporte_preview(inv_id: int, body: MontoPreview):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
@@ -118,7 +120,7 @@ def inv_aporte_preview(inv_id: int, body: MontoPreview):
         }
 
 
-@router.get("/api/inv/resumen")
+@router.get("/api/inv/resumen", response_model=ResumenInversiones)
 def inv_resumen():
     with conexion() as conn:
         return operaciones.resumen_inversiones(coleccion(conn, "inversiones", hoy_bogota()), simbolo(conn))

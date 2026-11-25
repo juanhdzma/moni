@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 
+from ..schemas.respuestas.seguridad import PushEnviado, PushProbado
 from ..seguridad import client_ip
 from . import envio
 
@@ -50,7 +51,7 @@ def _limitar(request: Request) -> None:
         cola.append(ahora)
 
 
-@router.post("/api/push/enviar")
+@router.post("/api/push/enviar", response_model=PushEnviado)
 def push_enviar(body: PushEnviar, request: Request):
     _limitar(request)
     payload = envio.armar_payload(body.title, body.body, body.url, body.tag)
@@ -67,7 +68,7 @@ def push_enviar(body: PushEnviar, request: Request):
     return resultado
 
 
-@router.post("/api/push/test")
+@router.post("/api/push/test", response_model=PushProbado)
 def push_test(request: Request):
     _limitar(request)
     return {"enviadas": envio.enviar_a_todos("Moni", "Las notificaciones funcionan.", tag="test")["enviadas"]}

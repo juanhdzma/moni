@@ -12,13 +12,14 @@ from ..core.estado import coleccion
 from ..core.ops_ocultas import ocultar_op
 from ..core.sql import delete_row, get_row, guardar_y_leer, insert_row, iniciar_escritura, sumar_al_saldo, update_row
 from ..core.tablas import TX_COLS
+from ..schemas.respuestas.transacciones import ListadoTx, OpcionesTx, Tx, TxCruda
 from ..schemas.transaccion import TxIn
 from ..schemas.validadores import ColumnaTx, TipoTx
 from .lecturas import register_lectura
 
 logger = logging.getLogger("moni")
 router = APIRouter()
-register_lectura(router, "tx", "transacciones")
+register_lectura(router, "tx", "transacciones", Tx)
 
 
 def ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
@@ -64,7 +65,7 @@ def afectar_tx(response: Response, tarjetas: tuple, op_clave: Optional[str] = No
     afectar(response, *entidades)
 
 
-@router.post("/api/tx", name="create_tx")
+@router.post("/api/tx", name="create_tx", response_model=TxCruda)
 def create_tx(body: TxIn, response: Response):
     with conexion() as conn:
         data = body.model_dump()
@@ -76,7 +77,7 @@ def create_tx(body: TxIn, response: Response):
         return guardar_y_leer(conn, "transacciones", new_id)
 
 
-@router.put("/api/tx/{row_id}", name="update_tx")
+@router.put("/api/tx/{row_id:int}", name="update_tx", response_model=TxCruda)
 def update_tx(row_id: int, body: TxIn, response: Response):
     with conexion() as conn:
         anterior = get_row(conn, "transacciones", row_id)
@@ -89,7 +90,7 @@ def update_tx(row_id: int, body: TxIn, response: Response):
         return guardar_y_leer(conn, "transacciones", row_id)
 
 
-@router.delete("/api/tx/{row_id}", status_code=204, name="delete_tx")
+@router.delete("/api/tx/{row_id:int}", status_code=204, name="delete_tx")
 def delete_tx(row_id: int, response: Response):
     with conexion() as conn:
         anterior = get_row(conn, "transacciones", row_id)
@@ -99,7 +100,7 @@ def delete_tx(row_id: int, response: Response):
         afectar_tx(response, (anterior["tarjeta_id"],))
 
 
-@router.get("/api/tx/opciones")
+@router.get("/api/tx/opciones", response_model=OpcionesTx)
 def opciones_tx(tx_id: Optional[int] = None):
     with conexion() as conn:
         tx = get_row(conn, "transacciones", tx_id) if tx_id is not None else None
@@ -108,7 +109,7 @@ def opciones_tx(tx_id: Optional[int] = None):
         )
 
 
-@router.get("/api/tx")
+@router.get("/api/tx", response_model=ListadoTx)
 def listar_tx(
     col: ColumnaTx = "fecha",
     dir: Literal["1", "-1"] = "-1",

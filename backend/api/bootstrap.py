@@ -5,11 +5,12 @@ from ..calculos.constantes import TEXTO_DESACTUALIZADO
 from ..calculos.fechas import ahora_bogota_iso, hoy_bogota
 from ..core import estado as store
 from ..core.db import conexion
+from ..schemas.respuestas.sistema import Bootstrap
 
 router = APIRouter()
 
 
-@router.get("/api/bootstrap")
+@router.get("/api/bootstrap", response_model=Bootstrap)
 def bootstrap():
     with conexion() as conn:
         hoy = hoy_bogota()

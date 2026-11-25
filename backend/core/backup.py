@@ -63,7 +63,7 @@ def _normalizar_op_oculta(fila):
     try:
         fila["tipo"], fila["fuente_id"], fila["fecha"] = parse_clave(fila["clave"])
     except ValueError as e:
-        raise ErrorDeDominio(f"Operación oculta inválida: {e}")
+        raise ErrorDeDominio(f"Operación oculta inválida: {e}") from e
     fila["creada_en"] = fila["creada_en"] or ahora_bogota_iso()
 
 
@@ -90,16 +90,20 @@ def _validar_extra(table, idx, campo, validador, valor):
     try:
         return validador.validate_python(valor)
     except ValidationError as e:
-        raise ErrorDeDominio(f"Fila {table}[{idx}] inválida: {campo}: {_mensajes(e)}")
+        raise ErrorDeDominio(f"Fila {table}[{idx}] inválida: {campo}: {_mensajes(e)}") from e
+
+
+def _solo_campos_del_modelo(model, fila):
+    return {k: v for k, v in fila.items() if k in model.model_fields}
 
 
 def _validar_fila(table, model, row, idx):
     if not isinstance(row, dict):
         raise ErrorDeDominio(f"Fila {table}[{idx}]: se esperaba un objeto")
     try:
-        limpia = model.model_validate(PRENORMALIZADORES.get(table, lambda r: r)(row)).model_dump()
+        limpia = model.model_validate(_solo_campos_del_modelo(model, PRENORMALIZADORES.get(table, lambda r: r)(row))).model_dump()
     except ValidationError as e:
-        raise ErrorDeDominio(f"Fila {table}[{idx}] inválida: {_errores_en_espanol(e)}")
+        raise ErrorDeDominio(f"Fila {table}[{idx}] inválida: {_errores_en_espanol(e)}") from e
     for campo, validador in CAMPOS_EXTRA.items():
         if row.get(campo) is not None:
             limpia[campo] = _validar_extra(table, idx, campo, validador, row[campo])
@@ -114,7 +118,7 @@ def _validar_categorias(filas):
         try:
             fila["nombre"] = validar_categoria(fila["tipo"], fila["nombre"], vistas.setdefault(fila["tipo"], set()))
         except ErrorDeDominio as e:
-            raise ErrorDeDominio(f"Fila categorias[{i}] inválida: {e}")
+            raise ErrorDeDominio(f"Fila categorias[{i}] inválida: {e}") from e
         vistas[fila["tipo"]].add(fila["nombre"])
     return filas
 

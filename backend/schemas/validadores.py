@@ -29,19 +29,15 @@ class Entrada(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-def _redondear_entrada(v: float) -> float:
-    return pesos(v)
-
-
 def _a_pesos(v: float) -> float:
-    redondeado = _redondear_entrada(v)
+    redondeado = pesos(v)
     if redondeado <= 0:
         raise ValueError("Debe ser mayor que 0")
     return redondeado
 
 
 MontoPesos = Annotated[float, Field(gt=0, allow_inf_nan=False), AfterValidator(_a_pesos)]
-MontoCero = Annotated[float, Field(ge=0, allow_inf_nan=False), AfterValidator(_redondear_entrada)]
+MontoCero = Annotated[float, Field(ge=0, allow_inf_nan=False), AfterValidator(pesos)]
 Tasa = Annotated[float, Field(ge=0, allow_inf_nan=False)]
 Nombre = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=NOMBRE_LARGO_MAX)]
 Descripcion = Annotated[str, Field(max_length=DESCRIPCION_LARGO_MAX)]

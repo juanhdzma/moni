@@ -2,6 +2,7 @@ import unicodedata
 from datetime import timedelta
 
 from .constantes import TIPOS_TX
+from .errores import ErrorDeDominio
 from .fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
 from .formato import frase_flujo, top_segmentos
 from .numeros import monto_firmado
@@ -149,7 +150,7 @@ def _clave_texto(v):
 
 def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=None, simbolo="$"):
     if col not in COLUMNAS_ORDEN:
-        raise ValueError("columna inválida")
+        raise ErrorDeDominio("columna inválida")
     meses = meses_disponibles(txs)
     categorias = categorias_disponibles(txs)
     tipo = tipo if tipo in TIPOS_FILTRABLES else ""

@@ -10,10 +10,12 @@ from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer,
 from ..core.tablas import ACTIVO_COLS
 from ..schemas.activo import ActivoIn, ActivoValor, ActivoVenta
 from ..schemas.previews import NuevoValor, PrecioPreview
+from ..schemas.respuestas.activos import Activo, ActivoCrudo, PreviewVenta, ResumenActivos
+from ..schemas.respuestas.comun import Ok, PreviewValor
 from .lecturas import register_borrado, register_lectura
 
 router = APIRouter()
-register_lectura(router, "activo", "activos")
+register_lectura(router, "activo", "activos", Activo)
 register_borrado(router, "activo", "activos", (ACTIVOS,))
 
 
@@ -22,7 +24,7 @@ def _datos_activo(body: ActivoIn, anterior: dict | None) -> dict:
     return operaciones.completar_activo(datos, anterior, hoy_bogota(), ahora_bogota_iso())
 
 
-@router.post("/api/activo", name="create_activo")
+@router.post("/api/activo", name="create_activo", response_model=ActivoCrudo)
 def crear_activo(body: ActivoIn, response: Response):
     with conexion() as conn:
         datos = _datos_activo(body, None)
@@ -33,7 +35,7 @@ def crear_activo(body: ActivoIn, response: Response):
         return guardar_y_leer(conn, "activos", activo_id)
 
 
-@router.put("/api/activo/{activo_id:int}", name="update_activo")
+@router.put("/api/activo/{activo_id:int}", name="update_activo", response_model=ActivoCrudo)
 def actualizar_activo(activo_id: int, body: ActivoIn, response: Response):
     with conexion() as conn:
         datos = _datos_activo(body, get_row(conn, "activos", activo_id))
@@ -42,7 +44,7 @@ def actualizar_activo(activo_id: int, body: ActivoIn, response: Response):
         return guardar_y_leer(conn, "activos", activo_id)
 
 
-@router.post("/api/activo/{activo_id}/valor")
+@router.post("/api/activo/{activo_id:int}/valor", response_model=ActivoCrudo)
 def actualizar_valor(activo_id: int, body: ActivoValor, response: Response):
     with conexion() as conn:
         get_row(conn, "activos", activo_id)
@@ -51,7 +53,7 @@ def actualizar_valor(activo_id: int, body: ActivoValor, response: Response):
         return guardar_y_leer(conn, "activos", activo_id)
 
 
-@router.post("/api/activo/{activo_id}/venta")
+@router.post("/api/activo/{activo_id:int}/venta", response_model=Ok)
 def vender_activo(activo_id: int, body: ActivoVenta, response: Response):
     with conexion() as conn:
         activo = get_row(conn, "activos", activo_id)
@@ -63,7 +65,7 @@ def vender_activo(activo_id: int, body: ActivoVenta, response: Response):
         return {"ok": True}
 
 
-@router.post("/api/activo/{activo_id}/valor/preview")
+@router.post("/api/activo/{activo_id:int}/valor/preview", response_model=PreviewValor | None)
 def activo_valor_preview(activo_id: int, body: NuevoValor):
     with conexion() as conn:
         activo = get_row(conn, "activos", activo_id)
@@ -72,14 +74,14 @@ def activo_valor_preview(activo_id: int, body: NuevoValor):
         return operaciones.cambio_valor(body.nuevo_valor, activo["valor_actual"], activo["valor_inicial"])
 
 
-@router.post("/api/activo/{activo_id}/venta/preview")
+@router.post("/api/activo/{activo_id:int}/venta/preview", response_model=PreviewVenta | None)
 def activo_venta_preview(activo_id: int, body: PrecioPreview):
     with conexion() as conn:
         activo = get_row(conn, "activos", activo_id)
         return operaciones.preview_venta_activo(activo, body.precio) if body.precio else None
 
 
-@router.get("/api/activos/resumen")
+@router.get("/api/activos/resumen", response_model=ResumenActivos)
 def activos_resumen():
     with conexion() as conn:
         activos = coleccion(conn, "activos", hoy_bogota())

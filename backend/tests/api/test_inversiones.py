@@ -15,13 +15,13 @@ def _inv(client, inv_id):
 def test_crear_sin_valor_actual_usa_monto_y_fecha_inicio(client):
     inv = _crear(client, fecha_inicio="2026-03-01")
     assert inv["valor_actual"] == 1000
-    assert inv["valor_actualizado_en"] == "2026-03-01"
+    assert _inv(client, inv["id"])["valor_actualizado_en"] == "2026-03-01"
 
 
 def test_crear_sin_fechas_usa_hoy(client):
     inv = _crear(client)
     assert inv["fecha_inicio"] == hoy_bogota().isoformat()
-    assert inv["valor_actualizado_en"] == inv["fecha_inicio"]
+    assert _inv(client, inv["id"])["valor_actualizado_en"] == inv["fecha_inicio"]
 
 
 def test_crear_con_crear_tx_registra_el_gasto(client):
@@ -40,9 +40,10 @@ def test_editar_conserva_fecha_si_el_valor_no_cambia_y_usa_hoy_si_cambia(client)
     inv = _crear(client, valor_actual=1000, valor_actualizado_en="2026-01-05")
     base = {"nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 1000}
     igual = client.put(f"/api/inv/{inv['id']}", json=base).json()
-    assert igual["valor_actualizado_en"] == "2026-01-05"
+    assert _inv(client, inv["id"])["valor_actualizado_en"] == "2026-01-05"
     cambia = client.put(f"/api/inv/{inv['id']}", json={**base, "valor_actual": 1200}).json()
-    assert cambia["valor_actualizado_en"].startswith(hoy_bogota().isoformat()) and "T" in cambia["valor_actualizado_en"]
+    actualizado = _inv(client, cambia["id"])["valor_actualizado_en"]
+    assert actualizado.startswith(hoy_bogota().isoformat()) and "T" in actualizado
 
 
 def test_editar_respeta_fecha_explicita(client):
@@ -50,7 +51,7 @@ def test_editar_respeta_fecha_explicita(client):
     r = client.put(f"/api/inv/{inv['id']}", json={
         "nombre": "CDT", "tipo": "fija", "monto_invertido": 1000, "valor_actual": 900, "valor_actualizado_en": "2026-02-02",
     }).json()
-    assert r["valor_actualizado_en"] == "2026-02-02"
+    assert _inv(client, r["id"])["valor_actualizado_en"] == "2026-02-02"
 
 
 def test_aporte_sin_nuevo_valor_suma_el_monto_al_valor_actual(client):
@@ -123,9 +124,10 @@ def test_normaliza_segun_tipo_y_vacios(client):
 def test_valor_actualiza_valor_y_fecha(client):
     inv = _crear(client, tipo="variable", valor_actual=1000)
     r = client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 1234.6, "fecha": "2026-05-05"}).json()
-    assert (r["valor_actual"], r["valor_actualizado_en"]) == (1235, "2026-05-05")
+    assert (r["valor_actual"], _inv(client, inv["id"])["valor_actualizado_en"]) == (1235, "2026-05-05")
     sin_fecha = client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 900}).json()
-    assert sin_fecha["valor_actualizado_en"].startswith(hoy_bogota().isoformat()) and "T" in sin_fecha["valor_actualizado_en"]
+    actualizado = _inv(client, sin_fecha["id"])["valor_actualizado_en"]
+    assert actualizado.startswith(hoy_bogota().isoformat()) and "T" in actualizado
     assert client.post("/api/inv/999/valor", json={"nuevo_valor": 1}).status_code == 404
     assert client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 0}).status_code == 422
 
@@ -164,7 +166,7 @@ def test_inv_tasa_tipo_mv_se_guarda_como_ea(client):
 def test_valor_con_fecha_y_hora_o_solo_fecha_se_guarda_tal_cual(client):
     inv = _crear(client, tipo="variable")
     r = client.post(f"/api/inv/{inv['id']}/valor", json={"nuevo_valor": 5, "fecha": "2026-05-05T09:30"}).json()
-    assert r["valor_actualizado_en"] == "2026-05-05T09:30"
+    assert _inv(client, r["id"])["valor_actualizado_en"] == "2026-05-05T09:30"
 
 
 def test_es_desactualizado_acepta_fecha_sola_y_con_hora():

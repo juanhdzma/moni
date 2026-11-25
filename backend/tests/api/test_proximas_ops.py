@@ -11,8 +11,7 @@ from .builders_api import HOY, HOY_ISO, sembrar
 def test_proximas_operaciones_forma_y_no_poda(client):
     s = sembrar(client)
     r = client.get("/api/proximas-operaciones").json()
-    assert set(r) == {"hoy", "items", "extra", "texto_ver_todas", "texto_ver_menos", "frase", "texto_vacio"}
-    assert r["hoy"] == HOY_ISO
+    assert set(r) == {"items", "extra", "texto_ver_todas", "texto_ver_menos", "frase", "texto_vacio"}
     deuda = next(i for i in r["items"] if i["tipo"] == "deuda")
     assert set(deuda) == {
         "clave", "tipo", "fuente_id", "fecha", "dia", "mes_corto", "etiqueta", "sub", "monto", "sin_monto", "texto_dias", "vencida",

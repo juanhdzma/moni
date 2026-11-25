@@ -4,7 +4,7 @@ from ..calculos.categorias import validar_simbolo
 from .validadores import Entrada, TipoTx, clave_opcional
 
 
-class CategoriaIn(BaseModel):
+class CategoriaIn(Entrada):
     tipo: TipoTx
     nombre: str
 

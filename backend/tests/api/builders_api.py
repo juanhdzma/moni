@@ -1,6 +1,7 @@
 import datetime
 
 from backend.calculos.fechas import hoy_bogota
+from backend.schemas.deuda import DeudaIn
 
 HOY = hoy_bogota()
 HOY_ISO = HOY.isoformat()
@@ -9,7 +10,7 @@ MES = HOY_ISO[:7]
 TX_KEYS = {"id", "fecha", "tipo", "categoria", "descripcion", "monto", "notas", "tarjeta_id"}
 TX_DERIVADOS = {"monto_firmado", "tarjeta_nombre", "tarjeta_franquicia", "metodo_pago", "editable", "tono", "icono_metodo"}
 DEUDA_DERIVADOS = {
-    "activa", "vigente", "progreso_pct", "capital_pagado", "nivel_progreso",
+    "progreso_pct", "capital_pagado", "nivel_progreso",
     "disponible", "uso_pct", "nivel_uso", "tono_progreso", "tono_uso",
 }
 INV_DERIVADOS = {"ganancia", "ganancia_pct", "proximo_pago", "rendimiento_esperado", "desactualizado", "texto_tasa", "capitaliza_default"}
@@ -17,8 +18,12 @@ ACTIVO_DERIVADOS = {"cambio", "cambio_pct", "desactualizado"}
 REC_DERIVADOS = {"frecuencia_label", "mensual", "proximo_pago"}
 
 
+def fila_guardada(client, coleccion, row_id):
+    return next(f for f in client.get("/api/backup").json()[coleccion] if f["id"] == row_id)
+
+
 def editable(deuda):
-    return {k: v for k, v in deuda.items() if k != "es_tarjeta"}
+    return {k: v for k, v in deuda.items() if k in DeudaIn.model_fields}
 
 
 def tx(client, **kw):

@@ -9,6 +9,8 @@ from . import password, sesiones, tiempo
 from .bloqueo import fallo_generico, lock_ip, respuesta_si_bloqueada
 from ..core.db import conexion
 from .ip import client_ip
+from ..schemas.respuestas.comun import Ok
+from ..schemas.respuestas.seguridad import EstadoAuth, Sesion
 
 logger = logging.getLogger("moni.auth")
 
@@ -19,7 +21,7 @@ class LoginIn(BaseModel):
     clave: str = Field(min_length=1, max_length=256)
 
 
-@router.get("/estado")
+@router.get("/estado", response_model=EstadoAuth)
 def estado(request: Request):
     with conexion() as conn:
         passkeys = conn.execute("SELECT COUNT(*) FROM passkeys").fetchone()[0]
@@ -30,7 +32,7 @@ def estado(request: Request):
     }
 
 
-@router.post("/login")
+@router.post("/login", response_model=Ok)
 async def login(body: LoginIn, request: Request):
     if not password.configurado():
         return JSONResponse({"detail": "Autenticación sin configurar"}, status_code=503)
@@ -46,7 +48,7 @@ async def login(body: LoginIn, request: Request):
         return response
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=Ok)
 def logout(request: Request):
     sesion = sesiones.sesion_obligatoria(request)
     sesiones.borrar_sesion(sesion["id"])
@@ -55,7 +57,7 @@ def logout(request: Request):
     return response
 
 
-@router.get("/sesiones")
+@router.get("/sesiones", response_model=list[Sesion])
 def listar_sesiones(request: Request):
     actual = sesiones.sesion_obligatoria(request)
     with conexion() as conn:
@@ -74,7 +76,7 @@ def listar_sesiones(request: Request):
     ]
 
 
-@router.delete("/sesiones/{sesion_id}")
+@router.delete("/sesiones/{sesion_id}", response_model=Ok)
 def revocar_sesion(sesion_id: int, request: Request):
     actual = sesiones.sesion_obligatoria(request)
     if sesion_id == actual["id"]:

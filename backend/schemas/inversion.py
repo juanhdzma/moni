@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..calculos.constantes import DIA_PAGO_MAX, PAGOS_INVERSION, TIPOS_INVERSION, TIPOS_RETIRO, valores
 from .validadores import (
-    MontoCero, MontoPesos, Nombre, Notas, Tasa, TasaTipo, clave_opcional, fecha_opcional, fecha_requerida,
+    Entrada, MontoCero, MontoPesos, Nombre, Notas, Tasa, TasaTipo, clave_opcional, fecha_opcional, fecha_requerida,
 )
 
 
@@ -13,7 +13,7 @@ PagoInversion = Literal[valores(PAGOS_INVERSION)]
 TipoRetiro = Literal[valores(TIPOS_RETIRO)]
 
 
-class InvIn(BaseModel):
+class InvIn(Entrada):
     nombre: Nombre
     tipo: TipoInversion
     monto_invertido: MontoPesos

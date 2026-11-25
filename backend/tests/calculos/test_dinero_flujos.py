@@ -1,13 +1,11 @@
 import datetime
 
-from backend.calculos.dinero import (
+from backend.calculos.dinero.flujos import flujo_cartera, flujo_patrimonio, net_worth
+from backend.calculos.dinero.series import (
     etiquetas_meses,
-    flujo_cartera,
-    flujo_patrimonio,
     meses_periodo,
     monthly_inv_delta,
     monthly_patrimonio,
-    net_worth,
     serie_hacia_atras,
 )
 from backend.calculos.constantes import tiene_saldo

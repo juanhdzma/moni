@@ -11,6 +11,8 @@ from .. import tiempo
 from ..bloqueo import fallo_generico, lock_ip, respuesta_si_bloqueada
 from ...core.db import conexion
 from ..ip import client_ip
+from ...schemas.respuestas.comun import Ok
+from ...schemas.respuestas.seguridad import OpcionesLoginPasskey, OpcionesRegistroPasskey, PasskeyCreado, PasskeyFila
 from ..step_up import ConClave, exigir_clave
 from . import servicio
 from .challenges import consumir_challenge
@@ -26,7 +28,7 @@ def _json(texto: str) -> Response:
     return Response(content=texto, media_type="application/json")
 
 
-@router.post("/passkey/login/opciones")
+@router.post("/passkey/login/opciones", response_model=OpcionesLoginPasskey)
 def login_opciones(request: Request):
     texto = servicio.opciones_login(client_ip(request))
     if texto is None:
@@ -34,7 +36,7 @@ def login_opciones(request: Request):
     return _json(texto)
 
 
-@router.post("/passkey/login/verificar")
+@router.post("/passkey/login/verificar", response_model=Ok)
 async def login_verificar(request: Request, credencial: Credencial):
     ip = client_ip(request)
     async with lock_ip(ip):
@@ -55,7 +57,7 @@ async def login_verificar(request: Request, credencial: Credencial):
         return response
 
 
-@router.post("/passkey/registro/opciones")
+@router.post("/passkey/registro/opciones", response_model=OpcionesRegistroPasskey)
 async def registro_opciones(request: Request, body: ConClave | None = None):
     sesiones.sesion_obligatoria(request)
     rechazo = await exigir_clave(request, body.clave if body else None)
@@ -66,7 +68,7 @@ async def registro_opciones(request: Request, body: ConClave | None = None):
     return _json(servicio.opciones_registro(client_ip(request)))
 
 
-@router.post("/passkey/registro/verificar")
+@router.post("/passkey/registro/verificar", response_model=PasskeyCreado)
 def registro_verificar(request: Request, credencial: Credencial):
     sesiones.sesion_obligatoria(request)
     nombre = credencial.pop("nombre", None)
@@ -81,17 +83,17 @@ def registro_verificar(request: Request, credencial: Credencial):
     try:
         nuevo = servicio.registrar(credencial, challenge, nombre.strip())
     except sqlite3.IntegrityError:
-        raise HTTPException(status_code=409, detail="Passkey ya registrado")
-    except Exception:
+        raise HTTPException(status_code=409, detail="Passkey ya registrado") from None
+    except Exception as e:
         logger.warning("registro de passkey rechazado ip=%s", client_ip(request))
-        raise HTTPException(status_code=400, detail="Registro inválido")
+        raise HTTPException(status_code=400, detail="Registro inválido") from e
     if nuevo is None:
         raise HTTPException(status_code=409, detail="Límite de passkeys alcanzado")
     logger.info("passkey registrado id=%d", nuevo)
     return {"ok": True, "id": nuevo}
 
 
-@router.get("/passkeys")
+@router.get("/passkeys", response_model=list[PasskeyFila])
 def listar(request: Request):
     sesiones.sesion_obligatoria(request)
     with conexion() as conn:
@@ -106,7 +108,7 @@ def listar(request: Request):
     ]
 
 
-@router.delete("/passkeys/{passkey_id}")
+@router.delete("/passkeys/{passkey_id}", response_model=Ok)
 def borrar(passkey_id: int, request: Request):
     sesiones.sesion_obligatoria(request)
     with conexion() as conn:

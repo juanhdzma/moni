@@ -4,8 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from backend.calculos import dinero, fechas, listados, operaciones
+from backend.calculos import fechas, listados, operaciones
 from backend.calculos.constantes import tiene_saldo
+from backend.calculos.dinero import flujos, gastos, resumen, series
 from backend.calculos.operaciones.finanzas import rendimiento_esperado
 
 DATA = json.loads((Path(__file__).parent / "fixtures" / "parity.json").read_text())
@@ -27,37 +28,37 @@ ESTADO = {"transacciones": TXS, "deudas": [operaciones.derivar_deuda(d) for d in
 
 
 def test_flujos_y_net_worth():
-    assert dinero.flujo_cartera(TXS) == EXP["flujo_cartera"]
-    assert dinero.flujo_patrimonio(TXS) == EXP["flujo_patrimonio"]
-    assert dinero.net_worth(TXS, INVS, ACTIVOS, DEUDAS) == EXP["net_worth"]
+    assert flujos.flujo_cartera(TXS) == EXP["flujo_cartera"]
+    assert flujos.flujo_patrimonio(TXS) == EXP["flujo_patrimonio"]
+    assert flujos.net_worth(TXS, INVS, ACTIVOS, DEUDAS) == EXP["net_worth"]
 
 
 def test_series_mensuales():
     for n, esperado in EXP["monthly_patrimonio"].items():
-        assert dinero.monthly_patrimonio(TXS, int(n), HOY) == esperado
+        assert series.monthly_patrimonio(TXS, int(n), HOY) == esperado
     for n, esperado in EXP["monthly_inv_delta"].items():
-        assert dinero.monthly_inv_delta(TXS, int(n), HOY) == esperado
-    assert dinero.serie_hacia_atras(1000000, dinero.monthly_patrimonio(TXS, 6, HOY)) == EXP["serie_hacia_atras"]
+        assert series.monthly_inv_delta(TXS, int(n), HOY) == esperado
+    assert series.serie_hacia_atras(1000000, series.monthly_patrimonio(TXS, 6, HOY)) == EXP["serie_hacia_atras"]
 
 
 def test_etiquetas_meses():
-    assert dinero.etiquetas_meses(14, HOY) == EXP["month_labels"]
+    assert series.etiquetas_meses(14, HOY) == EXP["month_labels"]
 
 
 def test_fechas_y_periodos():
-    assert dinero.fechas_transacciones(TXS) == EXP["fechas_tx"]
-    ft = dinero.fechas_transacciones(TXS)
-    fi = dinero.fechas_inversiones(INVS)
+    assert series.fechas_transacciones(TXS) == EXP["fechas_tx"]
+    ft = series.fechas_transacciones(TXS)
+    fi = series.fechas_inversiones(INVS)
     for periodo, (solo_tx, con_inv, vacio) in EXP["periodo_meses"].items():
         if periodo == "1M":
             continue
-        assert dinero.meses_periodo(periodo, ft, HOY) == solo_tx
-        assert dinero.meses_periodo(periodo, ft + fi, HOY) == con_inv
-        assert dinero.meses_periodo(periodo, [], HOY) == vacio
+        assert series.meses_periodo(periodo, ft, HOY) == solo_tx
+        assert series.meses_periodo(periodo, ft + fi, HOY) == con_inv
+        assert series.meses_periodo(periodo, [], HOY) == vacio
 
 
 def test_resumen_dashboard():
-    r = dinero.resumen_dashboard(ESTADO, HOY)
+    r = resumen.resumen_dashboard(ESTADO, HOY)
     esperado = EXP["resumen_dashboard"]
     mes = {"ingresos_mes", "gastos_mes", "ahorro_pct"}
     redefinidos = {"deudas_activas", "cuota_total", "total_deuda"}
@@ -70,7 +71,7 @@ def test_resumen_dashboard():
             continue
         assert r[k] == pytest.approx(v, rel=0, abs=1e-6) if isinstance(v, float) else r[k] == v, k
     assert mes.isdisjoint(r)
-    este = dinero.este_mes(ESTADO, HOY)
+    este = resumen.este_mes(ESTADO, HOY)
     assert este["ingresos"] == esperado["ingresos_mes"]
     assert este["gastos"] == esperado["gastos_mes"]
     assert este["frase"]["pct"] == pytest.approx(esperado["ahorro_pct"], rel=0, abs=1e-6)
@@ -78,14 +79,14 @@ def test_resumen_dashboard():
 
 def test_movimientos_recientes():
     for n, ids in EXP["movimientos"].items():
-        assert [t["id"] for t in dinero.movimientos_recientes(TXS, int(n))] == ids
+        assert [t["id"] for t in gastos.movimientos_recientes(TXS, int(n))] == ids
 
 
 @pytest.mark.parametrize("periodo", ["1W", "1M", "3M", "6M", "1Y", "ALL"])
 def test_gastos(periodo):
     esperado = EXP["gastos"][periodo]
-    assert [t["id"] for t in dinero.gastos_en_periodo(TXS, periodo, HOY)] == esperado["ids"]
-    cats = dinero.agrupar_gastos(dinero.gastos_en_periodo(TXS, periodo, HOY))
+    assert [t["id"] for t in gastos.gastos_en_periodo(TXS, periodo, HOY)] == esperado["ids"]
+    cats = gastos.agrupar_gastos(gastos.gastos_en_periodo(TXS, periodo, HOY))
     assert [[c["categoria"], c["valor"]] for c in cats] == esperado["entries"]
     for c in cats:
         assert [d["id"] for d in c["detalle"]] == esperado["detalle"][c["categoria"]]
@@ -95,7 +96,7 @@ def test_gastos(periodo):
 
 def test_proximas_operaciones():
     cands = operaciones.calcular_proximas_operaciones(DEUDAS, INVS, RECS, HOY)
-    items = operaciones.armar_proximas(cands, set(), HOY)
+    items = operaciones.armar_proximas(cands, HOY)
     items = items["items"] + items["extra"]
     obtenido = [
         {

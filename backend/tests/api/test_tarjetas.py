@@ -113,7 +113,7 @@ def test_no_se_cambia_el_tipo_de_una_deuda_con_movimientos_ligados(client, tarje
     cuerpo = {"nombre": "Visa", "saldo_actual": 500, "monto_inicial": 500, "clase_deuda": "prestamo"}
     r = client.put(f"/api/deuda/{tarjeta['id']}", json=cuerpo)
     assert r.status_code == 400 and "movimientos ligados" in r.json()["detail"]
-    assert client.get(f"/api/deuda/{tarjeta['id']}").json()["es_tarjeta"] is True
+    assert client.get(f"/api/deuda/{tarjeta['id']}").json()["clase_deuda"] == "tarjeta"
 
 
 def test_se_cambia_el_tipo_de_una_deuda_sin_movimientos(client, tarjeta):

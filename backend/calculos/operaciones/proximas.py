@@ -3,6 +3,7 @@ import re
 
 from ..fechas import mes_corto, parse_fecha, texto_dias
 from ..constantes import tiene_saldo
+from ..errores import ErrorDeDominio
 from ..formato import cop, frase, plural
 from .finanzas import proxima_fecha_inversion, rendimiento_esperado
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente
@@ -24,7 +25,7 @@ def clave_op(tipo: str, fuente_id: int, fecha_iso: str) -> str:
 def parse_clave(clave: str) -> tuple[str, int, str]:
     m = _CLAVE_OP_RE.match(clave or "")
     if not m or parse_fecha(m.group(3)) is None:
-        raise ValueError("clave de operación inválida")
+        raise ErrorDeDominio("clave de operación inválida")
     return m.group(1), int(m.group(2)), m.group(3)
 
 
@@ -90,9 +91,9 @@ def en_ventana(candidatas: list[dict], hoy: datetime.date, dias: int) -> list[di
     return [c for c in candidatas if hoy <= c["fecha"] <= hoy + datetime.timedelta(days=dias)]
 
 
-def armar_proximas(candidatas: list[dict], ocultas: set[str], hoy: datetime.date, simbolo: str = "$") -> dict:
+def armar_proximas(candidatas: list[dict], hoy: datetime.date, simbolo: str = "$") -> dict:
     items = []
-    for c in sin_ocultas(candidatas, ocultas):
+    for c in candidatas:
         dias = (c["fecha"] - hoy).days
         items.append(
             {

@@ -6,7 +6,7 @@ from .flujos import es_gasto_cartera, flujo_cartera, net_worth
 from ..formato import cop, cop_corto, frase, plural, porcentaje_texto, tono_de_valor
 from .gastos import PERIODOS_EVOLUCION_VISIBLES
 from .series import (
-    _clave_mes,
+    clave_mes,
     etiquetas_meses,
     fechas_inversiones,
     fechas_transacciones,
@@ -33,7 +33,7 @@ def frase_mes(ahorro_pct: float, ingresos: float) -> dict:
 
 
 def _del_mes(txs, hoy: datetime.date) -> list:
-    clave = _clave_mes(hoy, 0)
+    clave = clave_mes(hoy, 0)
     return [t for t in txs if mes_de(t["fecha"]) == clave]
 
 

@@ -11,7 +11,7 @@ Franquicia = Literal[valores(FRANQUICIAS)]
 ClaseDeuda = Literal[valores(CLASES_DEUDA)]
 
 
-class DeudaIn(BaseModel):
+class DeudaIn(Entrada):
     nombre: Nombre
     monto_inicial: MontoCero = 0
     saldo_actual: MontoCero = 0
@@ -48,7 +48,7 @@ class DeudaIn(BaseModel):
         return self
 
 
-class DeudaCrear(DeudaIn, Entrada):
+class DeudaCrear(DeudaIn):
     crear_tx: bool = False
 
     @model_validator(mode="after")

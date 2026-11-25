@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from .validadores import MontoCero, MontoPesos, Nombre, Notas, fecha_opcional
+from .validadores import Entrada, MontoCero, MontoPesos, Nombre, Notas, fecha_opcional
 
 
-class ActivoIn(BaseModel):
+class ActivoIn(Entrada):
     nombre: Nombre
     valor_inicial: MontoPesos
     valor_actual: MontoCero = 0

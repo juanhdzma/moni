@@ -139,3 +139,26 @@ def test_validar_pago_liquidar_exige_saldo_cero():
     with pytest.raises(ErrorDeDominio):
         validar_pago(1000, 1, liquidar=True)
     validar_pago(1000, 1)
+
+
+def test_el_rendimiento_capitalizado_redondea_el_residuo_de_la_base_legacy():
+    from backend.calculos.operaciones.movimientos import aplicar_rendimiento
+
+    inv = {"nombre": "X", "valor_actual": 1000.0000000001}
+    cambio = aplicar_rendimiento(inv, 10, "2026-01-01", "", True, False)
+    assert cambio.cambios["valor_actual"] == 1010.0
+
+
+def test_el_aporte_sin_nuevo_valor_redondea_el_estimado():
+    from backend.calculos.operaciones.movimientos import aplicar_aporte
+
+    inv = {"nombre": "X", "valor_actual": 999.9999999999, "monto_invertido": 500.0000000001}
+    cambio = aplicar_aporte(inv, 10, None, "2026-01-01", "", False)
+    assert cambio.cambios["valor_actual"] == 1010.0 and cambio.cambios["monto_invertido"] == 510.0
+
+
+def test_parse_clave_invalida_es_error_de_dominio():
+    from backend.calculos.operaciones.proximas import parse_clave
+
+    with pytest.raises(ErrorDeDominio):
+        parse_clave("mal")

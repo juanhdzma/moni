@@ -10,24 +10,25 @@ from ..core.db import conexion
 from ..core.estado import simbolo
 from ..core.ops_ocultas import candidatas_visibles, ocultar_op, ocultas_con_etiqueta
 from ..schemas.ajustes import OpOculta
+from ..schemas.respuestas.operaciones import OpOcultaCreada, OpsOcultas, ProximasOperaciones
 
 router = APIRouter()
 
 
-@router.get("/api/proximas-operaciones")
+@router.get("/api/proximas-operaciones", response_model=ProximasOperaciones)
 def proximas_operaciones():
     with conexion() as conn:
         hoy = hoy_bogota()
-        return operaciones.armar_proximas(candidatas_visibles(conn, hoy), set(), hoy, simbolo(conn))
+        return operaciones.armar_proximas(candidatas_visibles(conn, hoy), hoy, simbolo(conn))
 
 
-@router.get("/api/ops-ocultas")
+@router.get("/api/ops-ocultas", response_model=OpsOcultas)
 def listar_ops_ocultas():
     with conexion() as conn:
         return {"items": ocultas_con_etiqueta(conn)}
 
 
-@router.post("/api/ops-ocultas", status_code=201)
+@router.post("/api/ops-ocultas", status_code=201, response_model=OpOcultaCreada)
 def crear_op_oculta(body: OpOculta, response: Response):
     with conexion() as conn:
         ocultar_op(conn, body.clave)

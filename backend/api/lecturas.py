@@ -7,8 +7,8 @@ from ..core.estado import detalle
 from ..core.sql import delete_row
 
 
-def register_lectura(router: APIRouter, path, table):
-    @router.get(f"/api/{path}/{{row_id:int}}", name=f"get_{path}")
+def register_lectura(router: APIRouter, path, table, modelo):
+    @router.get(f"/api/{path}/{{row_id:int}}", name=f"get_{path}", response_model=modelo)
     def leer(row_id: int):
         with conexion() as conn:
             return detalle(conn, table, row_id, hoy_bogota())

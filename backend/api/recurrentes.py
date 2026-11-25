@@ -9,20 +9,21 @@ from ..core.estado import categorias, coleccion, detalle, simbolo
 from ..core.sql import actualizar_columnas, get_row, guardar_y_leer, insert_row, update_row
 from ..core.tablas import REC_COLS
 from ..schemas.recurrente import RecIn
+from ..schemas.respuestas.recurrentes import Pausa, RecCruda, Recurrente, ResumenRecurrentes
 from .lecturas import register_borrado
 
 router = APIRouter()
 register_borrado(router, "rec", "recurrentes", (RECURRENTES,))
 
 
-@router.get("/api/rec/{row_id:int}", name="get_rec")
+@router.get("/api/rec/{row_id:int}", name="get_rec", response_model=Recurrente)
 def leer_rec(row_id: int):
     with conexion() as conn:
         rec = detalle(conn, "recurrentes", row_id, hoy_bogota())
         return operaciones.con_categoria_sugerida(rec, categorias(conn))
 
 
-@router.post("/api/rec", name="create_rec")
+@router.post("/api/rec", name="create_rec", response_model=RecCruda)
 def crear_rec(body: RecIn, response: Response):
     with conexion() as conn:
         new_id = insert_row(conn, "recurrentes", REC_COLS, body.model_dump())
@@ -30,7 +31,7 @@ def crear_rec(body: RecIn, response: Response):
         return guardar_y_leer(conn, "recurrentes", new_id)
 
 
-@router.put("/api/rec/{row_id}", name="update_rec")
+@router.put("/api/rec/{row_id:int}", name="update_rec", response_model=RecCruda)
 def actualizar_rec(row_id: int, body: RecIn, response: Response):
     with conexion() as conn:
         actual = get_row(conn, "recurrentes", row_id)
@@ -40,7 +41,7 @@ def actualizar_rec(row_id: int, body: RecIn, response: Response):
         return guardar_y_leer(conn, "recurrentes", row_id)
 
 
-@router.post("/api/rec/{row_id}/pausar")
+@router.post("/api/rec/{row_id:int}/pausar", response_model=Pausa)
 def pausar_rec(row_id: int, response: Response):
     with conexion() as conn:
         actual = get_row(conn, "recurrentes", row_id)
@@ -51,7 +52,7 @@ def pausar_rec(row_id: int, response: Response):
         return {"id": row_id, "activo": activo}
 
 
-@router.get("/api/rec/resumen")
+@router.get("/api/rec/resumen", response_model=ResumenRecurrentes)
 def rec_resumen():
     with conexion() as conn:
         return operaciones.resumen_recurrentes(coleccion(conn, "recurrentes", hoy_bogota()), categorias(conn), simbolo(conn))

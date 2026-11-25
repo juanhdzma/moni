@@ -5,6 +5,8 @@ from ..core.afectadas import TODAS, afectar
 from ..core.backup import IMPORT_TABLES, insertar_import, validar_import
 from ..core.db import conexion
 from ..schemas.backup import ImportPayload
+from ..schemas.respuestas.comun import Ok
+from ..schemas.respuestas.sistema import Backup, ResultadoImport
 from ..seguridad.step_up import ConClave, exigir_clave
 
 router = APIRouter()
@@ -14,7 +16,7 @@ class ImportConClave(ImportPayload, ConClave):
     pass
 
 
-@router.get("/api/backup")
+@router.get("/api/backup", response_model=Backup)
 def exportar():
     with conexion() as conn:
         filas = {
@@ -39,7 +41,7 @@ def _vaciar() -> None:
         conn.commit()
 
 
-@router.post("/api/import")
+@router.post("/api/import", response_model=ResultadoImport)
 async def import_data(body: ImportConClave, request: Request, response: Response):
     rechazo = await exigir_clave(request, body.clave)
     if rechazo:
@@ -49,7 +51,7 @@ async def import_data(body: ImportConClave, request: Request, response: Response
     return resultado
 
 
-@router.post("/api/truncate")
+@router.post("/api/truncate", response_model=Ok)
 async def truncate_all(request: Request, response: Response, body: ConClave | None = None):
     rechazo = await exigir_clave(request, body.clave if body else None)
     if rechazo:

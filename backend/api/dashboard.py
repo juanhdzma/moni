@@ -7,6 +7,9 @@ from ..calculos.fechas import hoy_bogota
 from ..calculos.operaciones.tasas import equivalencia_tasa
 from ..core import estado as store
 from ..core.db import conexion
+from ..schemas.respuestas.dashboard import (
+    EquivalenciaTasa, EsteMes, Evolucion, GastosPeriodo, Movimientos, ResumenDashboard,
+)
 from ..schemas.validadores import PeriodoEvolucion, PeriodoGastos, SerieEvolucion
 
 router = APIRouter()
@@ -19,7 +22,7 @@ def _estado_de_hoy(conn, *nombres):
     return store.cargar_estado(conn, hoy, nombres), hoy
 
 
-@router.get("/api/dashboard/resumen")
+@router.get("/api/dashboard/resumen", response_model=ResumenDashboard)
 def dashboard_resumen():
     with conexion() as conn:
         estado, hoy = _estado_de_hoy(conn, "transacciones", "deudas", "inversiones", "activos")
@@ -29,7 +32,7 @@ def dashboard_resumen():
         return {**{k: resumen[k] for k in CAMPOS_RESUMEN}, "partes": partes}
 
 
-@router.get("/api/dashboard/evolucion")
+@router.get("/api/dashboard/evolucion", response_model=Evolucion)
 def dashboard_evolucion(
     serie: SerieEvolucion = "patrimonio",
     periodo: PeriodoEvolucion = "6M",
@@ -40,27 +43,27 @@ def dashboard_evolucion(
         return dinero.evolucion(estado, serie, periodo, hoy, store.simbolo(conn))
 
 
-@router.get("/api/dashboard/este-mes")
+@router.get("/api/dashboard/este-mes", response_model=EsteMes)
 def dashboard_este_mes():
     with conexion() as conn:
         estado, hoy = _estado_de_hoy(conn, "transacciones")
         return dinero.este_mes(estado, hoy)
 
 
-@router.get("/api/dashboard/gastos")
+@router.get("/api/dashboard/gastos", response_model=GastosPeriodo)
 def dashboard_gastos(periodo: PeriodoGastos = "1M"):
     with conexion() as conn:
         estado, hoy = _estado_de_hoy(conn, "transacciones")
         return dinero.gastos_periodo(estado["transacciones"], periodo, hoy)
 
 
-@router.get("/api/dashboard/movimientos")
+@router.get("/api/dashboard/movimientos", response_model=Movimientos)
 def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
     with conexion() as conn:
         transacciones = store.coleccion(conn, "transacciones", hoy_bogota())
         return dinero.movimientos_dashboard(transacciones, n)
 
 
-@router.get("/api/calc/tasa")
+@router.get("/api/calc/tasa", response_model=EquivalenciaTasa)
 def calc_tasa(valor: Annotated[float, Query(ge=-1000, le=1000, allow_inf_nan=False)], tipo: Literal["ea", "mv"] = "ea"):
     return equivalencia_tasa(valor, tipo)

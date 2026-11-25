@@ -129,13 +129,13 @@ def test_normalizar_tasa_convierte_mv_a_ea():
     assert "tasa_tipo" not in convertida and convertida["tasa_ea"] > 26
 
 
-def test_es_tarjeta_sale_como_bool_y_progreso_no_pasa_de_100(client, prestamo):
-    assert prestamo["es_tarjeta"] is False
+def test_clase_deuda_sale_en_las_filas_y_progreso_no_pasa_de_100(client, prestamo):
+    assert prestamo["clase_deuda"] == "prestamo"
     tarjeta = client.post("/api/deuda", json={"nombre": "Visa", "clase_deuda": "tarjeta", "cupo": 1000}).json()
-    assert tarjeta["es_tarjeta"] is True
-    assert client.get(f"/api/deuda/{tarjeta['id']}").json()["es_tarjeta"] is True
+    assert tarjeta["clase_deuda"] == "tarjeta"
+    assert client.get(f"/api/deuda/{tarjeta['id']}").json()["clase_deuda"] == "tarjeta"
     sobrepagada = client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "monto_inicial": 100, "saldo_actual": 0})
-    assert sobrepagada.json()["es_tarjeta"] is False
+    assert sobrepagada.json()["clase_deuda"] == "prestamo"
     creciente = client.put(f"/api/deuda/{prestamo['id']}", json={**editable(prestamo), "monto_inicial": 100, "saldo_actual": 500}).json()
     deuda = client.get(f"/api/deuda/{creciente['id']}").json()
     assert deuda["progreso_pct"] == 0 and "intereses_pagados" not in deuda
@@ -182,14 +182,15 @@ def test_montos_de_deuda_se_redondean_a_pesos(client):
     assert client.post("/api/deuda", json={"nombre": "P", "saldo_actual": 0.4}).status_code == 422
 
 
-def test_clase_deuda_deriva_es_tarjeta_y_sale_en_las_filas(client):
+def test_clase_deuda_sale_en_las_filas_sin_es_tarjeta(client):
     t = client.post("/api/deuda", json={"nombre": "V", "clase_deuda": "tarjeta", "cupo": 10}).json()
-    assert (t["clase_deuda"], t["es_tarjeta"]) == ("tarjeta", True)
+    assert t["clase_deuda"] == "tarjeta" and "es_tarjeta" not in t
     p = client.post("/api/deuda", json={"nombre": "P", "saldo_actual": 5}).json()
-    assert (p["clase_deuda"], p["es_tarjeta"]) == ("prestamo", False)
+    assert p["clase_deuda"] == "prestamo" and "es_tarjeta" not in p
     assert client.get(f"/api/deuda/{t['id']}").json()["clase_deuda"] == "tarjeta"
     resumen = client.get("/api/deudas/resumen").json()
     assert {d["clase_deuda"] for d in resumen["creditos"] + resumen["tarjetas"]} == {"tarjeta", "prestamo"}
+    assert not {"es_tarjeta", "activa", "vigente"} & set(resumen["creditos"][0])
     assert client.post("/api/deuda", json={"nombre": "X", "clase_deuda": "otra"}).status_code == 422
 
 

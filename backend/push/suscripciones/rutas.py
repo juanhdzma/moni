@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field, field_validator
 
 from ...core import db
+from ...schemas.respuestas.comun import Ok
+from ...schemas.respuestas.seguridad import ClavePush
 from .. import vapid
 from .endpoint import endpoint_permitido
 
@@ -36,12 +38,12 @@ def _ejecutar(sql: str, params: tuple) -> dict:
     return {"ok": True}
 
 
-@router.get("/api/push/key")
+@router.get("/api/push/key", response_model=ClavePush)
 def push_key():
     return {"key": vapid.public_key()}
 
 
-@router.post("/api/push/subscribe")
+@router.post("/api/push/subscribe", response_model=Ok)
 def push_subscribe(body: PushSub):
     return _ejecutar(
         "INSERT INTO push_subs (endpoint, p256dh, auth) VALUES (?, ?, ?) "
@@ -50,6 +52,6 @@ def push_subscribe(body: PushSub):
     )
 
 
-@router.post("/api/push/unsubscribe")
+@router.post("/api/push/unsubscribe", response_model=Ok)
 def push_unsubscribe(body: PushUnsub):
     return _ejecutar("DELETE FROM push_subs WHERE endpoint = ?", (body.endpoint,))

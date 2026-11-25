@@ -45,5 +45,5 @@ def validar_categoria(tipo, nombre, existentes):
 def validar_simbolo(simbolo):
     limpio = (simbolo or "").strip()
     if limpio not in valores(MONEDAS):
-        raise ValueError("símbolo inválido")
+        raise ErrorDeDominio("símbolo inválido")
     return limpio

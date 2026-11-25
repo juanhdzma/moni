@@ -10,7 +10,7 @@ def _mes_atras(hoy: datetime.date, k: int) -> tuple[int, int]:
     return idx // 12, idx % 12 + 1
 
 
-def _clave_mes(hoy: datetime.date, k: int) -> str:
+def clave_mes(hoy: datetime.date, k: int) -> str:
     y, m = _mes_atras(hoy, k)
     return f"{y:04d}-{m:02d}"
 
@@ -19,7 +19,7 @@ def serie_mensual(txs, count: int, flujo, hoy: datetime.date) -> list[float]:
     por_mes: dict[str, list] = {}
     for t in txs:
         por_mes.setdefault(mes_de(t["fecha"]), []).append(t)
-    return [flujo(por_mes.get(_clave_mes(hoy, count - 1 - i), [])) for i in range(count)]
+    return [flujo(por_mes.get(clave_mes(hoy, count - 1 - i), [])) for i in range(count)]
 
 
 def monthly_patrimonio(txs, count: int, hoy: datetime.date) -> list[float]:

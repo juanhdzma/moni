@@ -1,4 +1,4 @@
-fastapi==0.139.0
-uvicorn[standard]==0.51.0
+fastapi==0.165.0
+uvicorn==0.54.0
 pywebpush==2.5.0
 webauthn==3.0.1

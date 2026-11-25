@@ -9,20 +9,20 @@ COPY web/ ./
 RUN npm run build
 
 
-FROM python:3.12-slim
+FROM python:3.12.16-slim
 
 WORKDIR /app
 
-COPY backend/requirements.txt backend/requirements.txt
-RUN pip install --no-cache-dir -r backend/requirements.txt
+RUN useradd --create-home --uid 1000 moni
 
-COPY backend backend
-COPY --from=build /app/web/dist /app/web/dist
+COPY backend/requirements.txt backend/constraints.txt backend/
+RUN pip install --no-cache-dir -c backend/constraints.txt -r backend/requirements.txt
+
+COPY --chown=moni:moni backend backend
+COPY --chown=moni:moni --from=build /app/web/dist /app/web/dist
 
 # El volumen de datos se monta acá; el usuario sin privilegios tiene que poder escribirlo.
-RUN useradd --create-home --uid 1000 moni \
-    && mkdir -p /app/backend/data \
-    && chown -R moni:moni /app
+RUN install -d -o moni -g moni /app/backend/data
 USER moni
 
 EXPOSE 80

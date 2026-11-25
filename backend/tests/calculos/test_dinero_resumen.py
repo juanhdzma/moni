@@ -1,6 +1,6 @@
 import pytest
 
-from backend.calculos.dinero import este_mes, evolucion, partes_patrimonio, resumen_dashboard
+from backend.calculos.dinero.resumen import este_mes, evolucion, partes_patrimonio, resumen_dashboard
 
 from .builders_calculos import HOY, activo, deuda, estado, inversion, tx
 

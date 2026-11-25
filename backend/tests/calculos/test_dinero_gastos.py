@@ -1,6 +1,6 @@
 import datetime
 
-from backend.calculos.dinero import agrupar_gastos, gastos_en_periodo, gastos_periodo, movimientos_recientes
+from backend.calculos.dinero.gastos import agrupar_gastos, gastos_en_periodo, gastos_periodo, movimientos_recientes
 
 from .builders_calculos import HOY, tx
 
@@ -61,7 +61,7 @@ def test_agrupar_gastos_pct_por_fila_con_piso():
 
 
 def test_movimientos_dashboard_trae_atributos_y_texto_vacio():
-    from backend.calculos.dinero import movimientos_dashboard
+    from backend.calculos.dinero.gastos import movimientos_dashboard
 
     r = movimientos_dashboard([{"id": 1, "fecha": "2026-08-01", "tipo": "transfer", "categoria": "Pago deuda", "descripcion": "", "monto": 5}])
     assert (r["items"][0]["editable"], r["items"][0]["tono"], r["items"][0]["icono_metodo"]) == (False, "neutro", "efectivo")

@@ -1,3 +1,5 @@
+from backend.schemas.activo import ActivoIn
+
 from .builders_api import ACTIVO_DERIVADOS, DEUDA_DERIVADOS, sembrar
 
 
@@ -5,8 +7,17 @@ def test_put_ignora_campos_derivados(client):
     sembrar(client)
     fila = client.get("/api/activos/resumen").json()["items"][0]
     assert ACTIVO_DERIVADOS <= set(fila)
-    r = client.put(f"/api/activo/{fila['id']}", json={**fila, "valor_actual": 4_000_000})
+    editables = {k: v for k, v in fila.items() if k in ActivoIn.model_fields}
+    r = client.put(f"/api/activo/{fila['id']}", json={**editables, "valor_actual": 4_000_000})
     assert r.status_code == 200 and r.json()["valor_actual"] == 4_000_000
+
+
+def test_put_rechaza_campos_derivados(client):
+    sembrar(client)
+    fila = client.get("/api/activos/resumen").json()["items"][0]
+    r = client.put(f"/api/activo/{fila['id']}", json=fila)
+    assert r.status_code == 422
+    assert {e["msg"] for e in r.json()["detail"]} == {"Campo no permitido"}
 
 
 def test_deudas_resumen(client, tarjeta):

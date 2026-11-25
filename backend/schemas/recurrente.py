@@ -1,14 +1,12 @@
 from typing import Literal
 
-from pydantic import BaseModel
-
 from ..calculos.operaciones.frecuencias import FRECUENCIAS
-from .validadores import MontoPesos, Nombre, Notas, fecha_opcional
+from .validadores import Entrada, MontoPesos, Nombre, Notas, fecha_opcional
 
 Frecuencia = Literal[tuple(FRECUENCIAS)]
 
 
-class RecIn(BaseModel):
+class RecIn(Entrada):
     nombre: Nombre
     tipo: Literal["ingreso", "gasto"]
     monto: MontoPesos
