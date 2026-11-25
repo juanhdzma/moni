@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response
 
 from ..calculos.fechas import hoy_bogota
-from ..core.afectadas import ACTIVOS, DEUDAS, INVERSIONES, RECURRENTES, TRANSACCIONES, afectar
+from ..core.afectadas import afectar
 from ..core.db import conexion
 from ..core.estado import detalle
 from ..core.sql import delete_row
@@ -14,20 +14,12 @@ def register_lectura(router: APIRouter, path, table):
             return detalle(conn, table, row_id, hoy_bogota())
 
 
-AFECTADAS_AL_BORRAR = {
-    "deudas": (DEUDAS, TRANSACCIONES),
-    "inversiones": (INVERSIONES,),
-    "activos": (ACTIVOS,),
-    "recurrentes": (RECURRENTES,),
-}
-
-
-def register_borrado(router: APIRouter, path, table):
-    @router.delete(f"/api/{path}/{{row_id}}", status_code=204, name=f"delete_{path}")
+def register_borrado(router: APIRouter, path, table, afectadas, al_borrar=None):
+    @router.delete(f"/api/{path}/{{row_id:int}}", status_code=204, name=f"delete_{path}")
     def borrar(row_id: int, response: Response):
         with conexion() as conn:
             delete_row(conn, table, row_id)
-            if table == "deudas":
-                conn.execute("UPDATE transacciones SET tarjeta_id = NULL WHERE tarjeta_id = ?", (row_id,))
+            if al_borrar:
+                al_borrar(conn, row_id)
             conn.commit()
-        afectar(response, *AFECTADAS_AL_BORRAR[table])
+        afectar(response, *afectadas)

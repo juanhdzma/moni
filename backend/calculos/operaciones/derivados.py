@@ -22,6 +22,10 @@ def _proximo_pago(fecha: datetime.date, hoy: datetime.date) -> dict:
     return {"fecha": fecha.isoformat(), "texto": texto_dias_corto(dias)}
 
 
+def es_vigente(fila: dict) -> bool:
+    return bool(fila.get("es_tarjeta")) or tiene_saldo(fila)
+
+
 def derivar_deuda(fila: dict) -> dict:
     saldo = fila["saldo_actual"]
     inicial = fila["monto_inicial"]
@@ -36,7 +40,7 @@ def derivar_deuda(fila: dict) -> dict:
         "es_tarjeta": bool(fila.get("es_tarjeta")),
         "clase_deuda": clase_deuda_de(fila.get("es_tarjeta")),
         "activa": activa,
-        "vigente": bool(fila.get("es_tarjeta")) or activa,
+        "vigente": es_vigente(fila),
         "progreso_pct": progreso,
         "capital_pagado": inicial - saldo,
         "nivel_progreso": nivel_progreso,

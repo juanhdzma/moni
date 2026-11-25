@@ -1,7 +1,7 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from ..calculos.categorias import validar_simbolo
-from .validadores import TipoTx, clave_opcional
+from .validadores import Entrada, TipoTx, clave_opcional
 
 
 class CategoriaIn(BaseModel):
@@ -9,7 +9,7 @@ class CategoriaIn(BaseModel):
     nombre: str
 
 
-class AjustesIn(BaseModel):
+class AjustesIn(Entrada):
     moneda_simbolo: str
 
     @field_validator("moneda_simbolo")
@@ -18,11 +18,12 @@ class AjustesIn(BaseModel):
         return validar_simbolo(v)
 
 
-class OpOculta(BaseModel):
+class OpOculta(Entrada):
     clave: str
 
     _v_clave = clave_opcional("clave")
 
 
 class OpOcultaBackup(OpOculta):
+    model_config = ConfigDict(extra="ignore")
     creada_en: str = ""

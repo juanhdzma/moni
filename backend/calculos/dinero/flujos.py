@@ -1,4 +1,5 @@
 from ..constantes import CATEGORIAS_SISTEMA
+from ..operaciones.derivados import es_vigente
 
 _INGRESO = CATEGORIAS_SISTEMA["ingreso"]
 _GASTO = CATEGORIAS_SISTEMA["gasto"]
@@ -48,5 +49,5 @@ def net_worth(txs, inversiones, activos, deudas) -> float:
         flujo_cartera(txs)
         + sum(i["valor_actual"] for i in inversiones)
         + sum(a["valor_actual"] for a in activos)
-        - sum(d["saldo_actual"] for d in deudas)
+        - sum(d["saldo_actual"] for d in deudas if es_vigente(d))
     )

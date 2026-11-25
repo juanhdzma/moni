@@ -14,17 +14,18 @@ router = APIRouter()
 CAMPOS_RESUMEN = ("patrimonio", "proy_delta", "texto_proyeccion", "total_barra")
 
 
-def _estado_de_hoy(conn):
+def _estado_de_hoy(conn, *nombres):
     hoy = hoy_bogota()
-    return store.cargar_estado(conn, hoy), hoy
+    return store.cargar_estado(conn, hoy, nombres), hoy
 
 
 @router.get("/api/dashboard/resumen")
 def dashboard_resumen():
     with conexion() as conn:
-        estado, hoy = _estado_de_hoy(conn)
+        estado, hoy = _estado_de_hoy(conn, "transacciones", "deudas", "inversiones", "activos")
         resumen = dinero.resumen_dashboard(estado, hoy)
-        partes = dinero.partes_patrimonio(resumen, store.conteos(conn), store.simbolo(conn))
+        conteos = {nombre: len(estado[nombre]) for nombre in ("activos", "inversiones")}
+        partes = dinero.partes_patrimonio(resumen, conteos, store.simbolo(conn))
         return {**{k: resumen[k] for k in CAMPOS_RESUMEN}, "partes": partes}
 
 
@@ -34,21 +35,22 @@ def dashboard_evolucion(
     periodo: PeriodoEvolucion = "6M",
 ):
     with conexion() as conn:
-        estado, hoy = _estado_de_hoy(conn)
+        colecciones = ("transacciones", "inversiones") if serie == "inversiones" else ("transacciones", "deudas", "inversiones", "activos")
+        estado, hoy = _estado_de_hoy(conn, *colecciones)
         return dinero.evolucion(estado, serie, periodo, hoy, store.simbolo(conn))
 
 
 @router.get("/api/dashboard/este-mes")
 def dashboard_este_mes():
     with conexion() as conn:
-        estado, hoy = _estado_de_hoy(conn)
+        estado, hoy = _estado_de_hoy(conn, "transacciones")
         return dinero.este_mes(estado, hoy)
 
 
 @router.get("/api/dashboard/gastos")
 def dashboard_gastos(periodo: PeriodoGastos = "1M"):
     with conexion() as conn:
-        estado, hoy = _estado_de_hoy(conn)
+        estado, hoy = _estado_de_hoy(conn, "transacciones")
         return dinero.gastos_periodo(estado["transacciones"], periodo, hoy)
 
 

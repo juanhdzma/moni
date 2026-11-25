@@ -115,7 +115,7 @@ def test_proximas_operaciones():
 def test_recurrentes_proxima_fecha():
     for rid, fecha, texto in EXP["recurrente_proxima"]:
         r = next(x for x in RECS if x["id"] == rid)
-        d = operaciones.proxima_fecha_recurrente(r["fecha_inicio"], r["frecuencia"], HOY)
+        d = operaciones.frecuencias.proxima_fecha_recurrente(r["fecha_inicio"], r["frecuencia"], HOY)
         assert (d.isoformat() if d else None) == fecha, rid
         derivada = operaciones.derivar_recurrente(dict(r, activo=1), HOY)["proximo_pago"]
         assert (derivada["texto"] if derivada else None) == texto, rid
@@ -125,31 +125,31 @@ def test_recurrentes_proxima_fecha_otros_hoy():
     for caso in EXP["recurrente_proxima_otras_fechas"]:
         hoy = datetime.date.fromisoformat(caso["hoy"])
         for r, esperado in zip(RECS, caso["r"]):
-            d = operaciones.proxima_fecha_recurrente(r["fecha_inicio"], r["frecuencia"], hoy)
+            d = operaciones.frecuencias.proxima_fecha_recurrente(r["fecha_inicio"], r["frecuencia"], hoy)
             assert (d.isoformat() if d else None) == esperado, (caso["hoy"], r["id"])
 
 
 def test_inversion_proxima_fecha():
     for dia, fecha, texto in EXP["inv_proxima"]:
-        d = operaciones.proxima_fecha_inversion(dia, HOY)
+        d = operaciones.finanzas.proxima_fecha_inversion(dia, HOY)
         assert d.isoformat() == fecha, dia
         assert operaciones.derivar_inversion(dict(INVS[0], dia_pago=dia, pago="mensual"), HOY)["proximo_pago"]["texto"] == texto
     for caso in EXP["inv_proxima_otras_fechas"]:
         hoy = datetime.date.fromisoformat(caso["hoy"])
-        assert [operaciones.proxima_fecha_inversion(d, hoy).isoformat() for d in (29, 30, 31, 15)] == caso["r"], caso["hoy"]
+        assert [operaciones.finanzas.proxima_fecha_inversion(d, hoy).isoformat() for d in (29, 30, 31, 15)] == caso["r"], caso["hoy"]
 
 
 def test_to_mensual():
     for frecuencia, valor in EXP["to_mensual"]:
-        assert operaciones.to_mensual(1000000, frecuencia) == valor, frecuencia
+        assert operaciones.frecuencias.to_mensual(1000000, frecuencia) == valor, frecuencia
 
 
 def test_rendimiento_y_tasas():
     for monto, tasa, esperado in EXP["rendimiento"]:
-        assert operaciones.rendimiento_mensual_fija(monto, tasa) == esperado, (monto, tasa)
+        assert operaciones.finanzas.rendimiento_mensual_fija(monto, tasa) == esperado, (monto, tasa)
     for v, mv, ea in EXP["tasas"]:
-        assert operaciones.ea_a_mv(v) == pytest.approx(mv, rel=1e-12)
-        assert operaciones.mv_a_ea(v) == pytest.approx(ea, rel=1e-12)
+        assert operaciones.finanzas.ea_a_mv(v) == pytest.approx(mv, rel=1e-12)
+        assert operaciones.finanzas.mv_a_ea(v) == pytest.approx(ea, rel=1e-12)
 
 
 def test_cambio_valor_y_desglose():
@@ -165,10 +165,10 @@ def test_deudas_intereses_y_saldo():
     for esperado in EXP["deudas"]:
         d = next(x for x in DEUDAS if x["id"] == esperado["id"])
         assert tiene_saldo(d) == esperado["tiene_saldo"], d["nombre"]
-        assert operaciones.estimar_intereses_pagados(d["monto_inicial"], d["saldo_actual"], d["tasa_ea"], d["cuota_mensual"]) == esperado["estimado"]
-        assert operaciones.intereses_pagados(d) == esperado["intereses"], d["nombre"]
+        assert operaciones.finanzas.estimar_intereses_pagados(d["monto_inicial"], d["saldo_actual"], d["tasa_ea"], d["cuota_mensual"]) == esperado["estimado"]
+        assert operaciones.finanzas.intereses_pagados(d) == esperado["intereses"], d["nombre"]
     for args, esperado in EXP["estimar_extra"]:
-        assert operaciones.estimar_intereses_pagados(*args) == esperado, args
+        assert operaciones.finanzas.estimar_intereses_pagados(*args) == esperado, args
 
 
 @pytest.mark.parametrize("caso", EXP["listar"], ids=lambda c: "-".join(map(str, c["args"])))

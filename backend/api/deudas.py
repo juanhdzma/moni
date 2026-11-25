@@ -6,11 +6,13 @@ from ..calculos import operaciones
 from ..calculos.constantes import clase_deuda_de
 from ..calculos.fechas import fecha_o_ahora, hoy_bogota
 from ..calculos.operaciones import asientos, frases_deuda as frases, movimientos
-from ..core.afectadas import DEUDAS, afectar, con_movimiento, con_op_oculta
+from ..core.afectadas import DEUDAS, TRANSACCIONES, afectar, con_movimiento, con_op_oculta
 from ..core.db import conexion
 from ..core.estado import coleccion, detalle, simbolo
 from ..core.ops_ocultas import ocultar_op
-from ..core.sql import fijar_saldo, get_row, guardar_y_leer, insert_row, insert_tx, update_row
+from ..core.sql import (
+    aplicar_pago_deuda, desligar_tx, fijar_saldo, get_row, guardar_y_leer, insert_row, insert_tx, tiene_tx_ligadas, update_row,
+)
 from ..core.tablas import DEUDA_COLS
 from ..schemas.deuda import AdelantoPreview, DeudaAdelanto, DeudaCrear, DeudaIn, DeudaPago
 from ..schemas.previews import PagoPreview
@@ -19,7 +21,7 @@ from .lecturas import register_borrado
 logger = logging.getLogger("moni")
 router = APIRouter()
 
-register_borrado(router, "deuda", "deudas")
+register_borrado(router, "deuda", "deudas", (DEUDAS, TRANSACCIONES), desligar_tx)
 
 
 def _guardar_y_leer_deuda(conn, deuda_id: int) -> dict:
@@ -37,22 +39,20 @@ def leer_deuda(deuda_id: int):
 @router.post("/api/deuda", name="create_deuda")
 def crear_deuda(body: DeudaCrear, response: Response):
     with conexion() as conn:
-        data = operaciones.completar_deuda(operaciones.normalizar_tasa(body.model_dump()), hoy_bogota())
-        crear_tx = data.pop("crear_tx")
+        data = operaciones.completar_deuda(operaciones.normalizar_tasa(body.model_dump(exclude={"crear_tx"})), hoy_bogota())
         deuda_id = insert_row(conn, "deudas", DEUDA_COLS, data)
-        if crear_tx:
+        if body.crear_tx:
             insert_tx(conn, **movimientos.tx_credito_recibido(data))
-        afectar(response, *con_movimiento(DEUDAS, crear_tx))
+        afectar(response, *con_movimiento(DEUDAS, body.crear_tx))
         return _guardar_y_leer_deuda(conn, deuda_id)
 
 
-@router.put("/api/deuda/{deuda_id}", name="update_deuda")
+@router.put("/api/deuda/{deuda_id:int}", name="update_deuda")
 def actualizar_deuda(deuda_id: int, body: DeudaIn, response: Response):
     with conexion() as conn:
         data = operaciones.normalizar_tasa(body.model_dump())
         actual = get_row(conn, "deudas", deuda_id)
-        ligadas = conn.execute("SELECT 1 FROM transacciones WHERE tarjeta_id = ? LIMIT 1", (deuda_id,)).fetchone()
-        movimientos.validar_cambio_de_tipo(bool(actual["es_tarjeta"]), data["es_tarjeta"], ligadas is not None)
+        movimientos.validar_cambio_de_tipo(bool(actual["es_tarjeta"]), data["es_tarjeta"], tiene_tx_ligadas(conn, deuda_id))
         update_row(conn, "deudas", DEUDA_COLS, deuda_id, data)
         afectar(response, DEUDAS)
         return _guardar_y_leer_deuda(conn, deuda_id)
@@ -71,11 +71,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
             avanzar_cuota=body.modo == "cuota", liquidar=body.modo == "liquidar", fecha=fecha_o_ahora(body.fecha), descripcion=body.descripcion,
             notas=body.notas, simbolo=simbolo(conn),
         )
-        conn.execute(
-            "UPDATE deudas SET saldo_actual = ?, total_intereses = total_intereses + ?,"
-            " proxima_cuota = COALESCE(?, proxima_cuota) WHERE id = ?",
-            (pago.saldo_actual, pago.intereses, pago.proxima_cuota, deuda_id),
-        )
+        aplicar_pago_deuda(conn, deuda_id, pago.saldo_actual, pago.intereses, pago.proxima_cuota)
         if body.registrar_tx:
             insert_tx(conn, **pago.tx)
         ocultar_op(conn, body.op_clave)

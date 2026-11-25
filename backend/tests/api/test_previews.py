@@ -33,3 +33,17 @@ def test_pago_preview_sin_datos_para_calcular_responde_null(client, prestamo):
     assert client.post(url, json={"modo": "abono", "total_pagado": 0, "nuevo_saldo": 900_000}).json() is None
     assert client.post(url, json={"modo": "abono", "total_pagado": 100}).json() is None
     assert client.post(url, json={"modo": "abono", "total_pagado": 100, "nuevo_saldo": None}).json() is None
+
+
+def test_previews_con_input_cero_responden_null(client):
+    inv = client.post("/api/inv", json={"nombre": "CDT", "tipo": "variable", "monto_invertido": 1000}).json()
+    a = client.post("/api/activo", json={"nombre": "Moto", "valor_inicial": 1000, "valor_actual": 1000}).json()
+    for url, body in (
+        (f"/api/inv/{inv['id']}/valor/preview", {"nuevo_valor": 0}),
+        (f"/api/inv/{inv['id']}/aporte/preview", {"monto": 0}),
+        (f"/api/activo/{a['id']}/valor/preview", {"nuevo_valor": 0}),
+        (f"/api/activo/{a['id']}/venta/preview", {"precio": 0}),
+    ):
+        r = client.post(url, json=body)
+        assert r.status_code == 200 and r.json() is None, url
+    assert client.post("/api/inv/999/aporte/preview", json={"monto": 0}).status_code == 404

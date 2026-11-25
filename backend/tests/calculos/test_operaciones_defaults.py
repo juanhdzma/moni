@@ -35,8 +35,13 @@ def test_activo_nuevo_y_update():
 
 
 def test_textos():
-    assert operaciones.texto_posiciones({"fijas": [1], "variables": []}) == "1 posición"
-    assert operaciones.texto_activos({"variacion": 0, "mostrar_variacion": False}, 0, 2) == {"texto_variacion": "", "texto_conteo": "2 activos"}
+    assert operaciones.textos.texto_posiciones({"fijas": [1], "variables": []}) == "1 posición"
+    assert operaciones.textos.texto_activos({"variacion": 0, "mostrar_variacion": False}, 0, 2) == {"texto_variacion": "", "texto_conteo": "2 activos"}
     cats = {"gasto": [{"nombre": "A"}, {"nombre": "Z"}]}
-    assert operaciones.categoria_sugerida({"tipo": "gasto", "nombre": "A"}, cats) == "A"
-    assert operaciones.categoria_sugerida({"tipo": "gasto", "nombre": "Q"}, cats) == "Z"
+    assert operaciones.textos.categoria_sugerida({"tipo": "gasto", "nombre": "A"}, cats) == "A"
+    assert operaciones.textos.categoria_sugerida({"tipo": "gasto", "nombre": "Q"}, cats) == "Z"
+
+
+def test_recurrente_sin_activo_conserva_el_anterior():
+    assert operaciones.completar_recurrente({"activo": True}, {"activo": 0}, False)["activo"] == 0
+    assert operaciones.completar_recurrente({"activo": True}, {"activo": 0}, True)["activo"] is True

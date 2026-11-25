@@ -221,3 +221,25 @@ def test_422_nunca_deja_mensajes_en_ingles(client, cuerpo):
 def test_simbolo_fuera_de_monedas_es_422(client):
     assert client.put("/api/ajustes", json={"moneda_simbolo": "COP"}).status_code == 422
     assert client.put("/api/ajustes", json={"moneda_simbolo": "€"}).status_code == 200
+
+
+def test_transaccion_rechaza_textos_mas_largos_que_el_tope(client):
+    base = {"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": 100}
+    for campo, largo in (("descripcion", 121), ("notas", 201), ("categoria", 26)):
+        r = client.post("/api/tx", json={**base, campo: "x" * largo})
+        assert r.status_code == 422, campo
+        assert "demasiado largo" in r.json()["detail"][0]["msg"]
+
+
+@pytest.mark.parametrize(
+    "ruta,cuerpo",
+    [
+        ("/api/ajustes", {"moneda_simbolo": "$", "extra": 1}),
+        ("/api/ops-ocultas", {"clave": "deuda:1:2026-01-01", "extra": 1}),
+        ("/api/deuda", {"nombre": "X", "saldo_actual": 10, "extra": 1}),
+    ],
+)
+def test_entradas_rechazan_campos_desconocidos_en_espanol(client, ruta, cuerpo):
+    r = (client.put if ruta == "/api/ajustes" else client.post)(ruta, json=cuerpo)
+    assert r.status_code == 422
+    assert r.json()["detail"][0]["msg"] == "Campo no permitido"

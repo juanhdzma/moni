@@ -3,18 +3,18 @@ from fastapi import APIRouter, Response
 from ..calculos import operaciones
 from ..calculos.operaciones import asientos, movimientos
 from ..calculos.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
-from ..core.actualizar import actualizar_columnas
 from ..core.afectadas import ACTIVOS, afectar, con_movimiento
 from ..core.db import conexion
 from ..core.estado import coleccion
-from ..core.sql import delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row
+from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row
 from ..core.tablas import ACTIVO_COLS
 from ..schemas.activo import ActivoIn, ActivoValor, ActivoVenta
 from ..schemas.previews import NuevoValor, PrecioPreview
-from .lecturas import register_borrado
+from .lecturas import register_borrado, register_lectura
 
 router = APIRouter()
-register_borrado(router, "activo", "activos")
+register_lectura(router, "activo", "activos")
+register_borrado(router, "activo", "activos", (ACTIVOS,))
 
 
 def _datos_activo(body: ActivoIn, anterior: dict | None) -> dict:
@@ -33,7 +33,7 @@ def crear_activo(body: ActivoIn, response: Response):
         return guardar_y_leer(conn, "activos", activo_id)
 
 
-@router.put("/api/activo/{activo_id}", name="update_activo")
+@router.put("/api/activo/{activo_id:int}", name="update_activo")
 def actualizar_activo(activo_id: int, body: ActivoIn, response: Response):
     with conexion() as conn:
         datos = _datos_activo(body, get_row(conn, "activos", activo_id))
@@ -67,13 +67,16 @@ def vender_activo(activo_id: int, body: ActivoVenta, response: Response):
 def activo_valor_preview(activo_id: int, body: NuevoValor):
     with conexion() as conn:
         activo = get_row(conn, "activos", activo_id)
+        if not body.nuevo_valor:
+            return None
         return operaciones.cambio_valor(body.nuevo_valor, activo["valor_actual"], activo["valor_inicial"])
 
 
 @router.post("/api/activo/{activo_id}/venta/preview")
 def activo_venta_preview(activo_id: int, body: PrecioPreview):
     with conexion() as conn:
-        return operaciones.preview_venta_activo(get_row(conn, "activos", activo_id), body.precio)
+        activo = get_row(conn, "activos", activo_id)
+        return operaciones.preview_venta_activo(activo, body.precio) if body.precio else None
 
 
 @router.get("/api/activos/resumen")

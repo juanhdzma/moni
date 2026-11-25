@@ -3,12 +3,12 @@ import datetime
 import logging
 from typing import Optional
 
-from ..calculos.fechas import ahora_bogota, hoy_bogota
+from ..calculos.fechas import ahora_bogota, hoy_bogota, texto_dias
 from ..calculos.formato import cop
-from ..calculos.operaciones.proximas import en_ventana, sin_ocultas
+from ..calculos.operaciones.proximas import en_ventana
 from ..core import db
 from ..core.estado import ajustes
-from ..core.ops_ocultas import candidatas, claves_ocultas
+from ..core.ops_ocultas import candidatas_visibles
 from . import envio
 
 logger = logging.getLogger("moni")
@@ -17,8 +17,7 @@ HORA_AVISO = 8
 
 
 def operaciones_del_dia(conn, hoy: datetime.date, dias: int = 1) -> list[tuple[datetime.date, str, float]]:
-    visibles = sin_ocultas(candidatas(conn, hoy), claves_ocultas(conn))
-    return [(c["fecha"], c["etiqueta"], c["monto"]) for c in en_ventana(visibles, hoy, dias)]
+    return [(c["fecha"], c["etiqueta"], c["monto"]) for c in en_ventana(candidatas_visibles(conn, hoy), hoy, dias)]
 
 
 def _monto(m: float, simbolo: str) -> str:
@@ -26,7 +25,7 @@ def _monto(m: float, simbolo: str) -> str:
 
 
 def armar_mensaje(ops: list[tuple[datetime.date, str, float]], hoy: datetime.date, simbolo: str = "$") -> dict:
-    lineas = [f"{'Hoy' if f == hoy else 'Mañana'}: {nombre} {_monto(m, simbolo)}" for f, nombre, m in ops]
+    lineas = [f"{texto_dias((f - hoy).days).capitalize()}: {nombre} {_monto(m, simbolo)}" for f, nombre, m in ops]
     titulo = "Moni" if len(ops) == 1 else f"Moni: {len(ops)} operaciones"
     return {"title": titulo, "body": "\n".join(lineas)}
 

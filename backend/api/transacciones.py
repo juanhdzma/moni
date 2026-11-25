@@ -10,7 +10,7 @@ from ..core.db import conexion
 from ..core import estado as store
 from ..core.estado import coleccion
 from ..core.ops_ocultas import ocultar_op
-from ..core.sql import delete_row, fijar_saldo, get_row, guardar_y_leer, insert_row, update_row
+from ..core.sql import delete_row, get_row, guardar_y_leer, insert_row, iniciar_escritura, sumar_al_saldo, update_row
 from ..core.tablas import TX_COLS
 from ..schemas.transaccion import TxIn
 from ..schemas.validadores import ColumnaTx, TipoTx
@@ -24,12 +24,13 @@ register_lectura(router, "tx", "transacciones")
 def ajustar_saldo_tarjeta(conn, tarjeta_id, delta):
     if tarjeta_id is None or delta == 0:
         return
+    iniciar_escritura(conn)
     tarjeta = _leer_tarjeta(conn, tarjeta_id)
     if tarjeta is None:
         logger.warning("tx apunta a tarjeta %s inexistente; se ignora el ajuste de saldo", tarjeta_id)
         return
     nuevo_saldo = tarjetas.saldo_tras_delta(tarjeta, delta)
-    fijar_saldo(conn, tarjeta_id, nuevo_saldo)
+    sumar_al_saldo(conn, tarjeta_id, delta)
     logger.info(
         "tarjeta %s: saldo_actual %.2f -> %.2f (delta %.2f)",
         tarjeta_id, tarjeta["saldo_actual"], nuevo_saldo, delta,

@@ -24,7 +24,7 @@ def test_derivar_inversion_ganancia():
     i = op.derivar_inversion(inversion(valor_actual=1_100_000, pago="vencimiento"), D(2026, 8, 1))
     assert i["ganancia"] == 100_000 and i["ganancia_pct"] == pytest.approx(10)
     assert i["proximo_pago"] is None and "tasa_mv" not in i
-    assert i["rendimiento_esperado"] == op.rendimiento_mensual_fija(1_100_000, 12)
+    assert i["rendimiento_esperado"] == op.finanzas.rendimiento_mensual_fija(1_100_000, 12)
 
 
 def test_deuda_trae_tono_de_nivel():

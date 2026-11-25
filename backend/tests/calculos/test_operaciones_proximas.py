@@ -4,7 +4,7 @@ from .helpers_operaciones import D, deuda, inversion, recurrente
 
 
 def test_clave_op():
-    assert op.clave_op("deuda", 3, "2026-08-20") == "deuda:3:2026-08-20"
+    assert op.proximas.clave_op("deuda", 3, "2026-08-20") == "deuda:3:2026-08-20"
 
 
 HOY = D(2026, 8, 15)

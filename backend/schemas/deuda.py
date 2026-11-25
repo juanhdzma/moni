@@ -4,7 +4,7 @@ from pydantic import BaseModel, computed_field, model_validator
 
 from ..calculos.constantes import CLASES_DEUDA, FRANQUICIAS, MODOS_PAGO, valores
 from .validadores import (
-    Descripcion, MontoCero, MontoPesos, Nombre, Notas, Tasa, clave_opcional, fecha_opcional,
+    Descripcion, Entrada, MontoCero, MontoPesos, Nombre, Notas, Tasa, clave_opcional, fecha_opcional,
 )
 
 Franquicia = Literal[valores(FRANQUICIAS)]
@@ -48,7 +48,7 @@ class DeudaIn(BaseModel):
         return self
 
 
-class DeudaCrear(DeudaIn):
+class DeudaCrear(DeudaIn, Entrada):
     crear_tx: bool = False
 
     @model_validator(mode="after")
@@ -64,7 +64,7 @@ class DeudaCrear(DeudaIn):
         return self
 
 
-class _SaldoTrasAdelanto(BaseModel):
+class _SaldoTrasAdelanto(Entrada):
     nuevo_saldo: Optional[MontoCero] = None
     disponible_nuevo: Optional[MontoCero] = None
 
@@ -92,7 +92,7 @@ class AdelantoPreview(_SaldoTrasAdelanto):
 ModoPago = Literal[valores(MODOS_PAGO)]
 
 
-class DeudaPago(BaseModel):
+class DeudaPago(Entrada):
     modo: ModoPago
     nuevo_saldo: MontoCero
     total_pagado: MontoPesos

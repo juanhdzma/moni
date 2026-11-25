@@ -85,7 +85,7 @@ class MetaOut(BaseModel):
     frecuencias: list[Opcion]
     franquicias: list[Opcion]
     tipos_manuales: list[Opcion]
-    tipos_categoria: list[Opcion]
+    tipos_categoria: list[OpcionConTono]
     tipos_inversion: list[OpcionTipoInversion]
     tipos_tasa: list[Opcion]
     pagos_inversion: list[OpcionPagoInversion]

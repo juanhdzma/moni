@@ -4,7 +4,7 @@ from .helpers_operaciones import D, fecha, recurrente
 
 
 def proxima(inicio, frec, hoy):
-    return op.proxima_fecha_recurrente(inicio, frec, fecha(hoy))
+    return op.frecuencias.proxima_fecha_recurrente(inicio, frec, fecha(hoy))
 
 
 def test_pago_que_cae_hoy_es_hoy():
@@ -35,9 +35,9 @@ def test_anual():
 
 def test_resultado_nunca_en_el_pasado():
     hoy = D(2026, 8, 1)
-    for frec in op.FRECUENCIAS:
+    for frec in op.frecuencias.FRECUENCIAS:
         for inicio in ["2020-01-01", "2024-02-29", "2026-07-31", "2026-08-01"]:
-            assert op.proxima_fecha_recurrente(inicio, frec, hoy) >= hoy
+            assert op.frecuencias.proxima_fecha_recurrente(inicio, frec, hoy) >= hoy
 
 
 def test_frecuencia_desconocida_o_fecha_vacia():

@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Optional
 
-from pydantic import AfterValidator, Field, StringConstraints, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 from ..calculos.constantes import (
     DESCRIPCION_LARGO_MAX,
@@ -23,6 +23,10 @@ TasaTipo = Literal[valores(TIPOS_TASA)]
 SerieEvolucion = Literal[valores(SERIES_EVOLUCION)]
 PeriodoGastos = Literal[PERIODOS_GASTOS]
 PeriodoEvolucion = Literal[PERIODOS_EVOLUCION]
+
+
+class Entrada(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
 
 def _redondear_entrada(v: float) -> float:

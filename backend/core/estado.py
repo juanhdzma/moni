@@ -58,9 +58,9 @@ def _derivar(conn, nombre, hoy, por_id):
     return [derivar(fila, hoy, por_id) for fila in filas(conn, nombre)]
 
 
-def cargar_estado(conn, hoy):
+def cargar_estado(conn, hoy, nombres=tuple(DERIVADORES)):
     por_id = _deudas_por_id(conn)
-    return {nombre: _derivar(conn, nombre, hoy, por_id) for nombre in DERIVADORES}
+    return {nombre: _derivar(conn, nombre, hoy, por_id) for nombre in nombres}
 
 
 def coleccion(conn, nombre, hoy):
@@ -71,10 +71,3 @@ def coleccion(conn, nombre, hoy):
 def detalle(conn, nombre, row_id, hoy):
     por_id = _deudas_por_id(conn) if nombre == "transacciones" else None
     return DERIVADORES[nombre](get_row(conn, nombre, row_id), hoy, por_id)
-
-
-def conteos(conn):
-    return {
-        nombre: conn.execute(f"SELECT COUNT(*) FROM {nombre}").fetchone()[0]
-        for nombre in ("activos", "inversiones")
-    }

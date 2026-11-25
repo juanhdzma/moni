@@ -58,9 +58,9 @@ SERIES_EVOLUCION = [
     {"value": "inversiones", "label": "Inversiones", "tono": "inversiones"},
 ]
 ETIQUETAS_TIPO_CATEGORIA = [
-    {"value": "ingreso", "label": "Ingresos"},
-    {"value": "gasto", "label": "Gastos"},
-    {"value": "transfer", "label": "Transferencias"},
+    {"value": "ingreso", "label": "Ingresos", "tono": "ingreso"},
+    {"value": "gasto", "label": "Gastos", "tono": "gasto"},
+    {"value": "transfer", "label": "Transferencias", "tono": "transfer"},
 ]
 
 

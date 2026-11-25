@@ -131,3 +131,10 @@ def test_etiquetas_meses_arrancan_count_menos_uno_atras():
     assert len(etiquetas_meses(3, HOY)) == 3
     assert etiquetas_meses(1, HOY) == ["ago."]
     assert etiquetas_meses(3, datetime.date(2026, 1, 5))[0] == "nov."
+
+
+def test_net_worth_ignora_deuda_saldada_pero_cuenta_tarjeta_en_cero():
+    saldada = {**deuda(0.4), "es_tarjeta": 0}
+    tarjeta = {**deuda(500_000), "es_tarjeta": 1}
+    assert net_worth([], [], [activo(1_000_000)], [saldada, tarjeta]) == 500_000
+    assert net_worth([], [], [], [saldada]) == 0

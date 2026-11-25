@@ -11,6 +11,7 @@ def test_meta_listas_de_dominio(client):
     assert [p["value"] for p in body["periodos"]["evolucion"]] == ["3M", "6M", "1Y", "ALL"]
     assert [t["value"] for t in body["tipos_manuales"]] == ["ingreso", "gasto"]
     assert [t["label"] for t in body["tipos_categoria"]] == ["Ingresos", "Gastos", "Transferencias"]
+    assert [t["tono"] for t in body["tipos_categoria"]] == ["ingreso", "gasto", "transfer"]
     assert [c["value"] for c in body["clases_deuda"]] == ["prestamo", "tarjeta"]
     assert [t["value"] for t in body["tipos_retiro"]] == ["total", "parcial"]
     assert [d["value"] for d in body["destinos_rendimiento"]] == ["cuenta", "capitaliza"]

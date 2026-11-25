@@ -1,6 +1,6 @@
 from ..calculos import operaciones
 from ..calculos.fechas import ahora_bogota_iso
-from ..calculos.operaciones.proximas import FUENTES_OPS, parse_clave
+from ..calculos.operaciones.proximas import FUENTES_OPS, parse_clave, sin_ocultas
 from .estado import filas
 
 
@@ -18,6 +18,10 @@ def candidatas(conn, hoy):
     return operaciones.calcular_proximas_operaciones(
         filas(conn, "deudas"), filas(conn, "inversiones"), filas(conn, "recurrentes"), hoy
     )
+
+
+def candidatas_visibles(conn, hoy):
+    return sin_ocultas(candidatas(conn, hoy), claves_ocultas(conn))
 
 
 def claves_ocultas(conn) -> set[str]:

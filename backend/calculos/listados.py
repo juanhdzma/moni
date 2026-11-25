@@ -1,6 +1,7 @@
 import unicodedata
 from datetime import timedelta
 
+from .constantes import TIPOS_TX
 from .fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
 from .formato import frase_flujo, top_segmentos
 from .numeros import monto_firmado
@@ -15,8 +16,8 @@ ETIQUETAS_COLUMNA = {
 }
 OCULTAS_EN_MOVIL = ("tipo", "categoria")
 DIRECCION_INICIAL = {"fecha": -1, "tipo": 1, "categoria": 1, "descripcion": 1, "monto": -1}
-ETIQUETAS_TIPO = {"ingreso": "Ingresos", "gasto": "Gastos"}
-ETIQUETAS_TIPO_FILA = {"ingreso": "Ingreso", "gasto": "Gasto", "transfer": "Auto"}
+ETIQUETAS_TIPO_FILA = {o["value"]: o["label"] for o in TIPOS_TX}
+TIPOS_FILTRABLES = ("ingreso", "gasto")
 TONO_TX = {"ingreso": "ingreso", "gasto": "gasto", "transfer": "neutro"}
 EFECTIVO_DEBITO = "Efectivo / Débito"
 
@@ -151,7 +152,7 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
         raise ValueError("columna inválida")
     meses = meses_disponibles(txs)
     categorias = categorias_disponibles(txs)
-    tipo = tipo if tipo in ETIQUETAS_TIPO else ""
+    tipo = tipo if tipo in TIPOS_FILTRABLES else ""
     mes = mes if mes in meses else ""
     cat = cat if cat in categorias else ""
 
@@ -182,7 +183,7 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
     if mes:
         pills.append({"campo": "mes", "label": etiqueta_mes(mes)})
     if tipo:
-        pills.append({"campo": "tipo", "label": ETIQUETAS_TIPO[tipo]})
+        pills.append({"campo": "tipo", "label": ETIQUETAS_TIPO_FILA[tipo] + "s"})
     if cat:
         pills.append({"campo": "cat", "label": cat})
     return {
@@ -191,7 +192,7 @@ def listar_transacciones(txs, col="fecha", dir=-1, tipo="", mes="", cat="", hoy=
         "opciones": {
             "meses": [{"value": m, "label": etiqueta_mes(m)} for m in meses],
             "categorias": categorias,
-            "tipos": [{"value": k, "label": v} for k, v in ETIQUETAS_TIPO.items()],
+            "tipos": [{"value": k, "label": ETIQUETAS_TIPO_FILA[k] + "s"} for k in TIPOS_FILTRABLES],
         },
         "pills": pills,
         "resumen": {**resumen_tx(items, simbolo), "titulo": _titulo_resumen(items, bool(pills))},

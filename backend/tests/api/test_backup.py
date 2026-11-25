@@ -163,3 +163,24 @@ def test_import_rechaza_total_intereses_infinito(client):
     r = client.post("/api/import", content=cuerpo, headers={"content-type": "application/json"})
     assert r.status_code == 400 and "total_intereses" in r.json()["detail"]
     assert client.get("/api/deudas/resumen").status_code == 200
+
+
+def test_import_tope_de_filas_por_coleccion(client):
+    from backend.schemas.backup import FILAS_MAX_POR_COLECCION
+
+    r = importar(client, {"categorias": [{}] * (FILAS_MAX_POR_COLECCION + 1)})
+    assert r.status_code == 422
+    assert f"como máximo {FILAS_MAX_POR_COLECCION} elementos" in r.json()["detail"][0]["msg"]
+
+
+def test_import_texto_mas_largo_que_el_tope_falla_con_fila_y_campo(client):
+    largo = {**TX_OK, "descripcion": "x" * 121}
+    r = importar(client, {"transacciones": [largo]})
+    assert r.status_code == 400
+    assert "transacciones[0]" in r.json()["detail"] and "descripcion" in r.json()["detail"]
+    assert "demasiado largo" in r.json()["detail"]
+
+
+def test_import_op_oculta_con_columnas_derivadas_sigue_entrando(client):
+    fila = {"clave": "deuda:1:2026-01-01", "tipo": "deuda", "fuente_id": 1, "fecha": "2026-01-01", "creada_en": ""}
+    assert importar(client, {"ops_ocultas": [fila]}).status_code == 200

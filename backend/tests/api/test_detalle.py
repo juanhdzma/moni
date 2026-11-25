@@ -29,3 +29,18 @@ def test_detalle_tx_trae_la_tarjeta(client):
     tarjeta = client.post("/api/deuda", json={"nombre": "Visa", "clase_deuda": "tarjeta", "cupo": 1000, "franquicia": "Visa"}).json()
     tx = client.post("/api/tx", json={"tipo": "gasto", "categoria": "Comida", "monto": 5, "tarjeta_id": tarjeta["id"]}).json()
     assert client.get(f"/api/tx/{tx['id']}").json()["tarjeta_nombre"] == "Visa"
+
+
+def test_detalle_activo_trae_derivados_y_404(client):
+    from .builders_api import ACTIVO_DERIVADOS
+
+    a = client.post("/api/activo", json={"nombre": "Moto", "valor_inicial": 1000, "valor_actual": 1500}).json()
+    fila = client.get(f"/api/activo/{a['id']}").json()
+    assert ACTIVO_DERIVADOS <= set(fila) and fila["id"] == a["id"]
+    assert client.get("/api/activo/999").status_code == 404
+
+
+def test_rutas_de_id_solo_aceptan_enteros(client):
+    assert client.delete("/api/deuda/abc").status_code in (404, 405)
+    assert client.put("/api/deuda/abc", json={"nombre": "x"}).status_code in (404, 405)
+    assert client.put("/api/activo/abc", json={"nombre": "x", "valor_inicial": 1}).status_code in (404, 405)

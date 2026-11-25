@@ -4,12 +4,11 @@ from ..calculos import operaciones
 from ..calculos.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
 from ..calculos.operaciones import asientos, movimientos, textos
 from ..calculos.operaciones.movimientos import CambioInversion
-from ..core.actualizar import actualizar_columnas
 from ..core.afectadas import INVERSIONES, afectar, con_movimiento, con_op_oculta
 from ..core.db import conexion
 from ..core.estado import coleccion, simbolo
 from ..core.ops_ocultas import ocultar_op
-from ..core.sql import delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row
+from ..core.sql import actualizar_columnas, delete_row, get_row, guardar_y_leer, insert_row, insert_tx, update_row
 from ..core.tablas import INV_COLS
 from ..schemas.inversion import InvAporte, InvIn, InvRendimiento, InvRetiro, InvValor
 from ..schemas.previews import MontoPreview, NuevoValor
@@ -17,10 +16,10 @@ from .lecturas import register_borrado, register_lectura
 
 router = APIRouter()
 register_lectura(router, "inv", "inversiones")
-register_borrado(router, "inv", "inversiones")
+register_borrado(router, "inv", "inversiones", (INVERSIONES,))
 
 def _datos_inversion(body: InvIn, anterior: dict | None) -> dict:
-    data = operaciones.normalizar_tasa(body.model_dump())
+    data = operaciones.normalizar_tasa(body.model_dump(exclude={"crear_tx"}))
     return operaciones.completar_inversion(data, anterior, hoy_bogota(), ahora_bogota_iso())
 
 
@@ -28,11 +27,10 @@ def _datos_inversion(body: InvIn, anterior: dict | None) -> dict:
 def crear_inv(body: InvIn, response: Response):
     with conexion() as conn:
         data = _datos_inversion(body, None)
-        crear_tx = data.pop("crear_tx")
         new_id = insert_row(conn, "inversiones", INV_COLS, data)
-        if crear_tx:
+        if body.crear_tx:
             insert_tx(conn, **asientos.tx_inversion_nueva(data))
-        afectar(response, *con_movimiento(INVERSIONES, crear_tx))
+        afectar(response, *con_movimiento(INVERSIONES, body.crear_tx))
         return guardar_y_leer(conn, "inversiones", new_id)
 
 
@@ -40,7 +38,6 @@ def crear_inv(body: InvIn, response: Response):
 def actualizar_inv(row_id: int, body: InvIn, response: Response):
     with conexion() as conn:
         data = _datos_inversion(body, get_row(conn, "inversiones", row_id))
-        data.pop("crear_tx")
         update_row(conn, "inversiones", INV_COLS, row_id, data)
         afectar(response, INVERSIONES)
         return guardar_y_leer(conn, "inversiones", row_id)
@@ -103,6 +100,8 @@ def actualizar_valor_inv(inv_id: int, body: InvValor, response: Response):
 def inv_valor_preview(inv_id: int, body: NuevoValor):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
+        if not body.nuevo_valor:
+            return None
         return operaciones.cambio_valor(body.nuevo_valor, inv["valor_actual"], inv["monto_invertido"])
 
 
@@ -110,10 +109,12 @@ def inv_valor_preview(inv_id: int, body: NuevoValor):
 def inv_aporte_preview(inv_id: int, body: MontoPreview):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
+        if not body.monto:
+            return None
         estimado = movimientos.valor_estimado_tras_aporte(inv["valor_actual"], body.monto)
         return {
             "nuevo_valor_estimado": estimado,
-            "texto_estimado": textos.texto_estimado_aporte(estimado if body.monto > 0 else None, simbolo(conn)),
+            "texto_estimado": textos.texto_estimado_aporte(estimado, simbolo(conn)),
         }
 
 

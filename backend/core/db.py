@@ -136,6 +136,13 @@ CREATE TABLE IF NOT EXISTS challenges (
 """
 
 
+# aparte de SCHEMA: en una base vieja tarjeta_id aún no existe cuando corre SCHEMA, se crea en MIGRATIONS
+INDICES = """
+CREATE INDEX IF NOT EXISTS idx_tx_fecha ON transacciones (fecha);
+CREATE INDEX IF NOT EXISTS idx_tx_tarjeta ON transacciones (tarjeta_id);
+"""
+
+
 def get_conn():
     conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
@@ -165,18 +172,27 @@ MIGRATIONS = [
 ]
 
 
+def _migrar(conn):
+    version = conn.execute("PRAGMA user_version").fetchone()[0]
+    if version >= len(MIGRATIONS):
+        return
+    for stmt in MIGRATIONS[version:]:
+        try:
+            conn.execute(stmt)
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e):
+                raise
+    conn.execute(f"PRAGMA user_version = {len(MIGRATIONS)}")
+
+
 def init_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_conn()
     try:
         conn.execute("PRAGMA journal_mode = WAL")
         conn.executescript(SCHEMA)
-        for stmt in MIGRATIONS:
-            try:
-                conn.execute(stmt)
-            except sqlite3.OperationalError as e:
-                if "duplicate column name" not in str(e):
-                    raise
+        _migrar(conn)
+        conn.executescript(INDICES)
         conn.commit()
     finally:
         conn.close()
