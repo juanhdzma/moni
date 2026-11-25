@@ -1,70 +1,26 @@
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { fmtDate, fmtDateTime } from '../lib/format'
+import { Fragment, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { fmtDate, fmtDateTime } from '@/lib/format'
 import { useData } from '@/shell/providers/DataProvider'
+import { cn } from '@/lib/utils'
+import {
+  SIN_FECHA,
+  buildCells,
+  etiquetaDia,
+  formatValue,
+  mismoDia,
+  moverDia,
+  pad,
+  parseDateTime,
+  parseValue,
+  sumarMeses,
+  type Dia,
+  type Pending,
+} from './calendario'
+import { IconButton } from './IconButton'
 import { clearActivePopup, openPopup, repositionPopup } from './popups'
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
-
-interface Pending {
-  y: number
-  m: number
-  d: number
-  hh: number
-  mm: number
-}
-
-const SIN_FECHA: Pending = { y: 1970, m: 0, d: 1, hh: 0, mm: 0 }
-
-const pad = (n: number) => String(n).padStart(2, '0')
-
-function parseDateTime(value: string): Pending {
-  const [datePart = '', timePart] = value.split('T')
-  const [y = 0, mo = 1, d = 1] = datePart.split('-').map(Number)
-  const [hh, mm] = (timePart || '00:00').split(':').map(Number)
-  return { y, m: mo - 1, d, hh: hh || 0, mm: mm || 0 }
-}
-
-function parseValue(value: string, referencia: string): Pending | null {
-  const origen = value || referencia
-  return origen ? parseDateTime(origen) : null
-}
-
-function formatValue(s: Pending, isDateTime: boolean): string {
-  const dateStr = `${s.y}-${pad(s.m + 1)}-${pad(s.d)}`
-  return isDateTime ? `${dateStr}T${pad(s.hh)}:${pad(s.mm)}` : dateStr
-}
-
-interface Cell {
-  d: number
-  m: number
-  y: number
-  dim: boolean
-}
-
-function buildCells(viewY: number, viewM: number): Cell[] {
-  const firstDow = (new Date(viewY, viewM, 1).getDay() + 6) % 7
-  const daysInMonth = new Date(viewY, viewM + 1, 0).getDate()
-  const daysInPrevMonth = new Date(viewY, viewM, 0).getDate()
-  const cells: Cell[] = []
-  for (let i = 0; i < firstDow; i++) {
-    cells.push({
-      d: daysInPrevMonth - firstDow + 1 + i,
-      m: viewM === 0 ? 11 : viewM - 1,
-      y: viewM === 0 ? viewY - 1 : viewY,
-      dim: true,
-    })
-  }
-  for (let d = 1; d <= daysInMonth; d++) cells.push({ d, m: viewM, y: viewY, dim: false })
-  for (;;) {
-    const last = cells[cells.length - 1]
-    if (!last) break
-    const nd = new Date(last.y, last.m, last.d + 1)
-    cells.push({ d: nd.getDate(), m: nd.getMonth(), y: nd.getFullYear(), dim: true })
-    if (cells.length >= 42) break
-  }
-  return cells
-}
 
 interface Props {
   value: string
@@ -81,11 +37,15 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
   const referencia = isDateTime ? ahora : hoy
   const [pending, setPending] = useState<Pending>(() => parseValue(value, referencia) ?? SIN_FECHA)
   const [view, setView] = useState({ y: pending.y, m: pending.m })
+  const [foco, setFoco] = useState<Dia>(pending)
   const [timeText, setTimeText] = useState({ hh: '', mm: '' })
+  const panelId = useId()
+  const wrapRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const pendingRef = useRef(pending)
   const onChangeRef = useRef(onChange)
+  const enfocar = useRef(false)
   useEffect(() => {
     pendingRef.current = pending
     onChangeRef.current = onChange
@@ -93,11 +53,16 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
 
   const commit = (p: Pending) => onChangeRef.current(formatValue(p, isDateTime))
 
+  const cerrar = () => {
+    if (panelRef.current?.contains(document.activeElement)) triggerRef.current?.focus()
+    setOpen(false)
+  }
+
   const dismissRef = useRef<() => void>(() => undefined)
   useEffect(() => {
     dismissRef.current = () => {
       onChangeRef.current(formatValue(pendingRef.current, isDateTime))
-      setOpen(false)
+      cerrar()
     }
   })
 
@@ -119,31 +84,39 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
   }, [open])
 
   useEffect(() => {
-    if (open && panelRef.current && triggerRef.current) repositionPopup(triggerRef.current, panelRef.current)
+    if (!open) return
+    if (triggerRef.current && panelRef.current) repositionPopup(triggerRef.current, panelRef.current)
+    if (enfocar.current) {
+      enfocar.current = false
+      panelRef.current?.querySelector<HTMLElement>('[data-foco]')?.focus()
+    }
   })
 
   const toggle = () => {
     if (open) {
-      setOpen(false)
+      cerrar()
       return
     }
     const p = parseValue(value, referencia)
     if (!p) return
     setPending(p)
     setView({ y: p.y, m: p.m })
+    setFoco(p)
     setTimeText({ hh: pad(p.hh), mm: pad(p.mm) })
+    enfocar.current = true
     setOpen(true)
   }
 
   const finish = (p: Pending) => {
     commit(p)
-    setOpen(false)
+    cerrar()
   }
 
-  const selectDay = (y: number, m: number, d: number) => {
-    const p = { ...pending, y, m, d }
+  const selectDay = (dia: Dia) => {
+    const p = { ...pending, ...dia }
     setPending(p)
-    setView({ y, m })
+    setView({ y: dia.y, m: dia.m })
+    setFoco(dia)
     if (!isDateTime) finish(p)
   }
 
@@ -153,22 +126,24 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
     const p = isDateTime ? t : { ...pending, y: t.y, m: t.m, d: t.d }
     setPending(p)
     setView({ y: p.y, m: p.m })
+    setFoco(p)
     setTimeText({ hh: pad(p.hh), mm: pad(p.mm) })
     if (!isDateTime) finish(p)
   }
 
   const nav = (delta: number) => {
-    let m = view.m + delta
-    let y = view.y
-    if (m < 0) {
-      m = 11
-      y--
-    }
-    if (m > 11) {
-      m = 0
-      y++
-    }
-    setView({ y, m })
+    const nuevo = sumarMeses({ y: view.y, m: view.m, d: foco.d }, delta)
+    setView({ y: nuevo.y, m: nuevo.m })
+    setFoco(nuevo)
+  }
+
+  const enDias = (e: KeyboardEvent) => {
+    const destino = moverDia(foco, e.key)
+    if (!destino) return
+    e.preventDefault()
+    setFoco(destino)
+    setView({ y: destino.y, m: destino.m })
+    enfocar.current = true
   }
 
   const commitTime = (field: 'hh' | 'mm') => {
@@ -184,7 +159,14 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
   const label = !value ? 'Seleccionar fecha' : isDateTime ? fmtDateTime(value) : fmtDate(value)
 
   return (
-    <div className="cdp" style={style}>
+    <div
+      ref={wrapRef}
+      className="cdp"
+      style={style}
+      onBlur={(e) => {
+        if (open && e.relatedTarget instanceof Node && !wrapRef.current?.contains(e.relatedTarget)) dismissRef.current()
+      }}
+    >
       <input
         className="cdp-enhanced cdp-native"
         type={type}
@@ -197,38 +179,51 @@ export function DatePicker({ value, onChange, type = 'date', id, style }: Props)
         type="button"
         ref={triggerRef}
         id={id}
-        className={'cdp-trigger form-input' + (open ? ' open' : '')}
+        className={cn('cdp-trigger form-input', open && 'open')}
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-controls={panelId}
         onClick={toggle}
       >
         <span className="cdp-label">{label}</span>
         <CalendarDays aria-hidden="true" className="cdp-icon size-4" />
       </button>
-      <div ref={panelRef} className={'cdp-panel' + (open ? ' open' : '')}>
+      <div ref={panelRef} id={panelId} role="dialog" aria-label="Elegir fecha" className={cn('cdp-panel', open && 'open')}>
         {open && (
           <>
             <div className="cdp-nav">
-              <button type="button" className="cdp-nav-btn" aria-label="Mes anterior" onClick={() => nav(-1)}>
-                <ChevronLeft className="size-4" />
-              </button>
-              <div className="cdp-month">{monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}</div>
-              <button type="button" className="cdp-nav-btn" aria-label="Mes siguiente" onClick={() => nav(1)}>
-                <ChevronRight className="size-4" />
-              </button>
+              <IconButton label="Mes anterior" onClick={() => nav(-1)}>
+                <ChevronLeft className="size-4" aria-hidden="true" />
+              </IconButton>
+              <div className="cdp-month" aria-live="polite">
+                {monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}
+              </div>
+              <IconButton label="Mes siguiente" onClick={() => nav(1)}>
+                <ChevronRight className="size-4" aria-hidden="true" />
+              </IconButton>
             </div>
-            <div className="cdp-weekdays">
+            <div className="cdp-weekdays" aria-hidden="true">
               {WEEKDAYS.map((w, i) => (
                 <span key={i}>{w}</span>
               ))}
             </div>
-            <div className="cdp-days">
+            <div className="cdp-days" onKeyDown={enDias}>
               {buildCells(view.y, view.m).map((c) => {
-                const isToday = todayCell !== null && c.y === todayCell.y && c.m === todayCell.m && c.d === todayCell.d
-                const isSel = c.y === pending.y && c.m === pending.m && c.d === pending.d
-                const cls = ['cdp-day', c.dim && 'dim', isToday && 'today', isSel && 'sel'].filter(Boolean).join(' ')
+                const isToday = todayCell !== null && mismoDia(c, todayCell)
+                const isSel = mismoDia(c, pending)
+                const conFoco = mismoDia(c, foco)
                 return (
-                  <button type="button" key={`${c.y}-${c.m}-${c.d}`} className={cls} onClick={() => selectDay(c.y, c.m, c.d)}>
+                  <button
+                    type="button"
+                    key={`${c.y}-${c.m}-${c.d}`}
+                    className={cn('cdp-day', c.dim && 'dim', isToday && 'today', isSel && 'sel')}
+                    tabIndex={conFoco ? 0 : -1}
+                    data-foco={conFoco ? '' : undefined}
+                    aria-label={etiquetaDia(c)}
+                    aria-pressed={isSel}
+                    aria-current={isToday ? 'date' : undefined}
+                    onClick={() => selectDay(c)}
+                  >
                     {c.d}
                   </button>
                 )

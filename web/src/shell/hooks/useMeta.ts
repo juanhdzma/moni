@@ -5,7 +5,7 @@ import type { Meta } from '@/types'
 let resuelta: Meta | null = null
 let pendiente: Promise<Meta> | null = null
 
-function cargarUnaVez(): Promise<Meta> {
+export function cargarMetaUnaVez(): Promise<Meta> {
   pendiente ??= cargarMeta().then(
     (meta) => (resuelta = meta),
     (err: unknown) => {
@@ -20,7 +20,7 @@ export function useMeta(): Meta | null {
   const [meta, setMeta] = useState<Meta | null>(resuelta)
   useEffect(() => {
     let vigente = true
-    cargarUnaVez().then(
+    cargarMetaUnaVez().then(
       (m) => vigente && setMeta(m),
       () => undefined,
     )

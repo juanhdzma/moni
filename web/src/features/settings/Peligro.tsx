@@ -1,68 +1,45 @@
 import { useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { Panel } from '@/components/panel'
-import { FormStatus } from '../../controls/FormStatus'
-import { apiFetch } from '../../lib/api'
-import { errMsg } from '../../lib/format'
+import { Campo } from '@/controls/Campo'
+import { vaciarDatos } from '@/lib/api'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useData } from '@/shell/providers/DataProvider'
 import { useModal } from '@/shell/providers/ModalProvider'
+import type { Meta } from '@/types'
+import { ConfirmarClave } from './ConfirmarClave'
 
-const QUE_SE_BORRA =
-  'todas las transacciones, deudas, inversiones, activos, recurrentes, categorías personalizadas y operaciones ocultas. Se conservan los ajustes y las suscripciones push.'
-
-function TruncateConfirm() {
-  const { closeModal, setModalStatus } = useModal()
-  const { reload } = useData()
+function TruncateConfirm({ truncate }: { truncate: Meta['truncate'] }) {
+  const { mutar } = useData()
   const [val, setVal] = useState('')
 
-  const confirmar = async () => {
-    if (val.trim() !== 'BORRAR') {
-      setModalStatus('err', 'Escribí BORRAR (en mayúsculas) para confirmar')
-      return
-    }
-    setModalStatus('', 'Borrando...')
-    try {
-      await apiFetch('/api/truncate', { method: 'POST' })
-      closeModal()
-      await reload()
-    } catch (err) {
-      setModalStatus('err', errMsg(err))
-    }
-  }
-
   return (
-    <>
-      <div className="mb-4 text-sm text-muted-foreground">
-        Esto borra permanentemente {QUE_SE_BORRA}
-        Esta acción no se puede deshacer. Exportá un backup antes si no estás seguro.
-      </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="m-confirm-truncate">Escribí BORRAR para confirmar</label>
-        <input
-          className="form-input"
-          type="text"
-          id="m-confirm-truncate"
-          placeholder="BORRAR"
-          autoComplete="off"
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-        />
-      </div>
-      <div className="modal-footer">
-        <button className="btn btn-danger" onClick={() => void confirmar()}>
-          Borrar todo
-        </button>
-        <button className="btn btn-dim" onClick={closeModal}>
-          Cancelar
-        </button>
-      </div>
-      <FormStatus />
-    </>
+    <ConfirmarClave
+      peligro
+      etiqueta="Borrar todo"
+      descripcion={`${truncate.texto} Esta acción no se puede deshacer. Exportá un backup antes si no estás seguro.`}
+      validar={() => (val.trim() === truncate.palabra ? null : `Escribí ${truncate.palabra} (en mayúsculas) para confirmar`)}
+      onConfirmar={(clave) => mutar((onAfectadas) => vaciarDatos(clave, onAfectadas))}
+      extra={
+        <Campo id="m-confirm-truncate" label={`Escribí ${truncate.palabra} para confirmar`}>
+          <input
+            className="form-input"
+            type="text"
+            id="m-confirm-truncate"
+            placeholder={truncate.palabra}
+            autoComplete="off"
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+          />
+        </Campo>
+      }
+    />
   )
 }
 
 export function Peligro() {
   const { openModal } = useModal()
+  const truncate = useMeta()?.truncate
 
   return (
     <Panel
@@ -71,10 +48,13 @@ export function Peligro() {
       className="border-deudas/40"
       extra={<TriangleAlert className="size-4 text-deudas" aria-hidden="true" />}
     >
-      <div className="mb-3 text-sm text-muted-foreground">
-        Borra {QUE_SE_BORRA} No se puede deshacer.
-      </div>
-      <button type="button" className="btn btn-danger btn-sm" onClick={() => openModal('Borrar todos los datos', <TruncateConfirm />)}>
+      <div className="mb-3 text-sm text-muted-foreground">{truncate ? `${truncate.texto} No se puede deshacer.` : ''}</div>
+      <button
+        type="button"
+        className="btn btn-danger btn-sm"
+        disabled={!truncate}
+        onClick={() => truncate && openModal('Borrar todos los datos', <TruncateConfirm truncate={truncate} />)}
+      >
         Borrar todos los datos
       </button>
     </Panel>

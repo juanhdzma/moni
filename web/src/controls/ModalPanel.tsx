@@ -13,7 +13,7 @@ function Lado({ lado, derecha }: { lado: LadoPanel; derecha: boolean }) {
     <div className={cn('modal-panel-col', derecha && 'right')}>
       {lado.detalle && <div className="text-xs text-muted-foreground">{lado.detalle}</div>}
       <div className="modal-panel-label">{lado.label}</div>
-      <div className={cn(derecha ? 'text-base font-semibold' : 'modal-panel-value', lado.clase)}>{lado.valor}</div>
+      <div className={cn('modal-panel-value', lado.clase)}>{lado.valor}</div>
     </div>
   )
 }

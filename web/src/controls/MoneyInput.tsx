@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react'
-import { fmtMoneyInput } from '../lib/format'
-import { useMoneda } from '../shell/hooks/useMoneda'
+import { fmtMoneyInput } from '@/lib/format'
+import { useMoneda } from '@/shell/hooks/useMoneda'
 
 interface Props {
   value: string
@@ -8,9 +8,10 @@ interface Props {
   id?: string
   placeholder?: string
   ariaLabel?: string
+  describedBy?: string
 }
 
-export function MoneyInput({ value, onChange, id, placeholder = '0', ariaLabel }: Props) {
+export function MoneyInput({ value, onChange, id, placeholder = '0', ariaLabel, describedBy }: Props) {
   const { simbolo } = useMoneda()
   const handle = (e: ChangeEvent<HTMLInputElement>) => {
     fmtMoneyInput(e.currentTarget)
@@ -27,6 +28,7 @@ export function MoneyInput({ value, onChange, id, placeholder = '0', ariaLabel }
         value={value}
         placeholder={placeholder}
         aria-label={ariaLabel}
+        aria-describedby={describedBy}
         onChange={handle}
       />
     </div>

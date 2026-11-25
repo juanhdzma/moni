@@ -1,10 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
-import { failure, mockFetch } from '../../../test/mockFetch'
-import { renderWithProviders } from '../../../test/render'
-import { Deudas } from '../index'
-import { conResumen, full, hdr, resumenCompleto, installFakeDate } from './fixtures'
+import { describe, expect, it } from 'vitest'
+import { failure, mockFetch } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
+import { Deudas } from '@/features/deudas/index'
+import { conResumen, dialog, full, hdr, resumenCompleto, installFakeDate } from './fixtures'
 
 installFakeDate()
 
@@ -148,28 +148,58 @@ describe('forms', () => {
   it('eliminar: confirm y DELETE', async () => {
     const user = userEvent.setup()
     const f = conResumen(resumenCompleto, { 'DELETE /api/deuda/1': {} })
-    const conf = vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Editar'))
     await user.click(screen.getByText('Eliminar'))
-    expect(conf).toHaveBeenCalledWith('¿Eliminar "Crédito carro"?')
+    expect(screen.getByRole('dialog')).toHaveTextContent('¿Eliminar "Crédito carro"?')
+    await user.click(screen.getByText('Eliminar'))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/deuda/1', headers: { 'X-Moni-Request': '1' } })
-    conf.mockRestore()
   })
 
   it('eliminar: sin confirmar no envía; error va al banner', async () => {
     const user = userEvent.setup()
     const f = conResumen(resumenCompleto, { 'DELETE /api/deuda/1': failure(500, 'nope') })
-    const conf = vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderWithProviders(<Deudas active />, { estado: full() })
-    await user.click(await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Editar'))
+    const editar = async () => user.click(await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Editar'))
+    await editar()
     await user.click(screen.getByText('Eliminar'))
+    await user.click(screen.getByText('Cancelar'))
     expect(f.mutations()).toHaveLength(0)
-    conf.mockReturnValue(true)
+    await editar()
+    await user.click(screen.getByText('Eliminar'))
     await user.click(screen.getByText('Eliminar'))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     await waitFor(() => expect(f.callsTo('GET', '/api/deudas/resumen').length).toBeGreaterThan(1))
-    conf.mockRestore()
+  })
+  it('ofrece tasa MV: muestra la equivalencia y manda tasa_tipo solo cuando no es el default', async () => {
+    const user = userEvent.setup()
+    const f = conResumen(resumenCompleto, {
+      'POST /api/deuda': {},
+      'GET /api/calc/tasa': { texto: 'Equivale a 289,60% EA' },
+    })
+    renderWithProviders(<Deudas active />)
+    await user.click(screen.getByText('Nueva deuda'))
+    await user.type(document.getElementById('m-nombre') as HTMLElement, 'Libre')
+    await user.type(document.getElementById('m-saldo') as HTMLElement, '100')
+    await user.type(document.getElementById('m-tasa') as HTMLElement, '2')
+    await user.click(within(dialog()).getByRole('button', { name: 'MV' }))
+    await waitFor(() => expect(document.getElementById('tasa-equiv')).toHaveTextContent('Equivale a 289,60% EA'))
+    expect(f.callsTo('GET', '/api/calc/tasa?valor=2&tipo=mv')).toHaveLength(1)
+    await user.click(screen.getByText('Agregar deuda'))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]?.body).toMatchObject({ tasa_ea: 2, tasa_tipo: 'mv' })
+  })
+
+  it('con la tasa en EA no manda tasa_tipo', async () => {
+    const user = userEvent.setup()
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda': {} })
+    renderWithProviders(<Deudas active />)
+    await user.click(screen.getByText('Nueva deuda'))
+    await user.type(document.getElementById('m-saldo') as HTMLElement, '100')
+    await user.type(document.getElementById('m-tasa') as HTMLElement, '24')
+    await user.click(screen.getByText('Agregar deuda'))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(f.mutations()[0]?.body).not.toHaveProperty('tasa_tipo')
   })
 })

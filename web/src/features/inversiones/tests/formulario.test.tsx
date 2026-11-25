@@ -1,11 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
-import { failure } from '../../../test/mockFetch'
-import { renderWithProviders } from '../../../test/render'
-import { estado } from '../../../test/factories'
-import { expectLabels, modalBody } from '../../../test/labels'
-import { Inversiones } from '../index'
+import { describe, expect, it } from 'vitest'
+import { failure } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
+import { estado } from '@/test/factories'
+import { expectLabels, modalBody } from '@/test/labels'
+import { Inversiones } from '@/features/inversiones/index'
 import { H, clickInGrid, mockInv, modal, setup, typeMoney, installFakeClock } from './helpers'
 
 installFakeClock()
@@ -51,6 +51,23 @@ describe('crear / editar / eliminar', () => {
     })
     expect(f.mutations()[0]?.body).not.toHaveProperty('valor_actual')
     expect(f.mutations()[0]?.body).not.toHaveProperty('valor_actualizado_en')
+  })
+
+  it('los campos visibles salen de meta: la fija pide tasa y pago, el día solo si el pago lo requiere, la variable ninguno', async () => {
+    const user = userEvent.setup()
+    mockInv()
+    await setup([])
+    await user.click(screen.getByRole('button', { name: 'Nueva inversión' }))
+    expect(document.getElementById('m-tasa')).not.toBeNull()
+    expect(document.getElementById('rp-mensual')).not.toBeNull()
+    expect(document.getElementById('m-dia-pago')).toBeNull()
+    await user.click(document.getElementById('rp-mensual') as HTMLElement)
+    expect(document.getElementById('m-dia-pago')).toHaveAttribute('max', '31')
+    expect(document.getElementById('m-dia-pago')).toHaveAttribute('min', '1')
+    await user.click(modal().getByRole('button', { name: 'Variable' }))
+    expect(document.getElementById('m-tasa')).toBeNull()
+    expect(document.getElementById('rp-mensual')).toBeNull()
+    expect(document.getElementById('m-dia-pago')).toBeNull()
   })
 
   it('crear variable manda lo crudo (el backend anula tasa y pago) y crear_tx false', async () => {
@@ -137,12 +154,11 @@ describe('crear / editar / eliminar', () => {
   it('eliminar: confirm y DELETE', async () => {
     const user = userEvent.setup()
     const f = mockInv({ 'DELETE /api/inv/5': {} })
-    const confirmFn = vi.fn(() => true)
-    vi.stubGlobal('confirm', confirmFn)
     await setup()
     await clickInGrid(user, 'fija', 'Editar')
     await user.click(modal().getByRole('button', { name: 'Eliminar' }))
-    expect(confirmFn).toHaveBeenCalledWith('¿Eliminar "CDT Uno"?')
+    expect(screen.getByRole('dialog')).toHaveTextContent('¿Eliminar "CDT Uno"?')
+    await user.click(modal().getByRole('button', { name: 'Eliminar' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/inv/5', headers: H })
   })
@@ -150,10 +166,10 @@ describe('crear / editar / eliminar', () => {
   it('eliminar cancelado no envía nada', async () => {
     const user = userEvent.setup()
     const f = mockInv()
-    vi.stubGlobal('confirm', () => false)
     await setup()
     await clickInGrid(user, 'fija', 'Editar')
     await user.click(modal().getByRole('button', { name: 'Eliminar' }))
+    await user.click(modal().getByRole('button', { name: 'Cancelar' }))
     expect(f.mutations()).toHaveLength(0)
   })
 

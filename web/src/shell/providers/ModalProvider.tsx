@@ -160,7 +160,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
           onClick={onBackdrop}
           onKeyDown={modal ? trapFocus : undefined}
         >
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
             <div className="modal-header">
               <h2 className="modal-title" id="modal-title">
                 {modal?.title}

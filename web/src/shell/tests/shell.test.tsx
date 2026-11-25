@@ -1,13 +1,13 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { estado } from '../../test/factories'
-import { failure, mockFetch } from '../../test/mockFetch'
-import { ESTADO_AUTENTICADO, renderWithProviders } from '../../test/render'
+import { estado } from '@/test/factories'
+import { failure, mockFetch } from '@/test/mockFetch'
+import { ESTADO_AUTENTICADO, renderWithProviders } from '@/test/render'
 import { AuthProvider } from '@/shell/providers/AuthProvider'
 import { DataProvider } from '@/shell/providers/DataProvider'
 import { ModalProvider } from '@/shell/providers/ModalProvider'
-import { Shell } from '../layout/Shell'
+import { Shell } from '@/shell/layout/Shell'
 
 beforeEach(() => vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) }))
 afterEach(() => {
@@ -19,6 +19,11 @@ const nav = () => document.getElementById('header-nav') as HTMLElement
 const sheet = () => document.querySelector<HTMLElement>('[data-slot="sheet-content"]')
 
 describe('Shell', () => {
+  it('tiene un h1 para lectores de pantalla', () => {
+    renderWithProviders(<Shell />)
+    expect(screen.getByRole('heading', { level: 1, name: 'Moni, finanzas personales' })).toBeInTheDocument()
+  })
+
   it('nav de escritorio y drawer con sus etiquetas', () => {
     renderWithProviders(<Shell />)
     expect(within(nav()).getAllByRole('button').map((b) => b.textContent)).toEqual([
@@ -104,5 +109,21 @@ describe('Shell', () => {
     )
     await waitFor(() => expect(document.getElementById('err-banner')).toHaveTextContent('caído'))
     expect(document.getElementById('err-banner')).toHaveStyle({ display: 'flex' })
+  })
+
+  it('el banner de error se puede cerrar con el botón', async () => {
+    mockFetch({ 'GET /api/bootstrap': failure(500, 'caído') })
+    render(
+      <AuthProvider initialEstado={ESTADO_AUTENTICADO}>
+        <DataProvider>
+          <ModalProvider>
+            <Shell />
+          </ModalProvider>
+        </DataProvider>
+      </AuthProvider>,
+    )
+    await waitFor(() => expect(document.getElementById('err-banner')).toHaveStyle({ display: 'flex' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Cerrar aviso' }))
+    expect(document.getElementById('err-banner')).toHaveStyle({ display: 'none' })
   })
 })

@@ -1,14 +1,14 @@
 import { useEffect, useState, type ComponentType } from 'react'
-import { Menu, Plus, TriangleAlert } from 'lucide-react'
+import { Menu, Plus, TriangleAlert, X } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
-import { Dashboard } from '../../features/dashboard'
-import { Transacciones, openTxForm } from '../../features/transacciones'
-import { Deudas, openDeudaForm } from '../../features/deudas'
-import { Inversiones, openInvForm } from '../../features/inversiones'
-import { Activos, openActivoForm } from '../../features/activos'
-import { Recurrentes, openRecurrenteForm } from '../../features/recurrentes'
-import { Settings } from '../../features/settings'
+import { Dashboard } from '@/features/dashboard'
+import { Transacciones, openTxForm } from '@/features/transacciones'
+import { Deudas, openDeudaForm } from '@/features/deudas'
+import { Inversiones, openInvForm } from '@/features/inversiones'
+import { Activos, openActivoForm } from '@/features/activos'
+import { Recurrentes, openRecurrenteForm } from '@/features/recurrentes'
+import { Settings } from '@/features/settings'
 import { useData } from '@/shell/providers/DataProvider'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { useOpenerCtx, type OpenerCtx } from '@/shell/hooks/openers'
@@ -47,7 +47,7 @@ function AvisoPrecio() {
 export function Shell() {
   const [tab, setTab] = useState<TabId>('dashboard')
   const [drawer, setDrawer] = useState(false)
-  const { estado, banner, reportRenderFailure } = useData()
+  const { estado, banner, cerrarBanner, reportRenderFailure } = useData()
   const { closeModal } = useModal()
   const openerCtx = useOpenerCtx()
 
@@ -74,6 +74,7 @@ export function Shell() {
     <div className="min-h-dvh bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-[1240px] items-center gap-6 px-4 md:px-6">
+          <h1 className="sr-only">Moni, finanzas personales</h1>
           <Sheet open={drawer} onOpenChange={setDrawer}>
             <SheetTrigger asChild>
               <button type="button" aria-label="Menú" className="-ml-2 grid size-9 cursor-pointer place-items-center rounded-md hover:bg-muted lg:hidden">
@@ -94,7 +95,7 @@ export function Shell() {
                     aria-current={tab === t.id ? 'page' : undefined}
                     onClick={() => goTo(t.id)}
                     className={cn(
-                      'nav-drawer-item mx-2 flex cursor-pointer items-center rounded-md px-3 py-2.5 text-left text-[15px] transition-colors hover:bg-muted',
+                      'nav-drawer-item mx-2 flex cursor-pointer items-center rounded-md px-3 py-2.5 text-left text-body transition-colors hover:bg-muted',
                       tab === t.id ? 'active bg-muted font-semibold text-foreground' : 'text-muted-foreground',
                       warn[t.id] && 'has-warning',
                     )}
@@ -108,7 +109,7 @@ export function Shell() {
           </Sheet>
 
           <button type="button" onClick={() => goTo('dashboard')} className="flex cursor-pointer items-center gap-2 text-[17px] font-semibold tracking-tight">
-            <img src="assets/icons/moni.svg" alt="" className="size-5" />
+            <img src="/assets/icons/moni.svg" alt="" className="size-5" />
             Moni
           </button>
 
@@ -154,7 +155,10 @@ export function Shell() {
           className="mb-4 items-start gap-3 rounded-lg border border-deudas/40 bg-deudas/10 px-4 py-3 text-sm"
         >
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-deudas" />
-          <span>{banner}</span>
+          <span className="flex-1">{banner}</span>
+          <button type="button" onClick={cerrarBanner} aria-label="Cerrar aviso" className="grid size-6 shrink-0 cursor-pointer place-items-center rounded hover:bg-deudas/10">
+            <X className="size-4" />
+          </button>
         </div>
         {TABS.map(({ id, Tab }) => (
           <TabBoundary key={id} name={id} active={tab === id} resetKeys={[estado]} onFail={reportRenderFailure}>

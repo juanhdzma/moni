@@ -1,9 +1,11 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useMoneda } from '../hooks/useMoneda'
-import { ESTADO_INICIAL, failure, json, mockFetch } from '../../test/mockFetch'
-import { estado as estadoFactory } from '../../test/factories'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useMoneda } from '@/shell/hooks/useMoneda'
+import { guardarAjustes } from '@/lib/api'
+import { conAfectadas, ESTADO_INICIAL, failure, json, mockFetch } from '@/test/mockFetch'
+import { estado as estadoFactory } from '@/test/factories'
+import { cargarMetaUnaVez } from '@/shell/hooks/useMeta'
 import { DataProvider, ESTADO_VACIO, useData } from '@/shell/providers/DataProvider'
 
 function Harness() {
@@ -34,6 +36,12 @@ async function entregar(fn: () => void) {
 }
 
 const conAhora = (n: number) => json({ ...ESTADO_INICIAL, ahora: String(n) })
+
+beforeAll(async () => {
+  mockFetch()
+  await cargarMetaUnaVez()
+  vi.unstubAllGlobals()
+})
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -78,7 +86,7 @@ function Estado() {
       <output data-testid="hoy">{estado.hoy}</output>
       <output data-testid="alerta">{String(estado.alertas.activos)}</output>
       <output data-testid="loaded">{String(loaded)}</output>
-      <output data-testid="gen">{versiones.deudas}</output>
+      <output data-testid="gen">{versiones.deudas ?? 0}</output>
       <output data-testid="monto">{cop(1500)}</output>
     </>
   )
@@ -107,16 +115,19 @@ describe('DataProvider estado del backend', () => {
     expect(f.mutations()).toHaveLength(0)
   })
 
-  it('useMoneda usa $ si el símbolo es vacío y se actualiza al cambiar la moneda', async () => {
-    mockFetch({ 'GET /api/bootstrap': estadoFactory({ ajustes: { moneda_simbolo: '' } }) })
+  it('useMoneda usa el símbolo del backend tal cual y se actualiza al guardar ajustes por el header de afectadas', async () => {
+    const f = mockFetch({
+      'GET /api/bootstrap': estadoFactory({ ajustes: { moneda_simbolo: '$' } }),
+      'PUT /api/ajustes': conAfectadas({ moneda_simbolo: '€' }, 'ajustes'),
+    })
     function Cambiar() {
-      const { aplicarEstado } = useData()
+      const { mutar } = useData()
       const { simbolo, copShort } = useMoneda()
       return (
         <>
           <output data-testid="simbolo">{simbolo}</output>
           <output data-testid="corto">{copShort(2500000)}</output>
-          <button onClick={() => aplicarEstado({ ajustes: { moneda_simbolo: '€' } }, ['ajustes'])}>cambiar</button>
+          <button onClick={() => void mutar((o) => guardarAjustes({ moneda_simbolo: '€' }, o))}>cambiar</button>
         </>
       )
     }
@@ -128,9 +139,23 @@ describe('DataProvider estado del backend', () => {
     )
     await waitFor(() => expect(screen.getByTestId('simbolo')).toHaveTextContent('$'))
     expect(screen.getByTestId('corto')).toHaveTextContent('$2,5M')
+    f.set('GET /api/bootstrap', estadoFactory({ ajustes: { moneda_simbolo: '€' } }))
     await user.click(screen.getByText('cambiar'))
-    expect(screen.getByTestId('simbolo')).toHaveTextContent('€')
+    await waitFor(() => expect(screen.getByTestId('simbolo')).toHaveTextContent('€'))
     expect(screen.getByTestId('corto')).toHaveTextContent('€2,5M')
+  })
+
+  it('useMoneda no inventa un símbolo si el backend manda vacío', async () => {
+    mockFetch({ 'GET /api/bootstrap': estadoFactory({ ajustes: { moneda_simbolo: '' } }) })
+    function Simbolo() {
+      return <output data-testid="simbolo">{useMoneda().simbolo}</output>
+    }
+    render(
+      <DataProvider>
+        <Simbolo />
+      </DataProvider>,
+    )
+    await waitFor(() => expect(screen.getByTestId('simbolo')).toBeEmptyDOMElement())
   })
 
   it('reload sube la versión de las entidades afectadas y pide /api/bootstrap solo si alguna lo afecta', async () => {

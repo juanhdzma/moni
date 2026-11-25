@@ -1,4 +1,4 @@
-import type { Activo, Categorias, Deuda, Estado, Inversion, Recurrente, Transaccion } from '../types'
+import type { Activo, Categorias, Deuda, Estado, Inversion, Recurrente, Transaccion } from '@/types'
 import { registrarFilas, type Filas } from './filas'
 
 export const tx = (
@@ -19,6 +19,9 @@ export const tx = (
   tarjeta_nombre: null,
   tarjeta_franquicia: null,
   metodo_pago: 'Efectivo / Débito',
+  editable: true,
+  tono: tipo === 'ingreso' ? 'ingreso' : tipo === 'gasto' ? 'gasto' : 'neutro',
+  icono_metodo: 'efectivo',
   ...extra,
 })
 
@@ -31,7 +34,6 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
   cuota_mensual: 0,
   fecha_inicio: '',
   proxima_cuota: '',
-  es_tarjeta: false,
   clase_deuda: 'prestamo',
   pago: {
     cuota: { monto: null, nuevo_saldo: null, hint: 'Ingresá cuánto pagaste.' },
@@ -40,15 +42,16 @@ export const deuda = (extra: Partial<Deuda> = {}): Deuda => ({
   },
   cupo: 0,
   franquicia: '',
-  activa: false,
-  vigente: false,
   progreso_pct: 0,
   capital_pagado: 0,
   nivel_progreso: 'bajo',
+  tono_progreso: 'negativo',
   disponible: null,
   tiene_cupo: false,
   uso_pct: 0,
   nivel_uso: 'bajo',
+  tono_uso: 'positivo',
+  total_intereses: 0,
   frases: {
     detalle: '',
     meses_restantes_texto: null,
@@ -73,7 +76,6 @@ export const inversion = (extra: Partial<Inversion> = {}): Inversion => ({
   fecha_inicio: '',
   pago: null,
   dia_pago: null,
-  valor_actualizado_en: '',
   ganancia: 0,
   ganancia_pct: 0,
   proximo_pago: null,
@@ -90,7 +92,6 @@ export const activo = (extra: Partial<Activo> = {}): Activo => ({
   valor_inicial: 0,
   valor_actual: 0,
   fecha_adquisicion: '',
-  valor_actualizado_en: '',
   cambio: 0,
   cambio_pct: 0,
   desactualizado: false,

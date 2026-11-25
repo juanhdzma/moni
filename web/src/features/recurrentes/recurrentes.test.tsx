@@ -1,11 +1,10 @@
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ResumenRecurrentes } from '../../types'
-import { estado, recurrente } from '../../test/factories'
-import { mockFetch } from '../../test/mockFetch'
-import { renderWithProviders } from '../../test/render'
-import { expectLabels, modalBody } from '../../test/labels'
+import type { ResumenRecurrentes } from '@/types'
+import { estado, recurrente } from '@/test/factories'
+import { mockFetch } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useData } from '@/shell/providers/DataProvider'
 import { Recurrentes, openRecurrenteMaterializeFormById } from '.'
@@ -32,6 +31,8 @@ const resumen = (extra: Partial<ResumenRecurrentes> = {}): ResumenRecurrentes =>
   segmentos: [{ key: '2', label: 'Netflix', valor: 30000 }],
   ingresos: [salario],
   gastos: [gym, netflix],
+  texto_vacio_ingresos: { titulo: 'Sin ingresos recurrentes', texto: 'Agregá un sueldo o ingreso fijo con el botón Nuevo.' },
+  texto_vacio_gastos: { titulo: 'Sin gastos recurrentes', texto: 'Agregá un gasto fijo con el botón Nuevo.' },
   ...extra,
 })
 
@@ -95,8 +96,18 @@ describe('render', () => {
     expect(names).toEqual(['Gym', 'Netflix'])
     document.body.innerHTML = ''
     view([], resumen({ ingresos: [], gastos: [] }))
-    expect(await screen.findByText('Sin ingresos recurrentes.')).toBeTruthy()
-    expect(screen.getByText('Sin gastos recurrentes.')).toBeTruthy()
+    expect(await screen.findByText('Sin ingresos recurrentes')).toBeTruthy()
+    expect(screen.getByText('Agregá un sueldo o ingreso fijo con el botón Nuevo.')).toBeTruthy()
+    expect(screen.getByText('Sin gastos recurrentes')).toBeTruthy()
+  })
+
+  it('shows a skeleton and no empty state until the summary arrives', async () => {
+    view()
+    expect(document.querySelectorAll('#rec-ingresos .skeleton')).toHaveLength(1)
+    expect(document.querySelectorAll('#rec-gastos .skeleton')).toHaveLength(1)
+    expect(screen.queryByText('Sin ingresos recurrentes')).toBeNull()
+    await waitFor(() => expect(document.querySelectorAll('#rec-gastos [data-rec-name]')).toHaveLength(2))
+    expect(document.querySelectorAll('.skeleton')).toHaveLength(0)
   })
 
   it('action buttons are real buttons, reachable by keyboard', async () => {
@@ -211,23 +222,28 @@ describe('create / edit / delete', () => {
   })
 
   it('delete asks for confirmation then DELETEs', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
     const f = view(items, resumen(), { 'DELETE /api/rec/2': null })
-    const row = (await within(document.getElementById('rec-gastos') as HTMLElement).findByText('Netflix')).closest('[data-rec]') as HTMLElement
-    await userEvent.click(within(row).getByText('Editar'))
+    const abrirEdicion = async () => {
+      const row = (await within(document.getElementById('rec-gastos') as HTMLElement).findByText('Netflix')).closest('[data-rec]') as HTMLElement
+      await userEvent.click(within(row).getByText('Editar'))
+    }
+    await abrirEdicion()
     await userEvent.click(screen.getByText('Eliminar'))
-    expect(confirmSpy).toHaveBeenCalledWith('¿Eliminar "Netflix"?')
+    expect(screen.getByRole('dialog')).toHaveTextContent('¿Eliminar "Netflix"?')
+    await userEvent.click(screen.getByText('Cancelar'))
     expect(f.mutations()).toHaveLength(0)
+    await abrirEdicion()
+    await userEvent.click(screen.getByText('Eliminar'))
     await userEvent.click(screen.getByText('Eliminar'))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/rec/2', headers: H })
   })
 
   it('delete failure shows banner', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     view(items, resumen(), { 'DELETE /api/rec/2': new Response(JSON.stringify({ detail: 'no' }), { status: 500 }) })
     const row = (await within(document.getElementById('rec-gastos') as HTMLElement).findByText('Netflix')).closest('[data-rec]') as HTMLElement
     await userEvent.click(within(row).getByText('Editar'))
+    await userEvent.click(screen.getByText('Eliminar'))
     await userEvent.click(screen.getByText('Eliminar'))
     await waitFor(() => expect(screen.getByTestId('banner').textContent).toContain('no'))
   })
@@ -274,21 +290,5 @@ describe('materialize', () => {
     act(() => screen.getByText('open').click())
     await waitFor(() => expect(screen.getByTestId('banner').textContent).toContain('sin mock'))
     expect(document.getElementById('m-desc')).toBeNull()
-  })
-})
-
-describe('labels', () => {
-  it('el form de recurrente se encuentra por sus labels', async () => {
-    mockFetch()
-    renderWithProviders(<Recurrentes active />, { estado: estado({ recurrentes: items }) })
-    await userEvent.click(screen.getByText('Nuevo'))
-    expectLabels(modalBody(), {
-      Nombre: 'm-nombre',
-      'Monto (COP)': 'm-monto',
-      Frecuencia: 'm-frecuencia',
-      'Fecha inicio (opcional)': 'm-fecha',
-      'Notas (opcional)': 'm-notas',
-    })
-    expect(within(modalBody()).getByRole('group', { name: 'Tipo' })).toBeInTheDocument()
   })
 })

@@ -1,9 +1,9 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { categoriasBase, estado } from '../../test/factories'
-import { failure, mockFetch } from '../../test/mockFetch'
-import { renderWithProviders } from '../../test/render'
+import { categoriasBase, estado } from '@/test/factories'
+import { conAfectadas, failure, mockFetch } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
 import { useCategorias } from '@/shell/hooks/useCategorias'
 import { useData } from '@/shell/providers/DataProvider'
 
@@ -34,25 +34,25 @@ describe('useCategorias', () => {
     expect(screen.getByTestId('gasto')).toHaveTextContent('Inversión:true|Compra activos:true|Mascotas:false')
   })
 
-  it('agregar hace POST /api/categorias y aplica la respuesta sin pedir /api/bootstrap', async () => {
+  it('agregar hace POST /api/categorias y recarga el bootstrap porque el header declara categorias', async () => {
     const user = userEvent.setup()
-    const f = mockFetch({ 'POST /api/categorias': conMascotas().categorias })
+    const f = mockFetch({ 'POST /api/categorias': conAfectadas(conMascotas().categorias, 'categorias'), 'GET /api/bootstrap': conMascotas() })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('add'))
     await waitFor(() => expect(screen.getByTestId('gasto')).toHaveTextContent('Mascotas:false'))
-    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1)
     const [post] = f.callsTo('POST', '/api/categorias')
     expect(post?.headers['X-Moni-Request']).toBe('1')
     expect(post?.body).toEqual({ tipo: 'gasto', nombre: 'Mascotas' })
   })
 
-  it('quitar hace DELETE con tipo y nombre en el query y aplica la respuesta', async () => {
+  it('quitar hace DELETE con tipo y nombre en el query y recarga el bootstrap', async () => {
     const user = userEvent.setup()
-    const f = mockFetch({ 'DELETE /api/categorias?tipo=gasto&nombre=Mascotas': categoriasBase() })
+    const f = mockFetch({ 'DELETE /api/categorias?tipo=gasto&nombre=Mascotas': conAfectadas(categoriasBase(), 'categorias'), 'GET /api/bootstrap': estado() })
     renderWithProviders(<Harness />, { estado: conMascotas() })
     await user.click(screen.getByText('del'))
     await waitFor(() => expect(screen.getByTestId('gasto')).not.toHaveTextContent('Mascotas'))
-    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1)
     expect(f.mutations()).toMatchObject([{ method: 'DELETE', headers: { 'X-Moni-Request': '1' } }])
   })
 

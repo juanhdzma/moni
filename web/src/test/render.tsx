@@ -3,8 +3,8 @@ import type { ReactElement, ReactNode } from 'react'
 import { AuthProvider } from '@/shell/providers/AuthProvider'
 import { DataProvider } from '@/shell/providers/DataProvider'
 import { ModalProvider } from '@/shell/providers/ModalProvider'
-import type { EstadoAuth } from '../lib/seguridad/auth'
-import type { Estado } from '../types'
+import type { EstadoAuth } from '@/lib/seguridad/auth'
+import type { Estado } from '@/types'
 import { estado as estadoVacio } from './factories'
 
 export const ESTADO_AUTENTICADO: EstadoAuth = { configurado: true, autenticado: true, tiene_passkeys: false }

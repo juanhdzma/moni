@@ -1,6 +1,6 @@
 import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
-import { cargarRecurrente } from '../../../lib/api'
-import type { Recurrente } from '../../../types'
+import { cargarRecurrente } from '@/lib/api'
+import type { Recurrente } from '@/types'
 import { MaterializeForm } from './MaterializeForm'
 import { RecurrenteForm } from './RecurrenteForm'
 

@@ -1,16 +1,16 @@
 import { screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { renderWithProviders } from '../../test/render'
-import { Shell } from '../layout/Shell'
+import { renderWithProviders } from '@/test/render'
+import { Shell } from '@/shell/layout/Shell'
 
-vi.mock('../../features/deudas', async (orig) => ({
-  ...(await orig<typeof import('../../features/deudas')>()),
+vi.mock('@/features/deudas', async (orig) => ({
+  ...(await orig<typeof import('@/features/deudas')>()),
   Deudas: () => {
     throw new Error('rota')
   },
 }))
-vi.mock('../../features/activos', async (orig) => ({
-  ...(await orig<typeof import('../../features/activos')>()),
+vi.mock('@/features/activos', async (orig) => ({
+  ...(await orig<typeof import('@/features/activos')>()),
   Activos: () => {
     throw new Error('rota')
   },

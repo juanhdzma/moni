@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { estado } from '../../test/factories'
+import { estado } from '@/test/factories'
 import {
   agregarCategoria,
   apiFetch,
@@ -8,6 +8,8 @@ import {
   cargarBootstrap,
   cargarDeuda,
   guardarAjustes,
+  importarBackup,
+  vaciarDatos,
   previewPago,
   quitarCategoria,
   restaurarOp,
@@ -145,4 +147,29 @@ test('un 401 avisa una vez salvo en las rutas de login', async () => {
   await expect(apiFetch('/api/auth/passkey/login/verificar', { method: 'POST', body: {} })).rejects.toThrow('x')
   setAuthEvents(null)
   expect(noAutenticado).toHaveBeenCalledTimes(1)
+})
+
+test('las mutaciones de configuración exponen X-Moni-Afectadas: presente, vacío y ausente', async () => {
+  const con = (valor: string | null) =>
+    mockFetch({ json: () => Promise.resolve({}), headers: new Headers(valor === null ? {} : { 'X-Moni-Afectadas': valor }) })
+  const visto = vi.fn()
+  con('categorias')
+  await agregarCategoria('gasto', 'A', visto)
+  con('')
+  await quitarCategoria('gasto', 'A', visto)
+  con(null)
+  await guardarAjustes({ moneda_simbolo: '€' }, visto)
+  await restaurarOp(undefined, visto)
+  expect(visto.mock.calls).toEqual([['categorias'], [''], [null], [null]])
+})
+
+test('importar y vaciar mandan la clave del dueño y exponen las afectadas', async () => {
+  const fn = mockFetch({ json: () => Promise.resolve({}), headers: new Headers({ 'X-Moni-Afectadas': 'transacciones' }) })
+  const visto = vi.fn()
+  const mut = { 'X-Moni-Request': '1', 'Content-Type': 'application/json' }
+  await importarBackup({ deudas: [] }, 'secreta', visto)
+  expect(fn).toHaveBeenLastCalledWith('/api/import', { method: 'POST', headers: mut, body: '{"deudas":[],"clave":"secreta"}' })
+  await vaciarDatos('secreta', visto)
+  expect(fn).toHaveBeenLastCalledWith('/api/truncate', { method: 'POST', headers: mut, body: '{"clave":"secreta"}' })
+  expect(visto).toHaveBeenCalledTimes(2)
 })

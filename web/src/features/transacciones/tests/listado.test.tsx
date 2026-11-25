@@ -1,8 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { estado } from '../../../test/factories'
-import { renderWithProviders } from '../../../test/render'
+import { estado } from '@/test/factories'
+import { renderWithProviders } from '@/test/render'
 import { Transacciones } from '..'
 import { URL_BASE, listado, mercado, salario, mockFetch, ui } from './fixtures'
 
@@ -23,7 +23,7 @@ describe('Transacciones tab', () => {
     expect(screen.getAllByText('Visa Oro').length).toBeGreaterThan(0)
     expect(screen.getAllByTitle('Visa Oro').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Efectivo / Débito').length).toBeGreaterThan(0)
-    expect(document.querySelector('img[src="assets/franquicias/visa.svg"]')).toBeTruthy()
+    expect(document.querySelector('img[src="/assets/franquicias/visa.svg"]')).toBeTruthy()
     expect(screen.getByText('Te quedó')).toBeTruthy()
   })
 
@@ -80,7 +80,7 @@ describe('Transacciones tab', () => {
               items: [mercado],
               filtros: { tipo: 'gasto', mes: '', cat: '' },
               pills: [{ campo: 'tipo', label: 'Gastos' }],
-              resumen: { titulo: 'Te quedó con estos filtros', ingresos: 0, gastos: 5000, neto: -5000, dato: { texto: 'entró $0 · salió $5.000', partes: [] }, segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000 }] },
+              resumen: { titulo: 'Te quedó con estos filtros', ingresos: 0, gastos: 5000, gastos_firmado: -5000, neto: -5000, dato: { texto: 'entró $0 · salió $5.000', partes: [] }, segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000 }] },
             })
           : listado(),
     })
@@ -147,5 +147,47 @@ describe('filtros obsoletos', () => {
     await waitFor(() => expect(f.callsTo('GET', '/api/tx?col=fecha&dir=-1&tipo=&mes=2026-03&cat=').length).toBeGreaterThan(0))
     await waitFor(() => expect(document.getElementById('f-mes-filter')).toHaveTextContent('Todos los meses'))
     expect(document.querySelector('.filter-pill')).toBeNull()
+  })
+})
+
+describe('fila y columnas desde el backend', () => {
+  const transfer = { ...mercado, id: 3, tipo: 'transfer' as const, categoria: 'Pago deuda', descripcion: '', editable: false, tono: 'neutro', icono_metodo: 'efectivo', tarjeta_id: null, tarjeta_franquicia: null, grupo: 'Marzo - 2026' }
+
+  it('editable decide si la fila es un botón; tono pinta el monto; icono_metodo elige el asset', async () => {
+    mockFetch({ 'GET /api/tx': listado({ items: [salario, mercado, transfer] }) })
+    ui()
+    await screen.findByText('Abril - 2026'.replace('Abril', 'Marzo'))
+    expect(screen.getByRole('button', { name: 'Editar Mercado' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Editar Pago deuda' })).toBeNull()
+    const montos = [...document.querySelectorAll('td[data-label="Monto"] span')]
+    expect(montos.map((m) => m.className)).toEqual(['text-inversiones-text', 'text-foreground', 'text-muted-foreground'])
+    const iconos = [...document.querySelectorAll('td[data-label="Método de pago"] img')].map((i) => i.getAttribute('src'))
+    expect(iconos).toEqual(['/assets/icons/efectivo.svg', '/assets/franquicias/visa.svg', '/assets/icons/efectivo.svg'])
+  })
+
+  it('una icono_metodo desconocido cae a la franquicia Otra', async () => {
+    mockFetch({ 'GET /api/tx': listado({ items: [{ ...mercado, icono_metodo: 'Diners' }] }) })
+    ui()
+    await screen.findByText('Mercado')
+    expect(document.querySelector('td[data-label="Método de pago"] img')).toHaveAttribute('src', '/assets/franquicias/otra.svg')
+  })
+
+  it('los th salen de meta: scope col, ordenables con foco y aria-sort, el resto inertes', async () => {
+    const f = mockFetch()
+    const user = userEvent.setup()
+    ui()
+    await screen.findByText('Abril - 2026')
+    const heads = [...document.querySelectorAll('thead th')]
+    expect(heads.map((h) => h.getAttribute('data-col'))).toEqual(['fecha', 'tipo', 'categoria', 'descripcion', 'monto', 'metodo_pago'])
+    heads.forEach((h) => expect(h).toHaveAttribute('scope', 'col'))
+    heads.forEach((h) => expect(h.hasAttribute('role')).toBe(false))
+    const metodo = screen.getByRole('columnheader', { name: 'Método de pago' })
+    expect(metodo.hasAttribute('tabindex')).toBe(false)
+    expect(metodo.hasAttribute('aria-sort')).toBe(false)
+    await user.click(metodo)
+    expect(f.callsTo('GET', '/api/tx?col=metodo_pago&dir=1&tipo=&mes=&cat=')).toHaveLength(0)
+    expect(screen.getByRole('columnheader', { name: 'Tipo' })).toHaveClass('hidden', 'sm:table-cell')
+    expect(metodo).not.toHaveClass('hidden')
+    expect(document.querySelector('table caption')).toHaveTextContent('Movimientos')
   })
 })

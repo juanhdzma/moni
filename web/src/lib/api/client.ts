@@ -1,7 +1,9 @@
+export type AlAfectar = (header: string | null) => void
+
 interface ApiFetchOptions {
   method?: string
   body?: unknown
-  onAfectadas?: (header: string | null) => void
+  onAfectadas?: AlAfectar
 }
 
 function mensajeDeError(j: unknown, status: number): string {

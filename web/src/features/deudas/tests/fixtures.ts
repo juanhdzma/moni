@@ -1,7 +1,7 @@
 import { within } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
-import { deuda, estado } from '../../../test/factories'
-import { mockFetch } from '../../../test/mockFetch'
+import { deuda, estado } from '@/test/factories'
+import { mockFetch } from '@/test/mockFetch'
 
 export const credito = deuda({
   id: 1,
@@ -16,11 +16,10 @@ export const credito = deuda({
     abono: { monto: null, nuevo_saldo: null, hint: 'Ingresá cuánto abonaste.' },
     liquidar: { monto: 6000000, nuevo_saldo: 0, hint: 'Ajustá si el banco cobra intereses adicionales al cancelar.' },
   },
-  activa: true,
-  vigente: true,
   progreso_pct: 40,
   capital_pagado: 4000000,
   nivel_progreso: 'medio',
+  tono_progreso: 'alerta',
   frases: {
     detalle: '20,0% EA · $500.000/mes',
     meses_restantes_texto: '~12m',
@@ -36,17 +35,15 @@ export const credito = deuda({
 export const tarjeta = deuda({
   id: 2,
   nombre: 'Visa Oro',
-  es_tarjeta: true,
   clase_deuda: 'tarjeta',
   cupo: 5000000,
   saldo_actual: 1000000,
   franquicia: 'Visa',
-  activa: true,
-  vigente: true,
   disponible: 4000000,
   tiene_cupo: true,
   uso_pct: 20,
   nivel_uso: 'bajo',
+  tono_uso: 'positivo',
   frases: {
     detalle: 'Cupo $5.000.000',
     meses_restantes_texto: null,
@@ -69,6 +66,7 @@ export const saldado = deuda({
   progreso_pct: 100,
   capital_pagado: 3000000,
   nivel_progreso: 'alto',
+  tono_progreso: 'positivo',
   frases: {
     detalle: '18,0% EA',
     meses_restantes_texto: null,

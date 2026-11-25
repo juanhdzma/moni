@@ -1,8 +1,8 @@
-import { Login, ActivarDispositivo } from '../features/login'
+import { Login, ActivarDispositivo } from '@/features/login'
 import { AuthProvider, useAuth } from '@/shell/providers/AuthProvider'
 import { DataProvider } from '@/shell/providers/DataProvider'
 import { ModalProvider } from '@/shell/providers/ModalProvider'
-import { Shell } from '../shell/layout/Shell'
+import { Shell } from '@/shell/layout/Shell'
 
 function Gate() {
   const { fase } = useAuth()

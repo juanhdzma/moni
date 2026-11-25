@@ -1,5 +1,4 @@
 import { Panel } from '@/components/panel'
-import { useData } from '@/shell/providers/DataProvider'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { BackupPanel } from './Backup'
 import { Categorias } from './Categorias'
@@ -10,7 +9,6 @@ import { Peligro } from './Peligro'
 import { Seguridad } from './Seguridad'
 
 export function Settings({ active }: TabProps) {
-  useData()
   return (
     <TabContent id="settings" active={active}>
       <div className="space-y-3 lg:space-y-4">

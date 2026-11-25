@@ -1,33 +1,36 @@
 import { useState } from 'react'
-import { MoneyField } from '../../../controls/MoneyField'
+import { MoneyField } from '@/controls/MoneyField'
 import { useMeta } from '@/shell/hooks/useMeta'
-import { entero, parseMoney } from '../../../lib/format'
+import { entero, parseMoney } from '@/lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { InvRetiro, Inversion } from '../../../types'
-import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
-import { FormFooter } from '../../../controls/FormFooter'
-import { TipoToggle } from '../../../controls/TipoToggle'
+import type { InvRetiro, Inversion } from '@/types'
+import { FechaNotas, RegistrarToggle } from '@/controls/FormFields'
+import { FormFooter } from '@/controls/FormFooter'
+import { TipoToggle } from '@/controls/TipoToggle'
 import { InversionPanel } from './InversionPanel'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
+
+const TIPO_PARCIAL = 'parcial'
 
 export function RetiroForm({ inv }: { inv: Inversion }) {
   const { estado } = useData()
   const { apiAction } = useMutations()
   const guardar = useGuardar()
   const meta = useMeta()
-  const [tipo, setTipo] = useState<'total' | 'parcial'>('total')
+  const [tipoElegido, setTipo] = useState<string | null>(null)
+  const tipo = tipoElegido ?? meta?.defaults.tipo_retiro ?? ''
+  const parcial = tipo === TIPO_PARCIAL
   const [montoTotal, setMontoTotal] = useState(entero(inv.valor_actual))
   const [montoParcial, setMontoParcial] = useState('')
   const [saldoQueda, setSaldoQueda] = useState('')
   const campos = useCamposMovimiento(estado.hoy)
 
   const buildBody = (): InvRetiro => {
-    const comun = campos.cuerpo()
-    if (tipo === 'total') return { tipo: 'total', monto: parseMoney(montoTotal), ...comun }
+    const comun = { tipo: tipo as InvRetiro['tipo'], ...campos.cuerpoConFecha() }
+    if (!parcial) return { monto: parseMoney(montoTotal), ...comun }
     return {
-      tipo: 'parcial',
       monto: parseMoney(montoParcial),
       ...(saldoQueda.trim() ? { saldo_queda: parseMoney(saldoQueda) } : {}),
       ...comun,
@@ -44,7 +47,7 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
       <InversionPanel inv={inv} />
       <TipoToggle label="Tipo de retiro" value={tipo} opciones={meta?.tipos_retiro ?? []} onChange={setTipo} />
 
-      {tipo === 'total' && (
+      {!parcial && (
         <div id="retiro-total-fields">
           <MoneyField
             id="m-monto-total"
@@ -56,7 +59,7 @@ export function RetiroForm({ inv }: { inv: Inversion }) {
         </div>
       )}
 
-      {tipo === 'parcial' && (
+      {parcial && (
         <div id="retiro-parcial-fields">
           <MoneyField id="m-monto-parcial" label="Monto que retirás" value={montoParcial} onChange={setMontoParcial} />
           <MoneyField

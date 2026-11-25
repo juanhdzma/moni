@@ -3,18 +3,14 @@ import { TriangleAlert } from 'lucide-react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { useMoneda } from '@/shell/hooks/useMoneda'
 import { cn } from '@/lib/utils'
-import type { Frase, Segmento, TonoFrase } from '@/types'
-
-const CLASE_TONO: Record<Exclude<TonoFrase, null>, string> = {
-  positivo: 'font-semibold text-inversiones-text',
-  negativo: 'font-semibold text-deudas',
-  fuerte: 'font-semibold',
-}
+import type { Frase, Segmento } from '@/types'
+import { Skeleton } from './Skeleton'
+import { claseDeTono } from './tono'
 
 export function FraseTexto({ frase }: { frase: Frase }) {
   return (
     <>
-      {frase.partes.map((p, i) => (p.tono ? <span key={i} className={CLASE_TONO[p.tono]}>{p.texto}</span> : p.texto))}
+      {frase.partes.map((p, i) => (p.tono ? <span key={i} className={cn('font-semibold', p.tono !== 'fuerte' && claseDeTono(p.tono).texto)}>{p.texto}</span> : p.texto))}
     </>
   )
 }
@@ -42,7 +38,7 @@ export function Panel({
         </h2>
         {extra}
       </div>
-      {frase && <p className="mb-4 text-[15px] leading-snug text-foreground">{frase}</p>}
+      {frase && <p className="mb-4 text-body leading-snug text-foreground">{frase}</p>}
       {children}
     </section>
   )
@@ -73,7 +69,7 @@ export function Periodos<T extends string>({
       }}
     >
       {options.map((o) => (
-        <ToggleGroupItem key={o.value} value={o.value} data-period={o.value}>
+        <ToggleGroupItem key={o.value} value={o.value} data-period={o.value} className="max-sm:min-h-11">
           {o.label}
         </ToggleGroupItem>
       ))}
@@ -81,8 +77,7 @@ export function Periodos<T extends string>({
   )
 }
 
-export function Barra({ valor, max, className }: { valor: number; max: number; className?: string }) {
-  const pct = max > 0 ? Math.max((Math.abs(valor) / max) * 100, valor ? 2 : 0) : 0
+export function Barra({ pct, className }: { pct: number; className?: string }) {
   return (
     <span aria-hidden="true" className="block h-2 w-full overflow-hidden rounded-full bg-muted">
       <span className={cn('block h-full rounded-full', className)} style={{ width: `${pct}%` }} />
@@ -92,7 +87,7 @@ export function Barra({ valor, max, className }: { valor: number; max: number; c
 
 export function Total({ label, valor, className }: { label: ReactNode; valor: ReactNode; className?: string }) {
   return (
-    <div className={cn('mt-3 flex items-baseline justify-between border-t-2 border-foreground/80 pt-2 text-[15px] font-semibold', className)}>
+    <div className={cn('mt-3 flex items-baseline justify-between border-t-2 border-foreground/80 pt-2 text-body font-semibold', className)}>
       <span>{label}</span>
       <span>{valor}</span>
     </div>
@@ -136,7 +131,7 @@ export function Resumen({
               {dato && <span className="text-sm font-medium">{dato}</span>}
             </div>
           ) : (
-            <div className="skeleton mt-2 h-9 w-48 animate-pulse rounded-md bg-muted" />
+            <Skeleton className="mt-2 h-9 w-48" />
           )}
         </div>
         {extra}
@@ -173,7 +168,7 @@ export function Desactualizado({ texto }: { texto: string }) {
         aria-describedby={id}
         onClick={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className="grid size-6 cursor-pointer place-items-center rounded-md text-alerta-text transition-colors hover:bg-alerta/10"
+        className="relative grid size-6 cursor-pointer place-items-center rounded-md text-alerta-text transition-colors after:absolute after:-inset-2.5 hover:bg-alerta/10"
       >
         <TriangleAlert className="size-4" aria-hidden="true" />
         <span className="sr-only">Aviso</span>

@@ -2,8 +2,8 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as webauthn from '@simplewebauthn/browser'
-import { failure, mockFetch } from '../../test/mockFetch'
-import { renderWithProviders } from '../../test/render'
+import { failure, mockFetch } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
 import { useAuth } from '@/shell/providers/AuthProvider'
 import { Seguridad } from './Seguridad'
 
@@ -25,6 +25,7 @@ const SESIONES = [
 ]
 
 beforeEach(() => {
+  vi.clearAllMocks()
   localStorage.clear()
   vi.mocked(webauthn.browserSupportsWebAuthn).mockReturnValue(true)
   vi.mocked(webauthn.platformAuthenticatorIsAvailable).mockResolvedValue(true)
@@ -59,7 +60,7 @@ describe('Seguridad', () => {
     expect(m.callsTo('DELETE', '/api/auth/passkeys/3')[0]?.headers['X-Moni-Request']).toBe('1')
   })
 
-  it('agregar passkey manda el nombre elegido', async () => {
+  it('agregar passkey pide la clave en un modal y manda clave y nombre', async () => {
     const credencial = { id: 'c', rawId: 'c', type: 'public-key', response: {}, clientExtensionResults: {} }
     vi.mocked(webauthn.startRegistration).mockResolvedValue(credencial as unknown as Awaited<ReturnType<typeof webauthn.startRegistration>>)
     const m = mockFetch({
@@ -72,19 +73,41 @@ describe('Seguridad', () => {
     await user.clear(campo)
     await user.type(campo, 'MacBook')
     await user.click(screen.getByRole('button', { name: 'Agregar passkey' }))
+    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')).toHaveLength(0)
+    await user.type(await screen.findByLabelText('Clave'), 'secreta{Enter}')
     await waitFor(() => expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')).toHaveLength(1))
-    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toBeUndefined()
+    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.body).toEqual({ clave: 'secreta' })
+    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')[0]?.headers['X-Moni-Request']).toBe('1')
     expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')[0]?.body).toEqual({ ...credencial, nombre: 'MacBook' })
     expect(await screen.findByText('Passkey activada en este dispositivo')).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByLabelText('Clave')).toBeNull())
   })
 
-  it('un error al registrar se muestra en el panel', async () => {
+  it('una clave incorrecta (403) se muestra en el modal y no registra nada', async () => {
+    const m = mockFetch({ 'POST /api/auth/passkey/registro/opciones': failure(403, 'Ingresá tu clave para confirmar esta acción') })
+    const user = userEvent.setup()
+    renderWithProviders(<Seguridad />)
+    await user.click(await screen.findByRole('button', { name: 'Agregar passkey' }))
+    await user.type(await screen.findByLabelText('Clave'), 'mala{Enter}')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ingresá tu clave para confirmar esta acción')
+    expect(webauthn.startRegistration).not.toHaveBeenCalled()
+    expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')).toHaveLength(0)
+  })
+
+  it('un error del dispositivo al registrar se muestra en el modal', async () => {
     vi.mocked(webauthn.startRegistration).mockRejectedValue(new Error('El dispositivo canceló'))
     mockFetch({ 'POST /api/auth/passkey/registro/opciones': { challenge: 'r' } })
     const user = userEvent.setup()
     renderWithProviders(<Seguridad />)
     await user.click(await screen.findByRole('button', { name: 'Agregar passkey' }))
+    await user.type(await screen.findByLabelText('Clave'), 'secreta{Enter}')
     expect(await screen.findByRole('alert')).toHaveTextContent('El dispositivo canceló')
+  })
+
+  it('el nombre del dispositivo respeta meta.limites.nombre', async () => {
+    mockFetch()
+    renderWithProviders(<Seguridad />)
+    await waitFor(async () => expect(await screen.findByLabelText('Nombre del dispositivo')).toHaveAttribute('maxlength', '40'))
   })
 
   it('sin soporte de passkeys no ofrece agregar', async () => {

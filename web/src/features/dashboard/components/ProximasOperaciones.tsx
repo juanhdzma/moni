@@ -7,9 +7,10 @@ import { useMutations } from '@/shell/hooks/useMutations'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
-import { openDeudaPayFormById } from '../../deudas'
-import { openInvYieldFormById } from '../../inversiones'
-import { openRecurrenteMaterializeFormById } from '../../recurrentes'
+import { openDeudaPayFormById } from '@/features/deudas'
+import { openInvYieldFormById } from '@/features/inversiones'
+import { openRecurrenteMaterializeFormById } from '@/features/recurrentes'
+import { Skeleton } from '@/components/Skeleton'
 import { Monto } from '@/components/monto'
 import { FraseTexto, Panel } from '@/components/panel'
 
@@ -38,7 +39,7 @@ export function ProximasOperaciones() {
       {!loaded ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />
+            <Skeleton key={i} className="h-10" />
           ))}
         </div>
       ) : !events.length ? (
@@ -52,7 +53,7 @@ export function ProximasOperaciones() {
                 <li key={e.clave} data-op={e.clave} className="prox-op-row flex items-center gap-3 py-2">
                   <div className="w-10 shrink-0 text-center leading-none" aria-hidden="true">
                     <div className={cn('text-xl font-semibold', vencida ? 'text-deudas' : 'text-foreground')}>{e.dia}</div>
-                    <div className="mt-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                    <div className="mt-0.5 text-label font-medium tracking-wide text-muted-foreground uppercase">
                       {e.mes_corto}
                     </div>
                   </div>
@@ -71,7 +72,7 @@ export function ProximasOperaciones() {
                       onClick={() => void skip(e.clave)}
                       title="No tomar esta vez"
                       aria-label={`No tomar esta vez: ${e.etiqueta}`}
-                      className="grid size-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-deudas"
+                      className="grid size-11 cursor-pointer place-items-center rounded-md text-muted-foreground sm:size-8 transition-colors hover:bg-muted hover:text-deudas"
                     >
                       <X className="size-4" strokeWidth={2.25} />
                     </button>
@@ -80,7 +81,7 @@ export function ProximasOperaciones() {
                       onClick={() => materialize(e.clave)}
                       title="Registrar"
                       aria-label={`Registrar: ${e.etiqueta}`}
-                      className="grid size-8 cursor-pointer place-items-center rounded-md bg-primary text-primary-foreground transition-opacity hover:opacity-85"
+                      className="grid size-11 cursor-pointer place-items-center rounded-md bg-primary sm:size-8 text-primary-foreground transition-opacity hover:opacity-85"
                     >
                       <Check className="size-4" strokeWidth={2.5} />
                     </button>
@@ -94,7 +95,7 @@ export function ProximasOperaciones() {
               type="button"
               onClick={() => setTodas((v) => !v)}
               aria-expanded={todas}
-              className="mt-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="mt-2 cursor-pointer py-3 text-sm font-medium sm:py-0 text-muted-foreground hover:text-foreground"
             >
               {todas ? data.texto_ver_menos : data.texto_ver_todas}
             </button>

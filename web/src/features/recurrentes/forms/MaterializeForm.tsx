@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Cargando } from '@/components/Cargando'
-import { FormFooter } from '../../../controls/FormFooter'
-import { entero } from '../../../lib/format'
+import { FormFooter } from '@/controls/FormFooter'
+import { entero } from '@/lib/format'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { useMutations } from '@/shell/hooks/useMutations'
-import { CamposTx, cuerpoTx, useOpcionesTx } from '../../transacciones'
-import type { Recurrente } from '../../../types'
+import { CamposTx, cuerpoTx, useOpcionesTx } from '@/features/transacciones'
+import type { Recurrente } from '@/types'
 
 export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
   const opciones = useOpcionesTx()

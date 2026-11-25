@@ -1,31 +1,12 @@
 import type { ActivoIn } from './activo'
-import type { Categorias } from './comun'
 import type { DeudaIn } from './deuda'
 import type { InvIn } from './inversion'
 import type { RecIn } from './recurrente'
+import type { Schemas } from './gen'
 import type { TxIn } from './transaccion'
 
-export interface Ajustes {
-  moneda_simbolo: string
-}
-
-export interface Alertas {
-  activos: boolean
-  inversiones: boolean
-}
-
-export interface UmbralDesactualizado {
-  texto: string
-}
-
-export interface Estado {
-  hoy: string
-  ahora: string
-  categorias: Categorias
-  ajustes: Ajustes
-  alertas: Alertas
-  desactualizado: UmbralDesactualizado
-}
+export type Ajustes = Schemas['Ajustes']
+export type Estado = Schemas['Bootstrap']
 
 export type CrudEntity = 'tx' | 'deuda' | 'inv' | 'activo' | 'rec'
 

@@ -1,10 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { estado } from '../../../test/factories'
-import { failure } from '../../../test/mockFetch'
-import { renderWithProviders } from '../../../test/render'
-import { Deudas } from '../index'
+import { estado } from '@/test/factories'
+import { failure } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
+import { Deudas } from '@/features/deudas/index'
 import { acc, conResumen, dialog, full, hdr, resumenCompleto, tarjeta, installFakeDate } from './fixtures'
 
 installFakeDate()
@@ -37,7 +37,7 @@ describe('adelanto', () => {
     })
     expect(m?.body).not.toHaveProperty('nuevo_saldo')
     expect(m?.body).not.toHaveProperty('descripcion')
-    expect(m?.body).toMatchObject({ fecha: '' })
+    expect(m?.body).not.toHaveProperty('fecha')
   })
 
   it('tarjeta sin cupo: pide saldo después y lo manda', async () => {
@@ -79,5 +79,15 @@ describe('adelanto', () => {
     await user.click(screen.getByText('Pedir adelanto'))
     await waitFor(() => expect(document.getElementById('m-status')).toHaveTextContent('Debe ser mayor que 0'))
     expect(f.mutations().filter((c) => c.url === '/api/deuda/2/adelanto')).toHaveLength(1)
+  })
+
+  it('pide el preview apenas hay saldo escrito, sin exigir monto: el backend decide', async () => {
+    const user = userEvent.setup()
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/2/adelanto/preview': { comision: 0, nuevo_saldo: 1000000 } })
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await abrir(user)
+    await user.type(document.getElementById('m-disponible-nuevo') as HTMLElement, '3450000')
+    await waitFor(() => expect(f.callsTo('POST', '/api/deuda/2/adelanto/preview')).toHaveLength(1))
+    expect(f.callsTo('POST', '/api/deuda/2/adelanto/preview')[0]).toMatchObject({ headers: hdr, body: { monto: 0, disponible_nuevo: 3450000 } })
   })
 })

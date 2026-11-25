@@ -1,8 +1,8 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { renderWithProviders } from '../../../test/render'
-import { mockFetch } from '../../../test/mockFetch'
-import { Dashboard } from '../index'
+import { renderWithProviders } from '@/test/render'
+import { mockFetch } from '@/test/mockFetch'
+import { Dashboard } from '@/features/dashboard/index'
 import { GASTOS, gastoRows, pill, rutas, stat } from './fixtures'
 
 afterEach(() => {
@@ -19,6 +19,14 @@ describe('En qué se va tu plata', () => {
     expect(gastoRows().map((r) => r.textContent)).toEqual(['Comida$200k', 'Mercado$50k'])
     expect(stat('gastos-frase')).toHaveTextContent('Comida se lleva el 80% de lo que gastaste en el último mes.')
     expect(stat('dash-gastos')).toHaveTextContent('Total gastado, con tarjetas$250.000')
+  })
+
+  it('el ancho de cada barra es el pct del backend', async () => {
+    mockFetch(rutas())
+    renderWithProviders(<Dashboard active />)
+    await waitFor(() => expect(gastoRows()).toHaveLength(2))
+    const anchos = gastoRows().map((r) => (r.querySelector('button span[aria-hidden] > span') as HTMLElement).style.width)
+    expect(anchos).toEqual(['100%', '25%'])
   })
 
   it('cambiar el período pide el endpoint con ese período', async () => {

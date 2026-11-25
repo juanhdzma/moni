@@ -3,15 +3,16 @@ import { Button } from '@/components/ui/button'
 import { EmptyCard } from '@/components/EmptyCard'
 import { Monto, Tendencia } from '@/components/monto'
 import { Desactualizado, Panel, Resumen } from '@/components/panel'
-import { cargarResumenInversiones } from '../../lib/api'
-import { fmtDate, pct } from '../../lib/format'
+import { cargarResumenInversiones } from '@/lib/api'
+import { fmtDate, pct } from '@/lib/format'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
-import type { Inversion, TextoVacio } from '../../types'
+import type { Inversion, TextoVacio } from '@/types'
 import {
   openInvAddMoreFormById,
   openInvForm,
@@ -36,6 +37,7 @@ function InvCard({ inv }: { inv: Inversion }) {
   const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { estado } = useData()
+  const generaRendimiento = useMeta()?.tipos_inversion.find((t) => t.value === inv.tipo)?.campos.includes('tasa')
   const gan = inv.ganancia
   const ganP = inv.ganancia_pct
   const nextPago = inv.proximo_pago?.texto ?? null
@@ -43,7 +45,7 @@ function InvCard({ inv }: { inv: Inversion }) {
   return (
     <li className="inv-card py-4 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
-        <div className="inv-name min-w-0 truncate text-[15px] font-semibold">{inv.nombre}</div>
+        <div className="inv-name min-w-0 truncate text-body font-semibold">{inv.nombre}</div>
         <div className="flex shrink-0 items-center gap-1">
           {inv.desactualizado && <Desactualizado texto={estado.desactualizado.texto} />}
           <Monto valor={ganP} formato={pct} sufijo="%" className="text-sm font-semibold" />
@@ -67,7 +69,7 @@ function InvCard({ inv }: { inv: Inversion }) {
       </div>
       {inv.fecha_inicio ? <div className="mt-0.5 text-xs text-muted-foreground">Desde {fmtDate(inv.fecha_inicio)}</div> : null}
       <div className="card-actions mt-4 flex flex-wrap gap-2">
-        {inv.tipo === 'fija' ? (
+        {generaRendimiento === undefined ? null : generaRendimiento ? (
           <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvYieldFormById(ctx, inv.id)}>
             Rendimiento
           </button>

@@ -1,16 +1,20 @@
 import { Button } from '@/components/ui/button'
 import { Pause, Play, Plus } from 'lucide-react'
+import { EmptyCard } from '@/components/EmptyCard'
 import { Monto } from '@/components/monto'
 import { FraseTexto, Panel, Resumen } from '@/components/panel'
+import { Skeleton } from '@/components/Skeleton'
+import { IconButton } from '@/controls/IconButton'
 import { cn } from '@/lib/utils'
 import { useMoneda } from '@/shell/hooks/useMoneda'
-import { cargarResumenRecurrentes } from '../../lib/api'
+import { useData } from '@/shell/providers/DataProvider'
+import { cargarResumenRecurrentes } from '@/lib/api'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { Recurrente } from '../../types'
+import type { Recurrente, TextoVacio } from '@/types'
 import { openRecurrenteForm, openRecurrenteFormById } from './forms'
 
 function RecCard({ r }: { r: Recurrente }) {
@@ -43,18 +47,12 @@ function RecCard({ r }: { r: Recurrente }) {
         <div data-rec-amount className={cn('text-sm font-semibold', r.tipo === 'ingreso' && 'text-cartera')}>
           {cop(r.mensual)}
         </div>
-        <div className="text-[11px] text-muted-foreground">por mes</div>
+        <div className="text-label text-muted-foreground">por mes</div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <button
-          type="button"
-          onClick={() => void toggle()}
-          title={r.activo ? 'Pausar' : 'Activar'}
-          aria-label={`${r.activo ? 'Pausar' : 'Activar'}: ${r.nombre}`}
-          className="grid size-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
+        <IconButton label={`${r.activo ? 'Pausar' : 'Activar'}: ${r.nombre}`} title={r.activo ? 'Pausar' : 'Activar'} onClick={() => void toggle()}>
           <Icono className="size-4" strokeWidth={2.25} />
-        </button>
+        </IconButton>
         <button
           type="button"
           onClick={() => openRecurrenteFormById(ctx, r.id)}
@@ -67,17 +65,27 @@ function RecCard({ r }: { r: Recurrente }) {
   )
 }
 
-function Lista({ id, titulo, frase, items, emptyMsg, loaded }: { id: string; titulo: string; frase?: string; items: Recurrente[]; emptyMsg: string; loaded: boolean }) {
+interface ListaProps {
+  id: string
+  titulo: string
+  items: Recurrente[]
+  vacio?: TextoVacio
+  loaded: boolean
+}
+
+function Lista({ id, titulo, items, vacio, loaded }: ListaProps) {
   return (
-    <Panel id={id} titulo={titulo} frase={frase}>
-      {!loaded ? null : !items.length ? (
-        <p className="py-2 text-sm text-muted-foreground">{emptyMsg}</p>
-      ) : (
+    <Panel id={id} titulo={titulo}>
+      {!loaded ? (
+        <Skeleton className="h-10" />
+      ) : items.length || !vacio ? (
         <ul className="divide-y">
           {items.map((r) => (
             <RecCard key={r.id} r={r} />
           ))}
         </ul>
+      ) : (
+        <EmptyCard titulo={vacio.titulo} texto={vacio.texto} />
       )}
     </Panel>
   )
@@ -85,8 +93,9 @@ function Lista({ id, titulo, frase, items, emptyMsg, loaded }: { id: string; tit
 
 export function Recurrentes({ active }: TabProps) {
   const ctx = useOpenerCtx()
+  const { loaded: cargado } = useData()
   const { data } = useVista('rec', cargarResumenRecurrentes, DEPENDENCIAS_DE_VISTA.resumenRecurrentes)
-  const loaded = data !== null
+  const loaded = cargado && data !== null
   const neto = data?.neto_mensual ?? 0
   return (
     <TabContent id="recurrentes" active={active}>
@@ -107,8 +116,8 @@ export function Recurrentes({ active }: TabProps) {
           }
         />
         <div className="grid items-start gap-4 lg:grid-cols-2">
-          <Lista id="rec-ingresos" titulo="Ingresos recurrentes" items={data?.ingresos ?? []} emptyMsg="Sin ingresos recurrentes." loaded={loaded} />
-          <Lista id="rec-gastos" titulo="Gastos fijos" items={data?.gastos ?? []} emptyMsg="Sin gastos recurrentes." loaded={loaded} />
+          <Lista id="rec-ingresos" titulo="Ingresos recurrentes" items={data?.ingresos ?? []} vacio={data?.texto_vacio_ingresos} loaded={loaded} />
+          <Lista id="rec-gastos" titulo="Gastos fijos" items={data?.gastos ?? []} vacio={data?.texto_vacio_gastos} loaded={loaded} />
         </div>
       </div>
     </TabContent>

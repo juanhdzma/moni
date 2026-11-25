@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Bell, ScanFace } from 'lucide-react'
+import { Campo } from '@/controls/Campo'
+import { useAtrapaFoco } from '@/controls/useAtrapaFoco'
+import { ApiError } from '@/lib/api'
 import {
   dispositivoTienePasskey,
   esCancelacion,
@@ -8,8 +11,8 @@ import {
   ofertaYaMostrada,
   passkeysDisponibles,
   registrarPasskey,
-} from '../../lib/seguridad/passkeys'
-import { activarPush, pushSoportado, suscripcionActual } from '../../lib/seguridad/push'
+} from '@/lib/seguridad/passkeys'
+import { activarPush, pushSoportado, suscripcionActual } from '@/lib/seguridad/push'
 
 type Pendiente = 'passkey' | 'push'
 
@@ -30,7 +33,11 @@ export function ActivarDispositivo() {
   const [oculto, setOculto] = useState(false)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const primerBoton = useRef<HTMLButtonElement>(null)
+  const [clave, setClave] = useState('')
+  const dialogoRef = useRef<HTMLDivElement>(null)
+  const ocultar = useCallback(() => setOculto(true), [])
+  const visible = !oculto && faltan.length > 0
+  useAtrapaFoco(dialogoRef, visible, ocultar)
 
   useEffect(() => {
     if (ofertaYaMostrada()) return
@@ -46,20 +53,20 @@ export function ActivarDispositivo() {
   }, [])
 
   useEffect(() => {
-    primerBoton.current?.focus()
+    dialogoRef.current?.querySelector<HTMLElement>('input, button:not([disabled])')?.focus()
   }, [faltan.length])
 
-  if (oculto || faltan.length === 0) return null
+  if (!visible) return null
 
   const activar = async (cual: Pendiente) => {
     setEnviando(true)
     setError('')
     try {
-      if (cual === 'passkey') await registrarPasskey(nombreDeDispositivo())
+      if (cual === 'passkey') await registrarPasskey(nombreDeDispositivo(), clave)
       else await activarPush()
       setFaltan((f) => f.filter((x) => x !== cual))
     } catch (err) {
-      if (!esCancelacion(err)) setError(`No se pudo activar. Podés hacerlo desde Ajustes.`)
+      if (!esCancelacion(err)) setError(err instanceof ApiError && err.status === 403 ? err.message : 'No se pudo activar. Podés hacerlo desde Ajustes.')
     } finally {
       setEnviando(false)
     }
@@ -68,15 +75,15 @@ export function ActivarDispositivo() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
       <div
+        ref={dialogoRef}
         role="dialog"
         aria-modal="true"
         aria-label="Activar en este dispositivo"
-        onKeyDown={(e) => e.key === 'Escape' && setOculto(true)}
         className="w-full max-w-md space-y-5 rounded-3xl border bg-card p-6 text-card-foreground shadow-xl"
       >
         <h2 className="text-2xl font-semibold">Activá Moni en este dispositivo</h2>
         <div className="space-y-4">
-          {faltan.map((cual, i) => {
+          {faltan.map((cual) => {
             const { titulo, detalle, boton, Icono } = TEXTOS[cual]
             return (
               <div key={cual} className="space-y-3 rounded-2xl border p-4">
@@ -87,7 +94,25 @@ export function ActivarDispositivo() {
                     <p className="text-sm text-muted-foreground">{detalle}</p>
                   </div>
                 </div>
-                <button ref={i === 0 ? primerBoton : undefined} type="button" className="btn btn-accent w-full py-4 text-base" disabled={enviando} onClick={() => void activar(cual)}>
+                {cual === 'passkey' && (
+                  <Campo id="activar-clave" label="Clave para confirmar" className="mb-0">
+                    <input
+                      className="form-input"
+                      type="password"
+                      id="activar-clave"
+                      autoComplete="current-password"
+                      maxLength={256}
+                      value={clave}
+                      onChange={(e) => setClave(e.target.value)}
+                    />
+                  </Campo>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-accent w-full py-4 text-base"
+                  disabled={enviando || (cual === 'passkey' && !clave)}
+                  onClick={() => void activar(cual)}
+                >
                   {boton}
                 </button>
               </div>

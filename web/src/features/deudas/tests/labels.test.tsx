@@ -1,9 +1,9 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { renderWithProviders } from '../../../test/render'
-import { expectLabels, modalBody } from '../../../test/labels'
-import { Deudas } from '../index'
+import { renderWithProviders } from '@/test/render'
+import { expectLabels, modalBody } from '@/test/labels'
+import { Deudas } from '@/features/deudas/index'
 import { conResumen, full, installFakeDate } from './fixtures'
 
 installFakeDate()
@@ -20,7 +20,7 @@ describe('labels', () => {
       Nombre: 'm-nombre',
       'Monto del crédito (COP)': 'm-monto-ini',
       'Saldo actual (COP)': 'm-saldo',
-      'Tasa EA (%)': 'm-tasa',
+      'Tasa (%)': 'm-tasa',
       'Cuota mensual': 'm-cuota',
       'Fecha inicio': 'm-fecha-ini',
       'Próxima cuota': 'm-proxima',

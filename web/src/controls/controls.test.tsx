@@ -3,11 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { AdvancedToggle } from './AdvancedToggle'
-import { DatePicker } from './DatePicker'
 import { MoneyInput } from './MoneyInput'
 import { Select } from './Select'
-import { estado } from '../test/factories'
-import { renderWithProviders } from '../test/render'
+import { renderWithProviders } from '@/test/render'
 
 const OPTS = [
   { value: 'a', label: 'Alfa' },
@@ -49,13 +47,73 @@ describe('Select', () => {
     trigger.focus()
     await user.keyboard('{Enter}')
     expect(document.querySelector('.cdd-menu')).toHaveClass('open')
-    await user.tab()
-    expect(screen.getByRole('option', { name: 'Alfa' })).toHaveFocus()
-    await user.tab()
-    await user.keyboard('{Enter}')
+    expect(screen.getByRole('listbox')).toHaveFocus()
+    await user.keyboard('{ArrowDown}{Enter}')
     expect(screen.getByTestId('v')).toHaveTextContent('b')
     expect(document.querySelector('.cdd-menu')).not.toHaveClass('open')
     expect(trigger).toHaveTextContent('Beta')
+    expect(trigger).toHaveFocus()
+  })
+
+  it('ARIA: el trigger apunta a la lista y la lista a la opción activa', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SelectHarness />)
+    const trigger = screen.getByRole('button', { name: /Alfa/ })
+    const lista = document.querySelector('.cdd-menu') as HTMLElement
+    expect(trigger).toHaveAttribute('aria-controls', lista.id)
+    expect(lista).not.toHaveAttribute('aria-activedescendant')
+    await user.click(trigger)
+    const [alfa, beta] = screen.getAllByRole('option')
+    expect(lista).toHaveAttribute('aria-activedescendant', alfa?.id)
+    expect(alfa).toHaveAttribute('aria-selected', 'true')
+    await user.keyboard('{ArrowDown}')
+    expect(lista).toHaveAttribute('aria-activedescendant', beta?.id)
+    expect(beta).toHaveClass('active')
+  })
+
+  it('flechas, Home y End mueven la opción activa sin salirse de los límites', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SelectHarness />)
+    await user.click(screen.getByRole('button', { name: /Alfa/ }))
+    const lista = screen.getByRole('listbox')
+    const [alfa, beta] = screen.getAllByRole('option')
+    await user.keyboard('{ArrowUp}')
+    expect(lista).toHaveAttribute('aria-activedescendant', alfa?.id)
+    await user.keyboard('{End}')
+    expect(lista).toHaveAttribute('aria-activedescendant', beta?.id)
+    await user.keyboard('{ArrowDown}')
+    expect(lista).toHaveAttribute('aria-activedescendant', beta?.id)
+    await user.keyboard('{Home}')
+    expect(lista).toHaveAttribute('aria-activedescendant', alfa?.id)
+  })
+
+  it('ArrowDown en el trigger abre y escribir una letra salta a la opción que empieza así', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SelectHarness />)
+    screen.getByRole('button', { name: /Alfa/ }).focus()
+    await user.keyboard('{ArrowDown}')
+    expect(document.querySelector('.cdd-menu')).toHaveClass('open')
+    await user.keyboard('b')
+    expect(screen.getByRole('listbox')).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: 'Beta' }).id)
+    await user.keyboard('{Enter}')
+    expect(screen.getByTestId('v')).toHaveTextContent('b')
+  })
+
+  it('Escape devuelve el foco al trigger y Tab cierra sin elegir', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <>
+        <SelectHarness />
+        <button type="button">Siguiente</button>
+      </>,
+    )
+    const trigger = screen.getByRole('button', { name: /Alfa/ })
+    await user.click(trigger)
+    await user.keyboard('{Escape}')
+    expect(trigger).toHaveFocus()
+    await user.keyboard('{Enter}{ArrowDown}{Tab}')
+    expect(document.querySelector('.cdd-menu')).not.toHaveClass('open')
+    expect(screen.getByTestId('v')).toHaveTextContent('a')
   })
 
   it('Escape cierra el menú; click afuera también', async () => {
@@ -136,94 +194,5 @@ describe('AdvancedToggle', () => {
     expect(screen.getByText('Desactivá si ya lo tenías antes de usar Moni.')).toBeInTheDocument()
     await user.click(box)
     expect(box).not.toBeChecked()
-  })
-})
-
-describe('DatePicker', () => {
-  function H({ type = 'date' as 'date' | 'datetime-local', initial = '2026-08-05' }) {
-    const [v, setV] = useState(initial)
-    return (
-      <>
-        <DatePicker value={v} onChange={setV} type={type} />
-        <output data-testid="v">{v}</output>
-      </>
-    )
-  }
-
-  it('elegir un día confirma y cierra', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<H />)
-    await user.click(screen.getByRole('button', { name: /05\/08\/2026/ }))
-    expect(document.querySelector('.cdp-panel')).toHaveClass('open')
-    expect(document.querySelector('.cdp-month')).toHaveTextContent('Agosto de 2026')
-    await user.click(screen.getByRole('button', { name: '20' }))
-    expect(screen.getByTestId('v')).toHaveTextContent('2026-08-20')
-    expect(document.querySelector('.cdp-panel')).not.toHaveClass('open')
-  })
-
-  it('vacío arranca en estado.hoy, marca el día actual y Hoy lo elige', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<H initial="2026-03-05" />, { estado: estado({ hoy: '2026-08-20' }) })
-    await user.click(screen.getByRole('button', { name: /05\/03\/2026/ }))
-    await user.click(screen.getByText('Hoy'))
-    expect(screen.getByTestId('v')).toHaveTextContent('2026-08-20')
-    await user.click(screen.getByRole('button', { name: /20\/08\/2026/ }))
-    expect(document.querySelector('.cdp-day.today')).toHaveTextContent('20')
-  })
-
-  it('sin valor el selector abre en el mes de estado.hoy', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<H initial="" />, { estado: estado({ hoy: '2026-08-20' }) })
-    await user.click(screen.getByRole('button', { name: 'Seleccionar fecha' }))
-    expect(document.querySelector('.cdp-month')).toHaveTextContent('Agosto de 2026')
-  })
-
-  it('datetime: Hoy toma fecha y hora reales de estado.ahora', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<H type="datetime-local" initial="2026-03-05T07:09" />, { estado: estado({ ahora: '2026-08-20T14:45' }) })
-    await user.click(screen.getByRole('button', { name: /05\/03\/2026 07:09/ }))
-    await user.click(screen.getByText('Hoy'))
-    await user.click(screen.getByText('Aceptar'))
-    expect(screen.getByTestId('v')).toHaveTextContent('2026-08-20T14:45')
-  })
-
-  it('con estado.hoy vacío no abre un calendario con fecha inválida', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<H initial="" />, { estado: estado({ hoy: '', ahora: '' }) })
-    await user.click(screen.getByRole('button', { name: 'Seleccionar fecha' }))
-    expect(document.querySelector('.cdp-panel')).not.toHaveClass('open')
-    expect(screen.getByTestId('v')).toHaveTextContent('')
-  })
-
-  it('navegar de mes y Escape cancela sin confirmar', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<H />)
-    await user.click(screen.getByRole('button', { name: /05\/08\/2026/ }))
-    await user.click(screen.getByLabelText('Mes siguiente'))
-    expect(document.querySelector('.cdp-month')).toHaveTextContent('Septiembre de 2026')
-    await user.keyboard('{Escape}')
-    expect(document.querySelector('.cdp-panel')).not.toHaveClass('open')
-    expect(screen.getByTestId('v')).toHaveTextContent('2026-08-05')
-  })
-
-  it('datetime: hora se ajusta con límites y Aceptar confirma', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<H type="datetime-local" initial="2026-08-05T07:09" />)
-    await user.click(screen.getByRole('button', { name: /05\/08\/2026 07:09/ }))
-    await user.click(screen.getByRole('button', { name: '12' }))
-    const hh = screen.getByLabelText('Hora')
-    await user.clear(hh)
-    await user.type(hh, '99')
-    await user.click(screen.getByText('Aceptar'))
-    expect(screen.getByTestId('v')).toHaveTextContent('2026-08-12T23:09')
-  })
-
-  it('click afuera conserva lo elegido en datetime', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<H type="datetime-local" initial="2026-08-05T07:09" />)
-    await user.click(screen.getByRole('button', { name: /05\/08\/2026 07:09/ }))
-    await user.click(screen.getByRole('button', { name: '12' }))
-    await user.click(document.body)
-    expect(screen.getByTestId('v')).toHaveTextContent('2026-08-12T07:09')
   })
 })

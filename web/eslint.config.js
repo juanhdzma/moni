@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint'
 const dateMessage = 'Date-only strings parse as UTC midnight; build from components or use mediodia() from lib/format.'
 
 export default defineConfig(
-  { ignores: ['dist', 'node_modules'] },
+  { ignores: ['dist', 'node_modules', 'scripts'] },
   js.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
   reactHooks.configs.flat.recommended,
@@ -40,6 +40,7 @@ export default defineConfig(
         'error',
         {
           patterns: [
+            { group: ['../*'], message: "Use the '@/' alias instead of parent-relative imports." },
             {
               regex: '(^|/)lib/(dinero|deudas|inversiones|recurrentes|transacciones|proximasOps)$',
               message: 'Business logic lives in the backend; the front only formats and renders.',

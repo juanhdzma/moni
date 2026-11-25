@@ -1,8 +1,8 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mockFetch } from '../../test/mockFetch'
-import { renderWithProviders } from '../../test/render'
+import { mockFetch } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
 import { Notificaciones } from './Notificaciones'
 
 const subscription = { endpoint: 'https://fcm.googleapis.com/x', toJSON: () => ({ endpoint: 'https://fcm.googleapis.com/x', keys: { p256dh: 'p', auth: 'a' } }), unsubscribe: vi.fn(() => Promise.resolve(true)) }

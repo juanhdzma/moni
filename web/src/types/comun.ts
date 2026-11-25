@@ -1,25 +1,20 @@
-export type TipoTx = 'ingreso' | 'gasto' | 'transfer'
-export type TipoRec = 'ingreso' | 'gasto'
-export type TipoInv = 'fija' | 'variable'
-export type PagoInv = 'mensual' | 'vencimiento'
+import type { Refinar, Schemas } from './gen'
 
-export interface Opcion<T extends string = string> {
-  value: T
-  label: string
-}
+export type TipoTx = Schemas['Tx']['tipo']
+export type TipoRec = Schemas['Recurrente']['tipo']
+export type TipoInv = Schemas['Inversion']['tipo']
+export type PagoInv = NonNullable<Schemas['Inversion']['pago']>
 
-export interface OpcionConTono<T extends string = string> extends Opcion<T> {
-  tono?: TipoRec | null
-}
+export type Opcion<T extends string = string> = Refinar<Schemas['Opcion'], { value: T }>
+export type OpcionConTono<T extends string = string> = Refinar<Schemas['OpcionConTono'], { value: T }>
+export type OpcionConAyuda = Schemas['OpcionConAyuda']
 
-export interface OpcionConAyuda extends OpcionConTono {
-  hint: string
-}
-
-export interface TextoVacio {
-  titulo: string
-  texto: string
-}
+export type TextoVacio = Schemas['TextoVacio']
+export type Nivel = Schemas['Deuda']['nivel_progreso']
+export type ProximoPago = Schemas['ProximoPago']
+export type Segmento = Schemas['Segmento']
+export type Tasa = Schemas['EquivalenciaTasa']
+export type Categorias = Schemas['Categorias']
 
 export type Entidad =
   | 'transacciones'
@@ -30,29 +25,3 @@ export type Entidad =
   | 'categorias'
   | 'ajustes'
   | 'opsOcultas'
-
-export type Nivel = 'alto' | 'medio' | 'bajo'
-
-export interface ProximoPago {
-  fecha: string
-  texto: string
-}
-
-export interface Segmento {
-  key: string
-  label: string
-  valor: number
-}
-
-export interface Tasa {
-  ea: number | null
-  mv: number | null
-  texto: string | null
-}
-
-export interface CategoriaItem {
-  nombre: string
-  sistema: boolean
-}
-
-export type Categorias = Record<TipoTx, CategoriaItem[]>

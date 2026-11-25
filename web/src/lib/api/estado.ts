@@ -1,4 +1,4 @@
-import type { Estado, ResumenActivos, ResumenDeudas, ResumenInversiones, ResumenRecurrentes } from '../../types'
+import type { Estado, ResumenActivos, ResumenDeudas, ResumenInversiones, ResumenRecurrentes } from '@/types'
 import { get } from './client'
 
 export const cargarBootstrap = () => get<Estado>('/api/bootstrap')

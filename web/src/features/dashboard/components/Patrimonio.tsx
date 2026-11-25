@@ -1,17 +1,9 @@
 import { Monto } from '@/components/monto'
 import { useMoneda } from '@/shell/hooks/useMoneda'
+import { Skeleton } from '@/components/Skeleton'
+import { claseDeTono } from '@/components/tono'
 import { cn } from '@/lib/utils'
-import type { ParteResumen, ResumenDashboard } from '@/types'
-
-const ESTILO: Record<ParteResumen['id'], { fondo: string; texto: string }> = {
-  activos: { fondo: 'bg-activos', texto: 'text-activos-text' },
-  inversiones: { fondo: 'bg-inversiones', texto: 'text-inversiones-text' },
-  balance: { fondo: 'bg-cartera', texto: 'text-cartera' },
-  deudas: { fondo: 'bg-deudas', texto: 'text-deudas' },
-}
-
-const fondo = (p: ParteResumen) => (p.id === 'balance' && p.negativo ? 'bg-deudas' : ESTILO[p.id].fondo)
-const texto = (p: ParteResumen) => (p.id === 'balance' && p.negativo ? 'text-deudas' : ESTILO[p.id].texto)
+import type { ResumenDashboard } from '@/types'
 
 const ESQUELETO = [0, 1, 2, 3]
 
@@ -28,7 +20,7 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
           Patrimonio
         </h1>
         {loading || !r ? (
-          <span className="h-9 w-40 animate-pulse rounded-md bg-muted" aria-label="Cargando" />
+          <Skeleton className="h-9 w-40" aria-label="Cargando" />
         ) : (
           <span id="stat-networth" title={cop(r.patrimonio)} className="text-3xl font-semibold tracking-tight sm:text-4xl">
             <Monto valor={r.patrimonio} formato={copShort} signo="negativo" color="negativo" />
@@ -45,22 +37,24 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
       <div className="mt-4 flex h-3 gap-0.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
         {!loading &&
           totalBarra > 0 &&
-          partes.map((p) => <span key={p.id} className={fondo(p)} style={{ flexGrow: Math.abs(p.valor), flexBasis: 0, minWidth: p.valor ? 3 : 0 }} />)}
+          partes.map((p) => <span key={p.id} className={claseDeTono(p.tono).fondo} style={{ flexGrow: Math.abs(p.valor), flexBasis: 0, minWidth: p.valor ? 3 : 0 }} />)}
       </div>
 
       <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4" aria-label="De qué está hecho">
         {!r &&
           ESQUELETO.map((i) => (
-            <li key={i} className="h-14 animate-pulse rounded-md bg-muted" aria-hidden="true" />
+            <li key={i} aria-hidden="true">
+              <Skeleton className="h-14" />
+            </li>
           ))}
         {partes.map((p) => (
           <li key={p.id} id={`stat-${p.id}`} className="min-w-0">
-            <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
-              <span aria-hidden="true" className={cn('size-2 rounded-[2px]', fondo(p))} />
+            <div className="flex items-center gap-1.5 text-small text-muted-foreground">
+              <span aria-hidden="true" className={cn('size-2 rounded-[2px]', claseDeTono(p.tono).fondo)} />
               {p.nombre}
             </div>
-            <div className={cn('mt-0.5 text-lg font-semibold', texto(p))}>
-              {loading ? '—' : <Monto valor={p.valor_firmado} formato={copShort} signo="negativo" color="ninguno" />}
+            <div className="mt-0.5 text-lg font-semibold">
+              {loading ? '—' : <Monto valor={p.valor_firmado} tono={p.tono} formato={copShort} signo="negativo" />}
             </div>
             <div className="truncate text-xs text-muted-foreground">{p.detalle}</div>
           </li>

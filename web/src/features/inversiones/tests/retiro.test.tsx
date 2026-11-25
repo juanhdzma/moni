@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { failure } from '../../../test/mockFetch'
+import { failure } from '@/test/mockFetch'
 import { H, clickInGrid, mockInv, modal, setup, typeMoney, installFakeClock, type User } from './helpers'
 
 installFakeClock()

@@ -1,15 +1,15 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { renderWithProviders } from '../../../test/render'
-import { failure, mockFetch } from '../../../test/mockFetch'
-import type { OperacionProxima } from '../../../types'
-import { Dashboard } from '../index'
+import { renderWithProviders } from '@/test/render'
+import { failure, mockFetch } from '@/test/mockFetch'
+import type { OperacionProxima } from '@/types'
+import { Dashboard } from '@/features/dashboard/index'
 import { PROXIMAS, frase, list, rutas, stat } from './fixtures'
 
 const spies = vi.hoisted(() => ({ pay: vi.fn(), yield: vi.fn(), mat: vi.fn() }))
-vi.mock('../../deudas', () => ({ openDeudaPayFormById: spies.pay }))
-vi.mock('../../inversiones', () => ({ openInvYieldFormById: spies.yield }))
-vi.mock('../../recurrentes', () => ({ openRecurrenteMaterializeFormById: spies.mat }))
+vi.mock('@/features/deudas', () => ({ openDeudaPayFormById: spies.pay }))
+vi.mock('@/features/inversiones', () => ({ openInvYieldFormById: spies.yield }))
+vi.mock('@/features/recurrentes', () => ({ openRecurrenteMaterializeFormById: spies.mat }))
 
 beforeEach(() => {
   Object.values(spies).forEach((s) => s.mockClear())
@@ -52,7 +52,8 @@ describe('Próximas operaciones', () => {
     renderWithProviders(<Dashboard active />)
     const row = (await screen.findByText('Banco')).closest('.prox-op-row') as HTMLElement
     fireEvent.click(within(row).getByTitle('No tomar esta vez'))
-    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(m.mutations()).toHaveLength(1))
+    expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
     expect(within(list()).getByText('Banco')).toBeInTheDocument()
   })
 

@@ -1,6 +1,6 @@
 import { openConFila, type OpenerCtx } from '@/shell/hooks/openers'
-import { cargarTx } from '../../../lib/api'
-import type { Transaccion } from '../../../types'
+import { cargarTx } from '@/lib/api'
+import type { Transaccion } from '@/types'
 import { TxForm } from './TxForm'
 
 export function openTxForm(ctx: OpenerCtx, tx: Transaccion | null = null): void {

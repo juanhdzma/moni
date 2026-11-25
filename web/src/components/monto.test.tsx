@@ -1,13 +1,31 @@
 import { screen } from '@testing-library/react'
-import { renderWithProviders } from '../test/render'
+import { renderWithProviders } from '@/test/render'
 import { describe, expect, it } from 'vitest'
 import { pct } from '@/lib/format'
 import { Monto, Tendencia } from './monto'
 
 describe('tono', () => {
-  it('cero cuenta como positivo', () => {
-    renderWithProviders(<Monto valor={0} chip />)
-    expect(screen.getByText('+$0')).toHaveClass('bg-inversiones/15 text-inversiones-text')
+  it('cero es neutro: sin signo, sin flecha y con el chip neutro', () => {
+    const { container } = renderWithProviders(<Monto valor={0} chip flecha />)
+    expect(screen.getByText('$0')).toHaveClass('bg-muted text-muted-foreground')
+    expect(container.querySelector('span svg')).toBeNull()
+  })
+
+  it('el tono del backend manda sobre el signo', () => {
+    renderWithProviders(<Monto valor={-5000} tono="gasto" />)
+    expect(screen.getByText('−$5.000')).toHaveClass('text-foreground')
+  })
+
+  it.each([
+    ['ingreso', 'text-inversiones-text'],
+    ['neutro', 'text-muted-foreground'],
+    ['deudas', 'text-deudas'],
+    ['cartera', 'text-cartera'],
+    ['activos', 'text-activos-text'],
+    ['desconocido', 'text-muted-foreground'],
+  ])('tono %s pinta %s', (tono, clase) => {
+    renderWithProviders(<Monto valor={10} tono={tono} />)
+    expect(screen.getByText('+$10')).toHaveClass(clase)
   })
 
   it('negativo usa el chip de deudas', () => {

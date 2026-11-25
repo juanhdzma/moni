@@ -22,7 +22,7 @@
     @apply w-full sm:w-auto;
   }
   .modal-panel {
-    @apply mb-5 flex items-center justify-between gap-4 rounded-lg bg-muted px-4 py-3;
+    @apply mb-5 grid grid-cols-2 items-center gap-4 rounded-lg bg-muted px-4 py-3;
   }
   .modal-panel-col {
     @apply flex flex-col gap-0.5;
@@ -35,9 +35,6 @@
   }
   .modal-panel-value {
     @apply text-xl font-semibold tracking-tight;
-  }
-  .modal-panel-sub {
-    @apply text-xs text-muted-foreground;
   }
   .breakdown {
     @apply mb-4 hidden overflow-hidden rounded-lg border;
@@ -69,7 +66,13 @@
   }
   .form-input,
   .select-styled {
-    @apply flex h-10 w-full items-center rounded-md border bg-background px-3 text-[15px] text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground;
+    @apply flex items-center rounded-md border bg-background px-3 text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground;
+  }
+  .form-input {
+    @apply h-10 w-full text-body;
+  }
+  .select-styled {
+    @apply h-9 w-auto gap-2 text-sm;
   }
   .form-input:focus,
   .form-input.open,
@@ -78,9 +81,6 @@
   }
   textarea.form-input {
     @apply h-auto min-h-20 py-2;
-  }
-  .select-styled {
-    @apply h-9 w-auto gap-2 text-sm;
   }
   .form-status {
     @apply min-h-5 text-sm text-muted-foreground;
@@ -95,7 +95,7 @@
     @apply relative flex items-center;
   }
   .money-pfx {
-    @apply pointer-events-none absolute left-3 text-[15px] text-muted-foreground select-none;
+    @apply pointer-events-none absolute left-3 text-body text-muted-foreground select-none;
   }
   .money-wrap .form-input {
     @apply pl-7;
@@ -114,10 +114,10 @@
     @apply border border-deudas/40 bg-deudas/10 text-deudas hover:bg-deudas/15;
   }
   .btn-sm {
-    @apply h-9 px-3 text-[13px];
+    @apply h-11 px-3 text-small sm:h-9;
   }
   .icon-btn {
-    @apply grid size-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground;
+    @apply grid size-11 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:size-8;
   }
 
   .tipo-toggle {
@@ -134,13 +134,6 @@
   }
   .tipo-btn.gasto.sel {
     @apply text-deudas;
-  }
-
-  .progress-track {
-    @apply mt-3 h-1.5 overflow-hidden rounded-full bg-muted;
-  }
-  .progress-fill {
-    @apply h-full rounded-full transition-[width] duration-500;
   }
 
   details.advanced-toggle {
@@ -190,7 +183,7 @@
     @apply w-auto;
   }
   .cdd-arrow {
-    @apply ml-2 text-[10px] text-muted-foreground transition-transform;
+    @apply ml-2 text-muted-foreground transition-transform;
   }
   .cdd-trigger.open .cdd-arrow {
     @apply rotate-180;
@@ -213,35 +206,38 @@
   .cdp-panel.open {
     @apply block;
   }
+  .cdd-menu:focus-visible {
+    outline: none;
+  }
   .cdd-option {
-    @apply cursor-pointer rounded-md px-2.5 py-1.5 text-sm hover:bg-muted focus-visible:bg-muted;
+    @apply cursor-pointer rounded-md px-2.5 py-2.5 text-sm hover:bg-muted sm:py-1.5;
+  }
+  .cdd-option.active {
+    @apply bg-muted outline-2 -outline-offset-2 outline-ring;
   }
   .cdd-option.sel {
     @apply bg-muted font-semibold;
   }
   .cdp-icon {
-    @apply ml-2 text-xs opacity-60;
+    @apply ml-2 opacity-60;
   }
   .cdp-panel {
-    @apply w-64 p-3;
+    @apply w-[min(22rem,calc(100vw-1rem))] p-3 sm:w-64;
   }
   .cdp-nav {
     @apply mb-2 flex items-center justify-between;
-  }
-  .cdp-nav-btn {
-    @apply grid size-7 cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground;
   }
   .cdp-month {
     @apply text-sm font-semibold capitalize;
   }
   .cdp-weekdays {
-    @apply mb-1 grid grid-cols-7 text-center text-[11px] font-medium text-muted-foreground;
+    @apply mb-1 grid grid-cols-7 text-center text-label font-medium text-muted-foreground;
   }
   .cdp-days {
     @apply grid grid-cols-7 gap-px;
   }
   .cdp-day {
-    @apply h-8 cursor-pointer rounded-md text-[13px] hover:bg-muted;
+    @apply h-11 cursor-pointer rounded-md text-small hover:bg-muted focus-visible:bg-muted sm:h-8;
   }
   .cdp-day.dim {
     @apply text-muted-foreground opacity-50;

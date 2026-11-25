@@ -1,8 +1,8 @@
 import { cargarMovimientos } from '@/lib/api'
 import { fmtDateShort } from '@/lib/format'
-import { cn } from '@/lib/utils'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
+import { EmptyCard } from '@/components/EmptyCard'
 import { Monto } from '@/components/monto'
 import { Panel } from '@/components/panel'
 
@@ -20,17 +20,14 @@ export function Movimientos() {
                 <span className="block truncate">{t.descripcion || t.categoria}</span>
                 <span className="block truncate text-xs text-muted-foreground">{t.categoria}</span>
               </span>
-              <span
-                className={cn('recent-amount shrink-0 font-semibold', t.tipo === 'gasto' && 'text-foreground', t.tipo === 'transfer' && 'text-muted-foreground')}
-                data-tipo={t.tipo}
-              >
-                <Monto valor={t.monto_firmado} color={t.tipo === 'ingreso' ? 'siempre' : 'ninguno'} />
+              <span className="recent-amount shrink-0 font-semibold" data-tipo={t.tipo}>
+                <Monto valor={t.monto_firmado} tono={t.tono} />
               </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="py-3 text-sm text-muted-foreground">Sin transacciones</p>
+        <EmptyCard titulo={data.texto_vacio.titulo} texto={data.texto_vacio.texto} />
       )}
     </Panel>
   )

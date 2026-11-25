@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import { EmptyCard } from '@/components/EmptyCard'
 import { Tendencia } from '@/components/monto'
 import { Resumen } from '@/components/panel'
-import { cargarResumenActivos } from '../../lib/api'
+import { cargarResumenActivos } from '@/lib/api'
 import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
@@ -50,7 +50,7 @@ export function Activos({ active }: TabProps) {
         />
         <div id="activos-grid" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {loaded && resumen && !activos.length && (
-            <EmptyCard className="col-span-full rounded-2xl border bg-card p-6" titulo="Sin activos" texto="Registrá propiedades, vehículos u otros bienes con el botón Nuevo activo." />
+            <EmptyCard className="col-span-full rounded-2xl border bg-card p-6" titulo={resumen.texto_vacio.titulo} texto={resumen.texto_vacio.texto} />
           )}
           {activos.map((a) => (
             <ActivoCard key={a.id} activo={a} />

@@ -8,6 +8,7 @@ import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import type { PeriodoGastos } from '@/types'
+import { Skeleton } from '@/components/Skeleton'
 import { Barra, FraseTexto, Panel, Periodos, Total } from '@/components/panel'
 
 export function Gastos() {
@@ -46,7 +47,7 @@ export function Gastos() {
       {g === null ? (
         <div className="space-y-3">
           {[80, 55, 35].map((w) => (
-            <div key={w} className="h-4 animate-pulse rounded bg-muted" style={{ width: `${w}%` }} />
+            <Skeleton key={w} className="h-4" style={{ width: `${w}%` }} />
           ))}
         </div>
       ) : !entries.length ? (
@@ -65,17 +66,17 @@ export function Gastos() {
                     aria-controls={`gasto-detalle-${idx}`}
                     onClick={() => setAbierta(open ? null : cat)}
                     className={cn(
-                      'grid w-full cursor-pointer grid-cols-[minmax(0,7.5rem)_1fr_auto_auto] items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted',
+                      'grid w-full cursor-pointer grid-cols-[minmax(0,7.5rem)_1fr_auto_auto] items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm max-sm:min-h-11 transition-colors hover:bg-muted',
                       open && 'bg-muted',
                     )}
                   >
                     <span className="truncate">{cat}</span>
-                    <Barra valor={c.valor} max={g?.max ?? 0} className={cn('bg-foreground/75 transition-opacity', sel && !open && 'opacity-30')} />
+                    <Barra pct={c.pct} className={cn('bg-foreground/75 transition-opacity', sel && !open && 'opacity-30')} />
                     <span className="w-16 text-right font-semibold">{copShort(c.valor)}</span>
                     <ChevronDown aria-hidden="true" className={cn('size-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
                   </button>
                   {open && (
-                    <ul id={`gasto-detalle-${idx}`} className="mx-2 mb-2 divide-y rounded-md border text-[13px]">
+                    <ul id={`gasto-detalle-${idx}`} className="mx-2 mb-2 divide-y rounded-md border text-small">
                       {c.detalle.map((t) => (
                         <li key={t.id} className="flex items-baseline gap-3 px-3 py-1.5">
                           <span className="w-[4.5rem] shrink-0 whitespace-nowrap text-muted-foreground">{fmtDateShort(t.fecha)}</span>

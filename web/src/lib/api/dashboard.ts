@@ -8,7 +8,7 @@ import type {
   ProximasOperaciones,
   ResumenDashboard,
   SerieEvolucion,
-} from '../../types'
+} from '@/types'
 import { get, query } from './client'
 
 export const cargarResumenDashboard = () => get<ResumenDashboard>('/api/dashboard/resumen')

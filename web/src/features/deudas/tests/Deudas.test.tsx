@@ -1,9 +1,9 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { estado } from '../../../test/factories'
-import { renderWithProviders } from '../../../test/render'
-import { Deudas } from '../index'
+import { estado } from '@/test/factories'
+import { renderWithProviders } from '@/test/render'
+import { Deudas } from '@/features/deudas/index'
 import { conResumen, credito, dialog, full, resumenCompleto, saldado, tarjeta, installFakeDate } from './fixtures'
 
 installFakeDate()
@@ -31,7 +31,7 @@ describe('Deudas render', () => {
     expect(within(tar).getByText('Visa Oro')).toBeInTheDocument()
     expect(within(tar).getByText(/Disponible:/)).toHaveTextContent('$4.000.000')
     expect(within(tar).getByText(/Intereses pagados:/)).toBeInTheDocument()
-    expect(within(tar).getByAltText('Visa')).toHaveAttribute('src', 'assets/franquicias/visa.svg')
+    expect(within(tar).getByAltText('Visa')).toHaveAttribute('src', '/assets/franquicias/visa.svg')
     const term = document.getElementById('deudas-terminados') as HTMLElement
     expect(within(term).getByText('Préstamos terminados')).toBeInTheDocument()
     expect(within(term).getByText('Saldada')).toBeInTheDocument()
@@ -39,11 +39,30 @@ describe('Deudas render', () => {
     expect(within(term).getByText(/en intereses/)).toBeInTheDocument()
   })
 
-  it('el color de las barras sale del nivel que manda el backend', async () => {
+  it('una deuda en nivel medio pinta la barra con el tono alerta del backend', async () => {
+    conResumen()
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Crédito carro')
+    expect(document.querySelector('#deudas-grid-credito [aria-hidden="true"] > span')).toHaveClass('bg-alerta')
+  })
+
+  it('los botones de pago salen de meta.modos_pago: el préstamo tiene los tres y la tarjeta no tiene cuota', async () => {
+    conResumen()
+    renderWithProviders(<Deudas active />, { estado: full() })
+    const credito = within(document.getElementById('deudas-grid-credito') as HTMLElement)
+    expect(await credito.findByRole('button', { name: 'Pagar cuota' })).toBeInTheDocument()
+    expect(credito.getByRole('button', { name: 'Abonar' })).toBeInTheDocument()
+    expect(credito.getByRole('button', { name: 'Liquidar' })).toBeInTheDocument()
+    const tarjeta = within(document.getElementById('deudas-grid-tarjeta') as HTMLElement)
+    expect(await tarjeta.findByRole('button', { name: 'Abonar' })).toBeInTheDocument()
+    expect(tarjeta.queryByRole('button', { name: 'Pagar cuota' })).toBeNull()
+  })
+
+  it('el color de las barras sale del tono que manda el backend', async () => {
     conResumen({
       ...resumenCompleto,
-      creditos: [{ ...credito, nivel_progreso: 'alto' }],
-      tarjetas: [{ ...tarjeta, uso_pct: 95, nivel_uso: 'alto' }],
+      creditos: [{ ...credito, nivel_progreso: 'alto', tono_progreso: 'positivo' }],
+      tarjetas: [{ ...tarjeta, uso_pct: 95, nivel_uso: 'alto', tono_uso: 'negativo' }],
     })
     renderWithProviders(<Deudas active />, { estado: full() })
     await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Crédito carro')

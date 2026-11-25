@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { FechaNotas } from '../../../controls/FormFields'
-import { FormFooter } from '../../../controls/FormFooter'
-import { MoneyField } from '../../../controls/MoneyField'
-import { NombreField } from '../../../controls/NombreField'
-import { Select } from '../../../controls/Select'
-import { TipoToggle } from '../../../controls/TipoToggle'
-import { entero, parseMoney, soloFecha } from '../../../lib/format'
+import { Campo } from '@/controls/Campo'
+import { FechaNotas } from '@/controls/FormFields'
+import { FormFooter } from '@/controls/FormFooter'
+import { MoneyField } from '@/controls/MoneyField'
+import { NombreField } from '@/controls/NombreField'
+import { Select } from '@/controls/Select'
+import { TipoToggle } from '@/controls/TipoToggle'
+import { entero, parseMoney, soloFecha } from '@/lib/format'
 import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
-import type { Recurrente, TipoRec } from '../../../types'
+import type { RecIn, Recurrente, TipoRec } from '@/types'
 
 export function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const meta = useMeta()
@@ -21,11 +22,11 @@ export function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const [notas, setNotas] = useState(item?.notas || '')
 
   const save = async () => {
-    const data = {
+    const data: RecIn = {
       nombre: nombre.trim(),
       tipo,
       monto: parseMoney(monto),
-      frecuencia,
+      frecuencia: frecuencia as RecIn['frecuencia'],
       fecha_inicio: fecha,
       notas: notas.trim(),
     }
@@ -43,10 +44,9 @@ export function RecurrenteForm({ item }: { item: Recurrente | null }) {
       />
       <div className="form-row-2">
         <MoneyField id="m-monto" label="Monto (COP)" value={monto} onChange={setMonto} />
-        <div className="form-group">
-          <label className="form-label" htmlFor="m-frecuencia">Frecuencia</label>
+        <Campo id="m-frecuencia" label="Frecuencia">
           <Select id="m-frecuencia" value={frecuencia} onChange={setFrecuencia} options={meta?.frecuencias ?? []} />
-        </div>
+        </Campo>
       </div>
       <FechaNotas fechaType="date" fechaLabel="Fecha inicio (opcional)" fecha={fecha} onFecha={setFecha} notas={notas} onNotas={setNotas} notasPlaceholder="" />
       <FormFooter saveLabel={etiquetaGuardar()} onSave={() => void save()} onDelete={eliminar} cancelClassName="ml-auto" />

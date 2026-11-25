@@ -1,4 +1,4 @@
-import { apiFetch } from '../api'
+import { apiFetch } from '@/lib/api'
 
 export const pushSoportado = (): boolean =>
   'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window

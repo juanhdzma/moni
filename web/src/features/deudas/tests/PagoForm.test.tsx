@@ -1,27 +1,29 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { estado } from '../../../test/factories'
-import { failure } from '../../../test/mockFetch'
-import { renderWithProviders } from '../../../test/render'
-import { Deudas } from '../index'
+import { estado } from '@/test/factories'
+import { failure, previewSi } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
+import { Deudas } from '@/features/deudas/index'
 import { acc, conResumen, credito, dialog, full, hdr, resumenCompleto, installFakeDate } from './fixtures'
 
 installFakeDate()
+
+const conSaldo = (ok: unknown) => previewSi((b) => Number(b.total_pagado) > 0 && b.nuevo_saldo !== undefined, ok)
 
 describe('pago', () => {
   const pagar = (name: string) => within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText(name)
 
   it('pagar cuota: modo cuota, desglose y body', async () => {
     const user = userEvent.setup()
-    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 400000, intereses: 100000 } })
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': conSaldo({ capital: 400000, intereses: 100000 }) })
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await pagar('Pagar cuota'))
     expect(dialog()).toHaveTextContent('Pagar cuota · Crédito carro')
     expect(document.getElementById('m-monto')).toHaveValue('500.000')
     expect(document.getElementById('pay-breakdown')).not.toHaveClass('visible')
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '5600000')
-    expect(document.getElementById('pay-breakdown')).toHaveClass('visible')
+    await waitFor(() => expect(document.getElementById('pay-breakdown')).toHaveClass('visible'))
     await waitFor(() => expect(document.getElementById('pay-capital')).toHaveTextContent('400.000'))
     expect(document.getElementById('pay-intereses')).toHaveTextContent('100.000')
     const previews = f.mutations().filter((c) => c.url === '/api/deuda/1/pago/preview')
@@ -41,12 +43,23 @@ describe('pago', () => {
     expect(m?.body).not.toHaveProperty('avanzar_cuota')
     expect(m?.body).not.toHaveProperty('intereses')
     expect(m?.body).not.toHaveProperty('descripcion')
-    expect(m?.body).toMatchObject({ fecha: '' })
+    expect(m?.body).not.toHaveProperty('fecha')
+  })
+
+  it('pide el preview siempre: sin saldo nuevo no manda nuevo_saldo y el null del backend oculta el desglose', async () => {
+    const user = userEvent.setup()
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago/preview': conSaldo({ capital: 1, intereses: 1 }) })
+    renderWithProviders(<Deudas active />, { estado: full() })
+    await user.click(await pagar('Pagar cuota'))
+    await waitFor(() => expect(f.callsTo('POST', '/api/deuda/1/pago/preview')).toHaveLength(1))
+    expect(f.callsTo('POST', '/api/deuda/1/pago/preview')[0]).toMatchObject({ headers: hdr, body: { total_pagado: 500000, modo: 'cuota' } })
+    expect(f.callsTo('POST', '/api/deuda/1/pago/preview')[0]?.body).not.toHaveProperty('nuevo_saldo')
+    expect(document.getElementById('pay-breakdown')).not.toHaveClass('visible')
   })
 
   it('muestra el desglose que devuelve el backend para un saldo fraccionario', async () => {
     const user = userEvent.setup()
-    conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 235, intereses: 266 } })
+    conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': conSaldo({ capital: 235, intereses: 266 }) })
     renderWithProviders(<Deudas active />, { estado: estado({ deudas: [{ ...credito, saldo_actual: 1234.5, cuota_mensual: 500 }] }) })
     await user.click(await pagar('Pagar cuota'))
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '1000')
@@ -56,7 +69,7 @@ describe('pago', () => {
 
   it('pagar sin registrar_tx', async () => {
     const user = userEvent.setup()
-    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 400000, intereses: 100000 } })
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': conSaldo({ capital: 400000, intereses: 100000 }) })
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await pagar('Pagar cuota'))
     await user.type(document.getElementById('m-saldo-nuevo') as HTMLElement, '5500000')
@@ -68,7 +81,7 @@ describe('pago', () => {
 
   it('abono: parte vacío, manda modo abono sin avanzar_cuota', async () => {
     const user = userEvent.setup()
-    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 900000, intereses: 100000 } })
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': conSaldo({ capital: 900000, intereses: 100000 }) })
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await pagar('Abonar'))
     expect(dialog()).toHaveTextContent('Abonar · Crédito carro')
@@ -92,14 +105,14 @@ describe('pago', () => {
 
   it('liquidar: prellenado con el saldo completo, modo liquidar', async () => {
     const user = userEvent.setup()
-    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': { capital: 6000000, intereses: 0 } })
+    const f = conResumen(resumenCompleto, { 'POST /api/deuda/1/pago': {}, 'POST /api/deuda/1/pago/preview': conSaldo({ capital: 6000000, intereses: 0 }) })
     renderWithProviders(<Deudas active />, { estado: full() })
     await user.click(await pagar('Liquidar'))
     expect(dialog()).toHaveTextContent('Liquidar · Crédito carro')
     expect(document.getElementById('m-monto')).toHaveValue('6.000.000')
     expect(document.getElementById('m-saldo-nuevo')).toHaveValue('0')
-    expect(document.getElementById('pay-breakdown')).toHaveClass('visible')
-    await waitFor(() => expect(document.getElementById('pay-capital')).toHaveTextContent('6.000.000'))
+    await waitFor(() => expect(document.getElementById('pay-breakdown')).toHaveClass('visible'))
+    expect(document.getElementById('pay-capital')).toHaveTextContent('6.000.000')
     expect(document.getElementById('pay-intereses')).toHaveTextContent('0')
     expect(f.mutations()[0]).toMatchObject({ url: '/api/deuda/1/pago/preview', body: { total_pagado: 6000000, nuevo_saldo: 0, modo: 'liquidar' } })
     await user.click(within(dialog()).getByRole('button', { name: 'Liquidar' }))

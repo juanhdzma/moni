@@ -16,9 +16,9 @@ describe('render', () => {
     expect(within(fija).getByText('CDT Uno')).toBeInTheDocument()
     expect(fija).toHaveTextContent('12,00% EA')
     expect(fija).toHaveTextContent('Desde')
-    expect(within(fija).getByRole('button', { name: 'Rendimiento' })).toBeInTheDocument()
+    expect(await within(fija).findByRole('button', { name: 'Rendimiento' })).toBeInTheDocument()
     const variable = document.getElementById('inv-grid-variable') as HTMLElement
-    expect(within(variable).getByRole('button', { name: 'Actualizar' })).toBeInTheDocument()
+    expect(await within(variable).findByRole('button', { name: 'Actualizar' })).toBeInTheDocument()
     expect(variable).toHaveTextContent('Valor sin actualizar hace más de 1 mes')
     expect(fija).not.toHaveTextContent('Valor sin actualizar')
   })

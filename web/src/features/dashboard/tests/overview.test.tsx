@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { renderWithProviders } from '../../../test/render'
-import { mockFetch } from '../../../test/mockFetch'
-import { Dashboard } from '../index'
+import { renderWithProviders } from '@/test/render'
+import { mockFetch } from '@/test/mockFetch'
+import { Dashboard } from '@/features/dashboard/index'
 import { DataProvider } from '@/shell/providers/DataProvider'
 import { ModalProvider } from '@/shell/providers/ModalProvider'
 import { ESTE_MES, EVOLUCION, frase, rutas, pill, stat } from './fixtures'
@@ -43,6 +43,9 @@ describe('Patrimonio', () => {
     expect(stat('stat-activos')).toHaveTextContent('1 activo')
     expect(stat('stat-deudas')).toHaveTextContent('−$150k')
     expect(stat('stat-deudas')).toHaveTextContent('$20.000/mes · 1 deuda')
+    expect(stat('stat-deudas').querySelector('.text-deudas')).toBeInTheDocument()
+    expect(stat('stat-balance').querySelector('.text-cartera')).toBeInTheDocument()
+    expect(stat('stat-activos').querySelector('.text-activos-text')).toBeInTheDocument()
   })
 
   it('muestra placeholder antes de la primera carga', () => {
@@ -60,6 +63,7 @@ describe('Este mes en tu cartera', () => {
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('dash-mes')).toHaveTextContent('Entró+$1.000.000'))
     expect(stat('dash-mes')).toHaveTextContent('Salió−$200.000')
+    expect(screen.getByText('−$200.000')).toHaveClass('text-deudas')
     expect(stat('dash-mes')).toHaveTextContent('Te quedó$800.000')
     expect(stat('stat-ahorro')).toHaveTextContent('Te quedó el 80,0% de lo que entró.')
     expect(stat('stat-ahorro').querySelector('.text-inversiones-text')).toHaveTextContent('80,0%')
@@ -67,7 +71,7 @@ describe('Este mes en tu cartera', () => {
   })
 
   it('avisa cuando salió más de lo que entró', async () => {
-    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 100000, gastos: 150000, quedo: -50000, frase: { tipo: 'excedio', pct: 50, ...frase('Salió ', ['50,0%', 'negativo'], ' más de lo que entró.') } } }))
+    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 100000, gastos: 150000, gastos_firmado: -150000, quedo: -50000, tono_quedo: 'negativo', frase: { tipo: 'excedio', pct: 50, ...frase('Salió ', ['50,0%', 'negativo'], ' más de lo que entró.') } } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('stat-ahorro')).toHaveTextContent('Salió 50,0% más de lo que entró.'))
     expect(stat('stat-ahorro').querySelector('.text-deudas')).toHaveTextContent('50,0%')
@@ -75,9 +79,11 @@ describe('Este mes en tu cartera', () => {
   })
 
   it('sin ingresos lo dice', async () => {
-    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 0, gastos: 0, quedo: 0, frase: { tipo: 'sin_ingresos', ...frase('Todavía no entró plata este mes.') } } }))
+    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 0, gastos: 0, gastos_firmado: 0, quedo: 0, tono_ingresos: 'neutro', tono_quedo: 'neutro', frase: { tipo: 'sin_ingresos', ...frase('Todavía no entró plata este mes.') } } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('stat-ahorro')).toHaveTextContent('Todavía no entró plata este mes.'))
+    expect(stat('dash-mes')).toHaveTextContent('Entró$0')
+    expect(screen.getAllByText('$0', { selector: '#dash-mes dd span' })[0]).toHaveClass('text-muted-foreground')
   })
 })
 
@@ -110,15 +116,17 @@ describe('Últimos movimientos', () => {
     const items = document.querySelectorAll('#recent-list .recent-item')
     expect(items[0]).toHaveTextContent('Pago deuda')
     expect(items[0]?.querySelector('.recent-amount')).toHaveTextContent('−$100.000')
-    expect(items[0]?.querySelector('.recent-amount')).toHaveClass('text-muted-foreground')
-    expect(items[1]?.querySelector('.recent-amount')).toHaveClass('text-foreground')
+    expect(items[0]?.querySelector('.recent-amount > span')).toHaveClass('text-muted-foreground')
+    expect(items[1]?.querySelector('.recent-amount > span')).toHaveClass('text-foreground')
+    expect(items[2]?.querySelector('.recent-amount > span')).toHaveClass('text-inversiones-text')
     expect(items[2]?.querySelector('.recent-amount')).toHaveTextContent('+$1.000.000')
   })
 
   it('muestra el estado vacío', async () => {
-    mockFetch(rutas({ 'GET /api/dashboard/movimientos': { items: [] } }))
+    mockFetch(rutas({ 'GET /api/dashboard/movimientos': { items: [], texto_vacio: { titulo: 'Nada por acá', texto: 'Texto del backend' } } }))
     renderWithProviders(<Dashboard active />)
-    expect(await screen.findByText('Sin transacciones')).toBeInTheDocument()
+    expect(await screen.findByText('Nada por acá')).toBeInTheDocument()
+    expect(screen.getByText('Texto del backend')).toBeInTheDocument()
   })
 })
 

@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { formatearCop, formatearCopCorto } from '../../lib/format'
-import { useData } from '../providers/DataProvider'
+import { formatearCop, formatearCopCorto } from '@/lib/format'
+import { useData } from '@/shell/providers/DataProvider'
 
 export function useMoneda() {
-  const simbolo = useData().estado.ajustes.moneda_simbolo || '$'
+  const simbolo = useData().estado.ajustes.moneda_simbolo
   return useMemo(
     () => ({
       simbolo,

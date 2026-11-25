@@ -1,10 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { categoriasBase, estado, tx } from '../../../test/factories'
-import { failure } from '../../../test/mockFetch'
-import { renderWithProviders } from '../../../test/render'
-import { expectLabels, modalBody } from '../../../test/labels'
+import { categoriasBase, estado, tx } from '@/test/factories'
+import { failure } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
+import { expectLabels, modalBody } from '@/test/labels'
 import { Transacciones, openTxForm } from '..'
 import { datos, filaDe, listado, mockFetch, opcionesTx, ui } from './fixtures'
 
@@ -158,12 +158,11 @@ describe('tx form', () => {
     const user = userEvent.setup()
     ui()
     await user.click(await screen.findByRole('button', { name: 'Editar Mercado' }))
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
     await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
-    expect(confirm).toHaveBeenCalledWith('¿Eliminar este movimiento?')
+    expect(screen.getByText('¿Eliminar este movimiento?')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Eliminar' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/tx/1', headers: { 'X-Moni-Request': '1' } })
-    confirm.mockRestore()
   })
 
   it('un delete fallido recarga y muestra el banner', async () => {
@@ -171,11 +170,10 @@ describe('tx form', () => {
     const user = userEvent.setup()
     ui()
     await user.click(await screen.findByRole('button', { name: 'Editar Mercado' }))
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
     await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
+    await user.click(screen.getByRole('button', { name: 'Eliminar' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))
     await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
-    confirm.mockRestore()
   })
 
   it('shows API error in modal status', async () => {

@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ScanFace } from 'lucide-react'
 import { Cargando } from '@/components/Cargando'
-import { ApiError } from '../../lib/api'
-import { esCancelacion, passkeysDisponibles } from '../../lib/seguridad/passkeys'
+import { Campo } from '@/controls/Campo'
+import { ApiError } from '@/lib/api'
+import { esCancelacion, passkeysDisponibles } from '@/lib/seguridad/passkeys'
 import { useAuth } from '@/shell/providers/AuthProvider'
 
 function mensajeDeLogin(err: unknown): string {
@@ -105,8 +106,7 @@ function Formulario() {
             {textoBloqueo}
           </p>
         )}
-        <div className="form-group">
-          <label className="form-label" htmlFor="login-clave">Clave</label>
+        <Campo id="login-clave" label="Clave">
           <input
             className="form-input"
             id="login-clave"
@@ -117,7 +117,7 @@ function Formulario() {
             value={clave}
             onChange={(e) => setClave(e.target.value)}
           />
-        </div>
+        </Campo>
         {error && !textoBloqueo && (
           <p className="text-sm text-deudas" role="alert">
             {error}

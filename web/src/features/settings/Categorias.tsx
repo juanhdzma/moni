@@ -1,21 +1,20 @@
 import { X } from 'lucide-react'
 import { Panel } from '@/components/panel'
+import { claseDeTono } from '@/components/tono'
+import { IconButton } from '@/controls/IconButton'
 import { useCategorias } from '@/shell/hooks/useCategorias'
-import { CategoriaInput } from '../transacciones'
+import { CategoriaInput } from '@/features/transacciones'
 import { useMeta } from '@/shell/hooks/useMeta'
-import type { TipoTx } from '../../types'
+import type { TipoTx } from '@/types'
 
-const DOT: Record<TipoTx, string> = { ingreso: 'bg-inversiones', gasto: 'bg-deudas', transfer: 'bg-muted-foreground' }
-
-function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
+function CategoriaGroup({ tipo, label, tono }: { tipo: TipoTx; label: string; tono: string }) {
   const { categorias, addCategoria, removeCategoria } = useCategorias()
   const cats = categorias[tipo]
-
 
   return (
     <div>
       <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-        <span className={`size-2 rounded-full ${DOT[tipo]}`}></span>
+        <span className={`size-2 rounded-full ${claseDeTono(tono).fondo}`} aria-hidden="true"></span>
         {label}
       </div>
       <div className="mb-3 flex flex-wrap gap-1.5">
@@ -23,9 +22,9 @@ function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
           <span className="inline-flex items-center gap-1 rounded-full border bg-muted px-2.5 py-0.5 text-xs" key={c.nombre}>
             {c.nombre}
             {c.sistema ? null : (
-              <button type="button" className="rounded-full p-0.5 text-muted-foreground hover:text-foreground" onClick={() => void removeCategoria(tipo, c.nombre)} aria-label={`Eliminar ${c.nombre}`}>
+              <IconButton label={`Eliminar ${c.nombre}`} className="size-6 rounded-full sm:size-5" onClick={() => void removeCategoria(tipo, c.nombre)}>
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </IconButton>
             )}
           </span>
         ))}
@@ -38,12 +37,14 @@ function CategoriaGroup({ tipo, label }: { tipo: TipoTx; label: string }) {
 
 export function Categorias() {
   const meta = useMeta()
+  const { categorias } = useCategorias()
+  const esTipo = (valor: string): valor is TipoTx => valor in categorias
   return (
     <Panel id="settings-categorias-card" titulo="Categorías">
       <div id="settings-categorias" className="grid gap-5 md:grid-cols-3">
-        {meta?.tipos_categoria.map(({ value, label }) => (
-          <CategoriaGroup key={value} tipo={value} label={label} />
-        ))}
+        {meta?.tipos_categoria.map(({ value, label, tono }) =>
+          esTipo(value) ? <CategoriaGroup key={value} tipo={value} label={label} tono={tono ?? 'neutro'} /> : null,
+        )}
       </div>
     </Panel>
   )

@@ -9,8 +9,12 @@ import type {
   OpcionesTx,
   OpsOcultas,
   ProximasOperaciones,
+  ResumenActivos,
   ResumenDashboard,
-} from '../types'
+  ResumenDeudas,
+  ResumenInversiones,
+  ResumenRecurrentes,
+} from '@/types'
 import { afectadasPorDefecto, HEADER_AFECTADAS } from './afectadas'
 import { estado } from './factories'
 import { filaRegistrada } from './filas'
@@ -43,11 +47,12 @@ const EVOLUCION: Evolucion = {
   desde: 0,
   cambio: 0,
   nombre_serie: 'Patrimonio',
+  tono: 'cartera',
   descripcion_grafico: 'Evolución mensual de patrimonio',
   frase: { texto: '', partes: [] },
 }
 
-const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, quedo: 0, titulo_quedo: 'Te quedó', texto_tarjeta: 'Lo pagado con tarjeta no sale de la cartera.', frase: FRASE_SIN_INGRESOS, descripcion_grafico: 'Entró y salió por mes, últimos 6 meses', meses: [] }
+const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, gastos_firmado: 0, quedo: 0, tono_ingresos: 'neutro', tono_gastos: 'deudas', tono_quedo: 'neutro', titulo_quedo: 'Te quedó', texto_tarjeta: 'Lo pagado con tarjeta no sale de la cartera.', frase: FRASE_SIN_INGRESOS, descripcion_grafico: 'Entró y salió por mes, últimos 6 meses', meses: [] }
 
 const GASTOS: GastosPeriodo = {
   periodo: '1M',
@@ -60,9 +65,9 @@ const GASTOS: GastosPeriodo = {
   texto_total: 'Total gastado, con tarjetas',
 }
 
-const MOVIMIENTOS: Movimientos = { items: [] }
+const MOVIMIENTOS: Movimientos = { items: [], texto_vacio: { titulo: 'Sin transacciones', texto: 'Registrá un ingreso o gasto y aparece acá.' } }
 
-const PROXIMAS: ProximasOperaciones = { hoy: ESTADO_INICIAL.hoy, items: [], extra: [], texto_ver_todas: null, texto_ver_menos: null, frase: null, texto_vacio: 'Sin operaciones en los próximos 45 días.' }
+const PROXIMAS: ProximasOperaciones = { items: [], extra: [], texto_ver_todas: null, texto_ver_menos: null, frase: null, texto_vacio: 'Sin operaciones en los próximos 45 días.' }
 
 const LISTADO_TX: ListadoTx = {
   items: [],
@@ -70,7 +75,7 @@ const LISTADO_TX: ListadoTx = {
   opciones: { meses: [], categorias: [], tipos: [] },
   pills: [],
   texto_vacio: { titulo: 'Sin movimientos', texto: 'Agregá un ingreso o gasto con el botón de arriba.' },
-  resumen: { titulo: 'Te quedó', ingresos: 0, gastos: 0, neto: 0, dato: { texto: '', partes: [] }, segmentos: [] },
+  resumen: { titulo: 'Te quedó', ingresos: 0, gastos: 0, gastos_firmado: 0, neto: 0, dato: { texto: '', partes: [] }, segmentos: [] },
 }
 
 const OPCIONES_TX: OpcionesTx = {
@@ -101,7 +106,7 @@ const VISTAS_VACIAS: Record<string, Handler> = {
     terminadas: [],
     texto_vacio_creditos: { titulo: 'Sin créditos', texto: 'Agregá uno con el botón + de arriba.' },
     texto_vacio_tarjetas: { titulo: 'Sin tarjetas', texto: 'Agregá una con el botón + de arriba.' },
-  },
+  } satisfies ResumenDeudas,
   'GET /api/inv/resumen': {
     total_actual: 0,
     ganancia: 0,
@@ -114,7 +119,7 @@ const VISTAS_VACIAS: Record<string, Handler> = {
     variables: [],
     texto_vacio_fijas: { titulo: 'Sin inversiones fijas', texto: 'Agregá una con el botón + de arriba.' },
     texto_vacio_variables: { titulo: 'Sin inversiones variables', texto: 'Agregá una con el botón + de arriba.' },
-  },
+  } satisfies ResumenInversiones,
   'GET /api/activos/resumen': {
     total_actual: 0,
     variacion: 0,
@@ -123,14 +128,17 @@ const VISTAS_VACIAS: Record<string, Handler> = {
     items: [],
     texto_variacion: '',
     texto_conteo: '0 activos',
-  },
+    texto_vacio: { titulo: 'Sin activos', texto: 'Registrá propiedades, vehículos u otros bienes con el botón Nuevo activo.' },
+  } satisfies ResumenActivos,
   'GET /api/rec/resumen': {
     neto_mensual: 0,
     dato: { texto: '', partes: [] },
     segmentos: [],
     ingresos: [],
     gastos: [],
-  },
+    texto_vacio_ingresos: { titulo: 'Sin ingresos recurrentes', texto: 'Agregá uno con el botón Nuevo.' },
+    texto_vacio_gastos: { titulo: 'Sin gastos recurrentes', texto: 'Agregá uno con el botón Nuevo.' },
+  } satisfies ResumenRecurrentes,
   'GET /api/ops-ocultas': OPS_OCULTAS,
   'GET /api/auth/estado': { configurado: true, autenticado: true, tiene_passkeys: false },
   'GET /api/auth/sesiones': [],
@@ -181,3 +189,9 @@ export function mockFetch(routes: Record<string, Handler> = {}) {
     },
   }
 }
+
+export const previewConMonto = (campo: string, respuesta: unknown) => (call: RecordedCall) =>
+  Number((call.body as Record<string, unknown>)[campo]) > 0 ? respuesta : null
+
+export const previewSi = (condicion: (body: Record<string, unknown>) => boolean, respuesta: unknown) => (call: RecordedCall) =>
+  condicion(call.body as Record<string, unknown>) ? respuesta : null

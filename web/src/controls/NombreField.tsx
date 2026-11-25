@@ -1,3 +1,6 @@
+import { useMeta } from '@/shell/hooks/useMeta'
+import { Campo } from './Campo'
+
 interface Props {
   value: string
   onChange: (v: string) => void
@@ -5,20 +8,18 @@ interface Props {
 }
 
 export function NombreField({ value, onChange, placeholder }: Props) {
+  const maxLength = useMeta()?.limites.nombre
   return (
-    <div className="form-group">
-      <label className="form-label" htmlFor="m-nombre">
-        Nombre
-      </label>
+    <Campo id="m-nombre" label="Nombre">
       <input
         className="form-input"
         type="text"
         id="m-nombre"
-        maxLength={40}
+        maxLength={maxLength}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
       />
-    </div>
+    </Campo>
   )
 }

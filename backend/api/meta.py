@@ -22,6 +22,7 @@ from ..calculos.constantes import (
 from ..calculos.listados import EFECTIVO_DEBITO, columnas_transaccion
 from ..calculos.operaciones.frecuencias import opciones_frecuencia
 from ..push.job_diario import HORA_AVISO
+from ..core.afectadas import DEL_BOOTSTRAP, TODAS
 from ..core.backup import aviso_truncate
 from ..schemas.meta import MetaOut
 
@@ -54,4 +55,6 @@ def meta():
         "categoria_largo_max": CATEGORIA_LARGO_MAX,
         "limites": LIMITES,
         "truncate": aviso_truncate(),
+        "entidades": TODAS,
+        "entidades_del_bootstrap": DEL_BOOTSTRAP,
     }

@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import type { TipoRec } from '../../../types'
+import type { TipoRec } from '@/types'
 import { CategoriaInput } from './CategoriaInput'
 import { useCategorias } from '@/shell/hooks/useCategorias'
 

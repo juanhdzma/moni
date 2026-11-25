@@ -1,5 +1,5 @@
 import { within } from '@testing-library/react'
-import type { EsteMes, Frase, Evolucion, GastosPeriodo, Movimientos, ProximasOperaciones, ResumenDashboard } from '../../../types'
+import type { EsteMes, Frase, Evolucion, GastosPeriodo, Movimientos, ProximasOperaciones, ResumenDashboard } from '@/types'
 
 export const frase = (...partes: (string | [string, 'positivo' | 'negativo' | 'fuerte'])[]): Frase => {
   const items = partes.map((p) => (typeof p === 'string' ? { texto: p, tono: null } : { texto: p[0], tono: p[1] }))
@@ -30,10 +30,10 @@ export const RESUMEN: ResumenDashboard = {
   proy_delta: 720000,
   texto_proyeccion: 'proyectados en 12 meses',
   partes: [
-    { id: 'activos', nombre: 'Activos', valor: 300000, negativo: false, valor_firmado: 300000, detalle: '1 activo' },
-    { id: 'inversiones', nombre: 'Inversiones', valor: 500000, negativo: false, valor_firmado: 500000, detalle: '+$100k (+25,0%)' },
-    { id: 'balance', nombre: 'Cartera', valor: 670000, negativo: false, valor_firmado: 670000, detalle: 'Efectivo y cuentas' },
-    { id: 'deudas', nombre: 'Deudas', valor: 150000, negativo: true, valor_firmado: -150000, detalle: '$20.000/mes · 1 deuda' },
+    { id: 'activos', nombre: 'Activos', valor: 300000, negativo: false, valor_firmado: 300000, detalle: '1 activo', tono: 'activos' },
+    { id: 'inversiones', nombre: 'Inversiones', valor: 500000, negativo: false, valor_firmado: 500000, detalle: '+$100k (+25,0%)', tono: 'inversiones' },
+    { id: 'balance', nombre: 'Cartera', valor: 670000, negativo: false, valor_firmado: 670000, detalle: 'Efectivo y cuentas', tono: 'cartera' },
+    { id: 'deudas', nombre: 'Deudas', valor: 150000, negativo: true, valor_firmado: -150000, detalle: '$20.000/mes · 1 deuda', tono: 'deudas' },
   ],
   total_barra: 1620000,
 }
@@ -49,6 +49,7 @@ export const EVOLUCION: Evolucion = {
   desde: 600000,
   cambio: 720000,
   nombre_serie: 'Patrimonio',
+  tono: 'cartera',
   descripcion_grafico: 'Evolución mensual de patrimonio',
   frase: frase('Subiste ', ['+$720k', 'positivo'], ' desde fin de mar: de $600k a ', ['$1,3M', 'fuerte'], '.'),
 }
@@ -56,7 +57,11 @@ export const EVOLUCION: Evolucion = {
 export const ESTE_MES: EsteMes = {
   ingresos: 1000000,
   gastos: 200000,
+  gastos_firmado: -200000,
   quedo: 800000,
+  tono_ingresos: 'positivo',
+  tono_gastos: 'deudas',
+  tono_quedo: 'positivo',
   titulo_quedo: 'Te quedó',
   texto_tarjeta: 'Lo pagado con tarjeta no sale de la cartera.',
   frase: FRASE_QUEDO,
@@ -76,21 +81,21 @@ export const GASTOS: GastosPeriodo = {
   top: { categoria: 'Comida', valor: 200000, pct: 80 },
   frase: frase(['Comida', 'fuerte'], ' se lleva el ', ['80%', 'fuerte'], ' de lo que gastaste en el último mes.'),
   categorias: [
-    { categoria: 'Comida', valor: 200000, n: 8, detalle: [{ id: 2, fecha: '2026-08-05', descripcion: 'Almuerzo', categoria: 'Comida', monto: 200000 }], restantes_texto: 'y 2 más en Transacciones' },
-    { categoria: 'Mercado', valor: 50000, n: 1, detalle: [{ id: 3, fecha: '2026-08-06', descripcion: '', categoria: 'Mercado', monto: 50000 }], restantes_texto: null },
+    { categoria: 'Comida', valor: 200000, n: 8, detalle: [{ id: 2, fecha: '2026-08-05', descripcion: 'Almuerzo', categoria: 'Comida', monto: 200000 }], restantes_texto: 'y 2 más en Transacciones', pct: 100 },
+    { categoria: 'Mercado', valor: 50000, n: 1, detalle: [{ id: 3, fecha: '2026-08-06', descripcion: '', categoria: 'Mercado', monto: 50000 }], restantes_texto: null, pct: 25 },
   ],
 }
 
 export const MOVIMIENTOS: Movimientos = {
   items: [
-    { id: 4, fecha: '2026-08-07', tipo: 'transfer', categoria: 'Pago deuda', descripcion: '', monto: 100000, monto_firmado: -100000 },
-    { id: 3, fecha: '2026-08-06', tipo: 'gasto', categoria: 'Mercado', descripcion: '', monto: 50000, monto_firmado: -50000 },
-    { id: 1, fecha: '2026-08-01', tipo: 'ingreso', categoria: 'Salario', descripcion: '', monto: 1000000, monto_firmado: 1000000 },
+    { id: 4, fecha: '2026-08-07', tipo: 'transfer', categoria: 'Pago deuda', descripcion: '', monto: 100000, monto_firmado: -100000, editable: false, tono: 'neutro', icono_metodo: 'efectivo' },
+    { id: 3, fecha: '2026-08-06', tipo: 'gasto', categoria: 'Mercado', descripcion: '', monto: 50000, monto_firmado: -50000, editable: true, tono: 'gasto', icono_metodo: 'efectivo' },
+    { id: 1, fecha: '2026-08-01', tipo: 'ingreso', categoria: 'Salario', descripcion: '', monto: 1000000, monto_firmado: 1000000, editable: true, tono: 'ingreso', icono_metodo: 'efectivo' },
   ],
+  texto_vacio: { titulo: 'Sin transacciones', texto: 'Registrá un ingreso o gasto y aparece acá.' },
 }
 
 export const PROXIMAS: ProximasOperaciones = {
-  hoy: '2026-08-15',
   extra: [],
   texto_ver_todas: null,
   texto_ver_menos: null,

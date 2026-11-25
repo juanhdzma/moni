@@ -1,4 +1,4 @@
-import type { Meta } from '../types'
+import type { Meta } from '@/types'
 
 export const META: Meta = {
   frecuencias: [
@@ -22,25 +22,30 @@ export const META: Meta = {
     { value: 'gasto', label: 'Gasto' },
   ],
   tipos_categoria: [
-    { value: 'ingreso', label: 'Ingresos' },
-    { value: 'gasto', label: 'Gastos' },
-    { value: 'transfer', label: 'Transferencias' },
+    { value: 'ingreso', label: 'Ingresos', tono: 'ingreso' },
+    { value: 'gasto', label: 'Gastos', tono: 'gasto' },
+    { value: 'transfer', label: 'Transferencias', tono: 'transfer' },
   ],
   tipos_inversion: [
-    { value: 'fija', label: 'Fija', tono: 'ingreso' },
-    { value: 'variable', label: 'Variable', tono: 'gasto' },
+    { value: 'fija', label: 'Fija', tono: 'ingreso', campos: ['tasa', 'pago'] },
+    { value: 'variable', label: 'Variable', tono: 'gasto', campos: [] },
   ],
   tipos_tasa: [
     { value: 'ea', label: 'EA' },
     { value: 'mv', label: 'MV' },
   ],
   pagos_inversion: [
-    { value: 'mensual', label: 'Mensual', tono: 'ingreso' },
-    { value: 'vencimiento', label: 'Al vencimiento' },
+    { value: 'mensual', label: 'Mensual', tono: 'ingreso', requiere_dia: true },
+    { value: 'vencimiento', label: 'Al vencimiento', requiere_dia: false },
   ],
   clases_deuda: [
-    { value: 'prestamo', label: 'Préstamo' },
-    { value: 'tarjeta', label: 'Tarjeta' },
+    { value: 'prestamo', label: 'Préstamo', es_tarjeta: false },
+    { value: 'tarjeta', label: 'Tarjeta', es_tarjeta: true },
+  ],
+  modos_pago: [
+    { value: 'cuota', label: 'Pagar cuota', placeholder_notas: 'Ej. Cuota #14' },
+    { value: 'abono', label: 'Abonar', placeholder_notas: 'Ej. Abono extraordinario' },
+    { value: 'liquidar', label: 'Liquidar', placeholder_notas: 'Liquidar la deuda' },
   ],
   tipos_retiro: [
     { value: 'total', label: 'Total', tono: 'ingreso' },
@@ -58,16 +63,18 @@ export const META: Meta = {
     { value: '£', label: 'Libra esterlina (£)' },
   ],
   series_evolucion: [
-    { value: 'patrimonio', label: 'Patrimonio' },
-    { value: 'inversiones', label: 'Inversiones' },
+    { value: 'patrimonio', label: 'Patrimonio', tono: 'cartera' },
+    { value: 'inversiones', label: 'Inversiones', tono: 'inversiones' },
   ],
   columnas_transaccion: [
-    { col: 'fecha', label: 'Fecha', dir_defecto: -1 },
-    { col: 'tipo', label: 'Tipo', dir_defecto: 1 },
-    { col: 'categoria', label: 'Categoría', dir_defecto: 1 },
-    { col: 'descripcion', label: 'Descripción', dir_defecto: 1 },
-    { col: 'monto', label: 'Monto', dir_defecto: -1 },
+    { col: 'fecha', label: 'Fecha', dir_defecto: -1, ordenable: true, oculta_en_movil: false },
+    { col: 'tipo', label: 'Tipo', dir_defecto: 1, ordenable: true, oculta_en_movil: true },
+    { col: 'categoria', label: 'Categoría', dir_defecto: 1, ordenable: true, oculta_en_movil: true },
+    { col: 'descripcion', label: 'Descripción', dir_defecto: 1, ordenable: true, oculta_en_movil: false },
+    { col: 'monto', label: 'Monto', dir_defecto: -1, ordenable: true, oculta_en_movil: false },
+    { col: 'metodo_pago', label: 'Método de pago', dir_defecto: 1, ordenable: false, oculta_en_movil: false },
   ],
+
   defaults: {
     frecuencia_recurrente: 'mensual',
     tipo_inversion: 'fija',
@@ -75,8 +82,23 @@ export const META: Meta = {
     tipo_tasa: 'ea',
     clase_deuda: 'prestamo',
     franquicia: 'Visa',
+    tipo_retiro: 'total',
+    periodo_gastos: '1M',
+    periodo_evolucion: '6M',
+    serie_evolucion: 'patrimonio',
+    orden_tx: { col: 'fecha', dir: -1 },
+    etiqueta_efectivo: 'Efectivo / Débito',
   },
   categoria_largo_max: 25,
+  limites: { nombre: 40, descripcion: 120, notas: 200, dia_pago_max: 31 },
+  truncate: {
+    palabra: 'BORRAR',
+    texto:
+      'Esto borra permanentemente todas las deudas, inversiones, activos, recurrentes, transacciones, categorías y operaciones ocultas. Se conservan los ajustes y las suscripciones push.',
+    entidades: ['deudas', 'inversiones', 'activos', 'recurrentes', 'transacciones', 'categorías', 'operaciones ocultas'],
+  },
+  entidades: ['transacciones', 'deudas', 'inversiones', 'activos', 'recurrentes', 'categorias', 'ajustes', 'opsOcultas'],
+  entidades_del_bootstrap: ['activos', 'inversiones', 'ajustes', 'categorias'],
   push: { hora: '8:00', frase: 'Aviso diario a las 8:00 de las cuotas, rendimientos y recurrentes que vencen hoy o mañana.' },
   periodos: {
     gastos: [

@@ -1,11 +1,12 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { conAfectadas, failure, mockFetch } from '../../test/mockFetch'
-import { renderWithProviders } from '../../test/render'
+import { conAfectadas, failure, mockFetch } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
 import { useData } from '@/shell/providers/DataProvider'
+import { useModal } from '@/shell/providers/ModalProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
-import { deuda } from '../../test/factories'
+import { deuda } from '@/test/factories'
 
 function Harness() {
   const { crudOp, crudOpOrBanner, apiAction, apiActionOrBanner } = useMutations()
@@ -14,8 +15,8 @@ function Harness() {
   return (
     <>
       <div data-testid="banner">{banner}</div>
-      <output data-testid="deudas">{versiones.deudas}</output>
-      <output data-testid="transacciones">{versiones.transacciones}</output>
+      <output data-testid="deudas">{versiones.deudas ?? 0}</output>
+      <output data-testid="transacciones">{versiones.transacciones ?? 0}</output>
       <button onClick={() => void crudOp('deuda', 'update', { ...deuda({ id: 7, nombre: 'X' }), clase_deuda: 'prestamo', crear_tx: false } as never)}>upd</button>
       <button onClick={() => void apiAction('/api/deuda/3/pago', { monto: 5 }).catch(err)}>act</button>
       <button onClick={() => void apiActionOrBanner('/api/rec/2/pausar')}>actb</button>
@@ -142,5 +143,74 @@ describe('mutaciones', () => {
     await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
     expect(f.mutations()[0]).toMatchObject({ method: 'POST', url: '/api/rec/2/pausar', headers: { 'X-Moni-Request': '1' } })
     await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('boom'))
+  })
+
+  it('un header presente pero vacío no recarga nada', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch({ 'POST /api/rec/2/pausar': conAfectadas({}, '') })
+    renderWithProviders(<Harness />)
+    await user.click(screen.getByText('actb'))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    expect(screen.getByTestId('deudas')).toHaveTextContent('0')
+    expect(screen.getByTestId('transacciones')).toHaveTextContent('0')
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
+  })
+
+  it('un error 4xx de crudOpOrBanner deja el banner sin recargar nada', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch({ 'DELETE /api/rec/2': failure(409, 'en uso') })
+    renderWithProviders(<Harness />)
+    await user.click(screen.getByText('delb'))
+    await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('en uso'))
+    expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
+    expect(screen.getByTestId('transacciones')).toHaveTextContent('0')
+  })
+
+  it('un error de red de apiActionOrBanner recarga y deja el banner', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch()
+    f.fn.mockImplementationOnce(() => Promise.reject(new TypeError('Failed to fetch')))
+    renderWithProviders(<Harness />)
+    await user.click(screen.getByText('actb'))
+    await waitFor(() => expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
+    await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('Failed to fetch'))
+  })
+})
+
+describe('op_clave pendiente', () => {
+  function Pendiente({ clave }: { clave: string | null }) {
+    const { crudOp, apiAction } = useMutations()
+    const { setPendingProxOp } = useModal()
+    setPendingProxOp(clave)
+    return (
+      <>
+        <button onClick={() => void crudOp('tx', 'add', { fecha: '2026-08-01', tipo: 'gasto', categoria: 'c', descripcion: '', monto: 1, notas: '', tarjeta_id: null })}>tx</button>
+        <button onClick={() => void apiAction('/api/inv/1/rendimiento', { monto: 3 })}>rend</button>
+        <button onClick={() => void apiAction('/api/deuda/3/pago')}>sinbody</button>
+      </>
+    )
+  }
+
+  it('se envía siempre que hay una clave pendiente, en el alta y en la acción', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch({ 'POST /api/tx': {}, 'POST /api/inv/1/rendimiento': {} })
+    renderWithProviders(<Pendiente clave="deuda:1:2026-08-20" />)
+    await user.click(screen.getByText('tx'))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    await user.click(screen.getByText('rend'))
+    await waitFor(() => expect(f.mutations()).toHaveLength(2))
+    expect(f.mutations()[0]?.body).toMatchObject({ op_clave: 'deuda:1:2026-08-20', monto: 1 })
+    expect(f.mutations()[1]?.body).toEqual({ monto: 3, op_clave: 'deuda:1:2026-08-20' })
+  })
+
+  it('sin clave pendiente no agrega nada, y una acción sin body queda sin body', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch({ 'POST /api/tx': {}, 'POST /api/deuda/3/pago': {} })
+    renderWithProviders(<Pendiente clave={null} />)
+    await user.click(screen.getByText('tx'))
+    await user.click(screen.getByText('sinbody'))
+    await waitFor(() => expect(f.mutations()).toHaveLength(2))
+    expect(f.mutations()[0]?.body).not.toHaveProperty('op_clave')
+    expect(f.mutations()[1]?.body).toBeUndefined()
   })
 })

@@ -1,4 +1,4 @@
-import type { Activo, Deuda, Inversion, Recurrente, Transaccion } from '../types'
+import type { Activo, Deuda, Inversion, Recurrente, Transaccion } from '@/types'
 
 export interface Filas {
   transacciones?: Transaccion[]

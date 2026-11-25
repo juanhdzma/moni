@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { MoneyField } from '../../../controls/MoneyField'
-import { previewAporte } from '../../../lib/api'
-import { entero, parseMoney } from '../../../lib/format'
+import { MoneyField } from '@/controls/MoneyField'
+import { previewAporte } from '@/lib/api'
+import { entero, parseMoney } from '@/lib/format'
 import { useData } from '@/shell/providers/DataProvider'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { InvAporte, Inversion } from '../../../types'
-import { MovimientoCampos } from '../../../controls/FormFields'
-import { FormFooter } from '../../../controls/FormFooter'
+import type { InvAporte, Inversion } from '@/types'
+import { MovimientoCampos } from '@/controls/FormFields'
+import { FormFooter } from '@/controls/FormFooter'
 import { InversionPanel } from './InversionPanel'
 import { useGuardar } from '@/shell/hooks/useGuardar'
 import { usePreview } from '@/shell/hooks/usePreview'
@@ -27,7 +27,7 @@ export function AporteForm({ inv }: { inv: Inversion }) {
     const body: InvAporte = {
       monto: parseMoney(monto),
       ...(nuevoValor ? { nuevo_valor: parseMoney(nuevoValor) } : {}),
-      ...campos.cuerpo(),
+      ...campos.cuerpoConFecha(),
     }
     await guardar(() => apiAction(`/api/inv/${inv.id}/aporte`, body))
   }

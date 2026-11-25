@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as webauthn from '@simplewebauthn/browser'
-import App from '../../app/App'
-import { failure, json, mockFetch } from '../../test/mockFetch'
+import App from '@/app/App'
+import { failure, json, mockFetch } from '@/test/mockFetch'
 
 vi.mock('@simplewebauthn/browser', () => ({
   browserSupportsWebAuthn: vi.fn(() => true),
@@ -218,70 +218,5 @@ describe('login con passkey', () => {
     await screen.findByLabelText('Clave')
     await new Promise((r) => setTimeout(r, 20))
     expect(screen.queryByRole('button', { name: /passkey/ })).toBeNull()
-  })
-})
-
-describe('activar en el dispositivo', () => {
-  const dialogo = () => screen.queryByRole('dialog', { name: 'Activar en este dispositivo' })
-
-  it('al abrir la app con sesion ofrece la passkey y la registra con el nombre del dispositivo', async () => {
-    const opciones = { challenge: 'r', user: { id: 'u' } }
-    const credencial = { id: 'nuevo', rawId: 'nuevo', type: 'public-key', response: {}, clientExtensionResults: {} }
-    vi.mocked(webauthn.startRegistration).mockResolvedValue(credencial as unknown as Awaited<ReturnType<typeof webauthn.startRegistration>>)
-    const m = mockFetch({
-      'GET /api/auth/estado': ESTADO_OK,
-      'POST /api/auth/passkey/registro/opciones': opciones,
-      'POST /api/auth/passkey/registro/verificar': { ok: true, id: 7 },
-    })
-    const user = userEvent.setup()
-    render(<App />)
-    await user.click(await screen.findByRole('button', { name: 'Activar passkey' }))
-    await waitFor(() => expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')).toHaveLength(1))
-    expect(webauthn.startRegistration).toHaveBeenCalledWith({ optionsJSON: opciones })
-    expect(m.callsTo('POST', '/api/auth/passkey/registro/verificar')[0]?.body).toEqual({ ...credencial, nombre: 'Este dispositivo' })
-    await waitFor(() => expect(dialogo()).toBeNull())
-    expect(localStorage.getItem('moni_faceid_dispositivo')).toBe('1')
-    expect(localStorage.getItem('moni_faceid_oferta')).toBe('1')
-  })
-
-  it('cancelar el prompt no muestra error y deja el aviso, con el foco en el boton', async () => {
-    vi.mocked(webauthn.startRegistration).mockRejectedValue(Object.assign(new Error('x'), { name: 'NotAllowedError' }))
-    mockFetch({ 'GET /api/auth/estado': ESTADO_OK, 'POST /api/auth/passkey/registro/opciones': { challenge: 'r', user: { id: 'u' } } })
-    const user = userEvent.setup()
-    render(<App />)
-    const activar = await screen.findByRole('button', { name: 'Activar passkey' })
-    await waitFor(() => expect(activar).toHaveFocus())
-    await user.click(activar)
-    await waitFor(() => expect(activar).toBeEnabled())
-    expect(screen.queryByRole('alert')).toBeNull()
-    await user.keyboard('{Escape}')
-    expect(dialogo()).toBeNull()
-  })
-
-  it('Ahora no lo cierra sin pedir nada', async () => {
-    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK })
-    const user = userEvent.setup()
-    render(<App />)
-    await user.click(await screen.findByRole('button', { name: 'Ahora no' }))
-    expect(dialogo()).toBeNull()
-    expect(m.callsTo('POST', '/api/auth/passkey/registro/opciones')).toHaveLength(0)
-  })
-
-  it('no vuelve a aparecer si ya se le pregunto antes', async () => {
-    localStorage.setItem('moni_faceid_oferta', '1')
-    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK })
-    render(<App />)
-    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
-    await new Promise((r) => setTimeout(r, 20))
-    expect(dialogo()).toBeNull()
-  })
-
-  it('no aparece si el dispositivo ya tiene passkey', async () => {
-    localStorage.setItem('moni_faceid_dispositivo', '1')
-    const m = mockFetch({ 'GET /api/auth/estado': ESTADO_OK })
-    render(<App />)
-    await waitFor(() => expect(m.callsTo('GET', '/api/bootstrap')).toHaveLength(1))
-    await new Promise((r) => setTimeout(r, 20))
-    expect(dialogo()).toBeNull()
   })
 })

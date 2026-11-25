@@ -162,9 +162,6 @@ def test_categorias_ajustes_y_ops_ocultas(client):
 from backend.tests.api.test_backup import importar, truncar
 
 
-from backend.tests.api.test_backup import importar, truncar
-
-
 def test_import_y_truncate_afectan_todo(client):
     assert afectadas(truncar(client)) == list(TODAS)
     backup = client.get("/api/backup").json()
@@ -193,3 +190,4 @@ def test_ruta_mutante_sin_declarar_recibe_todas(client):
         assert afectadas(client.post("/api/__sin_declarar")) == list(TODAS)
     finally:
         app.router.routes.remove(ruta)
+

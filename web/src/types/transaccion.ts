@@ -1,53 +1,13 @@
-import type { Opcion, Segmento, TextoVacio, TipoRec, TipoTx } from './comun'
-import type { Frase } from './dashboard'
+import type { Opcional, Refinar, Schemas } from './gen'
+import type { operations } from './api.gen'
 
-export interface Transaccion {
-  id: number
-  fecha: string
-  tipo: TipoTx
-  categoria: string
-  descripcion: string
-  monto: number
-  monto_firmado: number
-  notas: string
-  tarjeta_id: number | null
-  tarjeta_nombre: string | null
-  tarjeta_franquicia: string | null
-  metodo_pago: string
-}
+export type Transaccion = Schemas['Tx']
+export type TxIn = Opcional<Schemas['TxIn'], 'fecha' | 'tarjeta_id' | 'op_clave'>
 
-export type TxIn = Pick<Transaccion, 'tipo' | 'categoria' | 'descripcion' | 'monto' | 'notas' | 'tarjeta_id'> & {
-  fecha?: string
-  op_clave?: string | null
-}
+type QueryListado = NonNullable<operations['listar_tx_api_tx_get']['parameters']['query']>
+export type ColTx = NonNullable<QueryListado['col']>
+export type FiltrosTx = Refinar<QueryListado, { dir?: 1 | -1 }>
 
-export type ColTx = 'fecha' | 'tipo' | 'categoria' | 'descripcion' | 'monto'
-
-export interface FiltrosTx {
-  col?: ColTx
-  dir?: 1 | -1
-  tipo?: TipoTx | ''
-  mes?: string
-  cat?: string
-}
-
-export interface FilaTx extends Transaccion {
-  tipo_label: string
-  grupo: string | null
-}
-
-export interface ListadoTx {
-  items: FilaTx[]
-  filtros: { tipo: string; mes: string; cat: string }
-  opciones: { meses: Opcion[]; categorias: string[]; tipos: Opcion[] }
-  pills: { campo: 'mes' | 'tipo' | 'cat'; label: string }[]
-  resumen: { titulo: string; ingresos: number; gastos: number; neto: number; dato: Frase; segmentos: Segmento[] }
-  texto_vacio: TextoVacio
-}
-
-export interface OpcionesTx {
-  tarjetas: { id: number; nombre: string }[]
-  categorias: { ingreso: string[]; gasto: string[] }
-  categoria_default: { ingreso: string; gasto: string }
-  inicial: { tipo: TipoRec; categoria: string; tarjeta_id: number | null; fecha: string }
-}
+export type FilaTx = Schemas['FilaTx']
+export type ListadoTx = Refinar<Schemas['ListadoTx'], { pills: { campo: 'mes' | 'tipo' | 'cat'; label: string }[] }>
+export type OpcionesTx = Schemas['OpcionesTx']

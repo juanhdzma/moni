@@ -1,17 +1,18 @@
+import { useMeta } from '@/shell/hooks/useMeta'
 import type { CamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
-import { AdvancedToggle } from './AdvancedToggle'
+import { RegistrarToggle } from './AdvancedToggle'
+import { Campo } from './Campo'
 import { DatePicker } from './DatePicker'
+
+export { RegistrarToggle }
 
 type FechaProps = { id: string; label: string; value: string; onChange: (v: string) => void; type?: 'date' | 'datetime-local' }
 
 export function FechaField({ id, label, value, onChange, type = 'datetime-local' }: FechaProps) {
   return (
-    <div className="form-group">
-      <label className="form-label" htmlFor={id}>
-        {label}
-      </label>
+    <Campo id={id} label={label}>
       <DatePicker id={id} type={type} value={value} onChange={onChange} />
-    </div>
+    </Campo>
   )
 }
 
@@ -23,21 +24,19 @@ type NotasProps = {
 }
 
 function NotasField({ id, placeholder, value, onChange }: NotasProps) {
+  const maxLength = useMeta()?.limites.notas
   return (
-    <div className="form-group">
-      <label className="form-label font-normal text-muted-foreground" htmlFor={id}>
-        Notas (opcional)
-      </label>
+    <Campo id={id} label="Notas (opcional)" labelClassName="font-normal text-muted-foreground">
       <input
         className="form-input"
         type="text"
         id={id}
-        maxLength={30}
+        maxLength={maxLength}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-    </div>
+    </Campo>
   )
 }
 
@@ -60,12 +59,6 @@ export function FechaNotas({ fechaLabel, fecha, onFecha, notas, onNotas, notasPl
       <NotasField id={notasId} placeholder={notasPlaceholder} value={notas} onChange={onNotas} />
     </>
   )
-}
-
-type RegistrarProps = { checked: boolean; onChange: (v: boolean) => void; label?: string }
-
-export function RegistrarToggle({ checked, onChange, label = 'Registrar en transacciones' }: RegistrarProps) {
-  return <AdvancedToggle checked={checked} onChange={onChange} label={label} hint="Desactivá si ya lo registraste en otra parte." />
 }
 
 type MovimientoProps = {

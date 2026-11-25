@@ -1,10 +1,10 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { activo, estado } from '../../test/factories'
-import { failure, mockFetch } from '../../test/mockFetch'
-import { renderWithProviders } from '../../test/render'
-import { expectLabels, modalBody } from '../../test/labels'
+import { activo, estado } from '@/test/factories'
+import { failure, mockFetch, previewConMonto } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
+import { expectLabels, modalBody } from '@/test/labels'
 import { Activos } from './index'
 
 const H = { 'X-Moni-Request': '1' }
@@ -18,7 +18,7 @@ afterEach(() => {
   cleanup()
 })
 
-const a1 = activo({ id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', valor_actualizado_en: '2026-06-01T10:00', cambio: 50000, cambio_pct: 50 })
+const a1 = activo({ id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', cambio: 50000, cambio_pct: 50 })
 
 const resumenDe = (activos: typeof a1[]) => ({
   total_inicial: activos.reduce((s, a) => s + a.valor_inicial, 0),
@@ -29,15 +29,16 @@ const resumenDe = (activos: typeof a1[]) => ({
   items: activos,
   texto_variacion: '50,0% sobre lo pagado',
   texto_conteo: `${activos.length} activo${activos.length === 1 ? '' : 's'}`,
+  texto_vacio: { titulo: 'Sin activos aún', texto: 'Registrá un bien con el botón Nuevo activo.' },
 })
 
 async function setup(activos = [a1]) {
   const f = mockFetch({
     'GET /api/activos/resumen': resumenDe(activos),
-    'POST /api/activo/4/valor/preview': { delta: 30000, total: 80000, total_pct: 80 },
-    'POST /api/activo/4/venta/preview': { vs_inicial: 50000, vs_actual: 0 },
+    'POST /api/activo/4/valor/preview': previewConMonto('nuevo_valor', { delta: 30000, total: 80000, total_pct: 80 }),
+    'POST /api/activo/4/venta/preview': previewConMonto('precio', { vs_inicial: 50000, vs_actual: 0 }),
   })
-  renderWithProviders(<Activos active />, { estado: estado({ hoy: '2026-06-15' }) })
+  renderWithProviders(<Activos active />, { estado: estado({ hoy: '2026-06-15', activos }) })
   await waitFor(() => expect(document.getElementById('activos-total')).toHaveTextContent(`${activos.length} activo`))
   const guardados = () => f.mutations().filter((c) => !c.url.endsWith('/preview'))
   return { f, guardados, user: userEvent.setup({ advanceTimers: vi.advanceTimersByTime }) }
@@ -56,7 +57,8 @@ describe('Activos render', () => {
   it('shows empty state and totals', async () => {
     const { f } = await setup([])
     await waitFor(() => expect(f.calls.some((c) => c.url === '/api/activos/resumen')).toBe(true))
-    expect(screen.getByText('Sin activos')).toBeInTheDocument()
+    expect(screen.getByText('Sin activos aún')).toBeInTheDocument()
+    expect(screen.getByText('Registrá un bien con el botón Nuevo activo.')).toBeInTheDocument()
     expect(document.getElementById('activos-total')).toHaveTextContent('0 activos')
   })
 
@@ -131,10 +133,11 @@ describe('Activos forms', () => {
     expect(guardados()[0]).toMatchObject({ method: 'POST', url: '/api/activo', body: { nombre: '', valor_inicial: 0 } })
   })
 
-  it('edit sends only what the form holds', async () => {
-    const { guardados, user } = await setup()
+  it('edit loads the row from GET /api/activo/{id} and sends only what the form holds', async () => {
+    const { f, guardados, user } = await setup()
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     expect(await screen.findByText('Valor inicial (COP)')).toBeInTheDocument()
+    expect(f.callsTo('GET', '/api/activo/4')).toHaveLength(1)
     expect(document.getElementById('m-es-nueva')).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(guardados()).toHaveLength(1))
@@ -168,20 +171,19 @@ describe('Activos forms', () => {
 
   it('delete confirms then DELETEs', async () => {
     const { guardados, user } = await setup()
-    const confirmFn = vi.fn(() => true)
-    vi.stubGlobal('confirm', confirmFn)
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
-    expect(confirmFn).toHaveBeenCalledWith('¿Eliminar "Casa"?')
+    expect(screen.getByRole('dialog')).toHaveTextContent('¿Eliminar "Casa"?')
+    await user.click(screen.getByRole('button', { name: 'Eliminar' }))
     await waitFor(() => expect(guardados()).toHaveLength(1))
     expect(guardados()[0]).toMatchObject({ method: 'DELETE', url: '/api/activo/4', headers: H })
   })
 
   it('delete cancelled does nothing', async () => {
     const { guardados, user } = await setup()
-    vi.stubGlobal('confirm', () => false)
     await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.click(await screen.findByRole('button', { name: 'Eliminar' }))
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
     expect(guardados()).toHaveLength(0)
   })
 

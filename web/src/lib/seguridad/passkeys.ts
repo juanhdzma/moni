@@ -6,8 +6,8 @@ import {
   type PublicKeyCredentialCreationOptionsJSON,
   type PublicKeyCredentialRequestOptionsJSON,
 } from '@simplewebauthn/browser'
-import { apiFetch } from '../api'
-import { escribirStorage, leerStorage } from '../storage'
+import { apiFetch } from '@/lib/api'
+import { escribirStorage, leerStorage } from '@/lib/storage'
 
 const CLAVE_DISPOSITIVO = 'moni_faceid_dispositivo'
 const CLAVE_OFERTA = 'moni_faceid_oferta'
@@ -47,9 +47,10 @@ export async function loginConPasskey(): Promise<void> {
   await apiFetch<{ ok: boolean }>('/api/auth/passkey/login/verificar', { method: 'POST', body: credencial })
 }
 
-export async function registrarPasskey(nombre: string): Promise<number> {
+export async function registrarPasskey(nombre: string, clave: string): Promise<number> {
   const optionsJSON = await apiFetch<PublicKeyCredentialCreationOptionsJSON>('/api/auth/passkey/registro/opciones', {
     method: 'POST',
+    body: { clave },
   })
   const credencial = await startRegistration({ optionsJSON })
   const { id } = await apiFetch<{ ok: boolean; id: number }>('/api/auth/passkey/registro/verificar', {

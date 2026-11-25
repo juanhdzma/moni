@@ -1,4 +1,10 @@
+from typing import Literal
+
 from pydantic import BaseModel
+
+from ..core.afectadas import TODAS
+
+Entidad = Literal[*TODAS]
 
 
 class Opcion(BaseModel):
@@ -102,3 +108,5 @@ class MetaOut(BaseModel):
     categoria_largo_max: int
     limites: LimitesMeta
     truncate: TruncateMeta
+    entidades: list[Entidad]
+    entidades_del_bootstrap: list[Entidad]

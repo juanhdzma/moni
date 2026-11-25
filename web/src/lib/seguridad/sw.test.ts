@@ -1,4 +1,4 @@
-import fuente from '../../../public/sw.js?raw'
+import fuente from '/public/sw.js?raw'
 import { describe, expect, it } from 'vitest'
 
 function cargarSw() {

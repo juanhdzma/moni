@@ -1,1 +1,1 @@
-export { openActivoForm, openActivoSellForm, openActivoUpdateForm } from './openers'
+export { openActivoForm, openActivoFormById, openActivoSellFormById, openActivoUpdateFormById } from './openers'

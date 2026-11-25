@@ -7,6 +7,7 @@ import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import type { PeriodoEvolucion, SerieEvolucion } from '@/types'
+import { Skeleton } from '@/components/Skeleton'
 import { FraseTexto, Panel, Periodos } from '@/components/panel'
 
 export function Evolucion() {
@@ -17,7 +18,7 @@ export function Evolucion() {
   const meta = useMeta()
   const loading = ev === null
   const datos = ev?.puntos ?? []
-  const color = serie === 'patrimonio' ? 'var(--cartera)' : 'var(--inversiones)'
+  const color = `var(--${ev?.tono ?? 'cartera'})`
   const config = { valor: { label: ev?.nombre_serie ?? '', color } } satisfies ChartConfig
   return (
     <Panel
@@ -40,7 +41,7 @@ export function Evolucion() {
       }
     >
       {loading ? (
-        <div className="h-[200px] animate-pulse rounded-lg bg-muted" />
+        <Skeleton className="h-[200px] rounded-lg" />
       ) : (
         <ChartContainer config={config} className="aspect-auto h-[200px] w-full" aria-label={ev?.descripcion_grafico}>
           <AreaChart data={datos} margin={{ left: 4, right: 8, top: 8, bottom: 0 }}>

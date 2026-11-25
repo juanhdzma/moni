@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { failure } from '../../../test/mockFetch'
+import { failure } from '@/test/mockFetch'
 import { CDT, H, mockInv, modal, setup, typeMoney, installFakeClock, type User } from './helpers'
 
 installFakeClock()
@@ -9,7 +9,7 @@ installFakeClock()
 describe('rendimiento', () => {
   const abrir = async (user: User, inv = CDT) => {
     await setup([inv])
-    await user.click(screen.getByRole('button', { name: 'Rendimiento' }))
+    await user.click(await screen.findByRole('button', { name: 'Rendimiento' }))
   }
 
   it('CDT al vencimiento capitaliza por defecto y oculta registrar en transacciones', async () => {

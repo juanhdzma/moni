@@ -1,4 +1,4 @@
-import type { Entidad } from '../types'
+import type { Entidad } from '@/types'
 
 export const HEADER_AFECTADAS = 'X-Moni-Afectadas'
 

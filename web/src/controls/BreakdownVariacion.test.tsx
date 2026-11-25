@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react'
-import { renderWithProviders } from '../test/render'
+import { renderWithProviders } from '@/test/render'
 import { describe, expect, it } from 'vitest'
 import { BreakdownVariacion } from './BreakdownVariacion'
 

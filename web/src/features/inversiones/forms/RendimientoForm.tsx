@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import { MoneyField } from '../../../controls/MoneyField'
+import { MoneyField } from '@/controls/MoneyField'
 import { useMeta } from '@/shell/hooks/useMeta'
-import { entero, parseMoney } from '../../../lib/format'
+import { entero, parseMoney } from '@/lib/format'
 import { useMoneda } from '@/shell/hooks/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useMutations } from '@/shell/hooks/useMutations'
-import type { InvRendimiento, Inversion } from '../../../types'
-import { FechaNotas, RegistrarToggle } from '../../../controls/FormFields'
-import { FormFooter } from '../../../controls/FormFooter'
-import { ModalPanel } from '../../../controls/ModalPanel'
-import { TipoToggle } from '../../../controls/TipoToggle'
+import type { InvRendimiento, Inversion } from '@/types'
+import { FechaNotas, RegistrarToggle } from '@/controls/FormFields'
+import { FormFooter } from '@/controls/FormFooter'
+import { ModalPanel } from '@/controls/ModalPanel'
+import { TipoToggle } from '@/controls/TipoToggle'
 import { useEditarInversion } from './openers'
 import { useCamposMovimiento } from '@/shell/hooks/useCamposMovimiento'
 import { useGuardar } from '@/shell/hooks/useGuardar'
@@ -32,7 +32,7 @@ export function RendimientoForm({ inv }: { inv: Inversion }) {
     const body: InvRendimiento = {
       monto: parseMoney(monto),
       capitaliza,
-      ...campos.cuerpo(),
+      ...campos.cuerpoConFecha(),
     }
     await guardar(() => apiAction(`/api/inv/${inv.id}/rendimiento`, body))
   }

@@ -1,11 +1,11 @@
 import { waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, vi } from 'vitest'
-import { estado, inversion } from '../../../test/factories'
-import { mockFetch } from '../../../test/mockFetch'
-import { renderWithProviders } from '../../../test/render'
-import type { Inversion, ResumenInversiones } from '../../../types'
-import { Inversiones } from '../index'
+import { estado, inversion } from '@/test/factories'
+import { mockFetch } from '@/test/mockFetch'
+import { renderWithProviders } from '@/test/render'
+import type { Inversion, ResumenInversiones } from '@/types'
+import { Inversiones } from '@/features/inversiones/index'
 
 export const CDT = inversion({
   id: 5,
@@ -17,7 +17,6 @@ export const CDT = inversion({
   fecha_inicio: '2026-01-10',
   pago: 'vencimiento',
   dia_pago: null,
-  valor_actualizado_en: '2026-11-01',
   ganancia: 10_000,
   ganancia_pct: 1,
   texto_tasa: '12,00% EA · 0,9489% MV',
@@ -31,7 +30,6 @@ export const FONDO = inversion({
   monto_invertido: 500_000,
   valor_actual: 450_000,
   fecha_inicio: '2026-02-01',
-  valor_actualizado_en: '2026-08-01',
   ganancia: -50_000,
   ganancia_pct: -10,
   desactualizado: true,
@@ -98,5 +96,5 @@ export async function typeMoney(user: User, id: string, text: string) {
 }
 
 export const grid = (tipo: 'fija' | 'variable') => document.getElementById(`inv-grid-${tipo}`) as HTMLElement
-export const clickInGrid = (user: User, tipo: 'fija' | 'variable', name: string) =>
-  user.click(within(grid(tipo)).getByRole('button', { name }))
+export const clickInGrid = async (user: User, tipo: 'fija' | 'variable', name: string) =>
+  user.click(await within(grid(tipo)).findByRole('button', { name }))

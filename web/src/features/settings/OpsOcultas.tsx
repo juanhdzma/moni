@@ -1,16 +1,16 @@
 import { Cargando } from '@/components/Cargando'
 import { Panel } from '@/components/panel'
-import { cargarOpsOcultas, restaurarOp } from '../../lib/api'
+import { cargarOpsOcultas, restaurarOp } from '@/lib/api'
 import { useData } from '@/shell/providers/DataProvider'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 
 export function OpsOcultas() {
-  const { reload, conBanner } = useData()
+  const { mutar, conBanner } = useData()
   const { data } = useVista('ops-ocultas', cargarOpsOcultas, DEPENDENCIAS_DE_VISTA.opsOcultas)
 
   const restaurar = async (clave?: string) => {
-    if (await conBanner(() => restaurarOp(clave), { recargar: true })) await reload(['opsOcultas'])
+    await conBanner(() => mutar((onAfectadas) => restaurarOp(clave, onAfectadas)), { recargar: true })
   }
 
   return (

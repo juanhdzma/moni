@@ -20,7 +20,7 @@
   --accent-foreground: #0f172a;
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #94a3b8;
+  --ring: #64748b;
   --radius: 0.625rem;
 
   --cartera: #2563eb;
@@ -52,7 +52,7 @@
     --accent-foreground: #eef2f7;
     --border: #243042;
     --input: #243042;
-    --ring: #475569;
+    --ring: #7b8ba1;
 
     --cartera: #6c9be8;
     --inversiones: #46b25e;
@@ -67,6 +67,10 @@
 
 @theme inline {
   --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
+  --text-label: 11px;
+  --text-small: 13px;
+  --text-body: 15px;
+  --text-display: 28px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

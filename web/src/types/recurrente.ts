@@ -1,27 +1,5 @@
-import type { Frase } from './dashboard'
-import type { ProximoPago, Segmento, TipoRec } from './comun'
+import type { Opcional, Schemas } from './gen'
 
-export interface Recurrente {
-  id: number
-  nombre: string
-  tipo: TipoRec
-  monto: number
-  frecuencia: string
-  activo: boolean
-  fecha_inicio: string
-  notas: string
-  categoria_sugerida: string
-  frecuencia_label: string
-  mensual: number
-  proximo_pago: ProximoPago | null
-}
-
-export type RecIn = Pick<Recurrente, 'nombre' | 'tipo' | 'monto' | 'frecuencia' | 'fecha_inicio' | 'notas'> & Partial<Pick<Recurrente, 'activo'>>
-
-export interface ResumenRecurrentes {
-  neto_mensual: number
-  dato: Frase
-  segmentos: Segmento[]
-  ingresos: Recurrente[]
-  gastos: Recurrente[]
-}
+export type Recurrente = Schemas['Recurrente']
+export type RecIn = Opcional<Schemas['RecIn'], 'activo'>
+export type ResumenRecurrentes = Schemas['ResumenRecurrentes']

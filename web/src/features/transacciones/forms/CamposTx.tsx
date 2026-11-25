@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
-import { FechaNotas } from '../../../controls/FormFields'
-import { MoneyField } from '../../../controls/MoneyField'
-import { Select } from '../../../controls/Select'
-import { cargarOpcionesTx } from '../../../lib/api/transacciones'
-import { parseMoney } from '../../../lib/format'
+import { FechaNotas } from '@/controls/FormFields'
+import { MoneyField } from '@/controls/MoneyField'
+import { Select } from '@/controls/Select'
+import { cargarOpcionesTx } from '@/lib/api/transacciones'
+import { parseMoney } from '@/lib/format'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
-import type { TipoRec } from '../../../types'
+import type { TipoRec } from '@/types'
 import { NuevaCategoria } from './NuevaCategoria'
 
 const SIN_CATEGORIAS = 'Sin categorías — agregá una con +'
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export function CamposTx({ tipo, categorias, valores, onCambio, fechaType, ayudaMonto, children }: Props) {
+  const limites = useMeta()?.limites
   return (
     <>
       <div className="form-group">
@@ -64,7 +66,7 @@ export function CamposTx({ tipo, categorias, valores, onCambio, fechaType, ayuda
           className="form-input"
           type="text"
           id="m-desc"
-          maxLength={30}
+          maxLength={limites?.descripcion}
           value={valores.descripcion}
           placeholder="Ej. Mercado Éxito"
           onChange={(e) => onCambio({ descripcion: e.target.value })}

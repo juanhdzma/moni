@@ -118,3 +118,12 @@ def test_meta_franquicias_y_tipos_manuales_salen_de_constantes(client):
     body = client.get("/api/meta").json()
     assert [f["value"] for f in body["franquicias"]] == ["Visa", "Mastercard", "Amex", "Otra", ""]
     assert body["tipos_manuales"] == [{"value": "ingreso", "label": "Ingreso"}, {"value": "gasto", "label": "Gasto"}]
+
+
+def test_meta_entidades_salen_de_core_afectadas(client):
+    from backend.core.afectadas import DEL_BOOTSTRAP, TODAS
+
+    body = client.get("/api/meta").json()
+    assert body["entidades"] == list(TODAS)
+    assert body["entidades_del_bootstrap"] == ["activos", "inversiones", "ajustes", "categorias"] == list(DEL_BOOTSTRAP)
+    assert set(DEL_BOOTSTRAP) <= set(TODAS)

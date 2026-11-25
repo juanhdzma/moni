@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Cargando } from '@/components/Cargando'
-import { FormFooter } from '../../../controls/FormFooter'
-import { Select } from '../../../controls/Select'
-import { TipoToggle } from '../../../controls/TipoToggle'
-import { entero } from '../../../lib/format'
+import { FormFooter } from '@/controls/FormFooter'
+import { Select } from '@/controls/Select'
+import { TipoToggle } from '@/controls/TipoToggle'
+import { entero } from '@/lib/format'
 import { useGuardarEntidad } from '@/shell/hooks/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/useMeta'
-import type { OpcionesTx, TipoRec, Transaccion } from '../../../types'
+import type { OpcionesTx, TipoRec, Transaccion } from '@/types'
 import { CamposTx, cuerpoTx, useOpcionesTx, type ValoresTx } from './CamposTx'
 
 export function TxForm({ tx }: { tx: Transaccion | null }) {
@@ -20,7 +20,7 @@ function TxFormCampos({ tx, opciones }: { tx: Transaccion | null; opciones: Opci
   const { guardar, eliminar, etiquetaGuardar } = useGuardarEntidad('tx', { item: tx, mensajeEliminar: '¿Eliminar este movimiento?' })
   const { tarjetas, inicial } = opciones
 
-  const [tipo, setTipo] = useState(inicial.tipo)
+  const [tipo, setTipo] = useState<TipoRec>(inicial.tipo === 'ingreso' ? 'ingreso' : 'gasto')
   const [tarjeta, setTarjeta] = useState(inicial.tarjeta_id != null ? String(inicial.tarjeta_id) : '')
   const [valores, setValores] = useState<ValoresTx>({
     categoria: inicial.categoria,

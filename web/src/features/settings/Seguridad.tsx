@@ -1,30 +1,37 @@
-import { useCallback, useEffect, useState } from 'react'
-import { borrarPasskey, cargarPasskeys, cargarSesiones, revocarSesion, type Passkey, type Sesion } from '../../lib/seguridad/auth'
-import { nombreDeDispositivo, passkeysDisponibles, registrarPasskey } from '../../lib/seguridad/passkeys'
-import { StatusMessage } from '../../controls/FormStatus'
+import { useEffect, useState } from 'react'
+import { StatusMessage } from '@/controls/FormStatus'
+import { borrarPasskey, cargarPasskeys, cargarSesiones, revocarSesion, type Passkey, type Sesion } from '@/lib/seguridad/auth'
+import { nombreDeDispositivo, passkeysDisponibles, registrarPasskey } from '@/lib/seguridad/passkeys'
+import { useMeta } from '@/shell/hooks/useMeta'
 import { useStatus } from '@/shell/hooks/useStatus'
+import { useVista } from '@/shell/hooks/useVista'
 import { useAuth } from '@/shell/providers/AuthProvider'
+import { useModal } from '@/shell/providers/ModalProvider'
+import { ConfirmarClave } from './ConfirmarClave'
+
+interface Cuenta {
+  passkeys: Passkey[]
+  sesiones: Sesion[]
+}
+
+const cargarCuenta = async (): Promise<Cuenta> => {
+  const [passkeys, sesiones] = await Promise.all([cargarPasskeys(), cargarSesiones()])
+  return { passkeys, sesiones }
+}
 
 export function Seguridad() {
   const { salir } = useAuth()
-  const [passkeys, setPasskeys] = useState<Passkey[] | null>(null)
-  const [sesiones, setSesiones] = useState<Sesion[] | null>(null)
+  const { openModal } = useModal()
+  const limiteNombre = useMeta()?.limites.nombre
+  const [refresco, setRefresco] = useState(0)
   const [disponible, setDisponible] = useState(false)
   const [nombre, setNombre] = useState(nombreDeDispositivo)
   const { cls, msg, ok: estadoOk, err: estadoErr } = useStatus()
-
-  const cargar = useCallback(async () => {
-    try {
-      const [p, s] = await Promise.all([cargarPasskeys(), cargarSesiones()])
-      setPasskeys(p)
-      setSesiones(s)
-    } catch (err) {
-      estadoErr(err)
-    }
-  }, [estadoErr])
+  const { data } = useVista(`seguridad:${refresco}`, cargarCuenta, [])
+  const [cuenta, setCuenta] = useState<Cuenta | null>(null)
+  if (data && data !== cuenta) setCuenta(data)
 
   useEffect(() => {
-    void Promise.resolve().then(cargar)
     let vigente = true
     void passkeysDisponibles().then((ok) => {
       if (vigente) setDisponible(ok)
@@ -32,13 +39,13 @@ export function Seguridad() {
     return () => {
       vigente = false
     }
-  }, [cargar])
+  }, [])
 
   const correr = async (fn: () => Promise<unknown>, ok: string) => {
     try {
       await fn()
       estadoOk(ok)
-      await cargar()
+      setRefresco((n) => n + 1)
     } catch (err) {
       estadoErr(err)
     }
@@ -47,7 +54,18 @@ export function Seguridad() {
   const agregar = () => {
     const limpio = nombre.trim()
     if (!limpio) return
-    void correr(() => registrarPasskey(limpio), 'Passkey activada en este dispositivo')
+    openModal(
+      'Agregar passkey',
+      <ConfirmarClave
+        etiqueta="Agregar passkey"
+        descripcion={`Confirmá con tu clave para activar la passkey en «${limpio}».`}
+        onConfirmar={async (clave) => {
+          await registrarPasskey(limpio, clave)
+          estadoOk('Passkey activada en este dispositivo')
+          setRefresco((n) => n + 1)
+        }}
+      />,
+    )
   }
 
   return (
@@ -61,7 +79,7 @@ export function Seguridad() {
               type="text"
               id="seguridad-nombre"
               aria-label="Nombre del dispositivo"
-              maxLength={40}
+              maxLength={limiteNombre}
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
@@ -72,9 +90,9 @@ export function Seguridad() {
         ) : (
           <p className="text-xs text-muted-foreground">Este dispositivo no soporta passkeys.</p>
         )}
-        {passkeys && passkeys.length > 0 && (
+        {cuenta && cuenta.passkeys.length > 0 && (
           <ul className="mt-3 divide-y">
-            {passkeys.map((p) => (
+            {cuenta.passkeys.map((p) => (
               <li className="flex items-center justify-between gap-3 py-2" key={p.id}>
                 <span className="text-sm">
                   {p.nombre}
@@ -91,9 +109,9 @@ export function Seguridad() {
 
       <section aria-labelledby="seguridad-sesiones-titulo">
         <h3 id="seguridad-sesiones-titulo" className="mb-2 text-sm font-medium">Sesiones</h3>
-        {sesiones && sesiones.length > 0 && (
+        {cuenta && cuenta.sesiones.length > 0 && (
           <ul className="divide-y">
-            {sesiones.map((s) => (
+            {cuenta.sesiones.map((s) => (
               <li className="flex items-center justify-between gap-3 py-2" key={s.id}>
                 <span className="min-w-0 text-xs text-muted-foreground">
                   <span className="text-sm text-foreground">{s.actual ? 'Esta sesión' : s.user_agent || 'Sesión'}</span>

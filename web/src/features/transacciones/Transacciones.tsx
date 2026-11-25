@@ -1,27 +1,27 @@
 import { ArrowDown, ArrowUp, Filter, Plus, X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Monto } from '@/components/monto'
 import { FraseTexto, Panel, Resumen } from '@/components/panel'
 import { cn } from '@/lib/utils'
-import { Select } from '../../controls/Select'
-import { cargarListadoTx } from '../../lib/api'
+import { Select } from '@/controls/Select'
+import { cargarListadoTx } from '@/lib/api'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useMeta } from '@/shell/hooks/useMeta'
 import { useVista } from '@/shell/hooks/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
-import type { ColTx, ColumnaTransaccion, FiltrosTx } from '../../types'
+import type { ColTx, ColumnaOrdenable, FiltrosTx } from '@/types'
 import { openTxForm, openTxFormById } from './forms'
-import { FilasTx } from './TxTabla'
+import { FilasTx, claseOculta } from './TxTabla'
 
 interface Orden {
-  col: string
+  col: ColTx
   dir: 1 | -1
 }
 
-const siguienteOrden = (actual: Orden, { col, dir_defecto }: ColumnaTransaccion): Orden =>
+const siguienteOrden = (actual: Orden, { col, dir_defecto }: ColumnaOrdenable): Orden =>
   actual.col === col ? { col, dir: actual.dir === 1 ? -1 : 1 } : { col, dir: dir_defecto }
 
 export function Transacciones({ active }: TabProps) {
@@ -34,13 +34,12 @@ export function Transacciones({ active }: TabProps) {
   const [tipoSel, setTipoSel] = useState<FiltrosTx['tipo']>('')
   const [catSel, setCatSel] = useState('')
 
-  const params: FiltrosTx = { col: sort.col as ColTx, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel }
+  const params: FiltrosTx = { col: sort.col, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel }
   const { data, loading } = useVista(loaded ? JSON.stringify(params) : null, () => cargarListadoTx(params), DEPENDENCIAS_DE_VISTA.listadoTransacciones)
 
-  if (data && !loading) {
-    if (data.filtros.mes !== mesSel) setMesSel(data.filtros.mes)
-    if (data.filtros.cat !== catSel) setCatSel(data.filtros.cat)
-  }
+  const filtros = data && !loading ? data.filtros : null
+  const mes = filtros?.mes ?? mesSel
+  const cat = filtros?.cat ?? catSel
 
   const list = data?.items ?? []
   const meses = data?.opciones.meses ?? []
@@ -78,7 +77,7 @@ export function Transacciones({ active }: TabProps) {
             aria-label="Filtros"
             aria-expanded={panelOpen}
             className={cn(
-              'relative inline-flex size-8 items-center justify-center rounded-sm border bg-background hover:bg-muted md:hidden',
+              'relative inline-flex size-11 items-center justify-center rounded-sm border bg-background hover:bg-muted md:hidden',
               panelOpen && 'bg-muted',
               pills.length > 0 && 'has-filters',
             )}
@@ -91,7 +90,7 @@ export function Transacciones({ active }: TabProps) {
             {pills.map((p) => (
               <span key={p.campo} className="filter-pill inline-flex items-center gap-1 rounded-full bg-muted py-0.5 pl-2.5 pr-1 text-xs">
                 {p.label}
-                <button type="button" className="filter-pill-remove inline-flex size-5 items-center justify-center rounded-full hover:bg-border" aria-label="Quitar filtro" onClick={quitar[p.campo]}>
+                <button type="button" className="filter-pill-remove relative inline-flex size-5 items-center justify-center rounded-full after:absolute after:-inset-3 hover:bg-border" aria-label="Quitar filtro" onClick={quitar[p.campo]}>
                   <X className="size-3" aria-hidden="true" />
                 </button>
               </span>
@@ -102,7 +101,7 @@ export function Transacciones({ active }: TabProps) {
               compact
               id="f-mes-filter"
               ariaLabel="Mes"
-              value={mesSel}
+              value={mes}
               onChange={setMesSel}
               options={[{ value: '', label: 'Todos los meses' }, ...meses]}
             />
@@ -118,7 +117,7 @@ export function Transacciones({ active }: TabProps) {
               compact
               id="f-cat-filter"
               ariaLabel="Categoría"
-              value={catSel}
+              value={cat}
               onChange={setCatSel}
               options={[{ value: '', label: 'Todas las categorías' }, ...cats.map((c) => ({ value: c, label: c }))]}
             />
@@ -126,43 +125,47 @@ export function Transacciones({ active }: TabProps) {
         </div>
         <div className="-mx-1 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
+            <caption className="sr-only">Movimientos</caption>
             <thead>
               <tr className="border-b">
                 {columnas.map((columna) => {
-                  const { col, label } = columna
-                  const activo = sort.col === col
-                  const go = () => setSort((s) => siguienteOrden(s, columna))
-                  const oculta = col === 'tipo' || col === 'categoria' ? 'hidden sm:table-cell' : ''
+                  const { col, label, ordenable } = columna
+                  const activo = ordenable && sort.col === col
+                  const go = () => {
+                    if (columna.ordenable) setSort((s) => siguienteOrden(s, columna))
+                  }
                   return (
                     <th
                       key={col}
+                      scope="col"
                       className={cn(
-                        'th-sort cursor-pointer select-none px-2 py-2 text-xs font-semibold hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
+                        'px-2 py-3 text-xs font-semibold sm:py-2',
                         col === 'monto' ? 'text-right' : 'text-left',
+                        ordenable && 'th-sort cursor-pointer select-none hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
                         activo ? `active ${sort.dir === 1 ? 'asc' : 'desc'} text-foreground` : 'text-muted-foreground',
-                        oculta,
+                        claseOculta(columna),
                       )}
                       data-col={col}
-                      tabIndex={0}
-                      role="columnheader"
-                      aria-sort={activo ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}
-                      onClick={go}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          go()
-                        }
-                      }}
+                      {...(ordenable && {
+                        tabIndex: 0,
+                        'aria-sort': activo ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none',
+                        onClick: go,
+                        onKeyDown: (e: KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            go()
+                          }
+                        },
+                      })}
                     >
                       {label}
                       {activo && (sort.dir === 1 ? <ArrowUp className="ml-1 inline size-3" aria-hidden="true" /> : <ArrowDown className="ml-1 inline size-3" aria-hidden="true" />)}
                     </th>
                   )
                 })}
-                <th className="hidden px-2 py-2 text-left text-xs font-semibold text-muted-foreground md:table-cell">Método de pago</th>
               </tr>
             </thead>
-            <tbody id="tx-tbody"><FilasTx items={data ? list : null} textoVacio={data?.texto_vacio} agrupar={sort.col === 'fecha'} onEdit={onEdit} /></tbody>
+            <tbody id="tx-tbody"><FilasTx items={data ? list : null} columnas={columnas} textoVacio={data?.texto_vacio} agrupar={sort.col === 'fecha'} onEdit={onEdit} /></tbody>
           </table>
         </div>
       </Panel>
