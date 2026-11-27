@@ -1,11 +1,12 @@
-import { ArrowDown, ArrowUp, Filter, Plus, X } from 'lucide-react'
-import { useState, type KeyboardEvent } from 'react'
-import { Button } from '@/components/ui/button'
+import { ArrowDown, ArrowUp, Filter, X } from 'lucide-react'
+import { useState } from 'react'
+import { BotonNuevo } from '@/components/BotonNuevo'
 import { Monto } from '@/components/Monto'
 import { FraseTexto, Panel, Resumen } from '@/components/Panel'
 import { cn } from '@/lib/utils'
 import { Select } from '@/controls/inputs/Select'
 import { cargarListadoTx } from '@/lib/api'
+import { alActivar } from '@/lib/teclado'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/acciones/openers'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
@@ -13,7 +14,7 @@ import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import type { ColTx, ColumnaOrdenable, FiltrosTx } from '@/types'
-import { openTxForm, openTxFormById } from './forms'
+import { openTxForm, openTxFormById } from './forms/openers'
 import { FilasTx, claseOculta } from './TxTabla'
 
 interface Orden {
@@ -29,6 +30,7 @@ export function Transacciones({ active }: TabProps) {
   const { loaded } = useData()
   const meta = useMeta()
   const columnas = meta?.columnas_transaccion ?? []
+  const textos = meta?.textos.transacciones
   const [sortElegido, setSort] = useState<Orden | null>(null)
   const ordenInicial = meta ? ({ col: meta.defaults.orden_tx.col, dir: meta.defaults.orden_tx.dir } as Orden) : null
   const sort = sortElegido ?? ordenInicial
@@ -38,7 +40,7 @@ export function Transacciones({ active }: TabProps) {
   const [catSel, setCatSel] = useState('')
 
   const params: FiltrosTx | null = sort ? { col: sort.col, dir: sort.dir, tipo: tipoSel, mes: mesSel, cat: catSel } : null
-  const { data, loading } = useVista(loaded && params ? JSON.stringify(params) : null, () => cargarListadoTx(params as FiltrosTx), DEPENDENCIAS_DE_VISTA.listadoTransacciones)
+  const { data, loading, error } = useVista(loaded && params ? JSON.stringify(params) : null, () => cargarListadoTx(params as FiltrosTx), DEPENDENCIAS_DE_VISTA.listadoTransacciones)
 
   const filtros = data && !loading ? data.filtros : null
   const mes = filtros?.mes ?? mesSel
@@ -52,7 +54,7 @@ export function Transacciones({ active }: TabProps) {
   const quitar = { mes: () => setMesSel(''), tipo: () => setTipoSel(''), cat: () => setCatSel('') }
   const onEdit = (id: number) => openTxFormById(ctx, id)
 
-  const r = data?.resumen ?? { titulo: '', neto: 0, dato: null, segmentos: [] }
+  const r = data?.resumen ?? { titulo: '', neto: 0, neto_tono: 'neutro', neto_signo: '', dato: null, segmentos: [] }
 
   return (
     <TabContent id="transacciones" active={active}>
@@ -61,23 +63,21 @@ export function Transacciones({ active }: TabProps) {
         id="tx-resumen"
         titulo={r.titulo}
         loaded={!!data}
-        valor={<Monto valor={r.neto} color="negativo" />}
+        error={error}
+        valor={<Monto valor={r.neto} tono={r.neto_tono} signo={r.neto_signo} color="negativo" />}
         color="bg-muted-foreground"
         segmentos={r.segmentos}
         dato={r.dato && <span className="text-muted-foreground"><FraseTexto frase={r.dato} /></span>}
         extra={
-          <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openTxForm(ctx)}>
-            <Plus aria-hidden="true" />
-            Nuevo movimiento
-          </Button>
+          <BotonNuevo label={textos?.boton_nuevo} onClick={() => openTxForm(ctx)} />
         }
       />
-      <Panel id="tx-movimientos" titulo="Movimientos">
+      <Panel id="tx-movimientos" titulo={textos?.titulo_panel ?? ''}>
         <div className="filters-bar mb-3 flex flex-wrap items-center gap-2">
           <button
             type="button"
             id="filter-toggle-btn"
-            aria-label="Filtros"
+            aria-label={textos?.aria_filtros}
             aria-expanded={panelOpen}
             className={cn(
               'relative inline-flex size-11 items-center justify-center rounded-sm border bg-background hover:bg-muted md:hidden',
@@ -103,32 +103,32 @@ export function Transacciones({ active }: TabProps) {
             <Select
               compact
               id="f-mes-filter"
-              ariaLabel="Mes"
+              ariaLabel={textos?.aria_mes}
               value={mes}
               onChange={setMesSel}
-              options={[{ value: '', label: 'Todos los meses' }, ...meses]}
+              options={[{ value: '', label: textos?.todos_meses ?? '' }, ...meses]}
             />
             <Select
               compact
               id="f-tipo-filter"
-              ariaLabel="Tipo"
+              ariaLabel={textos?.aria_tipo}
               value={tipoSel ?? ''}
               onChange={(v) => setTipoSel(tipos.some((t) => t.value === v) ? (v as FiltrosTx['tipo']) : '')}
-              options={[{ value: '', label: 'Todos los tipos' }, ...tipos]}
+              options={[{ value: '', label: textos?.todos_tipos ?? '' }, ...tipos]}
             />
             <Select
               compact
               id="f-cat-filter"
-              ariaLabel="Categoría"
+              ariaLabel={textos?.aria_categoria}
               value={cat}
               onChange={setCatSel}
-              options={[{ value: '', label: 'Todas las categorías' }, ...cats.map((c) => ({ value: c, label: c }))]}
+              options={[{ value: '', label: textos?.todas_categorias ?? '' }, ...cats.map((c) => ({ value: c, label: c }))]}
             />
           </div>
         </div>
         <div className="-mx-1 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
-            <caption className="sr-only">Movimientos</caption>
+            <caption className="sr-only">{textos?.titulo_panel}</caption>
             <thead>
               <tr className="border-b">
                 {columnas.map((columna) => {
@@ -153,12 +153,7 @@ export function Transacciones({ active }: TabProps) {
                         tabIndex: 0,
                         'aria-sort': activo ? (sort?.dir === 1 ? 'ascending' : 'descending') : 'none',
                         onClick: go,
-                        onKeyDown: (e: KeyboardEvent) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            go()
-                          }
-                        },
+                        onKeyDown: alActivar(go),
                       })}
                     >
                       {label}

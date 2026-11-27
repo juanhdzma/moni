@@ -12,6 +12,7 @@ import {
   passkeysDisponibles,
   registrarPasskey,
 } from '@/lib/seguridad/passkeys'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { activarPush, pushSoportado, suscripcionActual } from '@/lib/seguridad/push'
 
 type Pendiente = 'passkey' | 'push'
@@ -32,6 +33,7 @@ export function ActivarDispositivo() {
   const [faltan, setFaltan] = useState<Pendiente[]>([])
   const [oculto, setOculto] = useState(false)
   const [error, setError] = useState('')
+  const limiteClave = useMeta()?.limites.clave
   const [enviando, setEnviando] = useState(false)
   const [clave, setClave] = useState('')
   const dialogoRef = useRef<HTMLDivElement>(null)
@@ -101,7 +103,7 @@ export function ActivarDispositivo() {
                       type="password"
                       id="activar-clave"
                       autoComplete="current-password"
-                      maxLength={256}
+                      maxLength={limiteClave}
                       value={clave}
                       onChange={(e) => setClave(e.target.value)}
                     />

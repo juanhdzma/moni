@@ -63,7 +63,7 @@ def registrar_rendimiento(inv_id: int, body: InvRendimiento, response: Response)
         afectadas = _persistir(conn, inv_id, movimientos.aplicar_rendimiento(
             inv, body.monto, fecha_o_ahora(body.fecha), body.notas, body.capitaliza, body.registrar_tx
         ))
-        ocultar_op(conn, body.op_clave)
+        ocultar_op(conn, body.op_clave, ahora_bogota_iso())
         afectar(response, *con_op_oculta(afectadas, body.op_clave))
         return guardar_y_leer(conn, "inversiones", inv_id)
 
@@ -106,22 +106,14 @@ def actualizar_valor_inv(inv_id: int, body: InvValor, response: Response):
 def inv_valor_preview(inv_id: int, body: NuevoValor):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
-        if not body.nuevo_valor:
-            return None
-        return operaciones.cambio_valor(body.nuevo_valor, inv["valor_actual"], inv["monto_invertido"])
+        return operaciones.preview_cambio_valor(body.nuevo_valor, inv["valor_actual"], inv["monto_invertido"])
 
 
 @router.post("/api/inv/{inv_id:int}/aporte/preview", response_model=PreviewAporte | None)
 def inv_aporte_preview(inv_id: int, body: MontoPreview):
     with conexion() as conn:
         inv = get_row(conn, "inversiones", inv_id)
-        if not body.monto:
-            return None
-        estimado = movimientos.valor_estimado_tras_aporte(inv["valor_actual"], body.monto)
-        return {
-            "nuevo_valor_estimado": estimado,
-            "texto_estimado": textos.texto_estimado_aporte(estimado, simbolo(conn)),
-        }
+        return movimientos.preview_aporte(inv["valor_actual"], body.monto, simbolo(conn))
 
 
 @router.get("/api/inv/resumen", response_model=ResumenInversiones)

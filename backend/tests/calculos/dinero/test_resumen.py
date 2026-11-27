@@ -152,8 +152,8 @@ def test_este_mes_cuando_se_gasto_mas_de_lo_que_entro():
 
 def test_resumen_dashboard_objeto_completo():
     assert resumen_dashboard(_estado_completo(), HOY) == {
-        "patrimonio": 7_250_000, "efectivo": 4_650_000, "total_deuda": 500_000, "total_inv": 1_100_000,
-        "total_activos": 2_000_000, "proy_delta": 4_600_000.0, "texto_proyeccion": "proyectados en 12 meses",
+        "patrimonio": 7_250_000, "patrimonio_tono": "positivo", "patrimonio_signo": "+", "efectivo": 4_650_000, "total_deuda": 500_000, "total_inv": 1_100_000,
+        "total_activos": 2_000_000, "proy_delta": 4_600_000.0, "proy_delta_tono": "positivo", "proy_delta_signo": "+", "texto_proyeccion": "proyectados en 12 meses",
         "cuota_total": 120_000, "deudas_activas": 2, "total_invertido": 1_000_000, "ganancia_inv": 100_000,
         "ganancia_inv_pct": 10.0, "total_barra": 2_000_000 + 1_100_000 + 4_650_000 + 500_000,
     }
@@ -172,13 +172,13 @@ def test_total_barra_suma_valores_absolutos_con_efectivo_y_ganancia_negativos():
 def test_partes_patrimonio_lista_completa():
     partes = partes_patrimonio(resumen_dashboard(_estado_completo(), HOY), {"activos": 1, "inversiones": 1})
     assert partes == [
-        {"id": "activos", "nombre": "Activos", "valor": 2_000_000, "valor_firmado": 2_000_000, "negativo": False,
+        {"id": "activos", "nombre": "Activos", "valor": 2_000_000, "valor_firmado": 2_000_000, "valor_signo": "+", "proporcion": pytest.approx(2_000_000 / 8_250_000 * 100), "negativo": False,
          "detalle": "1 activo", "tono": "activos"},
-        {"id": "inversiones", "nombre": "Inversiones", "valor": 1_100_000, "valor_firmado": 1_100_000, "negativo": False,
+        {"id": "inversiones", "nombre": "Inversiones", "valor": 1_100_000, "valor_firmado": 1_100_000, "valor_signo": "+", "proporcion": pytest.approx(1_100_000 / 8_250_000 * 100), "negativo": False,
          "detalle": "+$100k (+10,0%)", "tono": "inversiones"},
-        {"id": "balance", "nombre": "Cartera", "valor": 4_650_000, "valor_firmado": 4_650_000, "negativo": False,
+        {"id": "balance", "nombre": "Cartera", "valor": 4_650_000, "valor_firmado": 4_650_000, "valor_signo": "+", "proporcion": pytest.approx(4_650_000 / 8_250_000 * 100), "negativo": False,
          "detalle": "Efectivo y cuentas", "tono": "cartera"},
-        {"id": "deudas", "nombre": "Deudas", "valor": 500_000, "valor_firmado": -500_000, "negativo": True,
+        {"id": "deudas", "nombre": "Deudas", "valor": 500_000, "valor_firmado": -500_000, "valor_signo": "−", "proporcion": pytest.approx(500_000 / 8_250_000 * 100), "negativo": True,
          "detalle": "$120.000/mes · 2 deudas", "tono": "deudas"},
     ]
 
@@ -227,6 +227,8 @@ def test_este_mes_objeto_completo():
     assert este_mes(e, HOY) == {
         "ingresos": 4_000, "gastos": 1_000, "gastos_firmado": -1_000, "quedo": 3_000,
         "tono_ingresos": "positivo", "tono_gastos": "deudas", "tono_quedo": "positivo",
+        "signo_ingresos": "+", "signo_gastos": "−", "signo_quedo": "+",
+        "titulo": "Este mes en tu cartera", "etiqueta_ingresos": "Entró", "etiqueta_gastos": "Salió",
         "titulo_quedo": "Te quedó", "texto_tarjeta": "Lo pagado con tarjeta no sale de la cartera.",
         "frase": frase_mes(75, 4_000), "descripcion_grafico": "Entró y salió por mes, últimos 6 meses",
         "meses": [{"mes": "mar.", "entro": 0, "salio": 0}, {"mes": "abr.", "entro": 0, "salio": 0},

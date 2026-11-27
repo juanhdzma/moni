@@ -12,13 +12,13 @@ import { ProximasOperaciones } from './components/ProximasOperaciones'
 
 export function Dashboard({ active }: TabProps) {
   const { loaded } = useData()
-  const { data: r } = useVista('resumen', cargarResumenDashboard, DEPENDENCIAS_DE_VISTA.resumenDashboard)
+  const { data: r, error } = useVista('resumen', cargarResumenDashboard, DEPENDENCIAS_DE_VISTA.resumenDashboard)
   const loading = !loaded || r === null
 
   return (
     <TabContent id="dashboard" active={active}>
       <div className="space-y-3 lg:space-y-4">
-        <Patrimonio r={r} loading={loading} />
+        <Patrimonio r={r} loading={loading} error={error} />
         <div className="grid gap-3 lg:grid-cols-12 lg:items-start lg:gap-4">
           <div className="contents lg:col-span-7 lg:block lg:space-y-4">
             <div className="order-1">

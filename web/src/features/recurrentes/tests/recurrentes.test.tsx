@@ -17,6 +17,8 @@ const gym = recurrente({ id: 3, nombre: 'Gym', tipo: 'gasto', monto: 120000, fre
 const items = [salario, netflix, gym]
 
 const resumen = (extra: Partial<ResumenRecurrentes> = {}): ResumenRecurrentes => ({
+  neto_mensual_tono: 'positivo',
+  neto_mensual_signo: '+',
   dato: {
     texto: 'entran $1.000.000 · salen $30.000 en fijos',
     partes: [
@@ -28,7 +30,7 @@ const resumen = (extra: Partial<ResumenRecurrentes> = {}): ResumenRecurrentes =>
     ],
   },
   neto_mensual: 970000,
-  segmentos: [{ key: '2', label: 'Netflix', valor: 30000 }],
+  segmentos: [{ key: '2', label: 'Netflix', valor: 30000, opacidad: 1 }],
   ingresos: [salario],
   gastos: [gym, netflix],
   texto_vacio_ingresos: { titulo: 'Sin ingresos recurrentes', texto: 'Agregá un sueldo o ingreso fijo con el botón Nuevo.' },
@@ -70,7 +72,7 @@ describe('render', () => {
   })
 
   it('header shows a negative net and the fixed costs in the legend', async () => {
-    view([], resumen({ neto_mensual: -50000, segmentos: [{ key: '9', label: 'Arriendo', valor: 50000 }], ingresos: [], gastos: [] }))
+    view([], resumen({ neto_mensual: -50000, neto_mensual_tono: 'negativo', neto_mensual_signo: '−', segmentos: [{ key: '9', label: 'Arriendo', valor: 50000, opacidad: 1 }], ingresos: [], gastos: [] }))
     const card = document.getElementById('rec-total') as HTMLElement
     await waitFor(() => expect(card.textContent).toContain('−$50.000'))
     expect(within(card).getByRole('list', { name: 'De qué está hecho' })).toHaveTextContent('Arriendo')

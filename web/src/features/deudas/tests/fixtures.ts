@@ -39,10 +39,11 @@ export const tarjeta = deuda({
   cupo: 5000000,
   saldo_actual: 1000000,
   franquicia: 'Visa',
+  icono_url: '/assets/franquicias/visa.svg',
+  modos_disponibles: ['abono', 'liquidar'],
   disponible: 4000000,
   tiene_cupo: true,
   uso_pct: 20,
-  nivel_uso: 'bajo',
   tono_uso: 'positivo',
   frases: {
     detalle: 'Cupo $5.000.000',

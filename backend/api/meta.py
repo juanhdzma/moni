@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from ..calculos import dinero
+from ..calculos.catalogo.textos_ui import TEXTOS_UI, textos_peligro
 from ..calculos.catalogo.constantes import (
     CATEGORIA_LARGO_MAX,
     CLASES_DEUDA,
@@ -31,10 +32,11 @@ router = APIRouter()
 
 @router.get("/api/meta", response_model=MetaOut)
 def meta():
+    truncate = aviso_truncate()
     return {
         "frecuencias": opciones_frecuencia(),
         "franquicias": FRANQUICIAS,
-        "tipos_manuales": [o for o in TIPOS_TX if o["value"] != "transfer"],
+        "tipos_manuales": [o for o in TIPOS_TX if o["editable"]],
         "tipos_categoria": ETIQUETAS_TIPO_CATEGORIA,
         "tipos_inversion": TIPOS_INVERSION,
         "tipos_tasa": TIPOS_TASA,
@@ -54,7 +56,8 @@ def meta():
         "push": {"hora": f"{HORA_AVISO}:00", "frase": frase_aviso_diario(f"{HORA_AVISO}:00")},
         "categoria_largo_max": CATEGORIA_LARGO_MAX,
         "limites": LIMITES,
-        "truncate": aviso_truncate(),
+        "truncate": truncate,
+        "textos": {**TEXTOS_UI, "peligro": textos_peligro(truncate["texto"])},
         "entidades": TODAS,
         "entidades_del_bootstrap": DEL_BOOTSTRAP,
     }

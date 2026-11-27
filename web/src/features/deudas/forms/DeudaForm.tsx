@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AdvancedToggle } from '@/controls/inputs/AdvancedToggle'
+import { CrearTxToggle } from '@/controls/inputs/OpcionesRegistro'
 import { Campo } from '@/controls/inputs/Campo'
 import { DatePicker } from '@/controls/inputs/DatePicker'
 import { FormFooter } from '@/controls/forms/FormFooter'
@@ -11,11 +11,13 @@ import { TipoToggle } from '@/controls/inputs/TipoToggle'
 import { entero, parseMoney, soloFecha } from '@/lib/format'
 import { useGuardarEntidad } from '@/shell/hooks/acciones/useGuardarEntidad'
 import { useMeta } from '@/shell/hooks/datos/useMeta'
+import { useEtiquetaMoneda } from '@/shell/hooks/datos/useMonedaCodigo'
 import type { Deuda, DeudaIn } from '@/types'
 import { FormModal } from '@/controls/forms/FormModal'
 
 export function DeudaForm({ d }: { d: Deuda | null }) {
   const meta = useMeta()
+  const conMoneda = useEtiquetaMoneda()
   const { guardar, eliminar, esEdicion: isEdit, etiquetaGuardar } = useGuardarEntidad('deuda', {
     item: d,
     conNuevo: (data) => ({ ...data, crear_tx: esNueva }),
@@ -62,12 +64,12 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
       <NombreField value={nombre} onChange={setNombre} placeholder={esTarjeta ? 'Ej. Tarjeta Visa' : 'Ej. Crédito de consumo'} />
       {!esTarjeta && (
         <div id="wrap-monto-ini">
-          <MoneyField id="m-monto-ini" label={`${isEdit ? 'Monto inicial' : 'Monto del crédito'} (COP)`} value={montoIni} onChange={setMontoIni} />
+          <MoneyField id="m-monto-ini" label={conMoneda(isEdit ? 'Monto inicial' : 'Monto del crédito')} value={montoIni} onChange={setMontoIni} />
         </div>
       )}
       {esTarjeta && (
         <div id="wrap-cupo">
-          <MoneyField id="m-cupo" label="Cupo (COP)" value={cupo} onChange={setCupo} />
+          <MoneyField id="m-cupo" label={conMoneda('Cupo')} value={cupo} onChange={setCupo} />
           <Campo id="m-franquicia" label="Franquicia">
             <Select id="m-franquicia" value={franquiciaActual} onChange={setFranquicia} options={meta?.franquicias ?? []} />
           </Campo>
@@ -75,7 +77,7 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
       )}
       <MoneyField
         id="m-saldo"
-        label={`${esTarjeta ? 'Deuda actual' : 'Saldo actual'} (COP)`}
+        label={conMoneda(esTarjeta ? 'Deuda actual' : 'Saldo actual')}
         value={saldo}
         onChange={setSaldo}
         hint={esTarjeta ? 'Dejá 0 si la tarjeta todavía no tiene gastos.' : undefined}
@@ -94,7 +96,7 @@ export function DeudaForm({ d }: { d: Deuda | null }) {
           </div>
         </div>
       )}
-      {!esTarjeta && <div id="wrap-advanced">{!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}</div>}
+      {!esTarjeta && <div id="wrap-advanced">{!isEdit && <CrearTxToggle checked={esNueva} onChange={setEsNueva} />}</div>}
       <FormFooter saveLabel={etiquetaGuardar('Agregar deuda')} onSave={() => void save()} onDelete={eliminar} />
     </FormModal>
   )

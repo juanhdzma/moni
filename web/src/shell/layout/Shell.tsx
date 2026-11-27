@@ -1,7 +1,6 @@
 import { useState, type ComponentType } from 'react'
 import { Menu, Plus, TriangleAlert, X } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { cn } from '@/lib/utils'
 import { Dashboard } from '@/features/dashboard'
 import { Transacciones, openTxForm } from '@/features/transacciones'
 import { Deudas, openDeudaForm } from '@/features/deudas'
@@ -11,6 +10,7 @@ import { Recurrentes, openRecurrenteForm } from '@/features/recurrentes'
 import { Settings } from '@/features/settings'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx, type OpenerCtx } from '@/shell/hooks/acciones/openers'
+import { NavButton } from './NavButton'
 import { TabBoundary } from './TabBoundary'
 import type { TabProps } from '@/shell/layout/TabContent'
 
@@ -32,15 +32,6 @@ const FAB_ACTIONS: Partial<Record<TabId, (ctx: OpenerCtx) => void>> = {
   inversiones: (ctx) => openInvForm(ctx),
   activos: (ctx) => openActivoForm(ctx),
   recurrentes: (ctx) => openRecurrenteForm(ctx),
-}
-
-function AvisoPrecio() {
-  return (
-    <>
-      <span aria-hidden="true" className="ml-1.5 inline-block size-1.5 -translate-y-2 rounded-full bg-alerta" />
-      <span className="sr-only"> (precios sin actualizar)</span>
-    </>
-  )
 }
 
 export function Shell() {
@@ -67,7 +58,7 @@ export function Shell() {
           <h1 className="sr-only">Moni, finanzas personales</h1>
           <Sheet open={drawer} onOpenChange={setDrawer}>
             <SheetTrigger asChild>
-              <button type="button" aria-label="Menú" className="-ml-2 grid size-9 cursor-pointer place-items-center rounded-md hover:bg-muted lg:hidden">
+              <button type="button" aria-label="Menú" className="-ml-2 grid size-11 cursor-pointer place-items-center rounded-md hover:bg-muted lg:hidden">
                 <Menu className="size-5" />
               </button>
             </SheetTrigger>
@@ -78,21 +69,18 @@ export function Shell() {
               </div>
               <nav aria-label="Secciones" className="flex flex-col py-2">
                 {TABS.map((t) => (
-                  <button
+                  <NavButton
                     key={t.id}
-                    type="button"
-                    data-tab={t.id}
-                    aria-current={tab === t.id ? 'page' : undefined}
+                    id={t.id}
+                    activo={tab === t.id}
+                    aviso={warn[t.id] ?? false}
                     onClick={() => goTo(t.id)}
-                    className={cn(
-                      'nav-drawer-item mx-2 flex cursor-pointer items-center rounded-md px-3 py-2.5 text-left text-body transition-colors hover:bg-muted',
-                      tab === t.id ? 'active bg-muted font-semibold text-foreground' : 'text-muted-foreground',
-                      warn[t.id] && 'has-warning',
-                    )}
+                    claseBase="nav-drawer-item mx-2 flex cursor-pointer items-center rounded-md px-3 py-2.5 text-left text-body transition-colors hover:bg-muted"
+                    claseActivo="bg-muted font-semibold text-foreground"
+                    claseInactivo="text-muted-foreground"
                   >
                     {t.nav}
-                    {warn[t.id] && <AvisoPrecio />}
-                  </button>
+                  </NavButton>
                 ))}
               </nav>
             </SheetContent>
@@ -105,21 +93,18 @@ export function Shell() {
 
           <nav id="header-nav" aria-label="Secciones" className="ml-auto hidden items-center gap-1 lg:flex">
             {TABS.map((t) => (
-              <button
+              <NavButton
                 key={t.id}
-                type="button"
-                data-tab={t.id}
-                aria-current={tab === t.id ? 'page' : undefined}
+                id={t.id}
+                activo={tab === t.id}
+                aviso={warn[t.id] ?? false}
                 onClick={() => goTo(t.id)}
-                className={cn(
-                  'nav-btn relative flex cursor-pointer items-center rounded-full px-3 py-1.5 text-sm transition-colors',
-                  tab === t.id ? 'active bg-primary font-medium text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                  warn[t.id] && 'has-warning',
-                )}
+                claseBase="nav-btn relative flex cursor-pointer items-center rounded-full px-3 py-1.5 text-sm transition-colors"
+                claseActivo="bg-primary font-medium text-primary-foreground"
+                claseInactivo="text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 {t.nav}
-                {warn[t.id] && <AvisoPrecio />}
-              </button>
+              </NavButton>
             ))}
           </nav>
         </div>
@@ -146,7 +131,7 @@ export function Shell() {
         >
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-deudas" />
           <span className="flex-1">{banner}</span>
-          <button type="button" onClick={cerrarBanner} aria-label="Cerrar aviso" className="grid size-6 shrink-0 cursor-pointer place-items-center rounded hover:bg-deudas/10">
+          <button type="button" onClick={cerrarBanner} aria-label="Cerrar aviso" className="grid size-11 shrink-0 cursor-pointer place-items-center rounded hover:bg-deudas/10 sm:size-6">
             <X className="size-4" />
           </button>
         </div>

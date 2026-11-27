@@ -10,7 +10,7 @@ import os
 import random
 from pathlib import Path
 
-from ..calculos.base.fechas import hoy_bogota, sumar_meses
+from ..calculos.base.fechas import ahora_bogota_iso, hoy_bogota, sumar_meses
 from ..core import db
 
 
@@ -90,7 +90,7 @@ def sembrar() -> None:
 
     db.init_db()
     with db.conexion() as conn:
-        insertar_import(conn, validar_import(payload(hoy_bogota())))
+        insertar_import(conn, validar_import(payload(hoy_bogota()), hoy_bogota(), ahora_bogota_iso()))
 
 
 def main() -> None:

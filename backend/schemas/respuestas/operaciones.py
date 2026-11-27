@@ -16,6 +16,8 @@ class OperacionProxima(BaseModel):
     sub: str
     monto: float
     sin_monto: bool
+    monto_tono: str
+    monto_signo: str
     texto_dias: str
     vencida: bool
 
@@ -35,10 +37,12 @@ class OpOculta(BaseModel):
     fuente_id: int
     fecha: str
     etiqueta: str | None
+    texto: str
 
 
 class OpsOcultas(BaseModel):
     items: list[OpOculta]
+    texto_vacio: str
 
 
 class OpOcultaCreada(BaseModel):

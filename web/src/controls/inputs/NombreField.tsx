@@ -4,7 +4,7 @@ import { Campo } from '@/controls/inputs/Campo'
 interface Props {
   value: string
   onChange: (v: string) => void
-  placeholder: string
+  placeholder?: string
 }
 
 export function NombreField({ value, onChange, placeholder }: Props) {

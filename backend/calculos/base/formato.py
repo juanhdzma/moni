@@ -13,8 +13,10 @@ def cop(n: float, simbolo: str = "$") -> str:
 def cop_corto(n: float, simbolo: str = "$") -> str:
     absoluto = abs(n)
     signo = "−" if n < 0 else ""
+    if absoluto >= 1e12:
+        return f"{signo}{simbolo}{absoluto / 1e12:.1f}".replace(".", ",") + "B"
     if absoluto >= 1e9:
-        return f"{signo}{simbolo}{absoluto / 1e9:.1f}".replace(".", ",") + "B"
+        return f"{signo}{simbolo}{absoluto / 1e9:.1f}".replace(".", ",") + "MM"
     if absoluto >= 1e6:
         return f"{signo}{simbolo}{absoluto / 1e6:.1f}".replace(".", ",") + "M"
     if absoluto >= 1e3:
@@ -28,6 +30,18 @@ def porcentaje_texto(n: float, decimales: int = 1) -> str:
 
 def tono_de_valor(valor: float) -> str:
     return "positivo" if valor > 0 else "negativo" if valor < 0 else "neutro"
+
+
+def signo_de(valor: float) -> str:
+    return "" if valor == 0 else "+" if valor > 0 else "−"
+
+
+def con_variacion(datos: dict, *campos: str) -> dict:
+    return {
+        **datos,
+        **{f"{c}_tono": tono_de_valor(datos[c]) for c in campos},
+        **{f"{c}_signo": signo_de(datos[c]) for c in campos},
+    }
 
 
 def pct_barra(valor: float, maximo: float, minimo: float = 2) -> float:
@@ -51,9 +65,12 @@ def frase_flujo(verbo_entra, verbo_sale, ingresos, gastos, simbolo="$", sufijo="
     )
 
 
+OPACIDADES_SEGMENTO = (1, 0.65, 0.45, 0.3, 0.2)
+
+
 def top_segmentos(items, n=4):
     orden = sorted((s for s in items if s["valor"] > 0), key=lambda s: -s["valor"])
-    if len(orden) <= n + 1:
-        return orden
-    otros = sum(s["valor"] for s in orden[n:])
-    return orden[:n] + [{"key": "__otros", "label": "Otros", "valor": otros}]
+    if len(orden) > n + 1:
+        otros = sum(s["valor"] for s in orden[n:])
+        orden = orden[:n] + [{"key": "__otros", "label": "Otros", "valor": otros}]
+    return [{**s, "opacidad": OPACIDADES_SEGMENTO[min(i, len(OPACIDADES_SEGMENTO) - 1)]} for i, s in enumerate(orden)]

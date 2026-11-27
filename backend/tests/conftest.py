@@ -22,7 +22,9 @@ def hash_test():
 def entorno(monkeypatch):
     from backend.core import db
     from backend.seguridad import bloqueo
+    from backend.seguridad.passkeys import rutas as rutas_passkeys
 
+    rutas_passkeys._opciones.clear()
     monkeypatch.setattr(db, "DB_PATH", pathlib.Path(tempfile.mkdtemp()) / "test.db")
     monkeypatch.setenv("MONI_PASSWORD_HASH", hash_test())
     for nombre in ("MONI_TRUSTED_PROXIES", "MONI_BLOCK_HOURS", "MONI_PUSH_TOKEN"):

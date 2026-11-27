@@ -46,7 +46,7 @@ describe('Deudas render', () => {
     expect(document.querySelector('#deudas-grid-credito [aria-hidden="true"] > span')).toHaveClass('bg-alerta')
   })
 
-  it('los botones de pago salen de meta.modos_pago: el préstamo tiene los tres y la tarjeta no tiene cuota', async () => {
+  it('los botones de pago salen de meta.modos_pago filtrados por deuda.modos_disponibles: el préstamo tiene los tres y la tarjeta no tiene cuota', async () => {
     conResumen()
     renderWithProviders(<Deudas active />, { estado: full() })
     const credito = within(document.getElementById('deudas-grid-credito') as HTMLElement)
@@ -62,7 +62,7 @@ describe('Deudas render', () => {
     conResumen({
       ...resumenCompleto,
       creditos: [{ ...credito, nivel_progreso: 'alto', tono_progreso: 'positivo' }],
-      tarjetas: [{ ...tarjeta, uso_pct: 95, nivel_uso: 'alto', tono_uso: 'negativo' }],
+      tarjetas: [{ ...tarjeta, uso_pct: 95, tono_uso: 'negativo' }],
     })
     renderWithProviders(<Deudas active />, { estado: full() })
     await within(document.getElementById('deudas-grid-credito') as HTMLElement).findByText('Crédito carro')

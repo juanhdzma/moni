@@ -1,6 +1,6 @@
 import { useMeta } from '@/shell/hooks/datos/useMeta'
 import type { CamposMovimiento } from '@/shell/hooks/formulario/useCamposMovimiento'
-import { RegistrarToggle } from '@/controls/inputs/AdvancedToggle'
+import { RegistrarToggle } from '@/controls/inputs/OpcionesRegistro'
 import { Campo } from '@/controls/inputs/Campo'
 import { DatePicker } from '@/controls/inputs/DatePicker'
 
@@ -66,9 +66,13 @@ type MovimientoProps = {
   fechaLabel: string
   notasPlaceholder: string
   fechaType?: 'date' | 'datetime-local'
+  fechaId?: string
+  notasId?: string
+  conRegistrar?: boolean
+  registrarLabel?: string
 }
 
-export function MovimientoCampos({ campos, fechaLabel, notasPlaceholder, fechaType }: MovimientoProps) {
+export function MovimientoCampos({ campos, fechaLabel, notasPlaceholder, fechaType, fechaId, notasId, conRegistrar = true, registrarLabel }: MovimientoProps) {
   return (
     <>
       <FechaNotas
@@ -79,8 +83,10 @@ export function MovimientoCampos({ campos, fechaLabel, notasPlaceholder, fechaTy
         onNotas={campos.setNotas}
         notasPlaceholder={notasPlaceholder}
         fechaType={fechaType}
+        fechaId={fechaId}
+        notasId={notasId}
       />
-      <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} />
+      {conRegistrar && <RegistrarToggle checked={campos.registrar} onChange={campos.setRegistrar} label={registrarLabel} />}
     </>
   )
 }

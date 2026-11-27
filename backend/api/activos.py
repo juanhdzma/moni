@@ -71,16 +71,14 @@ def vender_activo(activo_id: int, body: ActivoVenta, response: Response):
 def activo_valor_preview(activo_id: int, body: NuevoValor):
     with conexion() as conn:
         activo = get_row(conn, "activos", activo_id)
-        if not body.nuevo_valor:
-            return None
-        return operaciones.cambio_valor(body.nuevo_valor, activo["valor_actual"], activo["valor_inicial"])
+        return operaciones.preview_cambio_valor(body.nuevo_valor, activo["valor_actual"], activo["valor_inicial"])
 
 
 @router.post("/api/activo/{activo_id:int}/venta/preview", response_model=PreviewVenta | None)
 def activo_venta_preview(activo_id: int, body: PrecioPreview):
     with conexion() as conn:
         activo = get_row(conn, "activos", activo_id)
-        return operaciones.preview_venta_activo(activo, body.precio) if body.precio else None
+        return operaciones.preview_venta_activo(activo, body.precio)
 
 
 @router.get("/api/activos/resumen", response_model=ResumenActivos)

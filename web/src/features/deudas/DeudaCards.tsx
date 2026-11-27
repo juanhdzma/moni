@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Barra } from '@/components/Panel'
 import { claseDeTono } from '@/components/tono'
-import { FRANQUICIA_ICONS, fmtDate } from '@/lib/format'
+import { fmtDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { useMeta } from '@/shell/hooks/datos/useMeta'
@@ -9,7 +9,6 @@ import { useOpenerCtx } from '@/shell/hooks/acciones/openers'
 import type { Deuda, ModoPago } from '@/types'
 import { openDeudaAdelantoFormById, openDeudaFormById, openDeudaPayFormById } from './forms/openers'
 
-const MODO_CUOTA = 'cuota'
 const miniLabel = 'text-xs text-muted-foreground'
 const miniValue = 'text-small font-semibold'
 
@@ -24,7 +23,7 @@ interface ItemProps {
 
 function Item({ nombre, badge, sub, children, actions, className }: ItemProps) {
   return (
-    <div className={cn('rounded-xl border p-4', className)}>
+    <div className={cn('rounded-2xl border p-5', className)}>
       <div className="flex items-start justify-between gap-2">
         <div className="text-body font-semibold">{nombre}</div>
         {badge}
@@ -36,13 +35,13 @@ function Item({ nombre, badge, sub, children, actions, className }: ItemProps) {
   )
 }
 
-function BotonesPago({ id, incluirCuota }: { id: number; incluirCuota: boolean }) {
+function BotonesPago({ d }: { d: Deuda }) {
   const ctx = useOpenerCtx()
-  const modos = (useMeta()?.modos_pago ?? []).filter((m) => incluirCuota || m.value !== MODO_CUOTA)
+  const modos = (useMeta()?.modos_pago ?? []).filter((m) => d.modos_disponibles.includes(m.value))
   return (
     <>
       {modos.map((m, i) => (
-        <button key={m.value} className={cn('btn btn-sm', i === 0 ? 'btn-accent flex-1' : 'btn-dim')} onClick={() => openDeudaPayFormById(ctx, id, m.value as ModoPago)}>
+        <button key={m.value} className={cn('btn btn-sm', i === 0 ? 'btn-accent flex-1' : 'btn-dim')} onClick={() => openDeudaPayFormById(ctx, d.id, m.value as ModoPago)}>
           {m.label}
         </button>
       ))}
@@ -69,7 +68,7 @@ export function PrestamoCard({ d }: { d: Deuda }) {
       sub={frases.detalle}
       actions={
         <>
-          <BotonesPago id={d.id} incluirCuota />
+          <BotonesPago d={d} />
           <BotonEditar id={d.id} />
         </>
       }
@@ -116,13 +115,13 @@ export function TarjetaCard({ d }: { d: Deuda }) {
       nombre={d.nombre}
       badge={
         <span className="flex shrink-0 items-center rounded-md bg-muted p-1">
-          <img src={FRANQUICIA_ICONS[d.franquicia] || FRANQUICIA_ICONS.Otra} width="20" height="20" alt={d.franquicia || 'Tarjeta'} />
+          <img src={d.icono_url} width="20" height="20" alt={d.franquicia || 'Tarjeta'} />
         </span>
       }
       sub={d.frases.detalle}
       actions={
         <>
-          <BotonesPago id={d.id} incluirCuota={false} />
+          <BotonesPago d={d} />
           <button className="btn btn-dim btn-sm" onClick={() => openDeudaAdelantoFormById(ctx, d.id)}>
             Adelanto
           </button>

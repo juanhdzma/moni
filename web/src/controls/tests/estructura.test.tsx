@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/test/render'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { Breakdown, BreakdownRow } from '@/controls/desglose/Breakdown'
+import { BreakdownVariacion } from '@/controls/desglose/BreakdownVariacion'
 import { FormStatus, Hint, StatusMessage } from '@/controls/forms/FormStatus'
 import { ModalPanel } from '@/controls/forms/ModalPanel'
 
@@ -105,3 +106,21 @@ describe('Breakdown', () => {
   })
 })
 
+const propsVariacion = { id: 'p', idDelta: 'd', idTotal: 't', labelTotal: 'Ganancia total' }
+
+describe('BreakdownVariacion', () => {
+  it('muestra las dos filas con el cambio y la variación', () => {
+    renderWithProviders(<BreakdownVariacion {...propsVariacion} visible preview={{ delta: 100, delta_tono: 'positivo', delta_signo: '+', total: 500, total_tono: 'positivo', total_signo: '+', total_pct: 10 }} />)
+    expect(screen.getByText('Cambio desde último')).toBeInTheDocument()
+    expect(screen.getByText('Ganancia total')).toBeInTheDocument()
+    expect(document.getElementById('d')).toHaveTextContent('100')
+    expect(document.getElementById('t')).toHaveTextContent('500')
+    expect(document.getElementById('p')).toHaveClass('visible')
+  })
+
+  it('sin preview muestra guiones y oculto si no es visible', () => {
+    renderWithProviders(<BreakdownVariacion {...propsVariacion} visible={false} preview={null} />)
+    expect(document.getElementById('d')).toHaveTextContent('—')
+    expect(document.getElementById('p')).not.toHaveClass('visible')
+  })
+})

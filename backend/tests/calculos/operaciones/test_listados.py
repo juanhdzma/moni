@@ -98,19 +98,24 @@ def test_resumen_tx():
     r = L.resumen_tx([tx("ingreso", "Salario", 1000), tx("gasto", "Comida", 400), tx("gasto", "Comida", 100), tx("gasto", "Ocio", 50)])
     assert (r["ingresos"], r["gastos"], r["neto"]) == (1000, 550, 450)
     assert r["dato"]["texto"] == "entró $1.000 · salió $550"
+    assert (r["neto_tono"], r["neto_signo"]) == ("positivo", "+")
+    assert (L.resumen_tx([tx("gasto", "Comida", 5)])["neto_tono"], L.resumen_tx([])["neto_signo"]) == ("negativo", "")
     assert L.resumen_tx([tx("ingreso", "Salario", 10)], "US$")["dato"]["texto"] == "entró US$10 · salió US$0"
-    assert r["segmentos"] == [{"key": "Comida", "label": "Comida", "valor": 500}, {"key": "Ocio", "label": "Ocio", "valor": 50}]
+    assert r["segmentos"] == [
+        {"key": "Comida", "label": "Comida", "valor": 500, "opacidad": 1},
+        {"key": "Ocio", "label": "Ocio", "valor": 50, "opacidad": 0.65},
+    ]
 
 
 def test_top_segmentos():
     seg = lambda k, v: {"key": k, "label": k, "valor": v}
-    assert top_segmentos([seg("a", 0), seg("b", 2), seg("c", 5)]) == [seg("c", 5), seg("b", 2)]
+    assert top_segmentos([seg("a", 0), seg("b", 2), seg("c", 5)]) == [{**seg("c", 5), "opacidad": 1}, {**seg("b", 2), "opacidad": 0.65}]
     cinco = [seg(str(i), i) for i in range(1, 6)]
     assert len(top_segmentos(cinco)) == 5
     seis = [seg(str(i), i) for i in range(1, 7)]
     r = top_segmentos(seis)
     assert [s["key"] for s in r] == ["6", "5", "4", "3", "__otros"]
-    assert r[-1] == {"key": "__otros", "label": "Otros", "valor": 3}
+    assert r[-1] == {"key": "__otros", "label": "Otros", "valor": 3, "opacidad": 0.2}
 
 
 def test_derivar_tx():
@@ -143,6 +148,7 @@ def test_atributos_visuales_tx():
     assert (transfer["editable"], transfer["tono"]) == (False, "neutro")
     huerfano = L.derivar_tx(tx("gasto", "A", 5, tarjeta_id=99), deudas)
     assert huerfano["icono_metodo"] == "efectivo"
+    assert gasto_tarjeta["icono_url"] == "/assets/franquicias/mastercard.svg" and ingreso["icono_url"] == "/assets/icons/efectivo.svg"
 
 
 def test_resumen_tx_firma_gastos_y_rotula_segun_tarjeta():

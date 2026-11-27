@@ -6,10 +6,11 @@ from pydantic import BaseModel, Field
 from . import password
 from .bloqueo import fallo_generico, lock_ip, respuesta_si_bloqueada
 from .ip import client_ip
+from ..calculos.catalogo.constantes import CLAVE_LARGO_MAX
 
 
 class ConClave(BaseModel):
-    clave: str | None = Field(default=None, max_length=256)
+    clave: str | None = Field(default=None, max_length=CLAVE_LARGO_MAX)
 
 
 async def exigir_clave(request: Request, clave: str | None) -> JSONResponse | None:

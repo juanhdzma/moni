@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/img/logo.png" width="72" alt="">
+<img src="web/public/assets/icons/moni.png" width="72" alt="">
 
 # Moni
 
@@ -8,7 +8,7 @@
 
 <img src="https://cdn.simpleicons.org/react" height="14" alt=""> React &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/typescript" height="14" alt=""> TypeScript &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/tailwindcss" height="14" alt=""> Tailwind CSS &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/fastapi" height="14" alt=""> FastAPI &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/sqlite" height="14" alt=""> SQLite &nbsp;·&nbsp; <img src="https://cdn.simpleicons.org/docker" height="14" alt=""> Docker
 
-[Features](#features) · [Docs](docs/ARCHITECTURE.md) · [License](LICENSE)
+[Features](#features) · [How do I…](#how-do-i) · [Running](#running) · [Configuration](#configuration) · [Documentation](#documentation) · [Security](#security) · [License](LICENSE)
 
 </div>
 
@@ -16,17 +16,10 @@
 
 **What Moni does:** keeps spending, cards, loans, investments, assets and recurring items in a single ledger, so net worth and available cash are computed from the same rows. A loan payment, an investment contribution or an asset sale can drop a linked entry into the ledger, and the dashboard projects the installments, yields and charges coming up. The interface is in Spanish.
 
-<!-- demo-video:start -->
-<!-- Pending: run /brag-slim, drag brag-output/brag.mp4 (<10 MB) into a GitHub issue comment,
-     paste the user-attachments URL on its own line here, then remove this comment. -->
-<!-- demo-video:end -->
-
 ![Dashboard](docs/img/dashboard.png)
 
 > [!WARNING]
 > Moni stores your whole financial life in one SQLite file and has a single owner login. Without `MONI_PASSWORD_HASH` nobody can sign in, and the port should not be exposed to the internet without HTTPS. Details in [Security](#security).
-
-[Features](#features) · [How do I…](#how-do-i) · [Running](#running) · [Configuration](#configuration) · [Documentation](#documentation) · [Security](#security)
 
 ## Features
 
@@ -112,17 +105,7 @@ To sign in you need a password hash: `python -m backend.seguridad hash`, then se
 
 ## Configuration
 
-Copy `.env.example` to `.env`. Only `MONI_PASSWORD_HASH` is required; the rest matter behind a reverse proxy or with passkeys and push.
-
-```bash
-MONI_PASSWORD_HASH=                       # owner password hash (python -m backend.seguridad hash), single-quoted because it contains "$"; empty means every /api route answers 401
-MONI_RP_ID=moni.nufi.com.co               # WebAuthn relying party id for passkeys; use your domain, or localhost for local
-MONI_ORIGIN=https://moni.nufi.com.co      # WebAuthn origin; http://localhost:8080 for local
-MONI_TRUSTED_PROXIES=127.0.0.0/8,::1/128  # CIDRs allowed to set X-Forwarded-For/Proto; set the exact reverse proxy address, never a whole private range
-MONI_BLOCK_HOURS=24                       # how long an IP stays blocked after 3 failed logins in an hour
-MONI_PUSH_TOKEN=                          # optional bearer token (32+ chars) for POST /api/push/enviar without a session
-VAPID_SUBJECT=https://moni.nufi.com.co    # contact (https: or mailto:) sent in the Web Push VAPID claim; set your own domain
-```
+Copy `.env.example` to `.env`. Only `MONI_PASSWORD_HASH` is required; the rest matter behind a reverse proxy or with passkeys and push. Every variable, its default and what it does is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#configuration).
 
 ## Documentation
 

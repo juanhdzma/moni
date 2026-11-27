@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { apiFetch } from '@/lib/api'
+import { actualizarEntidad, borrarEntidad, crearEntidad, type OpcionesMutacion } from '@/lib/api'
 import type { CrudEntity, CrudPayloads } from '@/types'
 import { useData } from '@/shell/providers/DataProvider'
 import { useModal } from '@/shell/providers/ModalProvider'
@@ -14,39 +14,36 @@ interface CrudOp {
   (entity: CrudEntity, action: 'delete', payload: Identificada): Promise<void>
 }
 
+export type Llamada = (opciones: OpcionesMutacion) => Promise<unknown>
+
 interface Mutations {
   crudOp: CrudOp
   crudOpOrBanner: CrudOp
-  apiAction: (path: string, payload?: unknown) => Promise<void>
-  apiActionOrBanner: (path: string, payload?: unknown) => Promise<void>
+  accion: (llamar: Llamada) => Promise<void>
+  accionOrBanner: (llamar: Llamada) => Promise<void>
 }
-
-const conOpClave = (payload: unknown, op_clave: string | null): unknown =>
-  op_clave && typeof payload === 'object' && payload !== null ? { ...payload, op_clave } : payload
 
 export function useMutations(): Mutations {
   const { mutar, conBanner } = useData()
   const { closeModal, pendingOpClave } = useModal()
 
-  const crudOp = useCallback(
-    async (entity: CrudEntity, action: 'add' | 'update' | 'delete', payload: object) => {
-      const base = `/api/${entity}`
-      await mutar((onAfectadas) => {
-        if (action === 'add') return apiFetch(base, { method: 'POST', body: conOpClave(payload, pendingOpClave()), onAfectadas })
-        const { id, ...body } = payload as Identificada
-        const url = `${base}/${id}`
-        return action === 'update' ? apiFetch(url, { method: 'PUT', body, onAfectadas }) : apiFetch(url, { method: 'DELETE', onAfectadas })
-      }, closeModal)
+  const accion = useCallback(
+    async (llamar: Llamada) => {
+      const opClave = pendingOpClave()
+      await mutar((onAfectadas) => llamar({ onAfectadas, opClave }), closeModal)
     },
     [mutar, closeModal, pendingOpClave],
   )
 
-  const apiAction = useCallback(
-    async (path: string, payload?: unknown) => {
-      const body = conOpClave(payload, pendingOpClave())
-      await mutar((onAfectadas) => apiFetch(path, { method: 'POST', body, onAfectadas }), closeModal)
+  const crudOp = useCallback(
+    async (entity: CrudEntity, action: 'add' | 'update' | 'delete', payload: object) => {
+      await accion((o) => {
+        if (action === 'add') return crearEntidad(entity, payload as CrudPayloads[CrudEntity], o)
+        const { id, ...body } = payload as Identificada
+        return action === 'update' ? actualizarEntidad(entity, id, body as CrudPayloads[CrudEntity], o) : borrarEntidad(entity, id, o)
+      })
     },
-    [mutar, closeModal, pendingOpClave],
+    [accion],
   )
 
   const crudOpOrBanner = useCallback(
@@ -56,15 +53,12 @@ export function useMutations(): Mutations {
     [crudOp, conBanner],
   )
 
-  const apiActionOrBanner = useCallback(
-    async (path: string, payload?: unknown) => {
-      await conBanner(() => apiAction(path, payload), { recargar: true })
+  const accionOrBanner = useCallback(
+    async (llamar: Llamada) => {
+      await conBanner(() => accion(llamar), { recargar: true })
     },
-    [apiAction, conBanner],
+    [accion, conBanner],
   )
 
-  return useMemo(
-    () => ({ crudOp, crudOpOrBanner, apiAction, apiActionOrBanner }),
-    [crudOp, crudOpOrBanner, apiAction, apiActionOrBanner],
-  )
+  return useMemo(() => ({ crudOp, crudOpOrBanner, accion, accionOrBanner }), [crudOp, crudOpOrBanner, accion, accionOrBanner])
 }

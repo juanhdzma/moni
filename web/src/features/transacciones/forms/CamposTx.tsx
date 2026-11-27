@@ -2,8 +2,9 @@ import type { ReactNode } from 'react'
 import { FechaNotas } from '@/controls/forms/FormFields'
 import { MoneyField } from '@/controls/inputs/MoneyField'
 import { Select } from '@/controls/inputs/Select'
-import { cargarOpcionesTx } from '@/lib/api/transacciones'
+import { cargarOpcionesTx } from '@/lib/api'
 import { parseMoney } from '@/lib/format'
+import { useEtiquetaMoneda } from '@/shell/hooks/datos/useMonedaCodigo'
 import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
@@ -45,6 +46,7 @@ interface Props {
 
 export function CamposTx({ tipo, categorias, valores, onCambio, fechaType, ayudaMonto, children }: Props) {
   const limites = useMeta()?.limites
+  const conMoneda = useEtiquetaMoneda()
   return (
     <>
       <div className="form-group">
@@ -72,7 +74,7 @@ export function CamposTx({ tipo, categorias, valores, onCambio, fechaType, ayuda
           onChange={(e) => onCambio({ descripcion: e.target.value })}
         />
       </div>
-      <MoneyField id="m-monto" label="Monto (COP)" value={valores.monto} onChange={(monto) => onCambio({ monto })} hint={ayudaMonto} />
+      <MoneyField id="m-monto" label={conMoneda('Monto')} value={valores.monto} onChange={(monto) => onCambio({ monto })} hint={ayudaMonto} />
       {children}
       <FechaNotas
         fechaType={fechaType}

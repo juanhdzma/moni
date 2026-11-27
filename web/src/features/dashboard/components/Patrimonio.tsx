@@ -1,4 +1,5 @@
 import { Monto } from '@/components/Monto'
+import { CLASE_TARJETA } from '@/components/Panel'
 import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { Skeleton } from '@/components/Skeleton'
 import { claseDeTono } from '@/components/tono'
@@ -7,37 +8,38 @@ import type { ResumenDashboard } from '@/types'
 
 const ESQUELETO = [0, 1, 2, 3]
 
-export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading: boolean }) {
+export function Patrimonio({ r, loading, error }: { r: ResumenDashboard | null; loading: boolean; error: string | null }) {
   const { cop, copShort } = useMoneda()
   const partes = r?.partes ?? []
-  const totalBarra = r?.total_barra ?? 0
-  const proy = r?.proy_delta ?? 0
 
   return (
-    <section id="dash-patrimonio" aria-labelledby="patrimonio-titulo" className="rounded-xl border bg-card p-4 sm:p-5">
+    <section id="dash-patrimonio" aria-labelledby="patrimonio-titulo" className={CLASE_TARJETA}>
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <h2 id="patrimonio-titulo" className="text-sm font-semibold text-muted-foreground">
           Patrimonio
         </h2>
-        {loading || !r ? (
-          <Skeleton className="h-9 w-40" aria-label="Cargando" />
+        {error ? (
+          <span role="alert" className="text-sm text-deudas">
+            {error}
+          </span>
+        ) : loading || !r ? (
+          <Skeleton className="h-9 w-40" role="status" aria-label="Cargando" />
         ) : (
           <span id="stat-networth" title={cop(r.patrimonio)} className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            <Monto valor={r.patrimonio} formato={copShort} signo="negativo" color="negativo" />
+            <Monto valor={r.patrimonio} tono={r.patrimonio_tono} signo={r.patrimonio_signo} formato={copShort} mostrarSigno="negativo" color="negativo" />
           </span>
         )}
-        {!loading && (
+        {!loading && r && (
           <span className="text-sm text-muted-foreground">
-            <Monto valor={proy} formato={copShort} className="font-semibold" />{' '}
-            {r?.texto_proyeccion}
+            <Monto valor={r.proy_delta} tono={r.proy_delta_tono} signo={r.proy_delta_signo} formato={copShort} className="font-semibold" />{' '}
+            {r.texto_proyeccion}
           </span>
         )}
       </div>
 
       <div className="mt-4 flex h-3 gap-0.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
         {!loading &&
-          totalBarra > 0 &&
-          partes.map((p) => <span key={p.id} className={claseDeTono(p.tono).fondo} style={{ flexGrow: Math.abs(p.valor), flexBasis: 0, minWidth: p.valor ? 3 : 0 }} />)}
+          partes.map((p) => <span key={p.id} className={claseDeTono(p.tono).fondo} style={{ flexGrow: p.proporcion, flexBasis: 0, minWidth: p.proporcion ? 3 : 0 }} />)}
       </div>
 
       <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4" aria-label="De qué está hecho">
@@ -54,7 +56,7 @@ export function Patrimonio({ r, loading }: { r: ResumenDashboard | null; loading
               {p.nombre}
             </div>
             <div className="mt-0.5 text-lg font-semibold">
-              {loading ? '—' : <Monto valor={p.valor_firmado} tono={p.tono} formato={copShort} signo="negativo" />}
+              {loading ? '—' : <Monto valor={p.valor_firmado} tono={p.tono} signo={p.valor_signo} formato={copShort} mostrarSigno="negativo" />}
             </div>
             <div className="truncate text-xs text-muted-foreground">{p.detalle}</div>
           </li>

@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from ..core.afectadas import TODAS
+from .meta_textos import TextosMeta
 
 Entidad = Literal[*TODAS]
 
@@ -24,6 +25,16 @@ class OpcionPagoInversion(OpcionConTono):
     requiere_dia: bool
 
 
+class OpcionTipoTx(Opcion):
+    editable: bool
+    permite_tarjeta: bool
+
+
+class OpcionRetiro(OpcionConTono):
+    pide_saldo_queda: bool
+    prellena_monto: bool
+
+
 class OpcionClaseDeuda(Opcion):
     es_tarjeta: bool
 
@@ -34,6 +45,7 @@ class OpcionModoPago(Opcion):
 
 class OpcionConAyuda(OpcionConTono):
     hint: str
+    capitaliza: bool
 
 
 class PeriodosMeta(BaseModel):
@@ -62,6 +74,7 @@ class DefaultsMeta(BaseModel):
     clase_deuda: str
     franquicia: str
     tipo_retiro: str
+    tipo_tx: str
     periodo_gastos: str
     periodo_evolucion: str
     serie_evolucion: str
@@ -74,6 +87,7 @@ class LimitesMeta(BaseModel):
     descripcion: int
     notas: int
     dia_pago_max: int
+    clave: int
 
 
 class TruncateMeta(BaseModel):
@@ -90,14 +104,14 @@ class PushMeta(BaseModel):
 class MetaOut(BaseModel):
     frecuencias: list[Opcion]
     franquicias: list[Opcion]
-    tipos_manuales: list[Opcion]
+    tipos_manuales: list[OpcionTipoTx]
     tipos_categoria: list[OpcionConTono]
     tipos_inversion: list[OpcionTipoInversion]
     tipos_tasa: list[Opcion]
     pagos_inversion: list[OpcionPagoInversion]
     clases_deuda: list[OpcionClaseDeuda]
     modos_pago: list[OpcionModoPago]
-    tipos_retiro: list[OpcionConTono]
+    tipos_retiro: list[OpcionRetiro]
     destinos_rendimiento: list[OpcionConAyuda]
     monedas: list[Opcion]
     series_evolucion: list[OpcionConTono]
@@ -108,5 +122,6 @@ class MetaOut(BaseModel):
     categoria_largo_max: int
     limites: LimitesMeta
     truncate: TruncateMeta
+    textos: TextosMeta
     entidades: list[Entidad]
     entidades_del_bootstrap: list[Entidad]

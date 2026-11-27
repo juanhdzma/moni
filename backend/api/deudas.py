@@ -4,7 +4,7 @@ from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
 from ..calculos.catalogo.constantes import clase_deuda_de
-from ..calculos.base.fechas import fecha_o_ahora, hoy_bogota
+from ..calculos.base.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
 from ..calculos.operaciones import asientos, frases_deuda as frases, movimientos
 from ..core.afectadas import DEUDAS, TRANSACCIONES, afectar, con_movimiento, con_op_oculta
 from ..core.db import conexion
@@ -60,10 +60,6 @@ def actualizar_deuda(deuda_id: int, body: DeudaIn, response: Response):
         return _guardar_y_leer_deuda(conn, deuda_id)
 
 
-def _saldo_tras_adelanto(tarjeta: dict, body: DeudaAdelanto | AdelantoPreview) -> float:
-    return movimientos.saldo_tras_adelanto(tarjeta["cupo"], body.nuevo_saldo, body.disponible_nuevo)
-
-
 @router.post("/api/deuda/{deuda_id:int}/pago", response_model=DeudaCruda)
 def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
     with conexion() as conn:
@@ -77,7 +73,7 @@ def pagar_deuda(deuda_id: int, body: DeudaPago, response: Response):
         aplicar_pago_deuda(conn, deuda_id, pago.saldo_actual, pago.intereses, pago.proxima_cuota)
         if body.registrar_tx:
             insert_tx(conn, **pago.tx)
-        ocultar_op(conn, body.op_clave)
+        ocultar_op(conn, body.op_clave, ahora_bogota_iso())
         afectar(response, *con_op_oculta(con_movimiento(DEUDAS, body.registrar_tx), body.op_clave))
         return _guardar_y_leer_deuda(conn, deuda_id)
 
@@ -87,7 +83,7 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto, response: Response):
     with conexion() as conn:
         iniciar_escritura(conn)
         tarjeta = get_row(conn, "deudas", deuda_id)
-        nuevo_saldo = _saldo_tras_adelanto(tarjeta, body)
+        nuevo_saldo = movimientos.saldo_tras_adelanto(tarjeta["cupo"], body.nuevo_saldo, body.disponible_nuevo)
         movimientos.validar_adelanto(bool(tarjeta["es_tarjeta"]), tarjeta["saldo_actual"], nuevo_saldo)
         fijar_saldo(conn, deuda_id, nuevo_saldo)
         if body.registrar_tx:
@@ -107,16 +103,14 @@ def pedir_adelanto(deuda_id: int, body: DeudaAdelanto, response: Response):
 def pago_preview(deuda_id: int, body: PagoPreview):
     with conexion() as conn:
         deuda = get_row(conn, "deudas", deuda_id)
-        if not body.total_pagado or body.nuevo_saldo is None:
-            return None
-        return operaciones.desglose_pago(deuda["saldo_actual"], body.total_pagado, body.nuevo_saldo)
+        return operaciones.preview_pago(deuda["saldo_actual"], body.total_pagado, body.nuevo_saldo)
 
 
 @router.post("/api/deuda/{deuda_id:int}/adelanto/preview", response_model=PreviewAdelanto)
 def adelanto_preview(deuda_id: int, body: AdelantoPreview):
     with conexion() as conn:
         deuda = get_row(conn, "deudas", deuda_id)
-        nuevo_saldo = _saldo_tras_adelanto(deuda, body)
+        nuevo_saldo = movimientos.saldo_tras_adelanto(deuda["cupo"], body.nuevo_saldo, body.disponible_nuevo)
         return {
             "nuevo_saldo": nuevo_saldo,
             "comision": operaciones.comision_adelanto(deuda["saldo_actual"], body.monto, nuevo_saldo),

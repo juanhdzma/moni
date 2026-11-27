@@ -4,7 +4,7 @@ Moni runs as one container: FastAPI serves the API and the built frontend on por
 
 ## Image and compose
 
-`.github/workflows/build-push.yml` runs lint, typecheck, frontend tests and build, checks that `web/src/types/api.gen.ts` is up to date, runs pytest, and then builds and pushes `ghcr.io/<owner>/moni` (tags `latest` and the commit SHA) on every push to `main`.
+`.github/workflows/build-push.yml` runs lint, typecheck, frontend tests and build, `npm audit` and `pip-audit`, checks that `web/src/types/api.gen.ts` is up to date, and runs pytest (installing with `backend/constraints.txt`, the same pins as the image), on every push and pull request. It then builds and pushes `ghcr.io/<owner>/moni` (tags `latest` and the commit SHA) only on pushes to `main`.
 
 In production, point the compose file at that image instead of `build: .`:
 
@@ -15,14 +15,7 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
-    environment:
-      MONI_PASSWORD_HASH: ${MONI_PASSWORD_HASH:-}
-      MONI_RP_ID: ${MONI_RP_ID:-moni.nufi.com.co}
-      MONI_ORIGIN: ${MONI_ORIGIN:-https://moni.nufi.com.co}
-      MONI_TRUSTED_PROXIES: ${MONI_TRUSTED_PROXIES:-127.0.0.0/8,::1/128}
-      MONI_BLOCK_HOURS: ${MONI_BLOCK_HOURS:-24}
-      MONI_PUSH_TOKEN: ${MONI_PUSH_TOKEN:-}
-      VAPID_SUBJECT: ${VAPID_SUBJECT:-https://moni.nufi.com.co}
+    # add the environment block from docker-compose.yml; the variables are listed under Configuration
     volumes:
       - moni-data:/app/backend/data
 
@@ -30,7 +23,7 @@ volumes:
   moni-data:
 ```
 
-The image runs as an unprivileged user (uid 1000) and has a healthcheck on `GET /api/auth/estado`. Run a single instance: the daily push job assumes one process and would send duplicates otherwise.
+The image runs as an unprivileged user (uid 1000) and has a healthcheck on `GET /api/auth/estado`. Inside the container it listens on port 80, which an unprivileged user can only bind when the kernel has `net.ipv4.ip_unprivileged_port_start=0` (the default in Docker 20.10 and later). On runtimes that do not set it, such as rootless Podman, set that sysctl on the container (`sysctls: [net.ipv4.ip_unprivileged_port_start=0]`) or the server will not start. Uvicorn runs with `--no-proxy-headers`: the client IP and scheme come only from `MONI_TRUSTED_PROXIES`. Run a single instance: the daily push job assumes one process and would send duplicates otherwise.
 
 ## Configuration
 

@@ -3,9 +3,9 @@ DIAS_DESACTUALIZADO = 30
 TEXTO_DESACTUALIZADO = "Valor sin actualizar hace más de 1 mes"
 
 TIPOS_TX = [
-    {"value": "ingreso", "label": "Ingreso"},
-    {"value": "gasto", "label": "Gasto"},
-    {"value": "transfer", "label": "Auto"},
+    {"value": "ingreso", "label": "Ingreso", "editable": True, "permite_tarjeta": False},
+    {"value": "gasto", "label": "Gasto", "editable": True, "permite_tarjeta": True},
+    {"value": "transfer", "label": "Auto", "editable": False, "permite_tarjeta": False},
 ]
 TIPOS_INVERSION = [
     {"value": "fija", "label": "Fija", "tono": "ingreso", "campos": ["tasa", "pago"]},
@@ -27,23 +27,42 @@ FRANQUICIAS = [
     {"value": "Otra", "label": "Otra"},
     {"value": "", "label": "Ninguna"},
 ]
+ICONOS_METODO = {
+    "Visa": "/assets/franquicias/visa.svg",
+    "Mastercard": "/assets/franquicias/mastercard.svg",
+    "Amex": "/assets/franquicias/americanexpress.svg",
+    "Otra": "/assets/franquicias/otra.svg",
+    "efectivo": "/assets/icons/efectivo.svg",
+}
+
+
+def icono_url(clave: str | None) -> str:
+    return ICONOS_METODO.get(clave or "Otra", ICONOS_METODO["Otra"])
+
+
 MODOS_PAGO = [
     {"value": "cuota", "label": "Pagar cuota", "placeholder_notas": "Ej. Cuota #14"},
     {"value": "abono", "label": "Abonar", "placeholder_notas": "Ej. Abono extraordinario"},
     {"value": "liquidar", "label": "Liquidar", "placeholder_notas": "Liquidar la deuda"},
 ]
-TIPOS_RETIRO = [{"value": "total", "label": "Total", "tono": "ingreso"}, {"value": "parcial", "label": "Parcial"}]
+MODOS_SOLO_PRESTAMO = ("cuota",)
+TIPOS_RETIRO = [
+    {"value": "total", "label": "Total", "tono": "ingreso", "pide_saldo_queda": False, "prellena_monto": True},
+    {"value": "parcial", "label": "Parcial", "pide_saldo_queda": True, "prellena_monto": False},
+]
 DESTINOS_RENDIMIENTO = [
     {
         "value": "cuenta",
         "label": "Me lo pagan",
         "tono": "ingreso",
         "hint": "Entra como ingreso a tu cartera. El valor de la inversión no cambia.",
+        "capitaliza": False,
     },
     {
         "value": "capitaliza",
         "label": "Capitaliza",
         "hint": "Sube el valor de la inversión. No entra plata a tu cartera.",
+        "capitaliza": True,
     },
 ]
 MONEDAS = [
@@ -72,6 +91,7 @@ DEFAULTS_FORMULARIOS = {
     "clase_deuda": "prestamo",
     "franquicia": "Visa",
     "tipo_retiro": "total",
+    "tipo_tx": "gasto",
     "periodo_gastos": "1M",
     "periodo_evolucion": "6M",
     "serie_evolucion": "patrimonio",
@@ -82,11 +102,13 @@ NOMBRE_LARGO_MAX = 40
 DESCRIPCION_LARGO_MAX = 120
 NOTAS_LARGO_MAX = 200
 DIA_PAGO_MAX = 31
+CLAVE_LARGO_MAX = 256
 LIMITES = {
     "nombre": NOMBRE_LARGO_MAX,
     "descripcion": DESCRIPCION_LARGO_MAX,
     "notas": NOTAS_LARGO_MAX,
     "dia_pago_max": DIA_PAGO_MAX,
+    "clave": CLAVE_LARGO_MAX,
 }
 
 PALABRA_TRUNCATE = "BORRAR"

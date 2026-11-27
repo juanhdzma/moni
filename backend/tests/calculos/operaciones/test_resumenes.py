@@ -30,7 +30,7 @@ def test_resumen_deudas_totales_y_listas():
     r = resumen_deudas([credito, tarjeta, saldada, tarjeta_en_cero])
     assert r == {
         "total": 900, "total_cuotas": 180, "total_intereses": 0, "intereses_aproximado": False,
-        "segmentos": [{"key": "1", "label": "D1", "valor": 600}, {"key": "2", "label": "D2", "valor": 300}],
+        "segmentos": [{"key": "1", "label": "D1", "valor": 600, "opacidad": 1}, {"key": "2", "label": "D2", "valor": 300, "opacidad": 0.65}],
         "creditos": [credito], "tarjetas": [tarjeta, tarjeta_en_cero], "terminadas": [saldada],
     }
 
@@ -60,8 +60,8 @@ def test_resumen_inversiones_ganancia_positiva():
     r = resumen_inversiones([fija, variable])
     assert r == {
         "total_actual": 1750, "ganancia": 250, "ganancia_pct": (250 / 1500) * 100, "mostrar_ganancia": True,
-        "texto_ganancia": "$250 (16,7%) ganado",
-        "segmentos": [{"key": "1", "label": "I1", "valor": 1300}, {"key": "2", "label": "I2", "valor": 450}],
+        "texto_ganancia": "$250 (16,7%) ganado", "ganancia_tono": "positivo", "ganancia_signo": "+",
+        "segmentos": [{"key": "1", "label": "I1", "valor": 1300, "opacidad": 1}, {"key": "2", "label": "I2", "valor": 450, "opacidad": 0.65}],
         "fijas": [fija], "variables": [variable], "texto_posiciones": "2 posiciones",
         "texto_vacio_fijas": VACIO_INV, "texto_vacio_variables": texto_vacio_inversiones("inversiones variables"),
     }
@@ -84,7 +84,7 @@ def test_segmentos_agrupan_en_otros_a_partir_del_sexto():
     filas = [fila_inv(i, "fija", 10, v) for i, v in enumerate([50, 40, 30, 20, 10, 5], start=1)]
     segmentos = resumen_inversiones(filas)["segmentos"]
     assert [s["valor"] for s in segmentos] == [50, 40, 30, 20, 15]
-    assert segmentos[-1] == {"key": "__otros", "label": "Otros", "valor": 15}
+    assert segmentos[-1] == {"key": "__otros", "label": "Otros", "valor": 15, "opacidad": 0.2}
 
 
 def fila_activo(id, inicial, actual):
@@ -96,7 +96,8 @@ def test_resumen_activos():
     r = resumen_activos([a, b])
     assert r == {
         "total_actual": 1600, "variacion": 100, "mostrar_variacion": True,
-        "segmentos": [{"key": "1", "label": "A1", "valor": 1200}, {"key": "2", "label": "A2", "valor": 400}],
+        "variacion_tono": "positivo", "variacion_signo": "+",
+        "segmentos": [{"key": "1", "label": "A1", "valor": 1200, "opacidad": 1}, {"key": "2", "label": "A2", "valor": 400, "opacidad": 0.65}],
         "items": [a, b], "texto_variacion": "6,7% sobre lo pagado", "texto_conteo": "2 activos",
         "texto_vacio": texto_vacio_activos(),
     }
@@ -110,8 +111,14 @@ def test_resumen_activos_sin_valor_inicial_no_muestra_variacion():
 
 
 def test_preview_venta_activo():
-    assert preview_venta_activo(fila_activo(1, 1000, 1200), 1500) == {"vs_inicial": 500, "vs_actual": 300}
-    assert preview_venta_activo(fila_activo(1, 1000, 1200), 900) == {"vs_inicial": -100, "vs_actual": -300}
+    assert preview_venta_activo(fila_activo(1, 1000, 1200), 1500) == {
+        "vs_inicial": 500, "vs_actual": 300,
+        "vs_inicial_tono": "positivo", "vs_inicial_signo": "+", "vs_actual_tono": "positivo", "vs_actual_signo": "+",
+    }
+    assert preview_venta_activo(fila_activo(1, 1000, 1200), 900) == {
+        "vs_inicial": -100, "vs_actual": -300,
+        "vs_inicial_tono": "negativo", "vs_inicial_signo": "−", "vs_actual_tono": "negativo", "vs_actual_signo": "−",
+    }
 
 
 CATEGORIAS = {"gasto": [{"nombre": "Comida"}, {"nombre": "Otros"}], "ingreso": [{"nombre": "Salario"}, {"nombre": "Extra"}]}

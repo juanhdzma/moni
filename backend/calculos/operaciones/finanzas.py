@@ -2,6 +2,7 @@ import datetime
 from typing import Optional
 
 from ..base.fechas import redondear_js, sumar_meses
+from ..base.formato import con_variacion
 from ..base.numeros import porcentaje
 
 
@@ -36,6 +37,10 @@ def cambio_valor(nuevo: float, anterior: float, base: float) -> dict:
     return {"delta": nuevo - anterior, "total": total, "total_pct": porcentaje(total, base)}
 
 
+def preview_cambio_valor(nuevo: float, anterior: float, base: float) -> Optional[dict]:
+    return con_variacion(cambio_valor(nuevo, anterior, base), "delta", "total") if nuevo else None
+
+
 def estimar_intereses_pagados(monto_inicial: float, saldo_actual: float, tasa_ea: float, cuota_mensual: float) -> Optional[int]:
     if not tasa_ea or not cuota_mensual or not monto_inicial or saldo_actual >= monto_inicial:
         return None
@@ -64,6 +69,12 @@ def intereses_pagados(d: dict) -> Optional[dict]:
 def desglose_pago(saldo_anterior: float, total: float, saldo_nuevo: float) -> dict:
     capital = max(0, saldo_anterior - saldo_nuevo)
     return {"capital": capital, "intereses": max(0, total - capital)}
+
+
+def preview_pago(saldo_anterior: float, total: float, saldo_nuevo: Optional[float]) -> Optional[dict]:
+    if not total or saldo_nuevo is None:
+        return None
+    return desglose_pago(saldo_anterior, total, saldo_nuevo)
 
 
 def comision_adelanto(saldo_anterior: float, monto: float, saldo_nuevo: float) -> float:

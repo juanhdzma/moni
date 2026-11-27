@@ -23,7 +23,7 @@ def crear_categoria(body: CategoriaIn, response: Response):
         return store.categorias(conn)
 
 
-@router.delete("/api/categorias", response_model=Categorias)
+@router.delete("/api/categorias", status_code=204)
 def borrar_categoria(tipo: TipoTx, nombre: str, response: Response):
     with conexion() as conn:
         if es_categoria_sistema(tipo, nombre):
@@ -32,7 +32,6 @@ def borrar_categoria(tipo: TipoTx, nombre: str, response: Response):
             raise ErrorDeDominio("Categoría no encontrada", 404)
         conn.commit()
         afectar(response, CATEGORIAS)
-        return store.categorias(conn)
 
 
 @router.put("/api/ajustes", response_model=Ajustes)

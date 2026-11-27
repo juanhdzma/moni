@@ -29,7 +29,9 @@ backend/
   api/                One router per resource, plus lecturas.py (shared GET/DELETE) and errores.py
   schemas/            Pydantic request models; respuestas/ holds one response_model per route
   core/               db.py (schema, migrations), sql.py (row helpers, write lock),
-                      afectadas.py (entities a mutation touched), backup.py, csrf.py
+                      estado.py (derived collections), afectadas.py (entities a mutation touched),
+                      backup.py (import/export), ops_ocultas.py (hidden upcoming operations),
+                      mensajes.py (Spanish validation messages), csrf.py, ruta.py (path normalization)
   calculos/           Pure logic
     base/             Dates (America/Bogota), number rounding, formatting, domain errors
     catalogo/         System categories and option lists served by /api/meta
@@ -38,7 +40,7 @@ backend/
   seguridad/          Password, sessions, IP lockout, passkeys, step-up, body size limit
   push/               Web Push: VAPID keys, subscriptions, daily job
   scripts/seed_demo.py  Serves the app on a throwaway DB with fictional data
-  tests/              Mirrors the code: api, calculos/{base,catalogo,dinero,operaciones}, push, seguridad
+  tests/              Mirrors the code: api, core, calculos/{base,catalogo,dinero,operaciones}, push, seguridad
 web/
   src/app/            Providers composition
   src/shell/          Providers (data, modal, auth), hooks, layout, error boundaries

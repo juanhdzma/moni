@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { entero, formatearCop, formatearCopCorto, pct, signStr } from '@/lib/format'
+import { entero, formatearCop, formatearCopCorto, pct } from '@/lib/format'
 
 describe('entero', () => {
   it.each([
@@ -37,12 +37,13 @@ describe('formatearCopCorto', () => {
     [1_000_000, '$1,0M'],
     [1_250_000, '$1,3M'],
     [999_999_999, '$1000,0M'],
-    [1_000_000_000, '$1,0B'],
-    [12_340_000_000, '$12,3B'],
+    [1_000_000_000, '$1,0MM'],
+    [2_500_000_000_000, '$2,5B'],
+    [12_340_000_000, '$12,3MM'],
     [-999, '−$999'],
     [-1000, '−$1k'],
     [-1_000_000, '−$1,0M'],
-    [-1_000_000_000, '−$1,0B'],
+    [-1_000_000_000, '−$1,0MM'],
   ])('%d se acorta a %s', (n, esperado) => {
     expect(formatearCopCorto(n, '$')).toBe(esperado)
   })
@@ -51,7 +52,7 @@ describe('formatearCopCorto', () => {
     expect(formatearCopCorto(5, '€')).toBe('€5')
     expect(formatearCopCorto(5_000, '€')).toBe('€5k')
     expect(formatearCopCorto(5_000_000, '€')).toBe('€5,0M')
-    expect(formatearCopCorto(5_000_000_000, '€')).toBe('€5,0B')
+    expect(formatearCopCorto(5_000_000_000, '€')).toBe('€5,0MM')
   })
 })
 
@@ -66,13 +67,5 @@ describe('pct', () => {
     [0, undefined, '0,0'],
   ])('pct(%s, %s) = %s', (n, d, esperado) => {
     expect(pct(n, d)).toBe(esperado)
-  })
-})
-
-describe('signStr', () => {
-  it('cero y positivo llevan +, negativo lleva el menos tipográfico', () => {
-    expect(signStr(0)).toBe('+')
-    expect(signStr(1)).toBe('+')
-    expect(signStr(-1)).toBe('−')
   })
 })

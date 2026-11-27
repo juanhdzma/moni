@@ -13,7 +13,7 @@ export function useCategorias(): CategoriasApi {
   const { estado, mutar: aplicar, conBanner } = useData()
 
   const mutar = useCallback(
-    (cambio: (onAfectadas: AlAfectar) => Promise<Categorias>) => conBanner(() => aplicar(cambio)),
+    (cambio: (onAfectadas: AlAfectar) => Promise<unknown>) => conBanner(() => aplicar(cambio)),
     [aplicar, conBanner],
   )
 

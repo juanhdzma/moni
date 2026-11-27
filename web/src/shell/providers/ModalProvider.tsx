@@ -41,6 +41,10 @@ interface Status {
 const ModalContext = createContext<ModalApi | null>(null)
 const StatusContext = createContext<Status>({ cls: '', msg: '' })
 
+const SIN_ESTADO = () => undefined
+
+export const useEstablecerEstado = (): ModalApi['setModalStatus'] => useContext(ModalContext)?.setModalStatus ?? SIN_ESTADO
+
 export function useModal(): ModalApi {
   const ctx = useContext(ModalContext)
   if (!ctx) throw new Error('useModal fuera de ModalProvider')
@@ -169,7 +173,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     <ModalContext.Provider value={api}>
       <StatusContext.Provider value={status}>
         <div id="modal-overlay" className={'modal-overlay' + (tope ? ' open' : '')} onClick={onBackdrop}>
-          <div ref={dialogRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
+          <div ref={dialogRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className="modal-header">
               <h2 className="modal-title" id="modal-title">
                 {tope?.title}

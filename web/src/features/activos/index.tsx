@@ -1,2 +1,2 @@
 export { Activos } from './Activos'
-export { openActivoForm } from './forms'
+export { openActivoForm } from './forms/openers'

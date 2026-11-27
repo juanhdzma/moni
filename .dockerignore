@@ -39,6 +39,7 @@ web/coverage/
 # Docs y tests: no se sirven ni se corren en runtime
 docs/
 backend/tests/
+backend/scripts/
+backend/openapi.py
 *.md
 LICENSE
-docs/design/.impeccable/

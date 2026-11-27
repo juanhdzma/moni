@@ -60,7 +60,7 @@ def _derivar(conn, nombre, hoy, por_id):
 
 
 def cargar_estado(conn, hoy, nombres=tuple(DERIVADORES)):
-    por_id = _deudas_por_id(conn)
+    por_id = _deudas_por_id(conn) if "transacciones" in nombres else None
     return {nombre: _derivar(conn, nombre, hoy, por_id) for nombre in nombres}
 
 

@@ -49,9 +49,9 @@ def _acciones(client):
     ]
 
 
-def test_op_clave_no_da_422_y_solo_oculta_donde_se_consume(client):
+def test_op_clave_solo_se_acepta_donde_se_consume(client):
     for n, (url, cuerpo, consume) in enumerate(_acciones(client)):
         clave = f"deuda:{n}:2026-01-01"
         r = client.post(url, json={**cuerpo, "op_clave": clave})
-        assert r.status_code == 200, (url, r.text)
+        assert r.status_code == (200 if consume else 422), (url, r.text)
         assert (clave in _hidden(client)) == consume, url

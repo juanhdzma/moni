@@ -7,7 +7,7 @@ from backend.core import db
 from backend.core.ops_ocultas import candidatas
 from backend.push import envio, job_diario
 from backend.tests.api.builders_api import editable
-from backend.tests.push.ayudas_push import SUB, HOY
+from backend.tests.push.helpers import SUB, HOY
 
 
 def test_operaciones_proximas_hoy_y_manana(client, prestamo):
@@ -79,3 +79,29 @@ def test_segundos_hasta_aviso():
     tz = TZ
     assert job_diario.segundos_hasta_aviso(datetime.datetime(2026, 6, 15, 7, 0, tzinfo=tz)) == 3600
     assert job_diario.segundos_hasta_aviso(datetime.datetime(2026, 6, 15, 8, 0, tzinfo=tz)) == 86400
+
+
+def test_loop_diario_no_avisa_dos_veces_si_despierta_antes_de_las_8(monkeypatch):
+    import asyncio
+
+    instantes = iter([
+        datetime.datetime(2026, 6, 15, 7, 59, 59, 999000, tzinfo=TZ),
+        datetime.datetime(2026, 6, 15, 7, 59, 59, 999500, tzinfo=TZ),
+        datetime.datetime(2026, 6, 15, 8, 0, 0, 1000, tzinfo=TZ),
+        datetime.datetime(2026, 6, 15, 8, 0, 0, 2000, tzinfo=TZ),
+        datetime.datetime(2026, 6, 15, 8, 0, 1, tzinfo=TZ),
+    ])
+    pausas = []
+    avisos = []
+
+    async def dormir(segundos):
+        pausas.append(segundos)
+        if len(pausas) == 3:
+            raise asyncio.CancelledError
+
+    monkeypatch.setattr(job_diario, "ahora_bogota", lambda: next(instantes))
+    monkeypatch.setattr(job_diario.asyncio, "sleep", dormir)
+    monkeypatch.setattr(job_diario, "avisar", lambda: avisos.append(1))
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(job_diario.loop_diario())
+    assert avisos == [1]

@@ -33,13 +33,7 @@ CAMPOS_CLAVE = [
     ("/api/tx", TX, "op_clave"),
     ("/api/ops-ocultas", {}, "clave"),
     ("/api/deuda/1/pago", {"modo": "abono", "nuevo_saldo": 0, "total_pagado": 10}, "op_clave"),
-    ("/api/deuda/1/adelanto", {"monto": 10, "nuevo_saldo": 0}, "op_clave"),
     ("/api/inv/1/rendimiento", {"monto": 10}, "op_clave"),
-    ("/api/inv/1/aporte", {"monto": 10}, "op_clave"),
-    ("/api/inv/1/retiro", {"tipo": "parcial", "monto": 10}, "op_clave"),
-    ("/api/inv/1/valor", {"nuevo_valor": 10}, "op_clave"),
-    ("/api/activo/1/venta", {"precio": 10}, "op_clave"),
-    ("/api/activo/1/valor", {"nuevo_valor": 10}, "op_clave"),
 ]
 IDS_CLAVE = [f"{r}:{c}" for r, _, c in CAMPOS_CLAVE]
 

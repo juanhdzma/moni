@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from ..catalogo.constantes import CATEGORIAS_SISTEMA
+from ..catalogo.constantes import CATEGORIAS_SISTEMA, SALDO_MINIMO
 from ..base.errores import ErrorDeDominio
 from ..base.fechas import parse_fecha, sumar_meses
 from ..base.numeros import pesos
-from . import asientos
+from . import asientos, textos
 from .finanzas import desglose_pago
 from .frases_deuda import descripcion_credito, descripcion_pago
 
@@ -30,8 +30,24 @@ def retiro_parcial(
     )
 
 
+def validar_retiro_parcial(valor_actual: float, monto: float, saldo_queda: float) -> None:
+    if monto > valor_actual:
+        raise ErrorDeDominio("El monto retirado no puede superar el valor actual")
+    if saldo_queda < SALDO_MINIMO:
+        raise ErrorDeDominio("Para retirar todo el valor usá el retiro total")
+    if monto + saldo_queda > valor_actual:
+        raise ErrorDeDominio("El monto retirado más el saldo que queda no puede superar el valor actual")
+
+
 def valor_estimado_tras_aporte(valor_actual: float, monto: float) -> float:
     return valor_actual + monto
+
+
+def preview_aporte(valor_actual: float, monto: float, simbolo: str) -> Optional[dict]:
+    if not monto:
+        return None
+    estimado = valor_estimado_tras_aporte(valor_actual, monto)
+    return {"nuevo_valor_estimado": estimado, "texto_estimado": textos.texto_estimado_aporte(estimado, simbolo)}
 
 
 def validar_pago(saldo_actual: float, nuevo_saldo: float, liquidar: bool = False) -> None:
@@ -154,10 +170,11 @@ def aplicar_retiro(
         prefijo, cambios, borrar = "retiro_total", {}, True
     else:
         nuevo = retiro_parcial(inv["valor_actual"], inv["monto_invertido"], monto, saldo_queda)
+        validar_retiro_parcial(inv["valor_actual"], monto, saldo_queda)
         prefijo, borrar = "retiro_parcial", False
         cambios = {
             "valor_actual": nuevo.valor_actual,
-            "monto_invertido": nuevo.monto_invertido,
+            "monto_invertido": max(float(SALDO_MINIMO), nuevo.monto_invertido),
             "valor_actualizado_en": fecha,
         }
     tx = asientos.tx_retiro(prefijo, inv["nombre"], monto, fecha, notas) if registrar_tx else None

@@ -29,7 +29,7 @@ def test_frase_aviso_diario():
 
 
 def test_limites_y_textos_de_contrato():
-    assert C.LIMITES == {"nombre": 40, "descripcion": 120, "notas": 200, "dia_pago_max": 31}
+    assert C.LIMITES == {"nombre": 40, "descripcion": 120, "notas": 200, "dia_pago_max": 31, "clave": 256}
     assert C.CATEGORIA_LARGO_MAX == 25 and C.DIAS_DESACTUALIZADO == 30 and C.PALABRA_TRUNCATE == "BORRAR"
     assert C.TEXTO_DESACTUALIZADO == "Valor sin actualizar hace más de 1 mes"
     assert C.DEFAULTS_FORMULARIOS["orden_tx"] == {"col": "fecha", "dir": -1}

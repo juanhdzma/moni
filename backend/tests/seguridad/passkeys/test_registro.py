@@ -59,6 +59,6 @@ def test_limite_de_10_passkeys(client):
 def test_borrar_passkey(client):
     _, r = alta(client)
     pid = r.json()["id"]
-    assert client.delete(f"/api/auth/passkeys/{pid}").status_code == 200
+    assert client.delete(f"/api/auth/passkeys/{pid}").status_code == 204
     assert client.delete(f"/api/auth/passkeys/{pid}").status_code == 404
     assert client.get("/api/auth/passkeys").json() == []

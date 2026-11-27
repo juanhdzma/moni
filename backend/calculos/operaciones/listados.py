@@ -1,10 +1,10 @@
 import unicodedata
 from datetime import timedelta
 
-from ..catalogo.constantes import TIPOS_TX
+from ..catalogo.constantes import DEFAULTS_FORMULARIOS, TIPOS_TX, icono_url
 from ..base.errores import ErrorDeDominio
 from ..base.fechas import es_desactualizado, mes_de, nombre_mes, normalizar_fecha, parse_fecha
-from ..base.formato import frase_flujo, top_segmentos
+from ..base.formato import con_variacion, frase_flujo, signo_de, top_segmentos
 from ..base.numeros import monto_firmado
 
 COLUMNAS_ORDEN = ("fecha", "tipo", "categoria", "descripcion", "monto")
@@ -18,6 +18,7 @@ ETIQUETAS_COLUMNA = {
 OCULTAS_EN_MOVIL = ("tipo", "categoria")
 DIRECCION_INICIAL = {"fecha": -1, "tipo": 1, "categoria": 1, "descripcion": 1, "monto": -1}
 ETIQUETAS_TIPO_FILA = {o["value"]: o["label"] for o in TIPOS_TX}
+TIPOS_EDITABLES = {o["value"] for o in TIPOS_TX if o["editable"]}
 TIPOS_FILTRABLES = ("ingreso", "gasto")
 TONO_TX = {"ingreso": "ingreso", "gasto": "gasto", "transfer": "neutro"}
 EFECTIVO_DEBITO = "Efectivo / Débito"
@@ -42,10 +43,12 @@ def columnas_transaccion():
 
 def atributos_visuales_tx(tx):
     tarjeta = tx.get("tarjeta_nombre") is not None
+    icono = (tx.get("tarjeta_franquicia") or "Otra") if tarjeta else "efectivo"
     return {
-        "editable": tx["tipo"] != "transfer",
+        "editable": tx["tipo"] in TIPOS_EDITABLES,
         "tono": TONO_TX[tx["tipo"]],
-        "icono_metodo": (tx.get("tarjeta_franquicia") or "Otra") if tarjeta else "efectivo",
+        "icono_metodo": icono,
+        "icono_url": icono_url(icono),
     }
 
 
@@ -63,6 +66,7 @@ def derivar_tx(fila, deudas_por_id):
     tx = dict(fila)
     tx["fecha"] = normalizar_fecha(fila["fecha"])
     tx["monto_firmado"] = monto_firmado(fila["tipo"], fila["monto"])
+    tx["monto_signo"] = signo_de(tx["monto_firmado"])
     tarjeta_id = fila.get("tarjeta_id")
     tarjeta = deudas_por_id.get(tarjeta_id) if fila["tipo"] == "gasto" and tarjeta_id else None
     tx["tarjeta_nombre"] = tarjeta["nombre"] if tarjeta else None
@@ -127,14 +131,14 @@ def resumen_tx(txs, simbolo="$"):
             gastos += t["monto"]
             por_cat[t["categoria"]] = por_cat.get(t["categoria"], 0) + t["monto"]
     segmentos = [{"key": c, "label": c, "valor": v} for c, v in por_cat.items()]
-    return {
+    return con_variacion({
         "ingresos": ingresos,
         "gastos": gastos,
         "gastos_firmado": -gastos,
         "neto": ingresos - gastos,
         "dato": frase_flujo("entró", "salió", ingresos, gastos, simbolo),
         "segmentos": top_segmentos(segmentos),
-    }
+    }, "neto")
 
 
 def _titulo_resumen(items, filtrado):
@@ -209,7 +213,7 @@ def _fecha_con_hora(fecha):
 
 
 def opciones_tx(categorias, deudas, tx, ahora):
-    tipo = "ingreso" if tx and tx["tipo"] == "ingreso" else "gasto"
+    tipo = "ingreso" if tx and tx["tipo"] == "ingreso" else DEFAULTS_FORMULARIOS["tipo_tx"]
     nombres = {t: [c["nombre"] for c in categorias[t]] for t in ("ingreso", "gasto")}
     if tx and tx["categoria"] not in nombres[tipo]:
         nombres[tipo].append(tx["categoria"])

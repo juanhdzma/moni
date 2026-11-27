@@ -1,4 +1,4 @@
-from ..base.formato import cop_corto, frase_flujo, porcentaje_texto, top_segmentos
+from ..base.formato import con_variacion, cop_corto, frase_flujo, porcentaje_texto, top_segmentos
 from ..base.numeros import porcentaje
 from .finanzas import intereses_pagados
 from .textos import categoria_sugerida, texto_activos, texto_posiciones, texto_vacio_activos, texto_vacio_inversiones, texto_vacio_recurrentes
@@ -33,7 +33,7 @@ def resumen_inversiones(filas: list[dict], simbolo: str = "$") -> dict:
     actual = sum(i["valor_actual"] for i in filas)
     ganancia = actual - invertido
     ganancia_pct = porcentaje(ganancia, invertido)
-    resumen = {
+    resumen = con_variacion({
         "total_actual": actual,
         "ganancia": ganancia,
         "ganancia_pct": ganancia_pct,
@@ -42,7 +42,7 @@ def resumen_inversiones(filas: list[dict], simbolo: str = "$") -> dict:
         "segmentos": _segmentos(filas, "valor_actual"),
         "fijas": [i for i in filas if i["tipo"] == "fija"],
         "variables": [i for i in filas if i["tipo"] == "variable"],
-    }
+    }, "ganancia")
     return {
         **resumen,
         "texto_posiciones": texto_posiciones(resumen),
@@ -54,18 +54,22 @@ def resumen_inversiones(filas: list[dict], simbolo: str = "$") -> dict:
 def resumen_activos(filas: list[dict]) -> dict:
     inicial = sum(a["valor_inicial"] for a in filas)
     actual = sum(a["valor_actual"] for a in filas)
-    resumen = {
+    resumen = con_variacion({
         "total_actual": actual,
         "variacion": actual - inicial,
         "mostrar_variacion": inicial > 0,
         "segmentos": _segmentos(filas, "valor_actual"),
         "items": filas,
-    }
+    }, "variacion")
     return {**resumen, **texto_activos(resumen, inicial, len(filas)), "texto_vacio": texto_vacio_activos()}
 
 
-def preview_venta_activo(fila: dict, precio: float) -> dict:
-    return {"vs_inicial": precio - fila["valor_inicial"], "vs_actual": precio - fila["valor_actual"]}
+def preview_venta_activo(fila: dict, precio: float) -> dict | None:
+    if not precio:
+        return None
+    return con_variacion(
+        {"vs_inicial": precio - fila["valor_inicial"], "vs_actual": precio - fila["valor_actual"]}, "vs_inicial", "vs_actual"
+    )
 
 
 def con_categoria_sugerida(rec: dict, categorias: dict) -> dict:
@@ -82,7 +86,7 @@ def resumen_recurrentes(filas: list[dict], categorias: dict, simbolo: str = "$")
     ingresos = sum(r["mensual"] for r in activas if r["tipo"] == "ingreso")
     gastos_activos = [r for r in activas if r["tipo"] != "ingreso"]
     gastos = sum(r["mensual"] for r in gastos_activos)
-    return {
+    return con_variacion({
         "neto_mensual": ingresos - gastos,
         "dato": frase_flujo("entran", "salen", ingresos, gastos, simbolo, " en fijos"),
         "segmentos": _segmentos(gastos_activos, "mensual"),
@@ -90,4 +94,4 @@ def resumen_recurrentes(filas: list[dict], categorias: dict, simbolo: str = "$")
         "gastos": _ordenadas(filas, lambda r: r["tipo"] != "ingreso", categorias),
         "texto_vacio_ingresos": texto_vacio_recurrentes("ingresos"),
         "texto_vacio_gastos": texto_vacio_recurrentes("gastos"),
-    }
+    }, "neto_mensual")

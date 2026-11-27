@@ -1,4 +1,5 @@
 import contextlib
+import os
 import sqlite3
 from pathlib import Path
 
@@ -187,6 +188,7 @@ def _migrar(conn):
 
 def init_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    os.chmod(DB_PATH.parent, 0o700)
     conn = get_conn()
     try:
         conn.execute("PRAGMA journal_mode = WAL")
@@ -196,3 +198,4 @@ def init_db():
         conn.commit()
     finally:
         conn.close()
+    os.chmod(DB_PATH, 0o600)

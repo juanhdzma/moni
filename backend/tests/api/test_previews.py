@@ -10,7 +10,10 @@ def test_previews_de_deuda(client, prestamo, tarjeta):
 def test_previews_de_inversion(client):
     inv = client.post("/api/inv", json={"nombre": "A", "tipo": "variable", "monto_invertido": 1000, "valor_actual": 1200}).json()
     r = client.post(f"/api/inv/{inv['id']}/valor/preview", json={"nuevo_valor": 1500})
-    assert r.json() == {"delta": 300, "total": 500, "total_pct": 50.0}
+    assert r.json() == {
+        "delta": 300, "delta_tono": "positivo", "delta_signo": "+",
+        "total": 500, "total_tono": "positivo", "total_signo": "+", "total_pct": 50.0,
+    }
     r = client.post(f"/api/inv/{inv['id']}/aporte/preview", json={"monto": 300})
     assert r.json() == {"nuevo_valor_estimado": 1500, "texto_estimado": "Estimado: $1.500. Ajustá si el mercado se movió."}
     assert client.post("/api/inv/999/valor/preview", json={"nuevo_valor": 1}).status_code == 404
@@ -20,9 +23,15 @@ def test_previews_de_inversion(client):
 def test_previews_de_activo(client):
     a = client.post("/api/activo", json={"nombre": "Casa", "valor_inicial": 1000, "valor_actual": 1200}).json()
     r = client.post(f"/api/activo/{a['id']}/valor/preview", json={"nuevo_valor": 1500})
-    assert r.json() == {"delta": 300, "total": 500, "total_pct": 50.0}
+    assert r.json() == {
+        "delta": 300, "delta_tono": "positivo", "delta_signo": "+",
+        "total": 500, "total_tono": "positivo", "total_signo": "+", "total_pct": 50.0,
+    }
     r = client.post(f"/api/activo/{a['id']}/venta/preview", json={"precio": 1100})
-    assert r.json() == {"vs_inicial": 100, "vs_actual": -100}
+    assert r.json() == {
+        "vs_inicial": 100, "vs_inicial_tono": "positivo", "vs_inicial_signo": "+",
+        "vs_actual": -100, "vs_actual_tono": "negativo", "vs_actual_signo": "−",
+    }
     assert client.post("/api/activo/999/venta/preview", json={"precio": 1}).status_code == 404
     assert client.get("/api/activos/resumen").json()["items"][0]["valor_actual"] == 1200
 

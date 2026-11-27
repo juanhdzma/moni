@@ -75,7 +75,7 @@ def test_listar_y_revocar_sesiones(anon_client):
     assert set(actual[0]) == {"id", "creada", "ultimo_uso", "creada_texto", "ultimo_uso_texto", "ip", "user_agent", "metodo", "actual"}
     ajena = next(s for s in lista if not s["actual"])
     assert anon_client.delete(f"/api/auth/sesiones/{actual[0]['id']}").status_code == 400
-    assert anon_client.delete(f"/api/auth/sesiones/{ajena['id']}").status_code == 200
+    assert anon_client.delete(f"/api/auth/sesiones/{ajena['id']}").status_code == 204
     assert anon_client.delete(f"/api/auth/sesiones/{ajena['id']}").status_code == 404
     assert otra.get("/api/backup").status_code == 401
     assert anon_client.get("/api/backup").status_code == 200

@@ -23,6 +23,7 @@ class Segmento(BaseModel):
     key: str
     label: str
     valor: float
+    opacidad: float
 
 
 class TextoVacio(BaseModel):
@@ -48,6 +49,10 @@ class Categorias(BaseModel):
 
 class PreviewValor(BaseModel):
     delta: float
+    delta_tono: str
+    delta_signo: str
     total: float
+    total_tono: str
+    total_signo: str
     total_pct: float
 

@@ -18,9 +18,10 @@ afterEach(() => {
 
 const OPS = {
   items: [
-    { clave: 'deuda:1:2026-01-01', tipo: 'deuda', fuente_id: 1, fecha: '2026-01-01', etiqueta: 'Moto' },
-    { clave: 'recurrente:2:2026-02-01', tipo: 'recurrente', fuente_id: 2, fecha: '2026-02-01', etiqueta: null },
+    { clave: 'deuda:1:2026-01-01', tipo: 'deuda', fuente_id: 1, fecha: '2026-01-01', etiqueta: 'Moto', texto: 'Moto · 1 ene 2026' },
+    { clave: 'recurrente:2:2026-02-01', tipo: 'recurrente', fuente_id: 2, fecha: '2026-02-01', etiqueta: null, texto: 'Recurrente 2 · 1 feb 2026' },
   ],
+  texto_vacio: 'Ninguna operación oculta.',
 }
 
 describe('categorias', () => {
@@ -60,8 +61,8 @@ describe('operaciones ocultas', () => {
   it('lista lo que devuelve el backend y restaura una', async () => {
     const f = mockFetch({ 'GET /api/ops-ocultas': OPS, 'DELETE /api/ops-ocultas': {} })
     renderWithProviders(<Settings active />)
-    expect(await screen.findByText('deuda:1:2026-01-01')).toBeInTheDocument()
-    expect(screen.getByText(/Moto/)).toBeInTheDocument()
+    expect(await screen.findByText('Moto · 1 ene 2026')).toBeInTheDocument()
+    expect(screen.queryByText('deuda:1:2026-01-01')).toBeNull()
     await userEvent.click(screen.getAllByRole('button', { name: 'Restaurar' })[0] as HTMLElement)
     await waitFor(() => expect(screen.queryByText('Mascotas')).toBeNull())
     expect(f.mutations()[0]).toMatchObject({ method: 'DELETE', url: '/api/ops-ocultas?clave=deuda%3A1%3A2026-01-01', headers: { 'X-Moni-Request': '1' } })
@@ -232,7 +233,7 @@ describe('teclado', () => {
   it('todo lo accionable es button/input alcanzable por Tab', async () => {
     mockFetch({ 'GET /api/ops-ocultas': OPS })
     renderWithProviders(<Settings active />)
-    await screen.findByText('deuda:1:2026-01-01')
+    await screen.findByText('Moto · 1 ene 2026')
     const first = document.getElementById('settings-new-cat-ingreso') as HTMLInputElement
     first.focus()
     await userEvent.tab()

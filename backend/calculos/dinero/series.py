@@ -1,13 +1,12 @@
 import datetime
-import re
 
-from ..base.fechas import mes_corto, mes_de, normalizar_fecha
+from ..base.fechas import mes_corto, mes_de, normalizar_fecha, parse_fecha, sumar_meses
 from .flujos import flujo_inversiones, flujo_patrimonio
 
 
 def _mes_atras(hoy: datetime.date, k: int) -> tuple[int, int]:
-    idx = hoy.year * 12 + hoy.month - 1 - k
-    return idx // 12, idx % 12 + 1
+    d = sumar_meses(hoy, -k, 1)
+    return d.year, d.month
 
 
 def clave_mes(hoy: datetime.date, k: int) -> str:
@@ -59,8 +58,8 @@ def meses_periodo(periodo: str, fechas, hoy: datetime.date) -> int:
     validas = sorted(f for f in fechas if f)
     if not validas:
         return 6
-    m = re.match(r"^(\d{4})-(\d{2})", validas[0])
-    if not m:
+    primera = parse_fecha(validas[0])
+    if primera is None:
         return 6
-    meses = (hoy.year - int(m.group(1))) * 12 + (hoy.month - int(m.group(2))) + 1
+    meses = (hoy.year - primera.year) * 12 + (hoy.month - primera.month) + 1
     return max(meses, 2)

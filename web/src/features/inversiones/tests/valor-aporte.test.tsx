@@ -2,14 +2,14 @@ import { waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { failure, previewConMonto } from '@/test/mockFetch'
-import { H, clickInGrid, mockInv, modal, reales, setup, typeMoney, installFakeClock } from './helpers'
+import { H, clickInGrid, mockInv, modal, reales, setup, typeMoney, installFakeClock } from './fixtures'
 
 installFakeClock()
 
 describe('actualizar valor (variable)', () => {
   it('preview y POST a /valor con nuevo valor y fecha', async () => {
     const user = userEvent.setup()
-    const f = mockInv({ 'POST /api/inv/6/valor': {}, 'POST /api/inv/6/valor/preview': previewConMonto('nuevo_valor', { delta: 150000, total: 100000, total_pct: 20 }) })
+    const f = mockInv({ 'POST /api/inv/6/valor': {}, 'POST /api/inv/6/valor/preview': previewConMonto('nuevo_valor', { delta: 150000, delta_tono: 'positivo', delta_signo: '+', total: 100000, total_tono: 'positivo', total_signo: '+', total_pct: 20 }) })
     await setup()
     await clickInGrid(user, 'variable', 'Actualizar')
     await waitFor(() => expect(f.callsTo('POST', '/api/inv/6/valor/preview')).toHaveLength(1))

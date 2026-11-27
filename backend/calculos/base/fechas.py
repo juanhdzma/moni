@@ -17,6 +17,7 @@ MESES = (
 
 _ISO_HORA = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]")
 _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_HORA = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 _LEGACY = re.compile(r"^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:[\s,]+(\d{1,2}:\d{2}))?")
 
 
@@ -65,10 +66,9 @@ def parse_fecha_hora(s: Optional[str]) -> Optional[datetime.datetime]:
         return None
     hora = datetime.time(0, 0)
     if len(norm) >= 16 and norm[10] == "T":
-        try:
-            hora = datetime.time.fromisoformat(norm[11:16])
-        except ValueError:
+        if not _HORA.match(norm[11:16]):
             return None
+        hora = datetime.time.fromisoformat(norm[11:16])
     return datetime.datetime.combine(d, hora)
 
 
@@ -122,5 +122,4 @@ def es_desactualizado(fecha: Optional[str], hoy: datetime.date, dias: int = DIAS
     d = parse_fecha(fecha) if fecha else None
     if d is None:
         return False
-    ahora = datetime.datetime.combine(hoy, datetime.time(12), TZ)
-    return ahora - datetime.datetime.combine(d, datetime.time(12), TZ) >= datetime.timedelta(days=dias)
+    return (hoy - d).days >= dias

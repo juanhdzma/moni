@@ -71,7 +71,7 @@ describe('Este mes en tu cartera', () => {
   })
 
   it('avisa cuando salió más de lo que entró', async () => {
-    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 100000, gastos: 150000, gastos_firmado: -150000, quedo: -50000, tono_quedo: 'negativo', frase: { tipo: 'excedio', pct: 50, ...frase('Salió ', ['50,0%', 'negativo'], ' más de lo que entró.') } } }))
+    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 100000, gastos: 150000, gastos_firmado: -150000, quedo: -50000, tono_quedo: 'negativo', signo_quedo: '−', frase: { tipo: 'excedio', pct: 50, ...frase('Salió ', ['50,0%', 'negativo'], ' más de lo que entró.') } } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('stat-ahorro')).toHaveTextContent('Salió 50,0% más de lo que entró.'))
     expect(stat('stat-ahorro').querySelector('.text-deudas')).toHaveTextContent('50,0%')
@@ -79,7 +79,7 @@ describe('Este mes en tu cartera', () => {
   })
 
   it('sin ingresos lo dice', async () => {
-    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 0, gastos: 0, gastos_firmado: 0, quedo: 0, tono_ingresos: 'neutro', tono_quedo: 'neutro', frase: { tipo: 'sin_ingresos', ...frase('Todavía no entró plata este mes.') } } }))
+    mockFetch(rutas({ 'GET /api/dashboard/este-mes': { ...ESTE_MES, ingresos: 0, gastos: 0, gastos_firmado: 0, quedo: 0, tono_ingresos: 'neutro', tono_quedo: 'neutro', signo_ingresos: '', signo_gastos: '', signo_quedo: '', frase: { tipo: 'sin_ingresos', ...frase('Todavía no entró plata este mes.') } } }))
     renderWithProviders(<Dashboard active />)
     await waitFor(() => expect(stat('stat-ahorro')).toHaveTextContent('Todavía no entró plata este mes.'))
     expect(stat('dash-mes')).toHaveTextContent('Entró$0')

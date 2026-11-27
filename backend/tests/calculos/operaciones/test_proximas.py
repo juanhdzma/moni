@@ -70,6 +70,8 @@ def test_armar_proximas_filtra_ocultas_y_arma_textos():
     assert segundo["texto_dias"] == "hoy" and segundo["dia"] == 15 and segundo["mes_corto"] == "ago."
     assert segundo["sub"] == "Quincenal" and primero["sub"] == "Cuota deuda"
     assert r["items"][2]["texto_dias"] == "en 3d"
+    assert all(i["monto_signo"] == ("−" if i["monto"] < 0 else "+" if i["monto"] > 0 else "") for i in r["items"])
+    assert all(i["monto_tono"] == ("negativo" if i["monto"] < 0 else "positivo" if i["monto"] > 0 else "neutro") for i in r["items"])
 
 
 def test_claves_vigentes_incluye_ocultas():

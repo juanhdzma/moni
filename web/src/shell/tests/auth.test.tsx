@@ -1,4 +1,4 @@
-import { render, renderHook, screen, waitFor } from '@testing-library/react'
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, apiFetch, setAuthEvents } from '@/lib/api'
@@ -109,10 +109,11 @@ describe('sesión que se cae en medio', () => {
     [{ configurado: true, autenticado: false, tiene_passkeys: false }, 'login'],
   ] as [EstadoAuth, string][])('un 401 con la fase %j no cambia nada (%s)', async (estado, fase) => {
     const user = userEvent.setup()
-    mockFetch({ 'GET /api/backup': failure(401, 'x') })
+    const f = mockFetch({ 'GET /api/backup': failure(401, 'x') })
     montar(estado)
     await user.click(screen.getByText('dato'))
-    await new Promise((r) => setTimeout(r, 10))
+    await waitFor(() => expect(f.callsTo('GET', '/api/backup')).toHaveLength(1))
+    await act(async () => {})
     expect(screen.getByTestId('fase')).toHaveTextContent(fase)
   })
 

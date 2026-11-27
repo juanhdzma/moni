@@ -17,9 +17,10 @@ def test_listar_tx(client):
     assert set(r["opciones"]) == {"meses", "categorias", "tipos"}
     assert r["opciones"]["categorias"] == ["Comida", "Pago deuda", "Salario"]
     assert set(r["opciones"]["meses"][0]) == {"value", "label"}
-    assert set(r["resumen"]) == {"ingresos", "gastos", "gastos_firmado", "neto", "dato", "segmentos", "titulo"}
+    assert set(r["resumen"]) == {"ingresos", "gastos", "gastos_firmado", "neto", "neto_tono", "neto_signo", "dato", "segmentos", "titulo"}
     assert (r["resumen"]["ingresos"], r["resumen"]["gastos"], r["resumen"]["neto"]) == (500, 200, 300)
     assert r["resumen"]["titulo"] == "Te quedó"
+    assert (r["resumen"]["neto_tono"], r["resumen"]["neto_signo"]) == ("positivo", "+")
     assert r["texto_vacio"]["titulo"] == "Sin movimientos"
     assert client.get("/api/tx", params={"tipo": "gasto"}).json()["resumen"]["titulo"] == "Te quedó con estos filtros"
     assert r["resumen"]["dato"]["texto"] == "entró $500 · salió $200"

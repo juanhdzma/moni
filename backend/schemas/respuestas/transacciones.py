@@ -18,12 +18,13 @@ class TxCruda(BaseModel):
 
 class Tx(TxCruda):
     monto_firmado: float
+    monto_signo: str
     tarjeta_nombre: str | None
-    tarjeta_franquicia: str | None
     metodo_pago: str
     editable: bool
     tono: str
     icono_metodo: str
+    icono_url: str
 
 
 class FilaTx(Tx):
@@ -53,6 +54,8 @@ class ResumenTx(BaseModel):
     gastos: float
     gastos_firmado: float
     neto: float
+    neto_tono: str
+    neto_signo: str
     dato: Frase
     segmentos: list[Segmento]
     titulo: str

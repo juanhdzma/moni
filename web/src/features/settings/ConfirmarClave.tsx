@@ -4,6 +4,7 @@ import { errMsg } from '@/lib/format'
 import { Campo } from '@/controls/inputs/Campo'
 import { FormFooter } from '@/controls/forms/FormFooter'
 import { FormModal } from '@/controls/forms/FormModal'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { useModal } from '@/shell/providers/ModalProvider'
 
 interface Props {
@@ -22,6 +23,7 @@ const mensajeDe = (err: unknown): string => (err instanceof ApiError && err.text
 export function ConfirmarClave({ descripcion, etiqueta, peligro = false, extra, validar, onConfirmar }: Props) {
   const { closeModal, setModalStatus } = useModal()
   const [clave, setClave] = useState('')
+  const limiteClave = useMeta()?.limites.clave
 
   const confirmar = async () => {
     const invalido = validar?.() ?? (clave ? null : CLAVE_REQUERIDA)
@@ -48,7 +50,7 @@ export function ConfirmarClave({ descripcion, etiqueta, peligro = false, extra, 
           type="password"
           id="m-clave"
           autoComplete="current-password"
-          maxLength={256}
+          maxLength={limiteClave}
           value={clave}
           onChange={(e) => setClave(e.target.value)}
         />

@@ -76,7 +76,7 @@ class _SaldoTrasAdelanto(Entrada):
         return self
 
 
-class DeudaAdelanto(ConOpClave, _SaldoTrasAdelanto):
+class DeudaAdelanto(_SaldoTrasAdelanto):
     monto: MontoPesos
     fecha: str = ""
     descripcion: Descripcion = ""

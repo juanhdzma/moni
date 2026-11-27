@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
-import { cargarProximasOperaciones } from '@/lib/api'
+import { cargarProximasOperaciones, ocultarOperacion } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { useMutations } from '@/shell/hooks/acciones/useMutations'
@@ -10,16 +10,16 @@ import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { openDeudaPayFormById } from '@/features/deudas'
 import { openInvYieldFormById } from '@/features/inversiones'
 import { openRecurrenteMaterializeFormById } from '@/features/recurrentes'
-import { Skeleton } from '@/components/Skeleton'
 import { Monto } from '@/components/Monto'
+import { Skeleton } from '@/components/Skeleton'
 import { FraseTexto, Panel } from '@/components/Panel'
 
 export function ProximasOperaciones() {
-  const { apiActionOrBanner } = useMutations()
+  const { accionOrBanner } = useMutations()
   const { setPendingProxOp } = useModal()
   const ctx = useOpenerCtx()
   const [todas, setTodas] = useState(false)
-  const { data } = useVista('proximas', cargarProximasOperaciones, DEPENDENCIAS_DE_VISTA.proximasOperaciones)
+  const { data, error } = useVista('proximas', cargarProximasOperaciones, DEPENDENCIAS_DE_VISTA.proximasOperaciones)
   const loaded = data !== null
   const events = data ? (todas ? [...data.items, ...data.extra] : data.items) : []
 
@@ -32,10 +32,10 @@ export function ProximasOperaciones() {
     else openRecurrenteMaterializeFormById(ctx, op.fuente_id, op.fecha)
   }
 
-  const skip = (clave: string) => apiActionOrBanner('/api/ops-ocultas', { clave })
+  const skip = (clave: string) => accionOrBanner((o) => ocultarOperacion(clave, o))
 
   return (
-    <Panel id="dash-proximas" titulo="Lo que viene" frase={data?.frase ? <FraseTexto frase={data.frase} /> : undefined}>
+    <Panel id="dash-proximas" error={error} titulo="Lo que viene" frase={data?.frase ? <FraseTexto frase={data.frase} /> : undefined}>
       {!loaded ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
@@ -64,7 +64,7 @@ export function ProximasOperaciones() {
                     </div>
                   </div>
                   <div className="shrink-0 text-right text-sm font-semibold">
-                    <Monto valor={e.monto} signo={e.sin_monto ? 'ninguno' : 'siempre'} color={e.sin_monto ? 'ninguno' : 'siempre'} />
+                    <Monto valor={e.monto} tono={e.monto_tono} signo={e.monto_signo} mostrarSigno={e.sin_monto ? 'ninguno' : 'siempre'} color={e.sin_monto ? 'ninguno' : 'siempre'} />
                   </div>
                   <div className="flex shrink-0 gap-1">
                     <button

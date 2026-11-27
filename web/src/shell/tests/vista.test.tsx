@@ -128,7 +128,7 @@ describe('useVista', () => {
     )
     await waitFor(() => expect(f.callsTo('GET', '/api/rec/resumen')).toHaveLength(1))
     await user.click(screen.getByText('mutar deuda'))
-    await new Promise((r) => setTimeout(r, 20))
+    await act(async () => {})
     expect(f.callsTo('GET', '/api/rec/resumen')).toHaveLength(1)
     expect(f.callsTo('GET', '/api/dashboard/movimientos')).toHaveLength(1)
   })

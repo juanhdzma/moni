@@ -37,7 +37,7 @@ const FRASE_SIN_INGRESOS = {
   partes: [{ texto: 'Todavía no entró plata este mes.', tono: null }],
 }
 
-const RESUMEN_DASHBOARD: ResumenDashboard = { patrimonio: 0, proy_delta: 0, texto_proyeccion: 'proyectados en 12 meses', partes: [], total_barra: 0 }
+const RESUMEN_DASHBOARD: ResumenDashboard = { patrimonio: 0, patrimonio_tono: 'neutro', patrimonio_signo: '', proy_delta: 0, proy_delta_tono: 'neutro', proy_delta_signo: '', texto_proyeccion: 'proyectados en 12 meses', partes: [], total_barra: 0 }
 
 const EVOLUCION: Evolucion = {
   serie: 'patrimonio',
@@ -52,7 +52,7 @@ const EVOLUCION: Evolucion = {
   frase: { texto: '', partes: [] },
 }
 
-const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, gastos_firmado: 0, quedo: 0, tono_ingresos: 'neutro', tono_gastos: 'deudas', tono_quedo: 'neutro', titulo_quedo: 'Te quedó', texto_tarjeta: 'Lo pagado con tarjeta no sale de la cartera.', frase: FRASE_SIN_INGRESOS, descripcion_grafico: 'Entró y salió por mes, últimos 6 meses', meses: [] }
+const ESTE_MES: EsteMes = { ingresos: 0, gastos: 0, gastos_firmado: 0, quedo: 0, tono_ingresos: 'neutro', tono_gastos: 'deudas', tono_quedo: 'neutro', signo_ingresos: '', signo_gastos: '', signo_quedo: '', titulo: 'Este mes en tu cartera', etiqueta_ingresos: 'Entró', etiqueta_gastos: 'Salió', titulo_quedo: 'Te quedó', texto_tarjeta: 'Lo pagado con tarjeta no sale de la cartera.', frase: FRASE_SIN_INGRESOS, descripcion_grafico: 'Entró y salió por mes, últimos 6 meses', meses: [] }
 
 const GASTOS: GastosPeriodo = {
   periodo: '1M',
@@ -75,7 +75,7 @@ const LISTADO_TX: ListadoTx = {
   opciones: { meses: [], categorias: [], tipos: [] },
   pills: [],
   texto_vacio: { titulo: 'Sin movimientos', texto: 'Agregá un ingreso o gasto con el botón de arriba.' },
-  resumen: { titulo: 'Te quedó', ingresos: 0, gastos: 0, gastos_firmado: 0, neto: 0, dato: { texto: '', partes: [] }, segmentos: [] },
+  resumen: { titulo: 'Te quedó', ingresos: 0, gastos: 0, gastos_firmado: 0, neto: 0, neto_tono: 'neutro', neto_signo: '', dato: { texto: '', partes: [] }, segmentos: [] },
 }
 
 const OPCIONES_TX: OpcionesTx = {
@@ -85,7 +85,7 @@ const OPCIONES_TX: OpcionesTx = {
   inicial: { tipo: 'gasto', categoria: 'Inversión', tarjeta_id: null, fecha: '2026-08-20T10:30' },
 }
 
-const OPS_OCULTAS: OpsOcultas = { items: [] }
+const OPS_OCULTAS: OpsOcultas = { items: [], texto_vacio: 'Ninguna operación oculta.' }
 
 const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/dashboard/resumen': RESUMEN_DASHBOARD,
@@ -110,6 +110,8 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/inv/resumen': {
     total_actual: 0,
     ganancia: 0,
+    ganancia_tono: 'neutro',
+    ganancia_signo: '',
     ganancia_pct: 0,
     mostrar_ganancia: false,
     texto_ganancia: '',
@@ -123,6 +125,8 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   'GET /api/activos/resumen': {
     total_actual: 0,
     variacion: 0,
+    variacion_tono: 'neutro',
+    variacion_signo: '',
     mostrar_variacion: false,
     segmentos: [],
     items: [],
@@ -132,6 +136,8 @@ const VISTAS_VACIAS: Record<string, Handler> = {
   } satisfies ResumenActivos,
   'GET /api/rec/resumen': {
     neto_mensual: 0,
+    neto_mensual_tono: 'neutro',
+    neto_mensual_signo: '',
     dato: { texto: '', partes: [] },
     segmentos: [],
     ingresos: [],

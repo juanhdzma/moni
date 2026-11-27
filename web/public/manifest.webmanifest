@@ -7,6 +7,9 @@
   "theme_color": "#0f141c",
   "icons": [
     { "src": "/assets/icons/moni.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/assets/icons/moni-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/moni-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/assets/icons/moni-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "/assets/icons/moni.svg", "sizes": "any", "type": "image/svg+xml" }
   ]
 }

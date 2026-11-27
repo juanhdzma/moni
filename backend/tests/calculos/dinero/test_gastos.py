@@ -147,7 +147,7 @@ def test_movimiento_reciente_completo():
     t = tx("gasto", "Mercado", 80, fecha="2026-08-10T09:00", id=4, descripcion="Exito")
     assert movimientos_recientes([t]) == [{
         "id": 4, "fecha": "2026-08-10T09:00", "tipo": "gasto", "categoria": "Mercado", "descripcion": "Exito", "monto": 80,
-        "monto_firmado": -80, "editable": True, "tono": "gasto", "icono_metodo": "efectivo",
+        "monto_firmado": -80, "monto_signo": "−", "editable": True, "tono": "gasto", "icono_metodo": "efectivo", "icono_url": "/assets/icons/efectivo.svg",
     }]
 
 

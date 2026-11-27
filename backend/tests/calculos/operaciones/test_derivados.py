@@ -15,11 +15,6 @@ def test_derivar_deuda_y_tarjeta():
     assert op.derivar_deuda(deuda(es_tarjeta=1, saldo_actual=950, cupo=1000))["nivel_uso"] == "alto"
 
 
-def test_derivar_activo():
-    a = op.derivar_activo({"valor_inicial": 1000, "valor_actual": 1100, "valor_actualizado_en": ""}, D(2026, 8, 1))
-    assert a["cambio"] == 100 and a["cambio_pct"] == pytest.approx(10) and a["desactualizado"] is False
-
-
 def test_derivar_inversion_ganancia():
     i = op.derivar_inversion(inversion(valor_actual=1_100_000, pago="vencimiento"), D(2026, 8, 1))
     assert i["ganancia"] == 100_000 and i["ganancia_pct"] == pytest.approx(10)
@@ -44,6 +39,8 @@ def test_derivar_deuda_objeto_completo():
         "total_intereses": 0, "tasa_ea": 0, "es_tarjeta": False, "clase_deuda": "prestamo", "activa": True, "vigente": True,
         "progreso_pct": 75.0, "capital_pagado": 750, "nivel_progreso": "alto", "tono_progreso": "positivo",
         "tiene_cupo": False, "disponible": None, "uso_pct": 0, "nivel_uso": "bajo", "tono_uso": "positivo",
+        "modos_disponibles": ["cuota", "abono", "liquidar"],
+        "icono_url": "/assets/franquicias/otra.svg",
         "pago": {
             "cuota": {"monto": 100.0, "nuevo_saldo": None, "hint": "Pre-llenado con la cuota mensual — ajustá si aplica."},
             "abono": {"monto": None, "nuevo_saldo": None, "hint": HINT_ABONO},
@@ -111,7 +108,8 @@ def test_derivar_inversion_fija_objeto_completo():
         "id": 1, "nombre": "Inv", "tipo": "fija", "pago": "mensual", "dia_pago": 20, "tasa_ea": 12,
         "monto_invertido": 1_000_000, "valor_actual": 1_000_000, "capitaliza_default": False, "ganancia": 0,
         "ganancia_pct": 0.0, "texto_tasa": "12,00% EA · 0,9489% MV", "proximo_pago": {"fecha": "2026-08-20", "texto": "en 5d"},
-        "rendimiento_esperado": 9489, "desactualizado": False,
+        "rendimiento_esperado": 9489, "desactualizado": False, "monto_retiro_total": 1_000_000,
+        "ganancia_tono": "neutro", "ganancia_signo": "", "accion_principal": "rendimiento",
     }
 
 
@@ -120,7 +118,7 @@ def test_derivar_inversion_variable_sin_tasa_ni_proximo_pago():
                                        tasa_ea=None, valor_actualizado_en="2026-06-01"), HOY)
     assert v["capitaliza_default"] is True and v["ganancia"] == 200_000 and v["ganancia_pct"] == 20
     assert v["texto_tasa"] is None and v["proximo_pago"] is None and v["rendimiento_esperado"] is None
-    assert v["desactualizado"] is True
+    assert v["desactualizado"] is True and v["accion_principal"] == "valor"
 
 
 def test_texto_tasa_solo_en_fijas_con_tasa():
@@ -145,9 +143,12 @@ def test_proximo_pago_solo_con_pago_mensual_y_dia():
 
 
 def test_derivar_activo():
+    a = op.derivar_activo({"valor_inicial": 1000, "valor_actual": 1100, "valor_actualizado_en": ""}, D(2026, 8, 1))
+    assert a["cambio"] == 100 and a["cambio_pct"] == pytest.approx(10) and a["desactualizado"] is False
     base = {"valor_actual": 1200, "valor_inicial": 1000}
     assert op.derivar_activo({**base, "valor_actualizado_en": "2026-06-01"}, HOY) == {
         **base, "valor_actualizado_en": "2026-06-01", "cambio": 200, "cambio_pct": 20.0, "desactualizado": True,
+        "cambio_tono": "positivo", "cambio_signo": "+",
     }
     assert op.derivar_activo({**base, "valor_actualizado_en": "2026-08-01"}, HOY)["desactualizado"] is False
     assert op.derivar_activo(base, HOY)["desactualizado"] is False
@@ -158,3 +159,8 @@ def test_derivar_activo():
 def test_derivar_recurrente_mensualiza_segun_la_frecuencia():
     assert op.derivar_recurrente(recurrente(monto=1200, frecuencia="anual"), HOY)["mensual"] == 100
     assert op.derivar_recurrente(recurrente(monto=100, frecuencia="quincenal"), HOY)["mensual"] == 200
+
+
+def test_cuota_no_aplica_a_las_tarjetas():
+    assert op.derivar_deuda(deuda(es_tarjeta=0))["modos_disponibles"] == ["cuota", "abono", "liquidar"]
+    assert op.derivar_deuda(deuda(es_tarjeta=1))["modos_disponibles"] == ["abono", "liquidar"]

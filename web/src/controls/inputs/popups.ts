@@ -43,7 +43,7 @@ export function usePopupOutsideClick(): void {
 export function repositionPopup(
   trigger: HTMLElement,
   popup: HTMLElement,
-  opts: { matchWidth?: boolean; alignRight?: boolean } = {},
+  opts: { matchWidth?: boolean } = {},
 ): void {
   const r = trigger.getBoundingClientRect()
   const h = popup.offsetHeight
@@ -52,8 +52,7 @@ export function repositionPopup(
   const spaceAbove = r.top
   let top = spaceBelow >= h + 8 || spaceBelow >= spaceAbove ? r.bottom + 6 : r.top - h - 6
   top = Math.max(8, Math.min(top, window.innerHeight - h - 8))
-  let left = opts.alignRight ? r.right - w : r.left
-  left = Math.max(8, Math.min(left, window.innerWidth - w - 8))
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8))
   popup.style.top = `${top}px`
   popup.style.left = `${left}px`
   if (opts.matchWidth) popup.style.width = `${r.width}px`

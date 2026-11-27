@@ -7,7 +7,8 @@ def test_categorias_crud(client):
     assert r.json()["gasto"][-1] == {"nombre": "Mascotas", "sistema": False}
     assert client.get("/api/bootstrap").json()["categorias"] == r.json()
     r = client.delete("/api/categorias", params={"tipo": "gasto", "nombre": "Mascotas"})
-    assert r.status_code == 200 and r.json() == base
+    assert r.status_code == 204 and r.content == b""
+    assert client.get("/api/bootstrap").json()["categorias"] == base
 
 
 def test_categorias_errores(client):

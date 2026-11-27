@@ -22,11 +22,12 @@ export const mercado: ListadoTx['items'][number] = {
   descripcion: 'Mercado',
   monto: 5000,
   monto_firmado: -5000,
+  monto_signo: '−',
+  icono_url: '/assets/franquicias/visa.svg',
   notas: '',
   tarjeta_id: 5,
   metodo_pago: 'Visa Oro',
   tarjeta_nombre: 'Visa Oro',
-  tarjeta_franquicia: 'Visa',
   grupo: 'Marzo - 2026',
   tipo_label: 'Gasto',
   editable: true,
@@ -41,11 +42,12 @@ export const salario: ListadoTx['items'][number] = {
   descripcion: '',
   monto: 900000,
   monto_firmado: 900000,
+  monto_signo: '+',
+  icono_url: '/assets/icons/efectivo.svg',
   notas: '',
   tarjeta_id: null,
   metodo_pago: 'Efectivo / Débito',
   tarjeta_nombre: null,
-  tarjeta_franquicia: null,
   grupo: 'Abril - 2026',
   tipo_label: 'Ingreso',
   editable: true,
@@ -74,8 +76,10 @@ export const listado = (extra: Partial<ListadoTx> = {}): ListadoTx => ({
     gastos: 5000,
     gastos_firmado: -5000,
     neto: 895000,
+    neto_tono: 'positivo',
+    neto_signo: '+',
     dato: { texto: 'entró $900.000 · salió $5.000', partes: [] },
-    segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000 }],
+    segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000, opacidad: 1 }],
   },
   texto_vacio: { titulo: 'Sin movimientos', texto: 'Agregá un ingreso o gasto con el botón de arriba.' },
   ...extra,
@@ -91,5 +95,5 @@ export const mockFetch = (routes: Record<string, unknown> = {}) =>
   base({ 'GET /api/tx': listado(), 'GET /api/tx/opciones': opcionesTx(), ...routes })
 export const URL_BASE = '/api/tx?col=fecha&dir=-1&tipo=&mes=&cat='
 
-export const filaDe = (t: ReturnType<typeof tx>): ListadoTx['items'][number] => ({ ...mercado, ...t, tarjeta_franquicia: null, icono_metodo: 'efectivo', grupo: null })
+export const filaDe = (t: ReturnType<typeof tx>): ListadoTx['items'][number] => ({ ...mercado, ...t, icono_metodo: 'efectivo', grupo: null })
 export const ui = (e = datos()) => renderWithProviders(<Transacciones active />, { estado: e })

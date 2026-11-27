@@ -4,9 +4,10 @@ import { MovimientoCampos } from '@/controls/forms/FormFields'
 import { FormFooter } from '@/controls/forms/FormFooter'
 import { ModalPanel } from '@/controls/forms/ModalPanel'
 import { MoneyField } from '@/controls/inputs/MoneyField'
-import { previewPago } from '@/lib/api'
+import { pagarDeuda, previewPago } from '@/lib/api'
 import { entero, parseMoney } from '@/lib/format'
 import { useMeta } from '@/shell/hooks/datos/useMeta'
+import { useEtiquetaMoneda } from '@/shell/hooks/datos/useMonedaCodigo'
 import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { useCerrarYAbrir } from '@/shell/hooks/acciones/openers'
 import { useCamposMovimiento } from '@/shell/hooks/formulario/useCamposMovimiento'
@@ -21,8 +22,11 @@ export function PagoForm({ d, modo }: { d: Deuda; modo: ModoPago }) {
   const { cop } = useMoneda()
   const editar = useCerrarYAbrir((ctx) => openDeudaFormById(ctx, d.id))
   const guardar = useGuardar()
-  const { apiAction } = useMutations()
-  const infoModo = useMeta()?.modos_pago.find((m) => m.value === modo)
+  const { accion } = useMutations()
+  const meta = useMeta()
+  const infoModo = meta?.modos_pago.find((m) => m.value === modo)
+  const t = meta?.textos.pago
+  const conMoneda = useEtiquetaMoneda()
   const sugerido = d.pago[modo]
   const [monto, setMonto] = useState(sugerido.monto === null ? '' : entero(sugerido.monto))
   const [saldoNuevo, setSaldoNuevo] = useState(sugerido.nuevo_saldo === null ? '' : entero(sugerido.nuevo_saldo))
@@ -37,42 +41,42 @@ export function PagoForm({ d, modo }: { d: Deuda; modo: ModoPago }) {
 
   const save = async () => {
     await guardar(async () => {
-      const body: Omit<DeudaPago, 'nuevo_saldo'> & Partial<Pick<DeudaPago, 'nuevo_saldo'>> = {
+      const body: DeudaPago = {
         ...(saldoEscrito && { nuevo_saldo: saldoNuevoN }),
         total_pagado: total,
         ...campos.cuerpo(),
         modo,
       }
-      await apiAction(`/api/deuda/${d.id}/pago`, body)
+      await accion((o) => pagarDeuda(d.id, body, o))
     })
   }
 
   return (
     <FormModal>
       <ModalPanel
-        izquierda={{ label: 'Saldo pendiente', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
-        derecha={{ label: 'Cuota mensual', valor: cop(d.cuota_mensual) }}
+        izquierda={{ label: t?.label_saldo_pendiente ?? '', valor: cop(d.saldo_actual), clase: 'text-deudas' }}
+        derecha={{ label: t?.label_cuota_mensual ?? '', valor: cop(d.cuota_mensual) }}
       />
-      <MoneyField id="m-monto" label="Monto total pagado (COP)" value={monto} onChange={setMonto} hint={sugerido.hint} />
-      <MoneyField id="m-saldo-nuevo" label="Saldo capital después del pago" value={saldoNuevo} onChange={setSaldoNuevo} placeholder="Lo que muestra tu banco después" />
+      <MoneyField id="m-monto" label={conMoneda(t?.label_monto)} value={monto} onChange={setMonto} hint={sugerido.hint} />
+      <MoneyField id="m-saldo-nuevo" label={t?.label_saldo_nuevo ?? ''} value={saldoNuevo} onChange={setSaldoNuevo} placeholder={t?.placeholder_saldo_nuevo} />
       <Breakdown id="pay-breakdown" visible={preview !== null}>
-        <BreakdownRow id="pay-capital" label="A capital">
+        <BreakdownRow id="pay-capital" label={t?.label_capital ?? ''}>
           <span className="text-cartera">{preview ? cop(preview.capital) : '—'}</span>
         </BreakdownRow>
-        <BreakdownRow id="pay-intereses" label="A intereses">
+        <BreakdownRow id="pay-intereses" label={t?.label_intereses ?? ''}>
           <span className="text-deudas">{preview ? cop(preview.intereses) : '—'}</span>
         </BreakdownRow>
       </Breakdown>
       <MovimientoCampos
         campos={campos}
-        fechaLabel="Fecha del pago (ahora si se omite)"
+        fechaLabel={t?.label_fecha ?? ''}
         notasPlaceholder={infoModo?.placeholder_notas ?? ''}
       />
       <FormFooter
         saveLabel={infoModo?.label ?? ''}
         onSave={() => void save()}
         onEdit={editar}
-        editLabel="Editar deuda"
+        editLabel={t?.label_editar}
       />
     </FormModal>
   )

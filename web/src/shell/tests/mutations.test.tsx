@@ -7,9 +7,13 @@ import { useData } from '@/shell/providers/DataProvider'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { useMutations } from '@/shell/hooks/acciones/useMutations'
 import { deuda } from '@/test/factories'
+import { pagarDeuda, pausarRecurrente, registrarRendimiento } from '@/lib/api'
+import type { DeudaPago } from '@/types'
+
+const PAGO: DeudaPago = { modo: 'cuota', total_pagado: 5, notas: '', registrar_tx: true }
 
 function Harness() {
-  const { crudOp, crudOpOrBanner, apiAction, apiActionOrBanner } = useMutations()
+  const { crudOp, crudOpOrBanner, accion, accionOrBanner } = useMutations()
   const { banner, versiones } = useData()
   const err = (e: unknown) => document.body.setAttribute('data-err', e instanceof Error ? e.message : '')
   return (
@@ -18,8 +22,8 @@ function Harness() {
       <output data-testid="deudas">{versiones.deudas ?? 0}</output>
       <output data-testid="transacciones">{versiones.transacciones ?? 0}</output>
       <button onClick={() => void crudOp('deuda', 'update', { ...deuda({ id: 7, nombre: 'X' }), clase_deuda: 'prestamo', crear_tx: false } as never)}>upd</button>
-      <button onClick={() => void apiAction('/api/deuda/3/pago', { monto: 5 }).catch(err)}>act</button>
-      <button onClick={() => void apiActionOrBanner('/api/rec/2/pausar')}>actb</button>
+      <button onClick={() => void accion((o) => pagarDeuda(3, PAGO, o)).catch(err)}>act</button>
+      <button onClick={() => void accionOrBanner((o) => pausarRecurrente(2, o))}>actb</button>
       <button onClick={() => void crudOp('tx', 'delete', { id: 9 })}>del</button>
       <button onClick={() => void crudOpOrBanner('rec', 'delete', { id: 2 })}>delb</button>
       <button
@@ -78,14 +82,14 @@ describe('mutaciones', () => {
     expect(del?.body).toBeUndefined()
   })
 
-  it('apiAction: POST al path dado con el payload', async () => {
+  it('accion: POST a la función de lib/api con su payload', async () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/deuda/3/pago': {} })
     renderWithProviders(<Harness />)
     await user.click(screen.getByText('act'))
     await waitFor(() => expect(screen.getByTestId('deudas')).toHaveTextContent('1'))
     expect(f.callsTo('GET', '/api/bootstrap')).toHaveLength(0)
-    expect(f.mutations()[0]?.body).toEqual({ monto: 5 })
+    expect(f.mutations()[0]?.body).toEqual(PAGO)
   })
 
   it('usa las entidades del header X-Moni-Afectadas, no el payload', async () => {
@@ -135,7 +139,7 @@ describe('mutaciones', () => {
     await waitFor(() => expect(screen.getByTestId('banner')).toHaveTextContent('boom'))
   })
 
-  it('apiActionOrBanner: el POST de acción fallido recarga y deja el error en el banner', async () => {
+  it('accionOrBanner: el POST de acción fallido recarga y deja el error en el banner', async () => {
     const user = userEvent.setup()
     const f = mockFetch({ 'POST /api/rec/2/pausar': failure(500, 'boom') })
     renderWithProviders(<Harness />)
@@ -166,7 +170,7 @@ describe('mutaciones', () => {
     expect(screen.getByTestId('transacciones')).toHaveTextContent('0')
   })
 
-  it('un error de red de apiActionOrBanner recarga y deja el banner', async () => {
+  it('un error de red de accionOrBanner recarga y deja el banner', async () => {
     const user = userEvent.setup()
     const f = mockFetch()
     f.fn.mockImplementationOnce(() => Promise.reject(new TypeError('Failed to fetch')))
@@ -179,14 +183,15 @@ describe('mutaciones', () => {
 
 describe('op_clave pendiente', () => {
   function Pendiente({ clave }: { clave: string | null }) {
-    const { crudOp, apiAction } = useMutations()
+    const { crudOp, accion } = useMutations()
     const { setPendingProxOp } = useModal()
     setPendingProxOp(clave)
     return (
       <>
         <button onClick={() => void crudOp('tx', 'add', { fecha: '2026-08-01', tipo: 'gasto', categoria: 'c', descripcion: '', monto: 1, notas: '', tarjeta_id: null })}>tx</button>
-        <button onClick={() => void apiAction('/api/inv/1/rendimiento', { monto: 3 })}>rend</button>
-        <button onClick={() => void apiAction('/api/deuda/3/pago')}>sinbody</button>
+        <button onClick={() => void accion((o) => registrarRendimiento(1, { monto: 3, capitaliza: false, notas: '', registrar_tx: true }, o))}>rend</button>
+        <button onClick={() => void accion((o) => pausarRecurrente(2, o))}>sinbody</button>
+        <button onClick={() => void crudOp('deuda', 'add', { nombre: 'D' } as never)}>deudaadd</button>
       </>
     )
   }
@@ -200,17 +205,29 @@ describe('op_clave pendiente', () => {
     await user.click(screen.getByText('rend'))
     await waitFor(() => expect(f.mutations()).toHaveLength(2))
     expect(f.mutations()[0]?.body).toMatchObject({ op_clave: 'deuda:1:2026-08-20', monto: 1 })
-    expect(f.mutations()[1]?.body).toEqual({ monto: 3, op_clave: 'deuda:1:2026-08-20' })
+    expect(f.mutations()[1]?.body).toEqual({ monto: 3, capitaliza: false, notas: '', registrar_tx: true, op_clave: 'deuda:1:2026-08-20' })
   })
 
   it('sin clave pendiente no agrega nada, y una acción sin body queda sin body', async () => {
     const user = userEvent.setup()
-    const f = mockFetch({ 'POST /api/tx': {}, 'POST /api/deuda/3/pago': {} })
+    const f = mockFetch({ 'POST /api/tx': {}, 'POST /api/rec/2/pausar': {} })
     renderWithProviders(<Pendiente clave={null} />)
     await user.click(screen.getByText('tx'))
     await user.click(screen.getByText('sinbody'))
     await waitFor(() => expect(f.mutations()).toHaveLength(2))
     expect(f.mutations()[0]?.body).not.toHaveProperty('op_clave')
+    expect(f.mutations()[1]?.body).toBeUndefined()
+  })
+
+  it('op_clave solo viaja en tx, pago y rendimiento: nunca en el alta de otras entidades ni en pausar', async () => {
+    const user = userEvent.setup()
+    const f = mockFetch({ 'POST /api/deuda': {}, 'POST /api/rec/2/pausar': {} })
+    renderWithProviders(<Pendiente clave="deuda:1:2026-08-20" />)
+    await user.click(screen.getByText('deudaadd'))
+    await waitFor(() => expect(f.mutations()).toHaveLength(1))
+    await user.click(screen.getByText('sinbody'))
+    await waitFor(() => expect(f.mutations()).toHaveLength(2))
+    expect(f.mutations()[0]?.body).toEqual({ nombre: 'D' })
     expect(f.mutations()[1]?.body).toBeUndefined()
   })
 })

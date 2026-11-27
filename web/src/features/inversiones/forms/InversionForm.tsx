@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AdvancedToggle } from '@/controls/inputs/AdvancedToggle'
+import { CrearTxToggle } from '@/controls/inputs/OpcionesRegistro'
 import { Campo, NumeroField } from '@/controls/inputs/Campo'
 import { DatePicker } from '@/controls/inputs/DatePicker'
 import { FormFooter } from '@/controls/forms/FormFooter'
@@ -82,7 +82,7 @@ function InversionCampos({ inv, meta }: { inv: Inversion | null; meta: Meta }) {
       {conTasa && <TasaField label="Tasa de rendimiento" value={tasa} onChange={setTasa} tipo={tipoTasa} onTipo={setTipoTasa} placeholder="0" />}
       {conPago && (
         <div id="m-pago-wrap">
-          <TipoToggle label="Pago de rendimientos" value={pago} opciones={meta.pagos_inversion} idPrefix="rp" onChange={setPago} />
+          <TipoToggle label={meta.textos.inversion.label_pago} value={pago} opciones={meta.pagos_inversion} idPrefix="rp" onChange={setPago} />
         </div>
       )}
       {pideDia && (
@@ -93,7 +93,7 @@ function InversionCampos({ inv, meta }: { inv: Inversion | null; meta: Meta }) {
       <Campo id="m-fecha-ini" label="Fecha inicio">
         <DatePicker id="m-fecha-ini" value={fecha} onChange={setFecha} />
       </Campo>
-      {!isEdit && <AdvancedToggle checked={esNueva} onChange={setEsNueva} />}
+      {!isEdit && <CrearTxToggle checked={esNueva} onChange={setEsNueva} />}
       <FormFooter saveLabel={etiquetaGuardar('Agregar inversión')} onSave={() => void save()} onDelete={eliminar} />
     </FormModal>
   )

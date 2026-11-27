@@ -8,9 +8,7 @@ interface MoneyInputLike {
 export function fmtMoneyInput(el: MoneyInputLike): void {
   const digitosAntes = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, '').length
 
-  let raw = el.value.replace(/[^\d,]/g, '')
-  const parts = raw.split(',')
-  if (parts.length > 2) raw = parts[0] + ',' + parts.slice(1).join('')
+  const raw = el.value.replace(/[^\d,]/g, '')
   el.value = (raw.split(',')[0] || '').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 
   let pos = 0

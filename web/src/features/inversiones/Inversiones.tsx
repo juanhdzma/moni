@@ -1,11 +1,10 @@
-import { Plus, TrendingUp } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { TrendingUp } from 'lucide-react'
+import { BotonNuevo } from '@/components/BotonNuevo'
 import { EmptyCard } from '@/components/EmptyCard'
 import { Monto, Tendencia } from '@/components/Monto'
 import { Desactualizado, Panel, Resumen } from '@/components/Panel'
 import { cargarResumenInversiones } from '@/lib/api'
 import { fmtDate, pct } from '@/lib/format'
-import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
 import { useOpenerCtx } from '@/shell/hooks/acciones/openers'
@@ -37,9 +36,6 @@ function InvCard({ inv }: { inv: Inversion }) {
   const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { estado } = useData()
-  const generaRendimiento = useMeta()?.tipos_inversion.find((t) => t.value === inv.tipo)?.campos.includes('tasa')
-  const gan = inv.ganancia
-  const ganP = inv.ganancia_pct
   const nextPago = inv.proximo_pago?.texto ?? null
 
   return (
@@ -48,7 +44,7 @@ function InvCard({ inv }: { inv: Inversion }) {
         <div className="inv-name min-w-0 truncate text-body font-semibold">{inv.nombre}</div>
         <div className="flex shrink-0 items-center gap-1">
           {inv.desactualizado && <Desactualizado texto={estado.desactualizado.texto} />}
-          <Monto valor={ganP} formato={pct} sufijo="%" className="text-sm font-semibold" />
+          <Monto valor={inv.ganancia_pct} tono={inv.ganancia_tono} signo={inv.ganancia_signo} formato={pct} sufijo="%" className="text-sm font-semibold" />
         </div>
       </div>
       {inv.texto_tasa && (
@@ -65,11 +61,11 @@ function InvCard({ inv }: { inv: Inversion }) {
       <div className="mt-1 text-2xl font-semibold tracking-tight text-inversiones-text">{cop(inv.valor_actual)}</div>
       <div className="mt-0.5 flex items-center justify-between gap-3 text-sm">
         <span className="text-muted-foreground">Invertido {cop(inv.monto_invertido)}</span>
-        <Monto valor={gan} className="font-semibold" />
+        <Monto valor={inv.ganancia} tono={inv.ganancia_tono} signo={inv.ganancia_signo} className="font-semibold" />
       </div>
       {inv.fecha_inicio ? <div className="mt-0.5 text-xs text-muted-foreground">Desde {fmtDate(inv.fecha_inicio)}</div> : null}
       <div className="card-actions mt-4 flex flex-wrap gap-2">
-        {generaRendimiento === undefined ? null : generaRendimiento ? (
+        {inv.accion_principal === 'rendimiento' ? (
           <button className="btn btn-accent btn-sm flex-1" onClick={() => openInvYieldFormById(ctx, inv.id)}>
             Rendimiento
           </button>
@@ -96,10 +92,9 @@ export function Inversiones({ active }: TabProps) {
   const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { loaded: cargado } = useData()
-  const { data } = useVista('inv-resumen', cargarResumenInversiones, DEPENDENCIAS_DE_VISTA.resumenInversiones)
+  const { data, error } = useVista('inv-resumen', cargarResumenInversiones, DEPENDENCIAS_DE_VISTA.resumenInversiones)
   const loaded = cargado && data !== null
   const totalActual = data?.total_actual ?? 0
-  const ganancia = data?.ganancia ?? 0
   const fijas = data?.fijas ?? []
   const variables = data?.variables ?? []
 
@@ -110,13 +105,14 @@ export function Inversiones({ active }: TabProps) {
           id="inv-total"
           titulo="Tus inversiones"
           loaded={loaded}
+          error={error}
           valor={cop(totalActual)}
           valorClassName="text-inversiones-text"
           color="bg-inversiones"
           segmentos={data?.segmentos ?? []}
           dato={
             <>
-              {data?.mostrar_ganancia && <Tendencia valor={ganancia}>{data.texto_ganancia}</Tendencia>}
+              {data?.mostrar_ganancia && <Tendencia tono={data.ganancia_tono} signo={data.ganancia_signo}>{data.texto_ganancia}</Tendencia>}
               <span className="text-muted-foreground">
                 {data?.mostrar_ganancia && ' · '}
                 {data?.texto_posiciones}
@@ -124,10 +120,7 @@ export function Inversiones({ active }: TabProps) {
             </>
           }
           extra={
-            <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openInvForm(ctx)}>
-              <Plus aria-hidden="true" />
-              Nueva inversión
-            </Button>
+            <BotonNuevo label="Nueva inversión" onClick={() => openInvForm(ctx)} />
           }
         />
         <div className="grid gap-4 lg:grid-cols-2 lg:items-start">

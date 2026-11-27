@@ -11,6 +11,10 @@ CHALLENGE_TTL_S = 300
 MAX_CHALLENGES_POR_IP = 5
 
 
+class ChallengeVencido(Exception):
+    pass
+
+
 def guardar_challenge(conn: sqlite3.Connection, tipo: str, challenge: bytes, ip: str) -> None:
     t = tiempo.ahora()
     conn.execute("DELETE FROM challenges WHERE expira <= ?", (tiempo.iso(t),))
@@ -34,12 +38,16 @@ def consumir_challenge(credencial: dict, tipo: str, ip: str) -> bytes | None:
         return None
     with conexion() as conn:
         fila = conn.execute(
-            "SELECT id, expira FROM challenges WHERE challenge = ? AND tipo = ? AND ip = ?", (challenge, tipo, ip)
+            "SELECT id, expira, ip FROM challenges WHERE challenge = ? AND tipo = ?", (challenge, tipo)
         ).fetchone()
         if fila is None:
             return None
+        if fila["ip"] != ip:
+            raise ChallengeVencido
         borrada = conn.execute("DELETE FROM challenges WHERE id = ?", (fila["id"],)).rowcount
         conn.commit()
-    if borrada != 1 or fila["expira"] <= tiempo.iso(tiempo.ahora()):
+    if borrada != 1:
         return None
+    if fila["expira"] <= tiempo.iso(tiempo.ahora()):
+        raise ChallengeVencido
     return base64url_to_bytes(challenge)

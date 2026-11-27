@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useModal } from '@/shell/providers/ModalProvider'
 import { FormStatus } from '@/controls/forms/FormStatus'
 import { useRegistrarGuardado } from '@/controls/forms/FormModal'
@@ -9,18 +9,21 @@ type Props = {
   onEdit?: () => void
   editLabel?: string
   onDelete?: () => void
-  cancelClassName?: string
   peligro?: boolean
 }
 
-export function FormFooter({ saveLabel, onSave, onEdit, editLabel, onDelete, cancelClassName, peligro = false }: Props) {
+export function FormFooter({ saveLabel, onSave, onEdit, editLabel, onDelete, peligro = false }: Props) {
   const { closeModal } = useModal()
   const registrar = useRegistrarGuardado()
+  const guardarActual = useRef(onSave)
+  useEffect(() => {
+    guardarActual.current = onSave
+  })
   useEffect(() => {
     if (!registrar) return
-    registrar(onSave)
+    registrar(() => guardarActual.current())
     return () => registrar(null)
-  })
+  }, [registrar])
   return (
     <>
       <div className="modal-footer">
@@ -37,7 +40,7 @@ export function FormFooter({ saveLabel, onSave, onEdit, editLabel, onDelete, can
             Eliminar
           </button>
         )}
-        <button type="button" className={cancelClassName ? `btn btn-dim ${cancelClassName}` : 'btn btn-dim'} onClick={closeModal}>
+        <button type="button" className="btn btn-dim" onClick={closeModal}>
           Cancelar
         </button>
       </div>

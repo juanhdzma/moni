@@ -1,6 +1,4 @@
-import collections
 import logging
-import threading
 import time
 from typing import Optional
 
@@ -9,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from ..schemas.respuestas.seguridad import PushEnviado, PushProbado
 from ..seguridad import client_ip
+from ..seguridad.limite import limitar, nuevo_registro
 from . import envio
 
 logger = logging.getLogger("moni")
@@ -18,8 +17,7 @@ router = APIRouter()
 MAX_PAYLOAD_BYTES = 1500
 MAX_ENVIOS = 20
 VENTANA_S = 60
-_lock_envios = threading.Lock()
-_envios: dict[str, collections.deque] = collections.defaultdict(collections.deque)
+_lock_envios, _envios = nuevo_registro()
 
 
 class PushEnviar(BaseModel):
@@ -39,16 +37,7 @@ class PushEnviar(BaseModel):
 
 
 def _limitar(request: Request) -> None:
-    ahora = time.monotonic()
-    with _lock_envios:
-        for ip in [ip for ip, c in _envios.items() if not c or ahora - c[-1] > VENTANA_S]:
-            del _envios[ip]
-        cola = _envios[client_ip(request)]
-        while cola and ahora - cola[0] > VENTANA_S:
-            cola.popleft()
-        if len(cola) >= MAX_ENVIOS:
-            raise HTTPException(429, "Demasiados envíos", headers={"Retry-After": str(VENTANA_S)})
-        cola.append(ahora)
+    limitar(_lock_envios, _envios, client_ip(request), MAX_ENVIOS, VENTANA_S, "Demasiados envíos")
 
 
 @router.post("/api/push/enviar", response_model=PushEnviado)

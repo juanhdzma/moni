@@ -53,7 +53,7 @@ class InvRendimiento(ConOpClave):
     _v_fecha = fecha_opcional("fecha")
 
 
-class InvAporte(ConOpClave):
+class InvAporte(Entrada):
     monto: MontoPesos
     nuevo_valor: Optional[MontoCero] = None
     fecha: str = ""
@@ -63,7 +63,7 @@ class InvAporte(ConOpClave):
     _v_fecha = fecha_opcional("fecha")
 
 
-class InvRetiro(ConOpClave):
+class InvRetiro(Entrada):
     tipo: TipoRetiro
     monto: MontoPesos
     saldo_queda: Optional[MontoCero] = None
@@ -74,7 +74,7 @@ class InvRetiro(ConOpClave):
     _v_fecha = fecha_opcional("fecha")
 
 
-class InvValor(ConOpClave):
+class InvValor(Entrada):
     nuevo_valor: MontoPesos
     fecha: str = ""
 

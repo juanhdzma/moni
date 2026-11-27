@@ -98,7 +98,7 @@ describe('modal', () => {
     const dialog = screen.getByRole('dialog')
     expect(dialog).toHaveAttribute('aria-modal', 'true')
     expect(dialog).toHaveAttribute('aria-labelledby', 'modal-title')
-    expect(dialog).toHaveAttribute('aria-describedby', 'modal-body')
+    expect(dialog).not.toHaveAttribute('aria-describedby')
     expect(document.getElementById('modal-overlay')).toHaveClass('open')
     expect(screen.getByText('Titulo')).toHaveAttribute('id', 'modal-title')
     expect(screen.getByLabelText('Cerrar')).toHaveFocus()

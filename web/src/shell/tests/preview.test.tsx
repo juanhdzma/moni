@@ -1,6 +1,9 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { usePreview } from '@/shell/hooks/datos/usePreview'
+import { FormStatus } from '@/controls/forms/FormStatus'
+import { useModal } from '@/shell/providers/ModalProvider'
+import { Providers } from '@/test/render'
 
 function Harness({ clave, cargar }: { clave: string | null; cargar: () => Promise<string> }) {
   return <output data-testid="p">{usePreview(clave, cargar) ?? '-'}</output>
@@ -78,7 +81,7 @@ describe('usePreview', () => {
     expect(screen.getByTestId('p')).toHaveTextContent('-')
   })
 
-  it('un error del preview se ignora en silencio y no deja datos', async () => {
+  it('un error del preview no deja datos', async () => {
     vi.useFakeTimers()
     const { cola, cargar } = pendientes()
     render(<Harness clave="a" cargar={cargar} />)
@@ -104,5 +107,34 @@ describe('usePreview', () => {
     r.rerender(<Harness clave="a" cargar={segunda} />)
     await waitFor(() => expect(screen.getByTestId('p')).toHaveTextContent('segunda'))
     expect(primera).not.toHaveBeenCalled()
+  })
+
+  it('un error del preview se muestra en el estado del modal y se limpia al recuperarse', async () => {
+    vi.useFakeTimers()
+    let falla = true
+    const cargar = () => (falla ? Promise.reject(new Error('Saldo inválido')) : Promise.resolve('ok'))
+    function Contenido({ clave }: { clave: string }) {
+      return (
+        <>
+          <output data-testid="p">{usePreview(clave, cargar) ?? '-'}</output>
+          <FormStatus />
+        </>
+      )
+    }
+    function Abrir({ clave }: { clave: string }) {
+      const { openModal } = useModal()
+      return <button onClick={() => openModal('T', <Contenido clave={clave} />)}>abrir</button>
+    }
+    render(<Providers><Abrir clave="a" /></Providers>)
+    act(() => screen.getByText('abrir').click())
+    await act(() => vi.advanceTimersByTimeAsync(250))
+    await entregar(() => undefined)
+    expect(screen.getByRole('alert')).toHaveTextContent('Saldo inválido')
+    falla = false
+    act(() => screen.getByText('abrir').click())
+    await act(() => vi.advanceTimersByTimeAsync(250))
+    await entregar(() => undefined)
+    expect(screen.getByTestId('p')).toHaveTextContent('ok')
+    expect(document.getElementById('m-status')).not.toHaveTextContent('Saldo inválido')
   })
 })

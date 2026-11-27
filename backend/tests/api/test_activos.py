@@ -116,3 +116,12 @@ def test_venta_borra_el_activo_y_registra_ingreso(client):
     assert client.get("/api/backup").json()["activos"] == []
     tx = client.get("/api/backup").json()["transacciones"][0]
     assert (tx["tipo"], tx["monto"], tx["categoria"]) == ("ingreso", 4200, "Venta activos")
+
+
+def test_un_activo_que_vale_cero_se_puede_guardar(client):
+    a = client.post("/api/activo", json={"nombre": "Moto", "valor_inicial": 5000, "valor_actual": 0}).json()
+    assert a["valor_actual"] == 0
+    editado = client.put(f"/api/activo/{a['id']}", json={"nombre": "Moto", "valor_inicial": 5000, "valor_actual": 0}).json()
+    assert editado["valor_actual"] == 0
+    omitido = client.post("/api/activo", json={"nombre": "Otra", "valor_inicial": 700}).json()
+    assert omitido["valor_actual"] == 700

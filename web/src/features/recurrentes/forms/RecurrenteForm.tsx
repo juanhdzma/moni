@@ -8,15 +8,18 @@ import { Select } from '@/controls/inputs/Select'
 import { TipoToggle } from '@/controls/inputs/TipoToggle'
 import { entero, parseMoney, soloFecha } from '@/lib/format'
 import { useGuardarEntidad } from '@/shell/hooks/acciones/useGuardarEntidad'
+import { useEtiquetaMoneda } from '@/shell/hooks/datos/useMonedaCodigo'
 import { useMeta } from '@/shell/hooks/datos/useMeta'
 import type { RecIn, Recurrente, TipoRec } from '@/types'
 import { FormModal } from '@/controls/forms/FormModal'
 
 export function RecurrenteForm({ item }: { item: Recurrente | null }) {
   const meta = useMeta()
+  const conMoneda = useEtiquetaMoneda()
   const { guardar, eliminar, etiquetaGuardar } = useGuardarEntidad('rec', { item })
   const [nombre, setNombre] = useState(item?.nombre || '')
-  const [tipo, setTipo] = useState<TipoRec>(item?.tipo ?? 'gasto')
+  const [tipoElegido, setTipo] = useState<TipoRec | null>(item?.tipo ?? null)
+  const tipo = tipoElegido ?? ((meta?.defaults.tipo_tx ?? '') as TipoRec)
   const [monto, setMonto] = useState(item ? entero(item.monto) : '')
   const [frecuencia, setFrecuencia] = useState<string>(item?.frecuencia || meta?.defaults.frecuencia_recurrente || '')
   const [fecha, setFecha] = useState(soloFecha(item?.fecha_inicio))
@@ -44,13 +47,13 @@ export function RecurrenteForm({ item }: { item: Recurrente | null }) {
         onChange={setTipo}
       />
       <div className="form-row-2">
-        <MoneyField id="m-monto" label="Monto (COP)" value={monto} onChange={setMonto} />
+        <MoneyField id="m-monto" label={conMoneda('Monto')} value={monto} onChange={setMonto} />
         <Campo id="m-frecuencia" label="Frecuencia">
           <Select id="m-frecuencia" value={frecuencia} onChange={setFrecuencia} options={meta?.frecuencias ?? []} />
         </Campo>
       </div>
       <FechaNotas fechaType="date" fechaLabel="Fecha inicio (opcional)" fecha={fecha} onFecha={setFecha} notas={notas} onNotas={setNotas} notasPlaceholder="" />
-      <FormFooter saveLabel={etiquetaGuardar()} onSave={() => void save()} onDelete={eliminar} cancelClassName="ml-auto" />
+      <FormFooter saveLabel={etiquetaGuardar()} onSave={() => void save()} onDelete={eliminar} />
     </FormModal>
   )
 }

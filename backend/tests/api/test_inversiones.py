@@ -266,3 +266,37 @@ def test_el_retiro_parcial_deja_el_capital_en_pesos_enteros(client):
     i = _inv(client, inv["id"])
     assert i["monto_invertido"] == 667
     assert i["monto_invertido"] == int(i["monto_invertido"])
+
+
+def _retirar(client, inv_id, **cuerpo):
+    return client.post(f"/api/inv/{inv_id}/retiro", json={"tipo": "parcial", "fecha": "2026-07-01", **cuerpo})
+
+
+def test_retiro_parcial_que_deja_saldo_cero_se_rechaza_y_pide_retiro_total(client):
+    inv = _crear(client, valor_actual=1000)
+    r = _retirar(client, inv["id"], monto=1000, saldo_queda=0)
+    assert r.status_code == 400 and r.json()["detail"] == "Para retirar todo el valor usá el retiro total"
+    assert _inv(client, inv["id"])["valor_actual"] == 1000
+
+
+def test_retiro_parcial_exige_monto_y_saldo_coherentes_con_el_valor_actual(client):
+    inv = _crear(client, valor_actual=1000)
+    assert _retirar(client, inv["id"], monto=1500, saldo_queda=100).json()["detail"] == "El monto retirado no puede superar el valor actual"
+    r = _retirar(client, inv["id"], monto=600, saldo_queda=600)
+    assert r.status_code == 400
+    assert r.json()["detail"] == "El monto retirado más el saldo que queda no puede superar el valor actual"
+    assert _retirar(client, inv["id"], monto=600, saldo_queda=400).status_code == 200
+    assert _retirar(client, inv["id"], monto=100, saldo_queda=300).status_code == 200
+
+
+def test_retiro_parcial_nunca_deja_capital_en_cero_y_el_backup_hace_round_trip(client):
+    inv = _crear(client, monto_invertido=1, valor_actual=1000)
+    assert _retirar(client, inv["id"], monto=600, saldo_queda=400).status_code == 200
+    fila = _inv(client, inv["id"])
+    assert (fila["monto_invertido"], fila["valor_actual"]) == (1, 400)
+    from backend.tests.conftest import CLAVE_TEST
+
+    antes = client.get("/api/backup").json()
+    assert client.post("/api/truncate", json={"clave": CLAVE_TEST}).status_code == 200
+    assert client.post("/api/import", json={**antes, "clave": CLAVE_TEST}).status_code == 200
+    assert client.get("/api/backup").json() == antes

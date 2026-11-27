@@ -27,13 +27,17 @@ export const PERIODOS = {
 
 export const RESUMEN: ResumenDashboard = {
   patrimonio: 1320000,
+  patrimonio_tono: 'positivo',
+  patrimonio_signo: '+',
   proy_delta: 720000,
+  proy_delta_tono: 'positivo',
+  proy_delta_signo: '+',
   texto_proyeccion: 'proyectados en 12 meses',
   partes: [
-    { id: 'activos', nombre: 'Activos', valor: 300000, negativo: false, valor_firmado: 300000, detalle: '1 activo', tono: 'activos' },
-    { id: 'inversiones', nombre: 'Inversiones', valor: 500000, negativo: false, valor_firmado: 500000, detalle: '+$100k (+25,0%)', tono: 'inversiones' },
-    { id: 'balance', nombre: 'Cartera', valor: 670000, negativo: false, valor_firmado: 670000, detalle: 'Efectivo y cuentas', tono: 'cartera' },
-    { id: 'deudas', nombre: 'Deudas', valor: 150000, negativo: true, valor_firmado: -150000, detalle: '$20.000/mes · 1 deuda', tono: 'deudas' },
+    { id: 'activos', nombre: 'Activos', valor: 300000, negativo: false, valor_firmado: 300000, valor_signo: '+', proporcion: 18.51851851851852, detalle: '1 activo', tono: 'activos' },
+    { id: 'inversiones', nombre: 'Inversiones', valor: 500000, negativo: false, valor_firmado: 500000, valor_signo: '+', proporcion: 30.864197530864196, detalle: '+$100k (+25,0%)', tono: 'inversiones' },
+    { id: 'balance', nombre: 'Cartera', valor: 670000, negativo: false, valor_firmado: 670000, valor_signo: '+', proporcion: 41.358024691358025, detalle: 'Efectivo y cuentas', tono: 'cartera' },
+    { id: 'deudas', nombre: 'Deudas', valor: 150000, negativo: true, valor_firmado: -150000, valor_signo: '−', proporcion: 9.25925925925926, detalle: '$20.000/mes · 1 deuda', tono: 'deudas' },
   ],
   total_barra: 1620000,
 }
@@ -61,7 +65,7 @@ export const ESTE_MES: EsteMes = {
   quedo: 800000,
   tono_ingresos: 'positivo',
   tono_gastos: 'deudas',
-  tono_quedo: 'positivo',
+  signo_ingresos: '+', signo_gastos: '−', signo_quedo: '+', titulo: 'Este mes en tu cartera', etiqueta_ingresos: 'Entró', etiqueta_gastos: 'Salió', tono_quedo: 'positivo',
   titulo_quedo: 'Te quedó',
   texto_tarjeta: 'Lo pagado con tarjeta no sale de la cartera.',
   frase: FRASE_QUEDO,
@@ -88,9 +92,9 @@ export const GASTOS: GastosPeriodo = {
 
 export const MOVIMIENTOS: Movimientos = {
   items: [
-    { id: 4, fecha: '2026-08-07', tipo: 'transfer', categoria: 'Pago deuda', descripcion: '', monto: 100000, monto_firmado: -100000, editable: false, tono: 'neutro', icono_metodo: 'efectivo' },
-    { id: 3, fecha: '2026-08-06', tipo: 'gasto', categoria: 'Mercado', descripcion: '', monto: 50000, monto_firmado: -50000, editable: true, tono: 'gasto', icono_metodo: 'efectivo' },
-    { id: 1, fecha: '2026-08-01', tipo: 'ingreso', categoria: 'Salario', descripcion: '', monto: 1000000, monto_firmado: 1000000, editable: true, tono: 'ingreso', icono_metodo: 'efectivo' },
+    { id: 4, fecha: '2026-08-07', tipo: 'transfer', categoria: 'Pago deuda', descripcion: '', monto: 100000, monto_firmado: -100000, monto_signo: '−', editable: false, tono: 'neutro', icono_metodo: 'efectivo', icono_url: '/assets/icons/efectivo.svg' },
+    { id: 3, fecha: '2026-08-06', tipo: 'gasto', categoria: 'Mercado', descripcion: '', monto: 50000, monto_firmado: -50000, monto_signo: '−', editable: true, tono: 'gasto', icono_metodo: 'efectivo', icono_url: '/assets/icons/efectivo.svg' },
+    { id: 1, fecha: '2026-08-01', tipo: 'ingreso', categoria: 'Salario', descripcion: '', monto: 1000000, monto_firmado: 1000000, monto_signo: '+', editable: true, tono: 'ingreso', icono_metodo: 'efectivo', icono_url: '/assets/icons/efectivo.svg' },
   ],
   texto_vacio: { titulo: 'Sin transacciones', texto: 'Registrá un ingreso o gasto y aparece acá.' },
 }
@@ -102,9 +106,9 @@ export const PROXIMAS: ProximasOperaciones = {
   frase: frase(['$70.000', 'fuerte'], ' por pagar en los próximos 45 días.'),
   texto_vacio: 'Sin operaciones en los próximos 45 días.',
   items: [
-    { clave: 'recurrente:3:2026-08-17', tipo: 'recurrente', fuente_id: 3, fecha: '2026-08-17', dia: 17, mes_corto: 'ago', etiqueta: 'Gym', sub: 'Mensual', monto: -50000, sin_monto: false, texto_dias: 'en 2d', vencida: false },
-    { clave: 'deuda:1:2026-08-20', tipo: 'deuda', fuente_id: 1, fecha: '2026-08-20', dia: 20, mes_corto: 'ago', etiqueta: 'Banco', sub: 'Cuota deuda', monto: -20000, sin_monto: false, texto_dias: 'en 5d', vencida: false },
-    { clave: 'inversion:2:2026-08-20', tipo: 'inversion', fuente_id: 2, fecha: '2026-08-20', dia: 20, mes_corto: 'ago', etiqueta: 'CDT', sub: 'Rendimiento', monto: 3800, sin_monto: false, texto_dias: 'en 5d', vencida: false },
+    { clave: 'recurrente:3:2026-08-17', tipo: 'recurrente', fuente_id: 3, fecha: '2026-08-17', dia: 17, mes_corto: 'ago', etiqueta: 'Gym', sub: 'Mensual', monto: -50000, monto_tono: 'negativo', monto_signo: '−', sin_monto: false, texto_dias: 'en 2d', vencida: false },
+    { clave: 'deuda:1:2026-08-20', tipo: 'deuda', fuente_id: 1, fecha: '2026-08-20', dia: 20, mes_corto: 'ago', etiqueta: 'Banco', sub: 'Cuota deuda', monto: -20000, monto_tono: 'negativo', monto_signo: '−', sin_monto: false, texto_dias: 'en 5d', vencida: false },
+    { clave: 'inversion:2:2026-08-20', tipo: 'inversion', fuente_id: 2, fecha: '2026-08-20', dia: 20, mes_corto: 'ago', etiqueta: 'CDT', sub: 'Rendimiento', monto: 3800, monto_tono: 'positivo', monto_signo: '+', sin_monto: false, texto_dias: 'en 5d', vencida: false },
   ],
 }
 

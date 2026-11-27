@@ -20,8 +20,10 @@ function TxFormCampos({ tx, opciones }: { tx: Transaccion | null; opciones: Opci
   const meta = useMeta()
   const { guardar, eliminar, etiquetaGuardar } = useGuardarEntidad('tx', { item: tx, mensajeEliminar: '¿Eliminar este movimiento?' })
   const { tarjetas, inicial } = opciones
+  const etiquetaPago = meta?.textos.transacciones.label_pagado_con ?? ''
 
-  const [tipo, setTipo] = useState<TipoRec>(inicial.tipo === 'ingreso' ? 'ingreso' : 'gasto')
+  const [tipo, setTipo] = useState<TipoRec>(inicial.tipo as TipoRec)
+  const permiteTarjeta = meta?.tipos_manuales.find((t) => t.value === tipo)?.permite_tarjeta ?? false
   const [tarjeta, setTarjeta] = useState(inicial.tarjeta_id != null ? String(inicial.tarjeta_id) : '')
   const [valores, setValores] = useState<ValoresTx>({
     categoria: inicial.categoria,
@@ -42,20 +44,20 @@ function TxFormCampos({ tx, opciones }: { tx: Transaccion | null; opciones: Opci
     <FormModal>
       <TipoToggle value={tipo} opciones={meta?.tipos_manuales ?? []} onChange={cambiarTipo} />
       <CamposTx tipo={tipo} categorias={opciones.categorias[tipo]} valores={valores} onCambio={(p) => setValores((v) => ({ ...v, ...p }))}>
-        {tipo === 'gasto' && (
+        {permiteTarjeta && (
           <div className="form-group" id="wrap-tarjeta">
-            <label className="form-label" htmlFor="m-tarjeta">Pagado con</label>
+            <label className="form-label" htmlFor="m-tarjeta">{etiquetaPago}</label>
             <Select
               id="m-tarjeta"
               value={tarjeta}
               onChange={setTarjeta}
-              ariaLabel="Pagado con"
-              options={[{ value: '', label: 'Efectivo / Débito' }, ...tarjetas.map((d) => ({ value: String(d.id), label: d.nombre }))]}
+              ariaLabel={etiquetaPago}
+              options={[{ value: '', label: meta?.defaults.etiqueta_efectivo ?? '' }, ...tarjetas.map((d) => ({ value: String(d.id), label: d.nombre }))]}
             />
           </div>
         )}
       </CamposTx>
-      <FormFooter saveLabel={etiquetaGuardar()} onSave={() => void save()} onDelete={eliminar} cancelClassName="ml-auto" />
+      <FormFooter saveLabel={etiquetaGuardar()} onSave={() => void save()} onDelete={eliminar} />
     </FormModal>
   )
 }

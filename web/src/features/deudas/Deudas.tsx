@@ -1,7 +1,7 @@
-import { PartyPopper, Plus, CreditCard } from 'lucide-react'
+import { PartyPopper, CreditCard } from 'lucide-react'
+import { BotonNuevo } from '@/components/BotonNuevo'
 import { EmptyCard } from '@/components/EmptyCard'
 import { Panel, Resumen } from '@/components/Panel'
-import { Button } from '@/components/ui/button'
 import { cargarResumenDeudas } from '@/lib/api'
 import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
@@ -16,7 +16,7 @@ export function Deudas({ active }: TabProps) {
   const { cop } = useMoneda()
   const ctx = useOpenerCtx()
   const { loaded: cargado } = useData()
-  const { data } = useVista('deudas', cargarResumenDeudas, DEPENDENCIAS_DE_VISTA.resumenDeudas)
+  const { data, error } = useVista('deudas', cargarResumenDeudas, DEPENDENCIAS_DE_VISTA.resumenDeudas)
   const loaded = cargado && data !== null
   const total = data?.total ?? 0
   const creditos = data?.creditos ?? []
@@ -30,6 +30,7 @@ export function Deudas({ active }: TabProps) {
           id="deudas-total"
           titulo="Lo que debés"
           loaded={loaded}
+          error={error}
           valor={cop(total)}
           valorClassName="text-deudas"
           color="bg-deudas"
@@ -49,10 +50,7 @@ export function Deudas({ active }: TabProps) {
             )
           }
           extra={
-            <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openDeudaForm(ctx)}>
-              <Plus aria-hidden="true" />
-              Nueva deuda
-            </Button>
+            <BotonNuevo label="Nueva deuda" onClick={() => openDeudaForm(ctx)} />
           }
         />
         <div className="grid gap-4 lg:grid-cols-2 lg:items-start">

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Response
 from fastapi.concurrency import run_in_threadpool
 
+from ..calculos.base.fechas import ahora_bogota_iso, hoy_bogota
 from ..core.afectadas import TODAS, afectar
 from ..core.backup import IMPORT_TABLES, insertar_import, validar_import
 from ..core.db import conexion
@@ -28,7 +29,7 @@ def exportar():
 
 
 def _importar(datos: dict) -> dict:
-    validadas = validar_import(datos)
+    validadas = validar_import(datos, hoy_bogota(), ahora_bogota_iso())
     with conexion() as conn:
         return insertar_import(conn, validadas)
 

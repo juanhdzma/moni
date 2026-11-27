@@ -7,29 +7,26 @@ import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { Monto } from '@/components/Monto'
 import { FraseTexto, Panel, Total } from '@/components/Panel'
 
-const config = {
-  entro: { label: 'Entró', color: 'var(--cartera)' },
-  salio: { label: 'Salió', color: 'var(--deudas)' },
-} satisfies ChartConfig
-
 export function EsteMes() {
   const { copShort } = useMoneda()
-  const { data: r } = useVista('este-mes', cargarEsteMes, DEPENDENCIAS_DE_VISTA.esteMes)
-  const loading = r === null
-  const quedo = r?.quedo ?? 0
+  const { data: r, error } = useVista('este-mes', cargarEsteMes, DEPENDENCIAS_DE_VISTA.esteMes)
+  const config = {
+    entro: { label: r?.etiqueta_ingresos ?? '', color: 'var(--cartera)' },
+    salio: { label: r?.etiqueta_gastos ?? '', color: 'var(--deudas)' },
+  } satisfies ChartConfig
   return (
-    <Panel id="dash-mes" titulo="Este mes en tu cartera" frase={r ? <span id="stat-ahorro"><FraseTexto frase={r.frase} /></span> : ' '}>
+    <Panel id="dash-mes" error={error} titulo={r?.titulo ?? ''} frase={r ? <span id="stat-ahorro"><FraseTexto frase={r.frase} /></span> : ' '}>
       <dl className="space-y-1 text-body">
         <div className="flex items-baseline justify-between">
           <dt>{config.entro.label}</dt>
-          <dd className="font-medium">{r ? <Monto valor={r.ingresos} tono={r.tono_ingresos} /> : '—'}</dd>
+          <dd className="font-medium">{r ? <Monto valor={r.ingresos} tono={r.tono_ingresos} signo={r.signo_ingresos} /> : '—'}</dd>
         </div>
         <div className="flex items-baseline justify-between">
           <dt>{config.salio.label}</dt>
-          <dd className="font-medium">{r ? <Monto valor={r.gastos_firmado} tono={r.tono_gastos} /> : '—'}</dd>
+          <dd className="font-medium">{r ? <Monto valor={r.gastos_firmado} tono={r.tono_gastos} signo={r.signo_gastos} /> : '—'}</dd>
         </div>
       </dl>
-      <Total label={r?.titulo_quedo ?? ''} valor={loading ? '—' : <Monto valor={quedo} tono={r?.tono_quedo} signo="negativo" color="negativo" />} />
+      <Total label={r?.titulo_quedo ?? ''} valor={r ? <Monto valor={r.quedo} tono={r.tono_quedo} signo={r.signo_quedo} mostrarSigno="negativo" color="negativo" /> : '—'} />
       <p className="mt-1 text-xs text-muted-foreground">{r?.texto_tarjeta}</p>
       {r && (
         <ChartContainer config={config} className="mt-4 aspect-auto h-[120px] w-full" aria-label={r.descripcion_grafico}>

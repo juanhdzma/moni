@@ -30,13 +30,13 @@ def test_cop_corto_escala_como_el_front():
     assert cop_corto(950) == "$950"
     assert cop_corto(1_500) == "$2k"
     assert cop_corto(1_320_000) == "$1,3M"
-    assert cop_corto(-2_500_000_000) == "−$2,5B"
+    assert cop_corto(-2_500_000_000) == "−$2,5MM"
 
 
 @pytest.mark.parametrize("valor,esperado", [
     (999, "$999"), (1_000, "$1k"), (999_499, "$999k"), (999_500, "$1000k"), (999_999, "$1000k"),
-    (1_000_000, "$1,0M"), (1_040_000, "$1,0M"), (999_999_999, "$1000,0M"), (1_000_000_000, "$1,0B"),
-    (-999, "−$999"), (-1_000, "−$1k"), (-1_000_000, "−$1,0M"), (-1_000_000_000, "−$1,0B"), (0, "$0"),
+    (1_000_000, "$1,0M"), (1_040_000, "$1,0M"), (999_999_999, "$1000,0M"), (1_000_000_000, "$1,0MM"), (1_000_000_000_000, "$1,0B"), (999_999_999_999, "$1000,0MM"),
+    (-999, "−$999"), (-1_000, "−$1k"), (-1_000_000, "−$1,0M"), (-1_000_000_000, "−$1,0MM"), (-1_000_000_000_000, "−$1,0B"), (0, "$0"),
 ])
 def test_cop_corto_en_los_bordes_de_cada_escala(valor, esperado):
     assert cop_corto(valor) == esperado
@@ -44,7 +44,7 @@ def test_cop_corto_en_los_bordes_de_cada_escala(valor, esperado):
 
 def test_cop_corto_con_simbolo():
     assert cop_corto(950, "US$") == "US$950" and cop_corto(1_500, "€") == "€2k"
-    assert cop_corto(1_320_000, "€") == "€1,3M" and cop_corto(-3_000_000_000, "£") == "−£3,0B"
+    assert cop_corto(1_320_000, "€") == "€1,3M" and cop_corto(-3_000_000_000, "£") == "−£3,0MM"
     assert cop_corto(-950, "€") == "−€950"
 
 
@@ -102,26 +102,32 @@ def seg(k, v):
     return {"key": k, "label": k, "valor": v}
 
 
+def con_opacidad(*segmentos):
+    return [{**s, "opacidad": o} for s, o in zip(segmentos, (1, 0.65, 0.45, 0.3, 0.2))]
+
+
 def test_top_segmentos_descarta_ceros_ordena_y_agrupa_en_otros():
-    assert top_segmentos([seg("a", 0), seg("b", -3), seg("c", 5), seg("d", 2)]) == [seg("c", 5), seg("d", 2)]
+    assert top_segmentos([seg("a", 0), seg("b", -3), seg("c", 5), seg("d", 2)]) == con_opacidad(seg("c", 5), seg("d", 2))
     assert top_segmentos([]) == []
     cinco = [seg(str(i), i) for i in range(1, 6)]
     assert [s["key"] for s in top_segmentos(cinco)] == ["5", "4", "3", "2", "1"]
     seis = [seg(str(i), i) for i in range(1, 7)]
-    assert top_segmentos(seis) == [seg("6", 6), seg("5", 5), seg("4", 4), seg("3", 3), {"key": "__otros", "label": "Otros", "valor": 3}]
+    assert top_segmentos(seis) == con_opacidad(
+        seg("6", 6), seg("5", 5), seg("4", 4), seg("3", 3), {"key": "__otros", "label": "Otros", "valor": 3}
+    )
     siete = [seg(str(i), i) for i in range(1, 8)]
-    assert top_segmentos(siete)[-1] == {"key": "__otros", "label": "Otros", "valor": 3 + 2 + 1}
+    assert top_segmentos(siete)[-1] == {"key": "__otros", "label": "Otros", "valor": 3 + 2 + 1, "opacidad": 0.2}
 
 
 def test_top_segmentos_con_n_personalizado():
     tres = [seg("a", 3), seg("b", 2), seg("c", 1)]
-    assert top_segmentos(tres, 2) == tres
+    assert top_segmentos(tres, 2) == con_opacidad(*tres)
     cuatro = tres + [seg("d", 0.5)]
-    assert top_segmentos(cuatro, 2) == [seg("a", 3), seg("b", 2), {"key": "__otros", "label": "Otros", "valor": 1.5}]
+    assert top_segmentos(cuatro, 2) == con_opacidad(seg("a", 3), seg("b", 2), {"key": "__otros", "label": "Otros", "valor": 1.5})
 
 
 def test_cop_corto_miles_de_millones_redondea_a_un_decimal():
-    assert cop_corto(1_050_000_000) == "$1,1B" and cop_corto(1_949_000_000) == "$1,9B"
+    assert cop_corto(1_050_000_000) == "$1,1MM" and cop_corto(1_949_000_000) == "$1,9MM"
 
 
 def test_pct_barra_con_maximo_de_un_peso():

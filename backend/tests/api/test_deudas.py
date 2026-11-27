@@ -1,8 +1,4 @@
-from .builders_api import editable
-
-
-def _tx(client):
-    return client.get("/api/backup").json()["transacciones"]
+from .builders_api import editable, fila_guardada, txs_guardadas
 
 
 def test_crear_deuda_con_crear_tx_registra_el_credito(client):
@@ -10,16 +6,16 @@ def test_crear_deuda_con_crear_tx_registra_el_credito(client):
         "/api/deuda",
         json={"nombre": "Credito", "monto_inicial": 500_000, "saldo_actual": 500_000, "crear_tx": True},
     )
-    tx = _tx(client)[0]
+    tx = txs_guardadas(client)[0]
     assert (tx["tipo"], tx["monto"], tx["categoria"]) == ("ingreso", 500_000, "Crédito recibido")
 
 
-def test_crear_tarjeta_nunca_registra_tx(client):
+def test_crear_tarjeta_nunca_registratxs_guardadas(client):
     client.post(
         "/api/deuda",
         json={"nombre": "Visa", "monto_inicial": 0, "saldo_actual": 0, "clase_deuda": "tarjeta", "crear_tx": True},
     )
-    assert _tx(client) == []
+    assert txs_guardadas(client) == []
 
 
 def test_tarjeta_ignora_los_campos_de_prestamo(client):
@@ -33,7 +29,7 @@ def test_tarjeta_ignora_los_campos_de_prestamo(client):
     ).json()
     assert r["nombre"] == "Visa" and r["cupo"] == 1000 and r["franquicia"] == "Visa"
     assert (r["monto_inicial"], r["tasa_ea"], r["cuota_mensual"], r["fecha_inicio"], r["proxima_cuota"]) == (0, 0, 0, "", "")
-    assert _tx(client) == []
+    assert txs_guardadas(client) == []
 
 
 def test_prestamo_ignora_cupo_y_exige_saldo(client):
@@ -94,7 +90,7 @@ def test_credito_con_crear_tx_sin_fecha_usa_hoy_y_el_listado_responde(client):
         "/api/deuda", json={"nombre": "Libre", "monto_inicial": 500_000, "saldo_actual": 500_000, "crear_tx": True}
     ).json()
     assert deuda["fecha_inicio"] == hoy_bogota().isoformat()
-    assert _tx(client)[0]["fecha"] == deuda["fecha_inicio"]
+    assert txs_guardadas(client)[0]["fecha"] == deuda["fecha_inicio"]
     listado = client.get("/api/tx").json()["items"]
     assert [(t["monto"], t["categoria"], t["fecha"]) for t in listado] == [(500_000, "Crédito recibido", deuda["fecha_inicio"])]
 

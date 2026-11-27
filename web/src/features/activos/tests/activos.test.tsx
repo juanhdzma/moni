@@ -18,12 +18,14 @@ afterEach(() => {
   cleanup()
 })
 
-const a1 = activo({ id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', cambio: 50000, cambio_pct: 50 })
+const a1 = activo({ id: 4, nombre: 'Casa', valor_inicial: 100000, valor_actual: 150000, fecha_adquisicion: '2026-01-02', cambio: 50000, cambio_tono: 'positivo', cambio_signo: '+', cambio_pct: 50 })
 
 const resumenDe = (activos: typeof a1[]) => ({
   total_inicial: activos.reduce((s, a) => s + a.valor_inicial, 0),
   total_actual: activos.reduce((s, a) => s + a.valor_actual, 0),
   variacion: activos.length ? 50000 : 0,
+  variacion_tono: activos.length ? 'positivo' : 'neutro',
+  variacion_signo: activos.length ? '+' : '',
   mostrar_variacion: activos.length > 0,
   segmentos: activos.map((a) => ({ key: String(a.id), label: a.nombre, valor: a.valor_actual })),
   items: activos,
@@ -35,8 +37,8 @@ const resumenDe = (activos: typeof a1[]) => ({
 async function setup(activos = [a1]) {
   const f = mockFetch({
     'GET /api/activos/resumen': resumenDe(activos),
-    'POST /api/activo/4/valor/preview': previewConMonto('nuevo_valor', { delta: 30000, total: 80000, total_pct: 80 }),
-    'POST /api/activo/4/venta/preview': previewConMonto('precio', { vs_inicial: 50000, vs_actual: 0 }),
+    'POST /api/activo/4/valor/preview': previewConMonto('nuevo_valor', { delta: 30000, delta_tono: 'positivo', delta_signo: '+', total: 80000, total_tono: 'positivo', total_signo: '+', total_pct: 80 }),
+    'POST /api/activo/4/venta/preview': previewConMonto('precio', { vs_inicial: 50000, vs_inicial_tono: 'positivo', vs_inicial_signo: '+', vs_actual: 0, vs_actual_tono: 'neutro', vs_actual_signo: '' }),
   })
   renderWithProviders(<Activos active />, { estado: estado({ hoy: '2026-06-15', activos }) })
   await waitFor(() => expect(document.getElementById('activos-total')).toHaveTextContent(`${activos.length} activo`))
@@ -158,6 +160,17 @@ describe('Activos forms', () => {
     await waitFor(() => expect(guardados()).toHaveLength(1))
     expect(guardados()[0]?.body).toMatchObject({ valor_actual: 160000 })
     expect(guardados()[0]?.body).not.toHaveProperty('valor_actualizado_en')
+  })
+
+  it('edit with value 0 sends valor_actual 0 instead of omitting it', async () => {
+    const { guardados, user } = await setup()
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
+    const el = await screen.findByDisplayValue<HTMLInputElement>('150.000')
+    await user.clear(el)
+    await user.type(el, '0')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(guardados()).toHaveLength(1))
+    expect(guardados()[0]?.body).toMatchObject({ valor_actual: 0 })
   })
 
   it('shows server error in modal', async () => {

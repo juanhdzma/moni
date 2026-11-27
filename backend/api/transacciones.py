@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from fastapi import APIRouter, Response
 
 from ..calculos.operaciones import listados
-from ..calculos.base.fechas import ahora_bogota_iso, hoy_bogota
+from ..calculos.base.fechas import ahora_bogota_iso, fecha_o_ahora, hoy_bogota
 from ..calculos.operaciones import tarjetas
 from ..core.afectadas import DEUDAS, OPS_OCULTAS, TRANSACCIONES, afectar
 from ..core.db import conexion
@@ -68,11 +68,11 @@ def afectar_tx(response: Response, tarjetas: tuple, op_clave: Optional[str] = No
 @router.post("/api/tx", name="create_tx", response_model=TxCruda)
 def create_tx(body: TxIn, response: Response):
     with conexion() as conn:
-        data = body.model_dump()
+        data = {**body.model_dump(), "fecha": fecha_o_ahora(body.fecha)}
         _exigir_tarjeta(conn, data["tarjeta_id"])
         new_id = insert_row(conn, "transacciones", TX_COLS, data)
         _aplicar_efecto_en_tarjeta(conn, data)
-        ocultar_op(conn, data["op_clave"])
+        ocultar_op(conn, data["op_clave"], ahora_bogota_iso())
         afectar_tx(response, (data["tarjeta_id"],), data["op_clave"])
         return guardar_y_leer(conn, "transacciones", new_id)
 
@@ -80,8 +80,9 @@ def create_tx(body: TxIn, response: Response):
 @router.put("/api/tx/{row_id:int}", name="update_tx", response_model=TxCruda)
 def update_tx(row_id: int, body: TxIn, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         anterior = get_row(conn, "transacciones", row_id)
-        data = body.model_dump()
+        data = {**body.model_dump(), "fecha": fecha_o_ahora(body.fecha)}
         _exigir_tarjeta(conn, data["tarjeta_id"])
         _deshacer_efecto_en_tarjeta(conn, anterior)
         update_row(conn, "transacciones", TX_COLS, row_id, data)
@@ -93,6 +94,7 @@ def update_tx(row_id: int, body: TxIn, response: Response):
 @router.delete("/api/tx/{row_id:int}", status_code=204, name="delete_tx")
 def delete_tx(row_id: int, response: Response):
     with conexion() as conn:
+        iniciar_escritura(conn)
         anterior = get_row(conn, "transacciones", row_id)
         _deshacer_efecto_en_tarjeta(conn, anterior)
         delete_row(conn, "transacciones", row_id)

@@ -6,7 +6,7 @@ from .builders_api import sembrar, tx
 def test_dashboard_resumen(client):
     sembrar(client)
     r = client.get("/api/dashboard/resumen").json()
-    assert set(r) == {"patrimonio", "proy_delta", "texto_proyeccion", "total_barra", "partes"}
+    assert set(r) == {"patrimonio", "patrimonio_tono", "patrimonio_signo", "proy_delta", "proy_delta_tono", "proy_delta_signo", "texto_proyeccion", "total_barra", "partes"}
     assert r["texto_proyeccion"] == "proyectados en 12 meses"
     assert r["patrimonio"] == 3_000_000 + 1_500_000 + 3_500_000 - 500_000
     assert [p["id"] for p in r["partes"]] == ["activos", "inversiones", "balance", "deudas"]
@@ -32,7 +32,7 @@ def test_dashboard_evolucion_rechaza_parametros(client, params):
 def test_dashboard_este_mes(client):
     sembrar(client)
     r = client.get("/api/dashboard/este-mes").json()
-    assert set(r) == {"ingresos", "gastos", "gastos_firmado", "quedo", "tono_ingresos", "tono_gastos", "tono_quedo", "titulo_quedo", "texto_tarjeta", "frase", "descripcion_grafico", "meses"}
+    assert set(r) == {"ingresos", "gastos", "gastos_firmado", "quedo", "tono_ingresos", "tono_gastos", "tono_quedo", "signo_ingresos", "signo_gastos", "signo_quedo", "titulo", "etiqueta_ingresos", "etiqueta_gastos", "titulo_quedo", "texto_tarjeta", "frase", "descripcion_grafico", "meses"}
     assert (r["ingresos"], r["gastos"], r["quedo"], r["frase"]["pct"]) == (4_000_000, 1_000_000, 3_000_000, 75.0)
     assert r["titulo_quedo"] == "Te quedó"
     assert (r["gastos_firmado"], r["tono_ingresos"], r["tono_gastos"], r["tono_quedo"]) == (-1_000_000, "positivo", "deudas", "positivo")
@@ -69,10 +69,11 @@ def test_dashboard_movimientos(client):
     r = client.get("/api/dashboard/movimientos").json()
     assert set(r) == {"items", "texto_vacio"} and len(r["items"]) == 5
     assert r["texto_vacio"] == {"titulo": "Sin transacciones", "texto": "Registrá un ingreso o gasto y aparece acá."}
-    assert set(r["items"][0]) == {"id", "fecha", "tipo", "categoria", "descripcion", "monto", "monto_firmado", "editable", "tono", "icono_metodo"}
+    assert set(r["items"][0]) == {"id", "fecha", "tipo", "categoria", "descripcion", "monto", "monto_firmado", "monto_signo", "editable", "tono", "icono_metodo", "icono_url"}
     assert (r["items"][0]["editable"], r["items"][0]["tono"], r["items"][0]["icono_metodo"]) == (True, "gasto", "efectivo")
     assert r["items"][0]["descripcion"] == "t6"
     assert r["items"][0]["monto_firmado"] == -r["items"][0]["monto"]
+    assert r["items"][0]["monto_signo"] == "−"
     assert len(client.get("/api/dashboard/movimientos", params={"n": 2}).json()["items"]) == 2
     assert client.get("/api/dashboard/movimientos", params={"n": 51}).status_code == 422
 

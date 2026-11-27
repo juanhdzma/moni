@@ -1,20 +1,19 @@
-from typing import Annotated, Literal
+from typing import Annotated
 
 from fastapi import APIRouter, Query
 
 from ..calculos import dinero
 from ..calculos.base.fechas import hoy_bogota
-from ..calculos.operaciones.tasas import equivalencia_tasa
 from ..core import estado as store
 from ..core.db import conexion
 from ..schemas.respuestas.dashboard import (
-    EquivalenciaTasa, EsteMes, Evolucion, GastosPeriodo, Movimientos, ResumenDashboard,
+    EsteMes, Evolucion, GastosPeriodo, Movimientos, ResumenDashboard,
 )
 from ..schemas.validadores import PeriodoEvolucion, PeriodoGastos, SerieEvolucion
 
 router = APIRouter()
 
-CAMPOS_RESUMEN = ("patrimonio", "proy_delta", "texto_proyeccion", "total_barra")
+CAMPOS_RESUMEN = ("patrimonio", "patrimonio_tono", "patrimonio_signo", "proy_delta", "proy_delta_tono", "proy_delta_signo", "texto_proyeccion", "total_barra")
 
 
 def _estado_de_hoy(conn, *nombres):
@@ -62,8 +61,3 @@ def dashboard_movimientos(n: Annotated[int, Query(ge=1, le=50)] = 5):
     with conexion() as conn:
         transacciones = store.coleccion(conn, "transacciones", hoy_bogota())
         return dinero.movimientos_dashboard(transacciones, n)
-
-
-@router.get("/api/calc/tasa", response_model=EquivalenciaTasa)
-def calc_tasa(valor: Annotated[float, Query(ge=-1000, le=1000, allow_inf_nan=False)], tipo: Literal["ea", "mv"] = "ea"):
-    return equivalencia_tasa(valor, tipo)

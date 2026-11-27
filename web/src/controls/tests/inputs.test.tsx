@@ -2,9 +2,11 @@ import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { AdvancedToggle } from '@/controls/inputs/AdvancedToggle'
+import { CrearTxToggle } from '@/controls/inputs/OpcionesRegistro'
+import { MoneyField } from '@/controls/inputs/MoneyField'
 import { MoneyInput } from '@/controls/inputs/MoneyInput'
 import { Select } from '@/controls/inputs/Select'
+import { mockFetch } from '@/test/mockFetch'
 import { renderWithProviders } from '@/test/render'
 
 const OPTS = [
@@ -180,18 +182,19 @@ describe('MoneyInput', () => {
   })
 })
 
-describe('AdvancedToggle', () => {
-  it('textos por defecto y checkbox controlado', async () => {
+describe('CrearTxToggle', () => {
+  it('textos del backend (meta.textos.registro) y checkbox controlado', async () => {
     const user = userEvent.setup()
+    mockFetch({})
     function H() {
       const [c, setC] = useState(true)
-      return <AdvancedToggle checked={c} onChange={setC} />
+      return <CrearTxToggle checked={c} onChange={setC} />
     }
     renderWithProviders(<H />)
-    const box = screen.getByLabelText('Registrar como nuevo en transacciones')
+    const box = await screen.findByLabelText('Registrar como nuevo en transacciones')
     expect(box).toBeChecked()
     expect(box).toHaveAttribute('id', 'm-es-nueva')
-    expect(screen.getByText('Desactivá si ya lo tenías antes de usar Moni.')).toBeInTheDocument()
+    expect(await screen.findByText('Desactivá si ya lo tenías antes de usar Moni.')).toBeInTheDocument()
     await user.click(box)
     expect(box).not.toBeChecked()
   })
@@ -226,5 +229,25 @@ describe('Select: teclado y select nativo', () => {
     await user.selectOptions(nativo, 'b')
     expect(screen.getByTestId('v')).toHaveTextContent('b')
     expect(screen.getByRole('button', { name: /Beta/ })).toBeInTheDocument()
+  })
+})
+
+function MoneyFieldHarness({ hint }: { hint?: string }) {
+  const [v, setV] = useState('')
+  return <MoneyField id="m-monto" label="Monto" value={v} onChange={setV} hint={hint} />
+}
+
+describe('MoneyField', () => {
+  it('asocia el label al input y formatea miles', async () => {
+    renderWithProviders(<MoneyFieldHarness />)
+    await userEvent.type(screen.getByLabelText('Monto'), '1234567')
+    expect(screen.getByLabelText('Monto')).toHaveValue('1.234.567')
+  })
+
+  it('el hint es opcional', () => {
+    const { rerender } = renderWithProviders(<MoneyFieldHarness />)
+    expect(screen.queryByText('Ayuda')).toBeNull()
+    rerender(<MoneyFieldHarness hint="Ayuda" />)
+    expect(screen.getByText('Ayuda')).toBeInTheDocument()
   })
 })

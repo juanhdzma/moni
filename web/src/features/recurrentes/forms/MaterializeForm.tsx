@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Cargando } from '@/components/Skeleton'
 import { FormFooter } from '@/controls/forms/FormFooter'
 import { entero } from '@/lib/format'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { useGuardar } from '@/shell/hooks/acciones/useGuardar'
 import { useMutations } from '@/shell/hooks/acciones/useMutations'
 import { CamposTx, cuerpoTx, useOpcionesTx } from '@/features/transacciones'
@@ -10,6 +11,7 @@ import { FormModal } from '@/controls/forms/FormModal'
 
 export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string }) {
   const opciones = useOpcionesTx()
+  const textos = useMeta()?.textos.materializar
   const guardar = useGuardar()
   const { crudOp } = useMutations()
   const tipo = r.tipo
@@ -33,9 +35,9 @@ export function MaterializeForm({ r, dateISO }: { r: Recurrente; dateISO: string
         valores={valores}
         onCambio={(p) => setValores((v) => ({ ...v, ...p }))}
         fechaType="date"
-        ayudaMonto="Pre-llenado con el monto recurrente — ajustá si difiere."
+        ayudaMonto={textos?.ayuda_monto}
       />
-      <FormFooter saveLabel="Registrar" onSave={() => void save()} cancelClassName="ml-auto" />
+      <FormFooter saveLabel={textos?.guardar ?? ''} onSave={() => void save()} />
     </FormModal>
   )
 }

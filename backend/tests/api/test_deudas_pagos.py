@@ -1,16 +1,8 @@
-from .builders_api import editable
-
-
-def _tx(client):
-    return client.get("/api/backup").json()["transacciones"]
-
-
-def _uno(client, entidad, id_):
-    return next(x for x in client.get("/api/backup").json()[entidad] if x["id"] == id_)
+from .builders_api import editable, fila_guardada, txs_guardadas
 
 
 def _deuda(client, id_):
-    return _uno(client, "deudas", id_)
+    return fila_guardada(client, "deudas", id_)
 
 
 def _pago(client, deuda_id, **extra):
@@ -28,11 +20,11 @@ def test_pago_baja_saldo_acumula_intereses_y_deja_rastro(client, prestamo):
         json={"modo": "abono", "nuevo_saldo": 920_000, "total_pagado": 100_000, "intereses": 20_000,
               "fecha": "2026-07-01", "descripcion": "Cuota 1"},
     )
-    d = _uno(client, "deudas", prestamo["id"])
+    d = fila_guardada(client, "deudas", prestamo["id"])
     assert d["saldo_actual"] == 920_000
     assert d["total_intereses"] == 20_000
 
-    tx = _tx(client)
+    tx = txs_guardadas(client)
     assert len(tx) == 1
     assert tx[0]["tipo"] == "transfer" and tx[0]["monto"] == 100_000
 
@@ -44,7 +36,7 @@ def test_intereses_se_acumulan_entre_pagos(client, prestamo):
             json={"modo": "abono", "nuevo_saldo": saldo, "total_pagado": 100_000, "intereses": interes,
                   "fecha": "2026-07-01", "descripcion": "Cuota"},
         )
-    assert _uno(client, "deudas", prestamo["id"])["total_intereses"] == 38_000
+    assert fila_guardada(client, "deudas", prestamo["id"])["total_intereses"] == 38_000
 
 
 def test_registrar_tx_false_no_ensucia_el_ledger(client, prestamo):
@@ -53,8 +45,8 @@ def test_registrar_tx_false_no_ensucia_el_ledger(client, prestamo):
         json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "fecha": "2026-07-01",
               "descripcion": "x", "registrar_tx": False},
     )
-    assert _tx(client) == []
-    assert _uno(client, "deudas", prestamo["id"])["saldo_actual"] == 900_000
+    assert txs_guardadas(client) == []
+    assert fila_guardada(client, "deudas", prestamo["id"])["saldo_actual"] == 900_000
 
 
 def test_adelanto_sube_la_deuda_y_registra_ingreso(client, tarjeta):
@@ -62,8 +54,8 @@ def test_adelanto_sube_la_deuda_y_registra_ingreso(client, tarjeta):
         f"/api/deuda/{tarjeta['id']}/adelanto",
         json={"monto": 200_000, "nuevo_saldo": 210_000, "fecha": "2026-07-01", "descripcion": "Avance"},
     )
-    assert _uno(client, "deudas", tarjeta["id"])["saldo_actual"] == 210_000
-    assert _tx(client)[0]["tipo"] == "ingreso"
+    assert fila_guardada(client, "deudas", tarjeta["id"])["saldo_actual"] == 210_000
+    assert txs_guardadas(client)[0]["tipo"] == "ingreso"
 
 
 def test_pagar_la_cuota_corre_el_vencimiento_un_mes(client, prestamo):
@@ -104,7 +96,7 @@ def test_saldar_la_deuda_deja_el_saldo_exacto_en_cero(client, prestamo):
             "fecha": "2026-08-01", "descripcion": "Liquidación", "registrar_tx": False,
         },
     )
-    d = _uno(client, "deudas", prestamo["id"])
+    d = fila_guardada(client, "deudas", prestamo["id"])
     assert d["saldo_actual"] == 0
 
 
@@ -135,7 +127,7 @@ def test_pago_deriva_intereses_y_arma_la_descripcion(client, prestamo):
     assert r.status_code == 200
     assert (r.json()["saldo_actual"], r.json()["total_intereses"]) == (920_000, 20_000)
     assert _deuda(client, prestamo["id"])["total_intereses"] == 20_000
-    tx = _tx(client)[0]
+    tx = txs_guardadas(client)[0]
     assert tx["descripcion"] == "Cuota · Credito (capital $80.000, intereses $20.000)"
     assert len(tx["fecha"]) == 16 and tx["fecha"][10] == "T"
 
@@ -145,13 +137,13 @@ def test_pago_respeta_descripcion_y_fecha_enviadas(client, prestamo):
         f"/api/deuda/{prestamo['id']}/pago",
         json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000, "descripcion": "Mia", "fecha": "2026-07-01"},
     )
-    assert (_tx(client)[0]["descripcion"], _tx(client)[0]["fecha"]) == ("Mia", "2026-07-01")
+    assert (txs_guardadas(client)[0]["descripcion"], txs_guardadas(client)[0]["fecha"]) == ("Mia", "2026-07-01")
 
 
 def test_pago_usa_el_simbolo_de_moneda_de_ajustes(client, prestamo):
     client.put("/api/ajustes", json={"moneda_simbolo": "US$"})
     client.post(f"/api/deuda/{prestamo['id']}/pago", json={"modo": "abono", "nuevo_saldo": 900_000, "total_pagado": 100_000})
-    assert _tx(client)[0]["descripcion"] == "Cuota · Credito (capital US$100.000, intereses US$0)"
+    assert txs_guardadas(client)[0]["descripcion"] == "Cuota · Credito (capital US$100.000, intereses US$0)"
 
 
 def test_pago_que_sube_el_saldo_se_rechaza(client, prestamo):
@@ -178,7 +170,7 @@ def test_adelanto_deriva_saldo_desde_el_disponible(client, tarjeta):
     r = client.post(f"/api/deuda/{tarjeta['id']}/adelanto", json={"monto": 100_000, "disponible_nuevo": 890_000})
     assert r.status_code == 200 and r.json()["saldo_actual"] == 110_000
     assert _deuda(client, tarjeta["id"])["saldo_actual"] == 110_000
-    tx = _tx(client)[0]
+    tx = txs_guardadas(client)[0]
     assert tx["descripcion"] == "Adelanto · Visa" and tx["tipo"] == "ingreso"
 
 

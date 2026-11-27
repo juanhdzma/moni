@@ -1,0 +1,106 @@
+from .constantes import PALABRA_TRUNCATE
+
+MONEDA_CODIGO = "COP"
+
+TEXTOS_UI = {
+    "moneda_codigo": MONEDA_CODIGO,
+    "retiro": {
+        "label_tipo": "Tipo de retiro",
+        "label_monto_total": "Monto que recibís",
+        "hint_monto_total": "Pre-llenado con el valor actual — ajustá si difiere al momento del retiro.",
+        "label_monto_parcial": "Monto que retirás",
+        "label_saldo_queda": "Saldo que queda en el fondo",
+        "hint_saldo_queda": "Valor total de la inversión después del retiro.",
+        "label_fecha": "Fecha (hoy si se omite)",
+        "placeholder_notas": "Ej. Vencimiento CDT",
+        "guardar": "Confirmar retiro",
+    },
+    "adelanto": {
+        "label_debes": "Debes",
+        "label_disponible": "Disponible",
+        "label_monto": "Monto del adelanto",
+        "hint_monto": "La plata que vas a recibir en tu cuenta.",
+        "label_disponible_nuevo": "Cupo disponible después del adelanto",
+        "placeholder_disponible_nuevo": "Lo que te muestra el banco como disponible",
+        "label_saldo_nuevo": "Saldo en la tarjeta después del adelanto",
+        "placeholder_saldo_nuevo": "Lo que muestra tu banco después",
+        "label_deuda_total": "Deuda total después",
+        "label_comision": "Comisión / cargos",
+        "label_fecha": "Fecha (ahora si se omite)",
+        "placeholder_notas": "Ej. Adelanto cajero",
+        "label_registrar": "Registrar como ingreso",
+        "guardar": "Pedir adelanto",
+    },
+    "pago": {
+        "label_saldo_pendiente": "Saldo pendiente",
+        "label_cuota_mensual": "Cuota mensual",
+        "label_monto": "Monto total pagado",
+        "label_saldo_nuevo": "Saldo capital después del pago",
+        "placeholder_saldo_nuevo": "Lo que muestra tu banco después",
+        "label_capital": "A capital",
+        "label_intereses": "A intereses",
+        "label_fecha": "Fecha del pago (ahora si se omite)",
+        "label_editar": "Editar deuda",
+    },
+    "materializar": {
+        "ayuda_monto": "Pre-llenado con el monto recurrente — ajustá si difiere.",
+        "guardar": "Registrar",
+    },
+    "activo": {
+        "placeholder_nombre": "Ej. Apartamento Bogotá",
+        "label_valor_inicial_nuevo": "Precio de compra",
+        "label_valor_inicial_edicion": "Valor inicial",
+        "label_valor_actual": "Valor actual",
+        "placeholder_valor_actual": "Igual al inicial si no cambia",
+        "label_fecha": "Fecha de adquisición",
+        "guardar": "Agregar activo",
+    },
+    "registro": {
+        "titulo": "Opciones de registro",
+        "label_crear_tx": "Registrar como nuevo en transacciones",
+        "hint_crear_tx": "Desactivá si ya lo tenías antes de usar Moni.",
+        "label_registrar_tx": "Registrar en transacciones",
+        "hint_registrar_tx": "Desactivá si ya lo registraste en otra parte.",
+    },
+    "inversion": {"label_pago": "Pago de rendimientos"},
+    "transacciones": {
+        "titulo_panel": "Movimientos",
+        "boton_nuevo": "Nuevo movimiento",
+        "aria_filtros": "Filtros",
+        "aria_mes": "Mes",
+        "aria_tipo": "Tipo",
+        "aria_categoria": "Categoría",
+        "todos_meses": "Todos los meses",
+        "todos_tipos": "Todos los tipos",
+        "todas_categorias": "Todas las categorías",
+        "label_pagado_con": "Pagado con",
+    },
+    "moneda": {
+        "titulo": "Moneda",
+        "label": "Símbolo mostrado junto a los montos",
+        "hint": f"Solo cambia el símbolo mostrado. Los montos se guardan y calculan igual, en {MONEDA_CODIGO}.",
+    },
+    "backup": {
+        "titulo": "Backup",
+        "exportar": "Exportar JSON",
+        "importar": "Importar JSON",
+        "hint": "Importar solo agrega filas del archivo; no reemplaza lo que ya tenés. Si los ids chocan con datos existentes, fallará.",
+        "titulo_modal": "Importar backup",
+        "etiqueta_confirmar": "Importar",
+        "descripcion_confirmar": "Importar agrega las filas del archivo a tus datos. Confirmá con tu clave para continuar.",
+        "archivo_invalido": "El archivo no es un backup válido",
+    },
+}
+
+
+def textos_peligro(aviso_truncate: str) -> dict:
+    return {
+        "titulo": "Zona de peligro",
+        "boton": "Borrar todos los datos",
+        "nota": f"{aviso_truncate} No se puede deshacer.",
+        "titulo_modal": "Borrar todos los datos",
+        "etiqueta_confirmar": "Borrar todo",
+        "descripcion_confirmar": f"{aviso_truncate} Esta acción no se puede deshacer. Exportá un backup antes si no estás seguro.",
+        "label_palabra": f"Escribí {PALABRA_TRUNCATE} para confirmar",
+        "error_palabra": f"Escribí {PALABRA_TRUNCATE} (en mayúsculas) para confirmar",
+    }

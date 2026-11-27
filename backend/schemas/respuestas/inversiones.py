@@ -19,8 +19,12 @@ class InvCruda(BaseModel):
 
 class Inversion(InvCruda):
     capitaliza_default: bool
+    accion_principal: Literal["rendimiento", "valor"]
     ganancia: float
+    ganancia_tono: str
+    ganancia_signo: str
     ganancia_pct: float
+    monto_retiro_total: float
     texto_tasa: str | None
     proximo_pago: ProximoPago | None
     rendimiento_esperado: float | None
@@ -30,6 +34,8 @@ class Inversion(InvCruda):
 class ResumenInversiones(BaseModel):
     total_actual: float
     ganancia: float
+    ganancia_tono: str
+    ganancia_signo: str
     ganancia_pct: float
     mostrar_ganancia: bool
     texto_ganancia: str

@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import { Panel } from '@/components/Panel'
 import { Hint, StatusMessage } from '@/controls/forms/FormStatus'
 import { cargarBackup, importarBackup } from '@/lib/api'
+import { useMeta } from '@/shell/hooks/datos/useMeta'
 import { useStatus } from '@/shell/hooks/formulario/useStatus'
 import { useData } from '@/shell/providers/DataProvider'
 import { useModal } from '@/shell/providers/ModalProvider'
@@ -9,9 +10,14 @@ import { ConfirmarClave } from './ConfirmarClave'
 
 type Backup = Record<string, unknown>
 
-function leerBackup(texto: string): Backup {
-  const payload: unknown = JSON.parse(texto)
-  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) throw new Error('El archivo no es un backup válido')
+function leerBackup(texto: string, mensajeInvalido: string): Backup {
+  let payload: unknown
+  try {
+    payload = JSON.parse(texto)
+  } catch {
+    throw new Error(mensajeInvalido)
+  }
+  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) throw new Error(mensajeInvalido)
   return payload as Backup
 }
 
@@ -19,6 +25,7 @@ export function BackupPanel() {
   const { estado, mutar } = useData()
   const { openModal } = useModal()
   const status = useStatus()
+  const t = useMeta()?.textos.backup
 
   const exportar = async () => {
     try {
@@ -40,13 +47,13 @@ export function BackupPanel() {
     const file = input.files?.[0]
     if (!file) return
     try {
-      const payload = leerBackup(await file.text())
+      const payload = leerBackup(await file.text(), t?.archivo_invalido ?? '')
       status.limpiar()
       openModal(
-        'Importar backup',
+        t?.titulo_modal ?? '',
         <ConfirmarClave
-          etiqueta="Importar"
-          descripcion="Importar agrega las filas del archivo a tus datos. Confirmá con tu clave para continuar."
+          etiqueta={t?.etiqueta_confirmar ?? ''}
+          descripcion={t?.descripcion_confirmar}
           onConfirmar={async (clave) => {
             const result = await mutar((onAfectadas) => importarBackup(payload, clave, onAfectadas))
             status.ok(result.texto)
@@ -61,19 +68,17 @@ export function BackupPanel() {
   }
 
   return (
-    <Panel id="settings-backup-card" titulo="Backup">
+    <Panel id="settings-backup-card" titulo={t?.titulo ?? ''}>
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="btn btn-accent btn-sm" onClick={() => void exportar()}>
-          Exportar JSON
+          {t?.exportar}
         </button>
         <label className="btn btn-dim btn-sm m-0 cursor-pointer has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring">
-          Importar JSON
+          {t?.importar}
           <input type="file" accept="application/json" className="sr-only" onChange={(e) => void importar(e)} />
         </label>
       </div>
-      <Hint className="mt-2">
-        Importar solo agrega filas del archivo; no reemplaza lo que ya tenés. Si los ids chocan con datos existentes, fallará.
-      </Hint>
+      <Hint className="mt-2">{t?.hint}</Hint>
       <StatusMessage cls={status.cls} msg={status.msg} id="settings-backup-status" />
     </Panel>
   )

@@ -51,3 +51,20 @@ def test_aportes_simultaneos_suman_todos(client):
     assert codigos == [200] * PETICIONES
     fila = next(i for i in client.get("/api/backup").json()["inversiones"] if i["id"] == inv["id"])
     assert fila["monto_invertido"] == fila["valor_actual"] == inicial + PETICIONES * 100
+
+
+def test_put_simultaneos_sobre_la_misma_tx_con_tarjeta_deshacen_el_efecto_una_sola_vez(client, tarjeta):
+    cuerpo = {"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": 1000, "tarjeta_id": tarjeta["id"]}
+    tx_id = client.post("/api/tx", json=cuerpo).json()["id"]
+    codigos = _en_paralelo(lambda _: client.put(f"/api/tx/{tx_id}", json={**cuerpo, "monto": 2000}).status_code)
+    assert codigos == [200] * PETICIONES
+    assert _saldo(client, tarjeta["id"]) == 2000
+
+
+def test_delete_simultaneo_de_la_misma_tx_devuelve_el_saldo_una_sola_vez(client, tarjeta):
+    cuerpo = {"fecha": "2026-07-01", "tipo": "gasto", "categoria": "Mercado", "monto": 1000, "tarjeta_id": tarjeta["id"]}
+    client.post("/api/tx", json={**cuerpo, "monto": 500})
+    tx_id = client.post("/api/tx", json=cuerpo).json()["id"]
+    codigos = _en_paralelo(lambda _: client.delete(f"/api/tx/{tx_id}").status_code)
+    assert sorted(codigos) == [204] + [404] * (PETICIONES - 1)
+    assert _saldo(client, tarjeta["id"]) == 500

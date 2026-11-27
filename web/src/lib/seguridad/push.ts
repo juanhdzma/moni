@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/api'
+import type { Schemas } from '@/types/gen'
 
 export const pushSoportado = (): boolean =>
   'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
@@ -18,7 +19,7 @@ export async function activarPush(): Promise<void> {
   if ((await Notification.requestPermission()) !== 'granted') throw new Error('Permiso de notificaciones denegado')
   await navigator.serviceWorker.register('/sw.js')
   const reg = await navigator.serviceWorker.ready
-  const { key } = await apiFetch<{ key: string }>('/api/push/key')
+  const { key } = await apiFetch<Schemas['ClavePush']>('/api/push/key')
   const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: claveABytes(key) })
   await apiFetch('/api/push/subscribe', { method: 'POST', body: sub.toJSON() })
 }
@@ -30,5 +31,5 @@ export async function desactivarPush(): Promise<void> {
   await sub.unsubscribe()
 }
 
-export const probarPush = (): Promise<{ enviadas: number }> =>
-  apiFetch<{ enviadas: number }>('/api/push/test', { method: 'POST' })
+export const probarPush = (): Promise<Schemas['PushProbado']> =>
+  apiFetch<Schemas['PushProbado']>('/api/push/test', { method: 'POST' })

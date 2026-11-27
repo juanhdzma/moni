@@ -26,8 +26,9 @@ def test_challenge_expirado_falla(client):
     conn.execute("UPDATE challenges SET expira = '2000-01-01T00:00:00'")
     conn.commit()
     conn.close()
-    assert client.post(VERIFICAR_LOGIN, json=auten.firmar(opciones, 1)).status_code == 401
-    assert fallos() == 1
+    r = client.post(VERIFICAR_LOGIN, json=auten.firmar(opciones, 1))
+    assert r.status_code == 401 and r.json() == {"detail": "El intento venció, probá de nuevo"}
+    assert fallos() == 0
 
 
 def test_challenge_de_otra_ip_falla(client, monkeypatch):
@@ -37,6 +38,17 @@ def test_challenge_de_otra_ip_falla(client, monkeypatch):
     opciones = client.post(OPCIONES_LOGIN, headers={"X-Forwarded-For": "203.0.113.1"}).json()
     r = client.post(VERIFICAR_LOGIN, json=auten.firmar(opciones, 1), headers={"X-Forwarded-For": "203.0.113.2"})
     assert r.status_code == 401
+    assert fallos() == 0
+
+
+def test_opciones_de_login_tienen_rate_limit_por_ip(client):
+    from backend.seguridad.passkeys import rutas
+
+    alta(client)
+    client.cookies.clear()
+    codigos = [client.post(OPCIONES_LOGIN).status_code for _ in range(rutas.MAX_OPCIONES + 1)]
+    assert codigos == [200] * rutas.MAX_OPCIONES + [429]
+    assert client.post(OPCIONES_LOGIN).headers["Retry-After"] == str(rutas.VENTANA_OPCIONES_S)
 
 
 def test_challenge_de_registro_no_sirve_para_login(client):

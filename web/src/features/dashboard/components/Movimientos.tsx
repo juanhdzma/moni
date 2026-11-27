@@ -7,10 +7,10 @@ import { Monto } from '@/components/Monto'
 import { Panel } from '@/components/Panel'
 
 export function Movimientos() {
-  const { data } = useVista('movimientos', () => cargarMovimientos(), DEPENDENCIAS_DE_VISTA.movimientos)
+  const { data, error } = useVista('movimientos', () => cargarMovimientos(), DEPENDENCIAS_DE_VISTA.movimientos)
   const recent = data?.items ?? []
   return (
-    <Panel id="dash-movimientos" titulo="Últimos movimientos">
+    <Panel id="dash-movimientos" error={error} titulo="Últimos movimientos">
       {data === null ? null : recent.length ? (
         <ul id="recent-list" className="divide-y">
           {recent.map((t) => (
@@ -21,7 +21,7 @@ export function Movimientos() {
                 <span className="block truncate text-xs text-muted-foreground">{t.categoria}</span>
               </span>
               <span className="recent-amount shrink-0 font-semibold" data-tipo={t.tipo}>
-                <Monto valor={t.monto_firmado} tono={t.tono} />
+                <Monto valor={t.monto_firmado} tono={t.tono} signo={t.monto_signo} />
               </span>
             </li>
           ))}

@@ -9,6 +9,7 @@ from . import password, sesiones, tiempo
 from .bloqueo import fallo_generico, lock_ip, respuesta_si_bloqueada
 from ..core.db import conexion
 from .ip import client_ip
+from ..calculos.catalogo.constantes import CLAVE_LARGO_MAX
 from ..schemas.respuestas.comun import Ok
 from ..schemas.respuestas.seguridad import EstadoAuth, Sesion
 
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/api/auth")
 
 
 class LoginIn(BaseModel):
-    clave: str = Field(min_length=1, max_length=256)
+    clave: str = Field(min_length=1, max_length=CLAVE_LARGO_MAX)
 
 
 @router.get("/estado", response_model=EstadoAuth)
@@ -76,7 +77,7 @@ def listar_sesiones(request: Request):
     ]
 
 
-@router.delete("/sesiones/{sesion_id}", response_model=Ok)
+@router.delete("/sesiones/{sesion_id}", status_code=204)
 def revocar_sesion(sesion_id: int, request: Request):
     actual = sesiones.sesion_obligatoria(request)
     if sesion_id == actual["id"]:
@@ -84,4 +85,3 @@ def revocar_sesion(sesion_id: int, request: Request):
     if not sesiones.borrar_sesion(sesion_id):
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
     logger.info("sesion revocada id=%d", sesion_id)
-    return {"ok": True}

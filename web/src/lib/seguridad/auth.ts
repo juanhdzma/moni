@@ -1,31 +1,9 @@
 import { apiFetch } from '@/lib/api'
+import type { Schemas } from '@/types/gen'
 
-export interface EstadoAuth {
-  configurado: boolean
-  autenticado: boolean
-  tiene_passkeys: boolean
-}
-
-export interface Sesion {
-  id: number
-  creada: string
-  ultimo_uso: string
-  creada_texto: string
-  ultimo_uso_texto: string
-  ip: string
-  user_agent: string
-  metodo: string
-  actual: boolean
-}
-
-export interface Passkey {
-  id: number
-  nombre: string
-  creada: string
-  ultimo_uso: string | null
-  creada_texto: string
-  ultimo_uso_texto: string
-}
+export type EstadoAuth = Schemas['EstadoAuth']
+export type Sesion = Schemas['Sesion']
+export type Passkey = Schemas['PasskeyFila']
 
 export const cargarEstadoAuth = () => apiFetch<EstadoAuth>('/api/auth/estado')
 export const entrarConClave = (clave: string) => apiFetch<{ ok: boolean }>('/api/auth/login', { method: 'POST', body: { clave } })

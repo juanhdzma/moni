@@ -1,7 +1,7 @@
 import datetime
 
-from ..base.fechas import parse_fecha_hora, restar_meses
-from ..base.formato import frase, pct_barra, porcentaje_texto
+from ..base.fechas import parse_fecha_hora, sumar_meses
+from ..base.formato import frase, pct_barra, porcentaje_texto, signo_de
 from ..operaciones.listados import atributos_visuales_tx, texto_vacio_movimientos
 from ..base.numeros import monto_firmado
 
@@ -25,15 +25,14 @@ def opciones_periodo(periodos) -> list[dict]:
 
 def gastos_en_periodo(txs, periodo: str, hoy: datetime.date) -> list[dict]:
     gastos = [t for t in txs if t["tipo"] == "gasto"]
-    ahora = datetime.datetime.combine(hoy, datetime.time(23, 59, 59, 999000))
     meses = {"1M": 1, "3M": 3, "6M": 6, "1Y": 12}
     if periodo == "1W":
-        desde = ahora - datetime.timedelta(days=7)
+        dia_desde = hoy - datetime.timedelta(days=7)
     elif periodo in meses:
-        desde = restar_meses(ahora, meses[periodo])
+        dia_desde = sumar_meses(hoy, -meses[periodo], hoy.day)
     else:
         return gastos
-    desde = desde.replace(hour=0, minute=0, second=0, microsecond=0)
+    desde = datetime.datetime.combine(dia_desde, datetime.time.min)
     resultado = []
     for t in gastos:
         d = parse_fecha_hora(t["fecha"])
@@ -109,6 +108,7 @@ def movimientos_recientes(txs, n: int = 5) -> list[dict]:
         {
             **{k: t[k] for k in ("id", "fecha", "tipo", "categoria", "descripcion", "monto")},
             "monto_firmado": monto_firmado(t["tipo"], t["monto"]),
+            "monto_signo": signo_de(monto_firmado(t["tipo"], t["monto"])),
             **atributos_visuales_tx(t),
         }
         for t in orden

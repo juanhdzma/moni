@@ -1,9 +1,14 @@
 from ..base.numeros import pesos
+from ..catalogo.constantes import MODOS_PAGO, MODOS_SOLO_PRESTAMO, valores
 
 HINT_CUOTA = "Pre-llenado con la cuota mensual — ajustá si aplica."
 HINT_CUOTA_SIN_MONTO = "Ingresá el monto de la cuota."
 HINT_ABONO = "Abono extraordinario: no mueve la fecha de la próxima cuota."
 HINT_LIQUIDAR = "Ajustá si el banco cobra intereses adicionales al cancelar."
+
+
+def modos_disponibles(es_tarjeta: bool) -> list[str]:
+    return [m for m in valores(MODOS_PAGO) if not (es_tarjeta and m in MODOS_SOLO_PRESTAMO)]
 
 
 def sugerencia_pago(saldo_actual: float, cuota_mensual: float) -> dict:

@@ -1,2 +1,2 @@
 export { Recurrentes } from './Recurrentes'
-export { openRecurrenteForm, openRecurrenteMaterializeFormById } from './forms'
+export { openRecurrenteForm, openRecurrenteMaterializeFormById } from './forms/openers'

@@ -11,6 +11,8 @@ class ParteResumen(BaseModel):
     nombre: str
     valor: float
     valor_firmado: float
+    valor_signo: str
+    proporcion: float
     negativo: bool
     detalle: str
     tono: str
@@ -18,7 +20,11 @@ class ParteResumen(BaseModel):
 
 class ResumenDashboard(BaseModel):
     patrimonio: float
+    patrimonio_tono: str
+    patrimonio_signo: str
     proy_delta: float
+    proy_delta_tono: str
+    proy_delta_signo: str
     texto_proyeccion: str
     total_barra: float
     partes: list[ParteResumen]
@@ -73,6 +79,12 @@ class EsteMes(BaseModel):
     tono_ingresos: str
     tono_gastos: str
     tono_quedo: str
+    signo_ingresos: str
+    signo_gastos: str
+    signo_quedo: str
+    titulo: str
+    etiqueta_ingresos: str
+    etiqueta_gastos: str
     titulo_quedo: str
     texto_tarjeta: str
     frase: FraseMes
@@ -122,9 +134,11 @@ class Movimiento(BaseModel):
     descripcion: str
     monto: float
     monto_firmado: float
+    monto_signo: str
     editable: bool
     tono: str
     icono_metodo: str
+    icono_url: str
 
 
 class Movimientos(BaseModel):

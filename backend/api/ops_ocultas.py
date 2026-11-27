@@ -4,11 +4,11 @@ from fastapi import APIRouter, Response
 
 from ..calculos import operaciones
 from ..calculos.base.errores import ErrorDeDominio
-from ..calculos.base.fechas import hoy_bogota
+from ..calculos.base.fechas import ahora_bogota_iso, hoy_bogota
 from ..core.afectadas import OPS_OCULTAS, afectar
 from ..core.db import conexion
 from ..core.estado import simbolo
-from ..core.ops_ocultas import candidatas_visibles, ocultar_op, ocultas_con_etiqueta
+from ..core.ops_ocultas import TEXTO_VACIO_OCULTAS, candidatas_visibles, ocultar_op, ocultas_con_etiqueta
 from ..schemas.ajustes import OpOculta
 from ..schemas.respuestas.operaciones import OpOcultaCreada, OpsOcultas, ProximasOperaciones
 
@@ -25,13 +25,13 @@ def proximas_operaciones():
 @router.get("/api/ops-ocultas", response_model=OpsOcultas)
 def listar_ops_ocultas():
     with conexion() as conn:
-        return {"items": ocultas_con_etiqueta(conn)}
+        return {"items": ocultas_con_etiqueta(conn), "texto_vacio": TEXTO_VACIO_OCULTAS}
 
 
 @router.post("/api/ops-ocultas", status_code=201, response_model=OpOcultaCreada)
 def crear_op_oculta(body: OpOculta, response: Response):
     with conexion() as conn:
-        ocultar_op(conn, body.clave)
+        ocultar_op(conn, body.clave, ahora_bogota_iso())
         conn.commit()
         afectar(response, OPS_OCULTAS)
         return {"clave": body.clave}

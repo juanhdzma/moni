@@ -6,7 +6,7 @@ import { renderWithProviders } from '@/test/render'
 import { estado } from '@/test/factories'
 import { expectLabels, modalBody } from '@/test/labels'
 import { Inversiones } from '@/features/inversiones/index'
-import { H, clickInGrid, mockInv, modal, setup, typeMoney, installFakeClock } from './helpers'
+import { H, clickInGrid, mockInv, modal, setup, typeMoney, installFakeClock } from './fixtures'
 
 installFakeClock()
 

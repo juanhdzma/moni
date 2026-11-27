@@ -3,7 +3,7 @@ import datetime
 from ..base.fechas import mes_de
 from ..base.numeros import porcentaje
 from .flujos import es_gasto_cartera, flujo_cartera, net_worth
-from ..base.formato import cop, cop_corto, frase, plural, porcentaje_texto, tono_de_valor
+from ..base.formato import con_variacion, cop, cop_corto, frase, plural, porcentaje_texto, signo_de, tono_de_valor
 from .gastos import PERIODOS_EVOLUCION_VISIBLES
 from .series import (
     clave_mes,
@@ -20,6 +20,7 @@ from .series import (
 PERIODOS_EVOLUCION = PERIODOS_EVOLUCION_VISIBLES
 MESES_ESTE_MES = 6
 MESES_PROYECCION = 12
+MESES_VENTANA_PROYECCION = 12
 
 
 def frase_mes(ahorro_pct: float, ingresos: float) -> dict:
@@ -52,7 +53,6 @@ def _balance_mes(txs, hoy: datetime.date) -> dict:
         "ingresos": ingresos,
         "gastos": gastos,
         "quedo": quedo,
-        "ahorro_pct": ahorro_pct,
         "frase": frase_mes(ahorro_pct, ingresos),
     }
 
@@ -67,12 +67,12 @@ def resumen_dashboard(estado, hoy: datetime.date) -> dict:
     total_deuda = sum(d["saldo_actual"] for d in vigentes)
     total_inv = sum(i["valor_actual"] for i in inversiones)
     total_activos = sum(a["valor_actual"] for a in activos)
-    ultimos12 = monthly_patrimonio(txs, 12, hoy)
+    ultimos12 = monthly_patrimonio(txs, MESES_VENTANA_PROYECCION, hoy)
     total_invertido = sum(i["monto_invertido"] for i in inversiones)
     ganancia = total_inv - total_invertido
     efectivo = flujo_cartera(txs)
 
-    return {
+    return con_variacion({
         "patrimonio": net_worth(txs, inversiones, activos, deudas),
         "efectivo": efectivo,
         "total_deuda": total_deuda,
@@ -86,7 +86,7 @@ def resumen_dashboard(estado, hoy: datetime.date) -> dict:
         "ganancia_inv": ganancia,
         "ganancia_inv_pct": porcentaje(ganancia, total_invertido),
         "total_barra": abs(total_activos) + abs(total_inv) + abs(efectivo) + abs(total_deuda),
-    }
+    }, "patrimonio", "proy_delta")
 
 
 def _parte(id: str, nombre: str, valor: float, negativo: bool, detalle: str, tono: str) -> dict:
@@ -96,6 +96,7 @@ def _parte(id: str, nombre: str, valor: float, negativo: bool, detalle: str, ton
         "nombre": nombre,
         "valor": valor,
         "valor_firmado": firmado,
+        "valor_signo": signo_de(firmado),
         "negativo": negativo,
         "detalle": detalle,
         "tono": tono,
@@ -116,12 +117,14 @@ def partes_patrimonio(resumen: dict, conteos: dict, simbolo: str = "$") -> list[
         else plural(conteos["inversiones"], "posición", "posiciones")
     )
     detalle_deudas = f"{cop(resumen['cuota_total'], simbolo)}/mes · {plural(resumen['deudas_activas'], 'deuda', 'deudas')}"
-    return [
+    partes = [
         _parte("activos", "Activos", resumen["total_activos"], False, plural(conteos["activos"], "activo", "activos"), "activos"),
         _parte("inversiones", "Inversiones", resumen["total_inv"], False, detalle_inversiones, "inversiones"),
         _parte("balance", "Cartera", resumen["efectivo"], resumen["efectivo"] < 0, "Efectivo y cuentas", "deudas" if resumen["efectivo"] < 0 else "cartera"),
         _parte("deudas", "Deudas", resumen["total_deuda"], True, detalle_deudas, "deudas"),
     ]
+    total = sum(abs(p["valor"]) for p in partes)
+    return [{**p, "proporcion": abs(p["valor"]) / total * 100 if total > 0 else 0} for p in partes]
 
 
 def _frase_evolucion(verbo: str, sujeto: str, mes_desde: str, desde: float, hasta: float, simbolo: str) -> dict:
@@ -184,6 +187,12 @@ def este_mes(estado, hoy: datetime.date) -> dict:
         "tono_ingresos": tono_de_valor(mes["ingresos"]),
         "tono_gastos": "deudas",
         "tono_quedo": tono_de_valor(mes["quedo"]),
+        "signo_ingresos": signo_de(mes["ingresos"]),
+        "signo_gastos": signo_de(-mes["gastos"]),
+        "signo_quedo": signo_de(mes["quedo"]),
+        "titulo": "Este mes en tu cartera",
+        "etiqueta_ingresos": "Entró",
+        "etiqueta_gastos": "Salió",
         "titulo_quedo": "Te quedó",
         "texto_tarjeta": "Lo pagado con tarjeta no sale de la cartera.",
         "frase": mes["frase"],

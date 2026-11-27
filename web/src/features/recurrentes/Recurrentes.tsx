@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button'
-import { Pause, Play, Plus } from 'lucide-react'
+import { Pause, Play } from 'lucide-react'
+import { BotonNuevo } from '@/components/BotonNuevo'
 import { EmptyCard } from '@/components/EmptyCard'
 import { Monto } from '@/components/Monto'
 import { FraseTexto, Panel, Resumen } from '@/components/Panel'
@@ -8,21 +8,21 @@ import { IconButton } from '@/controls/forms/IconButton'
 import { cn } from '@/lib/utils'
 import { useMoneda } from '@/shell/hooks/datos/useMoneda'
 import { useData } from '@/shell/providers/DataProvider'
-import { cargarResumenRecurrentes } from '@/lib/api'
+import { cargarResumenRecurrentes, pausarRecurrente } from '@/lib/api'
 import { useOpenerCtx } from '@/shell/hooks/acciones/openers'
 import { useVista } from '@/shell/hooks/datos/useVista'
 import { DEPENDENCIAS_DE_VISTA } from '@/shell/invalidacion'
 import { TabContent, type TabProps } from '@/shell/layout/TabContent'
 import { useMutations } from '@/shell/hooks/acciones/useMutations'
 import type { Recurrente, TextoVacio } from '@/types'
-import { openRecurrenteForm, openRecurrenteFormById } from './forms'
+import { openRecurrenteForm, openRecurrenteFormById } from './forms/openers'
 
 function RecCard({ r }: { r: Recurrente }) {
   const { cop } = useMoneda()
   const ctx = useOpenerCtx()
-  const { apiActionOrBanner } = useMutations()
+  const { accionOrBanner } = useMutations()
   const nextStr = r.proximo_pago?.texto ?? null
-  const toggle = () => apiActionOrBanner(`/api/rec/${r.id}/pausar`)
+  const toggle = () => accionOrBanner((o) => pausarRecurrente(r.id, o))
   const Icono = r.activo ? Pause : Play
   return (
     <li data-rec={r.id} data-inactive={r.activo ? undefined : ''} className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5', !r.activo && 'opacity-50')}>
@@ -56,7 +56,7 @@ function RecCard({ r }: { r: Recurrente }) {
         <button
           type="button"
           onClick={() => openRecurrenteFormById(ctx, r.id)}
-          className="h-8 cursor-pointer rounded-md px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="h-8 cursor-pointer rounded-md px-2.5 max-sm:h-11 max-sm:px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           Editar
         </button>
@@ -94,9 +94,8 @@ function Lista({ id, titulo, items, vacio, loaded }: ListaProps) {
 export function Recurrentes({ active }: TabProps) {
   const ctx = useOpenerCtx()
   const { loaded: cargado } = useData()
-  const { data } = useVista('rec', cargarResumenRecurrentes, DEPENDENCIAS_DE_VISTA.resumenRecurrentes)
+  const { data, error } = useVista('rec', cargarResumenRecurrentes, DEPENDENCIAS_DE_VISTA.resumenRecurrentes)
   const loaded = cargado && data !== null
-  const neto = data?.neto_mensual ?? 0
   return (
     <TabContent id="recurrentes" active={active}>
       <div className="space-y-4">
@@ -104,15 +103,13 @@ export function Recurrentes({ active }: TabProps) {
           id="rec-total"
           titulo="Neto mensual"
           loaded={loaded}
-          valor={<Monto valor={neto} color="negativo" />}
+          error={error}
+          valor={data && <Monto valor={data.neto_mensual} tono={data.neto_mensual_tono} signo={data.neto_mensual_signo} color="negativo" />}
           color="bg-muted-foreground"
           segmentos={data?.segmentos ?? []}
           dato={data && <span className="text-muted-foreground"><FraseTexto frase={data.dato} /></span>}
           extra={
-            <Button size="sm" className="add-btn hidden md:inline-flex" onClick={() => openRecurrenteForm(ctx)}>
-              <Plus aria-hidden="true" />
-              Nuevo
-            </Button>
+            <BotonNuevo label="Nuevo" onClick={() => openRecurrenteForm(ctx)} />
           }
         />
         <div className="grid items-start gap-4 lg:grid-cols-2">

@@ -22,7 +22,7 @@ function CategoriaGroup({ tipo, label, tono }: { tipo: TipoTx; label: string; to
           <span className="inline-flex items-center gap-1 rounded-full border bg-muted px-2.5 py-0.5 text-xs" key={c.nombre}>
             {c.nombre}
             {c.sistema ? null : (
-              <IconButton label={`Eliminar ${c.nombre}`} className="size-6 rounded-full sm:size-5" onClick={() => void removeCategoria(tipo, c.nombre)}>
+              <IconButton label={`Eliminar ${c.nombre}`} className="relative size-6 rounded-full after:absolute after:-inset-3 sm:size-5" onClick={() => void removeCategoria(tipo, c.nombre)}>
                 <X className="size-3" aria-hidden="true" />
               </IconButton>
             )}

@@ -1,9 +1,11 @@
-import type { KeyboardEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Cargando } from '@/components/Skeleton'
 import { EmptyCard } from '@/components/EmptyCard'
 import { IconoMetodo } from '@/components/IconoMetodo'
 import { Monto } from '@/components/Monto'
 import { cn } from '@/lib/utils'
 import { fmtDate } from '@/lib/format'
+import { alActivar } from '@/lib/teclado'
 import type { ColumnaTransaccion, FilaTx, TextoVacio } from '@/types'
 
 const CELDA = 'px-2 py-3 align-middle sm:py-2'
@@ -28,12 +30,12 @@ const CELDAS: Record<string, Celda> = {
       </>
     ),
   },
-  monto: { clase: 'whitespace-nowrap text-right font-semibold', contenido: (t) => <Monto valor={t.monto_firmado} tono={t.tono} /> },
+  monto: { clase: 'whitespace-nowrap text-right font-semibold', contenido: (t) => <Monto valor={t.monto_firmado} tono={t.tono} signo={t.monto_signo} /> },
   metodo_pago: {
     clase: 'text-xs text-muted-foreground',
     contenido: (t) => (
       <div className="flex items-center gap-2">
-        <IconoMetodo icono={t.icono_metodo} />
+        <IconoMetodo src={t.icono_url} />
         <span title={t.tarjeta_nombre ?? undefined}>{t.metodo_pago}</span>
       </div>
     ),
@@ -46,12 +48,7 @@ function TxRow({ t, columnas, onEdit }: { t: FilaTx; columnas: ColumnaTransaccio
   const editar = t.editable
     ? {
         onClick: () => onEdit(t.id),
-        onKeyDown: (e: KeyboardEvent) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onEdit(t.id)
-          }
-        },
+        onKeyDown: alActivar(() => onEdit(t.id)),
         tabIndex: 0,
         role: 'button',
         'aria-label': `Editar ${t.descripcion || t.categoria}`,
@@ -93,7 +90,7 @@ export function FilasTx({ items, columnas, agrupar, textoVacio, onEdit }: FilasP
       </td>
     </tr>
   )
-  if (!items) return mensaje('loading', 'Cargando...')
+  if (!items) return mensaje('loading', <Cargando className="py-0" />)
   if (!items.length) return mensaje('empty', textoVacio && <EmptyCard titulo={textoVacio.titulo} texto={textoVacio.texto} className="py-0" />)
   const rows: ReactNode[] = []
   let lastBucket: string | null = null

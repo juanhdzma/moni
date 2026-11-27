@@ -20,7 +20,7 @@ A private, self-hosted tracker built around the owner's real financial life in C
 
 ## Operating Context
 
-- Runs on a home server on the LAN (Docker via Portainer), no internet required at runtime, no authentication.
+- Runs on a home server on the LAN (Docker via Portainer), no internet required at runtime. Single owner: password login with optional passkeys and expiring sessions.
 - Data is entered by hand: transactions, debt payments, investment contributions/yields, asset value updates.
 - "Próximas operaciones" projects upcoming cuotas, yields and recurring charges so the owner confirms or skips them.
 - Backup is a JSON export/import from Ajustes.
@@ -32,7 +32,7 @@ A private, self-hosted tracker built around the owner's real financial life in C
 - Two money definitions must stay distinct: cartera (available cash) and patrimonio (net worth).
 - Every asset (fonts, icons, chart library) is self-hosted; no CDN.
 - Pinch-zoom must never be blocked; everything clickable must be keyboard-reachable.
-- Frontend: React + TypeScript + Vite. Redesign moves styling to Tailwind CSS + shadcn/ui (Radix); Motion only where it earns its place.
+- Frontend: React + TypeScript + Vite. Styling is Tailwind CSS + shadcn/ui (Radix); Motion only where it earns its place.
 
 ## Brand Commitments
 

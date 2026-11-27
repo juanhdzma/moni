@@ -1,11 +1,11 @@
 import datetime
 
 from ..base.fechas import es_desactualizado, texto_dias_corto
-from ..catalogo.constantes import clase_deuda_de, tiene_saldo
-from ..base.formato import porcentaje_texto
+from ..catalogo.constantes import clase_deuda_de, icono_url, tiene_saldo
+from ..base.formato import con_variacion, porcentaje_texto
 from ..base.numeros import porcentaje
 from .finanzas import ea_a_mv, proxima_fecha_inversion, rendimiento_esperado
-from .sugerencias_pago import sugerencia_pago
+from .sugerencias_pago import modos_disponibles, sugerencia_pago
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente, to_mensual
 
 
@@ -51,6 +51,8 @@ def derivar_deuda(fila: dict) -> dict:
         "nivel_uso": nivel_uso,
         "tono_uso": TONO_USO[nivel_uso],
         "pago": sugerencia_pago(saldo, fila["cuota_mensual"]),
+        "modos_disponibles": modos_disponibles(bool(fila.get("es_tarjeta"))),
+        "icono_url": icono_url(fila.get("franquicia")),
     }
 
 
@@ -60,26 +62,28 @@ def derivar_inversion(fila: dict, hoy: datetime.date) -> dict:
     fija = fila["tipo"] == "fija"
     dia = fila.get("dia_pago")
     tasa_mv = ea_a_mv(tasa) if fija and tasa else None
-    return {
+    return con_variacion({
         **fila,
         "capitaliza_default": fila.get("pago") == "vencimiento",
+        "accion_principal": "rendimiento" if fija else "valor",
         "ganancia": ganancia,
         "ganancia_pct": porcentaje(ganancia, fila["monto_invertido"]),
         "texto_tasa": None if tasa_mv is None else f"{porcentaje_texto(tasa, 2)}% EA · {porcentaje_texto(tasa_mv, 4)}% MV",
         "proximo_pago": _proximo_pago(proxima_fecha_inversion(dia, hoy), hoy) if fila.get("pago") == "mensual" and dia else None,
         "rendimiento_esperado": rendimiento_esperado(fila),
         "desactualizado": fila["tipo"] == "variable" and es_desactualizado(fila.get("valor_actualizado_en"), hoy),
-    }
+        "monto_retiro_total": fila["valor_actual"],
+    }, "ganancia")
 
 
 def derivar_activo(fila: dict, hoy: datetime.date) -> dict:
     cambio = fila["valor_actual"] - fila["valor_inicial"]
-    return {
+    return con_variacion({
         **fila,
         "cambio": cambio,
         "cambio_pct": porcentaje(cambio, fila["valor_inicial"]),
         "desactualizado": es_desactualizado(fila.get("valor_actualizado_en"), hoy),
-    }
+    }, "cambio")
 
 
 def derivar_recurrente(fila: dict, hoy: datetime.date) -> dict:

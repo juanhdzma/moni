@@ -5,7 +5,8 @@ import { categoriasBase, estado, tx } from '@/test/factories'
 import { failure } from '@/test/mockFetch'
 import { renderWithProviders } from '@/test/render'
 import { expectLabels, modalBody } from '@/test/labels'
-import { Transacciones, openTxForm } from '..'
+import { Transacciones } from '..'
+import { openTxFormById } from '@/features/transacciones/forms/openers'
 import { datos, filaDe, listado, mockFetch, opcionesTx, ui } from './fixtures'
 
 beforeEach(() => vi.useFakeTimers({ toFake: ['Date'], now: new Date(2026, 5, 15, 10, 30) }))
@@ -187,12 +188,14 @@ describe('tx form', () => {
     expect(screen.getByText('Editar movimiento')).toBeInTheDocument()
   })
 
-  it('does not open the form for transfers', () => {
-    mockFetch()
+  it('does not open the form for transfers: meta.tipos_manuales decide qué tipo es editable', async () => {
+    mockFetch({ 'GET /api/tx/3': tx('transfer', 'Pago deuda', 100, { id: 3 }), 'GET /api/tx/4': tx('gasto', 'Comida', 100, { id: 4 }) })
     ui()
     const ctx = { openModal: vi.fn(), setPendingProxOp: vi.fn(), showBanner: vi.fn() }
-    openTxForm(ctx, tx('transfer', 'Pago deuda', 100, { id: 3 }))
-    expect(ctx.openModal).not.toHaveBeenCalled()
+    openTxFormById(ctx, 3)
+    openTxFormById(ctx, 4)
+    await waitFor(() => expect(ctx.openModal).toHaveBeenCalledTimes(1))
+    expect(ctx.openModal).toHaveBeenCalledWith('Editar movimiento', expect.anything())
   })
 })
 

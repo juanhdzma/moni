@@ -22,7 +22,7 @@ def test_inversion_update_conserva_fecha_si_mismo_valor_y_usa_hoy_si_cambia():
 
 
 def _activo(**kw):
-    return {"valor_inicial": 100, "valor_actual": 0, "fecha_adquisicion": "", "valor_actualizado_en": "", **kw}
+    return {"valor_inicial": 100, "valor_actual": None, "fecha_adquisicion": "", "valor_actualizado_en": "", **kw}
 
 
 def test_activo_nuevo_y_update():
@@ -32,6 +32,11 @@ def test_activo_nuevo_y_update():
     assert operaciones.completar_activo(_activo(), anterior, HOY, "x")["valor_actualizado_en"] == "2026-02-01"
     d = operaciones.completar_activo(_activo(valor_actual=150), anterior, HOY, "ahora")
     assert d["valor_actualizado_en"] == "ahora" and d["fecha_adquisicion"] == "2026-01-01"
+
+
+def test_activo_con_valor_cero_explicito_lo_conserva():
+    d = operaciones.completar_activo(_activo(valor_actual=0), None, HOY, "2026-07-01T10:00")
+    assert d["valor_actual"] == 0
 
 
 def test_textos():

@@ -12,10 +12,12 @@ import { FraseTexto, Panel, Periodos } from '@/components/Panel'
 
 export function Evolucion() {
   const { cop, copShort } = useMoneda()
-  const [serie, setSerie] = useState<SerieEvolucion>('patrimonio')
-  const [period, setPeriod] = useState<PeriodoEvolucion>('6M')
-  const { data: ev } = useVista(`${serie}:${period}`, () => cargarEvolucion(serie, period), DEPENDENCIAS_DE_VISTA.evolucion)
   const meta = useMeta()
+  const [serieElegida, setSerie] = useState<SerieEvolucion | null>(null)
+  const [periodoElegido, setPeriod] = useState<PeriodoEvolucion | null>(null)
+  const serie = serieElegida ?? (meta?.defaults.serie_evolucion as SerieEvolucion | undefined)
+  const period = periodoElegido ?? (meta?.defaults.periodo_evolucion as PeriodoEvolucion | undefined)
+  const { data: ev, error } = useVista(serie && period ? `${serie}:${period}` : null, () => cargarEvolucion(serie as SerieEvolucion, period as PeriodoEvolucion), DEPENDENCIAS_DE_VISTA.evolucion)
   const loading = ev === null
   const datos = ev?.puntos ?? []
   const color = `var(--${ev?.tono ?? 'cartera'})`
@@ -23,11 +25,12 @@ export function Evolucion() {
   return (
     <Panel
       id="dash-evolucion"
+      error={error}
       titulo="Cómo vas"
       extra={
         <div className="flex flex-wrap gap-2">
-          <Periodos id="evol-serie" label="Serie" options={meta?.series_evolucion ?? []} value={serie} onChange={(s) => setSerie(s as SerieEvolucion)} />
-          <Periodos id="evol-period-pills" label="Período" options={(meta?.periodos.evolucion ?? [])} value={period} onChange={setPeriod} />
+          <Periodos id="evol-serie" label="Serie" options={meta?.series_evolucion ?? []} value={serie ?? ''} onChange={(s) => setSerie(s as SerieEvolucion)} />
+          <Periodos id="evol-period-pills" label="Período" options={(meta?.periodos.evolucion ?? [])} value={period ?? ''} onChange={(p) => setPeriod(p as PeriodoEvolucion)} />
         </div>
       }
       frase={

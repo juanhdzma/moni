@@ -83,7 +83,7 @@ describe('formato', () => {
     expect(formatearCop(1500000, '$')).toBe('$1.500.000')
     expect(formatearCopCorto(1500000, '$')).toBe('$1,5M')
     expect(formatearCopCorto(-2500, '$')).toBe('−$3k')
-    expect(formatearCopCorto(2_000_000_000, '$')).toBe('$2,0B')
+    expect(formatearCopCorto(2_000_000_000, '$')).toBe('$2,0MM')
     expect(formatearCopCorto(-500, '$')).toBe('−$500')
     expect(formatearCop(1000, '€')).toBe('€1.000')
   })

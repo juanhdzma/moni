@@ -293,6 +293,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/calc/tasa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calc Tasa */
+        get: operations["calc_tasa_api_calc_tasa_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dashboard/resumen": {
         parameters: {
             query?: never;
@@ -370,23 +387,6 @@ export interface paths {
         };
         /** Dashboard Movimientos */
         get: operations["dashboard_movimientos_api_dashboard_movimientos_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/calc/tasa": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Calc Tasa */
-        get: operations["calc_tasa_api_calc_tasa_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1108,6 +1108,10 @@ export interface components {
             fecha_adquisicion: string;
             /** Cambio */
             cambio: number;
+            /** Cambio Tono */
+            cambio_tono: string;
+            /** Cambio Signo */
+            cambio_signo: string;
             /** Cambio Pct */
             cambio_pct: number;
             /** Desactualizado */
@@ -1147,11 +1151,8 @@ export interface components {
             nombre: string;
             /** Valor Inicial */
             valor_inicial: number;
-            /**
-             * Valor Actual
-             * @default 0
-             */
-            valor_actual: number;
+            /** Valor Actual */
+            valor_actual?: number | null;
             /**
              * Fecha Adquisicion
              * @default
@@ -1170,8 +1171,6 @@ export interface components {
         };
         /** ActivoValor */
         ActivoValor: {
-            /** Op Clave */
-            op_clave?: string | null;
             /** Nuevo Valor */
             nuevo_valor: number;
             /**
@@ -1182,8 +1181,6 @@ export interface components {
         };
         /** ActivoVenta */
         ActivoVenta: {
-            /** Op Clave */
-            op_clave?: string | null;
             /** Precio */
             precio: number;
             /**
@@ -1396,6 +1393,8 @@ export interface components {
             franquicia: string;
             /** Tipo Retiro */
             tipo_retiro: string;
+            /** Tipo Tx */
+            tipo_tx: string;
             /** Periodo Gastos */
             periodo_gastos: string;
             /** Periodo Evolucion */
@@ -1482,14 +1481,13 @@ export interface components {
             disponible: number | null;
             /** Uso Pct */
             uso_pct: number;
-            /**
-             * Nivel Uso
-             * @enum {string}
-             */
-            nivel_uso: "alto" | "medio" | "bajo";
             /** Tono Uso */
             tono_uso: string;
+            /** Icono Url */
+            icono_url: string;
             pago: components["schemas"]["PagoSugerido"];
+            /** Modos Disponibles */
+            modos_disponibles: string[];
             frases: components["schemas"]["FrasesDeuda"];
         };
         /** DeudaAdelanto */
@@ -1498,8 +1496,6 @@ export interface components {
             nuevo_saldo?: number | null;
             /** Disponible Nuevo */
             disponible_nuevo?: number | null;
-            /** Op Clave */
-            op_clave?: string | null;
             /** Monto */
             monto: number;
             /**
@@ -1774,6 +1770,18 @@ export interface components {
             tono_gastos: string;
             /** Tono Quedo */
             tono_quedo: string;
+            /** Signo Ingresos */
+            signo_ingresos: string;
+            /** Signo Gastos */
+            signo_gastos: string;
+            /** Signo Quedo */
+            signo_quedo: string;
+            /** Titulo */
+            titulo: string;
+            /** Etiqueta Ingresos */
+            etiqueta_ingresos: string;
+            /** Etiqueta Gastos */
+            etiqueta_gastos: string;
             /** Titulo Quedo */
             titulo_quedo: string;
             /** Texto Tarjeta */
@@ -1836,10 +1844,10 @@ export interface components {
             tarjeta_id: number | null;
             /** Monto Firmado */
             monto_firmado: number;
+            /** Monto Signo */
+            monto_signo: string;
             /** Tarjeta Nombre */
             tarjeta_nombre: string | null;
-            /** Tarjeta Franquicia */
-            tarjeta_franquicia: string | null;
             /** Metodo Pago */
             metodo_pago: string;
             /** Editable */
@@ -1848,6 +1856,8 @@ export interface components {
             tono: string;
             /** Icono Metodo */
             icono_metodo: string;
+            /** Icono Url */
+            icono_url: string;
             /** Tipo Label */
             tipo_label: string;
             /** Grupo */
@@ -2029,8 +2039,6 @@ export interface components {
         };
         /** InvAporte */
         InvAporte: {
-            /** Op Clave */
-            op_clave?: string | null;
             /** Monto */
             monto: number;
             /** Nuevo Valor */
@@ -2145,8 +2153,6 @@ export interface components {
         };
         /** InvRetiro */
         InvRetiro: {
-            /** Op Clave */
-            op_clave?: string | null;
             /**
              * Tipo
              * @enum {string}
@@ -2174,8 +2180,6 @@ export interface components {
         };
         /** InvValor */
         InvValor: {
-            /** Op Clave */
-            op_clave?: string | null;
             /** Nuevo Valor */
             nuevo_valor: number;
             /**
@@ -2209,10 +2213,21 @@ export interface components {
             dia_pago: number | null;
             /** Capitaliza Default */
             capitaliza_default: boolean;
+            /**
+             * Accion Principal
+             * @enum {string}
+             */
+            accion_principal: "rendimiento" | "valor";
             /** Ganancia */
             ganancia: number;
+            /** Ganancia Tono */
+            ganancia_tono: string;
+            /** Ganancia Signo */
+            ganancia_signo: string;
             /** Ganancia Pct */
             ganancia_pct: number;
+            /** Monto Retiro Total */
+            monto_retiro_total: number;
             /** Texto Tasa */
             texto_tasa: string | null;
             proximo_pago: components["schemas"]["ProximoPago"] | null;
@@ -2254,6 +2269,8 @@ export interface components {
             notas: number;
             /** Dia Pago Max */
             dia_pago_max: number;
+            /** Clave */
+            clave: number;
         };
         /** ListadoTx */
         ListadoTx: {
@@ -2287,7 +2304,7 @@ export interface components {
             /** Franquicias */
             franquicias: components["schemas"]["Opcion"][];
             /** Tipos Manuales */
-            tipos_manuales: components["schemas"]["Opcion"][];
+            tipos_manuales: components["schemas"]["OpcionTipoTx"][];
             /** Tipos Categoria */
             tipos_categoria: components["schemas"]["OpcionConTono"][];
             /** Tipos Inversion */
@@ -2301,7 +2318,7 @@ export interface components {
             /** Modos Pago */
             modos_pago: components["schemas"]["OpcionModoPago"][];
             /** Tipos Retiro */
-            tipos_retiro: components["schemas"]["OpcionConTono"][];
+            tipos_retiro: components["schemas"]["OpcionRetiro"][];
             /** Destinos Rendimiento */
             destinos_rendimiento: components["schemas"]["OpcionConAyuda"][];
             /** Monedas */
@@ -2317,6 +2334,7 @@ export interface components {
             categoria_largo_max: number;
             limites: components["schemas"]["LimitesMeta"];
             truncate: components["schemas"]["TruncateMeta"];
+            textos: components["schemas"]["TextosMeta"];
             /** Entidades */
             entidades: ("transacciones" | "deudas" | "inversiones" | "activos" | "recurrentes" | "categorias" | "ajustes" | "opsOcultas")[];
             /** Entidades Del Bootstrap */
@@ -2346,12 +2364,16 @@ export interface components {
             monto: number;
             /** Monto Firmado */
             monto_firmado: number;
+            /** Monto Signo */
+            monto_signo: string;
             /** Editable */
             editable: boolean;
             /** Tono */
             tono: string;
             /** Icono Metodo */
             icono_metodo: string;
+            /** Icono Url */
+            icono_url: string;
         };
         /** Movimientos */
         Movimientos: {
@@ -2386,6 +2408,8 @@ export interface components {
             fecha: string;
             /** Etiqueta */
             etiqueta: string | null;
+            /** Texto */
+            texto: string;
         };
         /** OpOcultaBackup */
         OpOcultaBackup: {
@@ -2431,6 +2455,8 @@ export interface components {
             tono?: string | null;
             /** Hint */
             hint: string;
+            /** Capitaliza */
+            capitaliza: boolean;
         };
         /** OpcionConTono */
         OpcionConTono: {
@@ -2461,6 +2487,19 @@ export interface components {
             /** Requiere Dia */
             requiere_dia: boolean;
         };
+        /** OpcionRetiro */
+        OpcionRetiro: {
+            /** Value */
+            value: string;
+            /** Label */
+            label: string;
+            /** Tono */
+            tono?: string | null;
+            /** Pide Saldo Queda */
+            pide_saldo_queda: boolean;
+            /** Prellena Monto */
+            prellena_monto: boolean;
+        };
         /** OpcionTipoInversion */
         OpcionTipoInversion: {
             /** Value */
@@ -2471,6 +2510,17 @@ export interface components {
             tono?: string | null;
             /** Campos */
             campos: string[];
+        };
+        /** OpcionTipoTx */
+        OpcionTipoTx: {
+            /** Value */
+            value: string;
+            /** Label */
+            label: string;
+            /** Editable */
+            editable: boolean;
+            /** Permite Tarjeta */
+            permite_tarjeta: boolean;
         };
         /** OpcionesListadoTx */
         OpcionesListadoTx: {
@@ -2543,6 +2593,10 @@ export interface components {
             monto: number;
             /** Sin Monto */
             sin_monto: boolean;
+            /** Monto Tono */
+            monto_tono: string;
+            /** Monto Signo */
+            monto_signo: string;
             /** Texto Dias */
             texto_dias: string;
             /** Vencida */
@@ -2552,6 +2606,8 @@ export interface components {
         OpsOcultas: {
             /** Items */
             items: components["schemas"]["OpOculta-Output"][];
+            /** Texto Vacio */
+            texto_vacio: string;
         };
         /** OrdenTx */
         OrdenTx: {
@@ -2605,6 +2661,10 @@ export interface components {
             valor: number;
             /** Valor Firmado */
             valor_firmado: number;
+            /** Valor Signo */
+            valor_signo: string;
+            /** Proporcion */
+            proporcion: number;
             /** Negativo */
             negativo: boolean;
             /** Detalle */
@@ -2685,8 +2745,16 @@ export interface components {
         PreviewValor: {
             /** Delta */
             delta: number;
+            /** Delta Tono */
+            delta_tono: string;
+            /** Delta Signo */
+            delta_signo: string;
             /** Total */
             total: number;
+            /** Total Tono */
+            total_tono: string;
+            /** Total Signo */
+            total_signo: string;
             /** Total Pct */
             total_pct: number;
         };
@@ -2694,8 +2762,16 @@ export interface components {
         PreviewVenta: {
             /** Vs Inicial */
             vs_inicial: number;
+            /** Vs Inicial Tono */
+            vs_inicial_tono: string;
+            /** Vs Inicial Signo */
+            vs_inicial_signo: string;
             /** Vs Actual */
             vs_actual: number;
+            /** Vs Actual Tono */
+            vs_actual_tono: string;
+            /** Vs Actual Signo */
+            vs_actual_signo: string;
         };
         /** ProximasOperaciones */
         ProximasOperaciones: {
@@ -2890,6 +2966,10 @@ export interface components {
             total_actual: number;
             /** Variacion */
             variacion: number;
+            /** Variacion Tono */
+            variacion_tono: string;
+            /** Variacion Signo */
+            variacion_signo: string;
             /** Mostrar Variacion */
             mostrar_variacion: boolean;
             /** Segmentos */
@@ -2906,8 +2986,16 @@ export interface components {
         ResumenDashboard: {
             /** Patrimonio */
             patrimonio: number;
+            /** Patrimonio Tono */
+            patrimonio_tono: string;
+            /** Patrimonio Signo */
+            patrimonio_signo: string;
             /** Proy Delta */
             proy_delta: number;
+            /** Proy Delta Tono */
+            proy_delta_tono: string;
+            /** Proy Delta Signo */
+            proy_delta_signo: string;
             /** Texto Proyeccion */
             texto_proyeccion: string;
             /** Total Barra */
@@ -2937,6 +3025,10 @@ export interface components {
             total_actual: number;
             /** Ganancia */
             ganancia: number;
+            /** Ganancia Tono */
+            ganancia_tono: string;
+            /** Ganancia Signo */
+            ganancia_signo: string;
             /** Ganancia Pct */
             ganancia_pct: number;
             /** Mostrar Ganancia */
@@ -2958,6 +3050,10 @@ export interface components {
         ResumenRecurrentes: {
             /** Neto Mensual */
             neto_mensual: number;
+            /** Neto Mensual Tono */
+            neto_mensual_tono: string;
+            /** Neto Mensual Signo */
+            neto_mensual_signo: string;
             dato: components["schemas"]["Frase"];
             /** Segmentos */
             segmentos: components["schemas"]["Segmento"][];
@@ -2978,6 +3074,10 @@ export interface components {
             gastos_firmado: number;
             /** Neto */
             neto: number;
+            /** Neto Tono */
+            neto_tono: string;
+            /** Neto Signo */
+            neto_signo: string;
             dato: components["schemas"]["Frase"];
             /** Segmentos */
             segmentos: components["schemas"]["Segmento"][];
@@ -2999,6 +3099,8 @@ export interface components {
             label: string;
             /** Valor */
             valor: number;
+            /** Opacidad */
+            opacidad: number;
         };
         /** SeleccionAutenticador */
         SeleccionAutenticador: {
@@ -3054,6 +3156,207 @@ export interface components {
             titulo: string;
             /** Texto */
             texto: string;
+        };
+        /** TextosActivo */
+        TextosActivo: {
+            /** Placeholder Nombre */
+            placeholder_nombre: string;
+            /** Label Valor Inicial Nuevo */
+            label_valor_inicial_nuevo: string;
+            /** Label Valor Inicial Edicion */
+            label_valor_inicial_edicion: string;
+            /** Label Valor Actual */
+            label_valor_actual: string;
+            /** Placeholder Valor Actual */
+            placeholder_valor_actual: string;
+            /** Label Fecha */
+            label_fecha: string;
+            /** Guardar */
+            guardar: string;
+        };
+        /** TextosAdelanto */
+        TextosAdelanto: {
+            /** Label Debes */
+            label_debes: string;
+            /** Label Disponible */
+            label_disponible: string;
+            /** Label Monto */
+            label_monto: string;
+            /** Hint Monto */
+            hint_monto: string;
+            /** Label Disponible Nuevo */
+            label_disponible_nuevo: string;
+            /** Placeholder Disponible Nuevo */
+            placeholder_disponible_nuevo: string;
+            /** Label Saldo Nuevo */
+            label_saldo_nuevo: string;
+            /** Placeholder Saldo Nuevo */
+            placeholder_saldo_nuevo: string;
+            /** Label Deuda Total */
+            label_deuda_total: string;
+            /** Label Comision */
+            label_comision: string;
+            /** Label Fecha */
+            label_fecha: string;
+            /** Placeholder Notas */
+            placeholder_notas: string;
+            /** Label Registrar */
+            label_registrar: string;
+            /** Guardar */
+            guardar: string;
+        };
+        /** TextosBackup */
+        TextosBackup: {
+            /** Titulo */
+            titulo: string;
+            /** Exportar */
+            exportar: string;
+            /** Importar */
+            importar: string;
+            /** Hint */
+            hint: string;
+            /** Titulo Modal */
+            titulo_modal: string;
+            /** Etiqueta Confirmar */
+            etiqueta_confirmar: string;
+            /** Descripcion Confirmar */
+            descripcion_confirmar: string;
+            /** Archivo Invalido */
+            archivo_invalido: string;
+        };
+        /** TextosInversion */
+        TextosInversion: {
+            /** Label Pago */
+            label_pago: string;
+        };
+        /** TextosMaterializar */
+        TextosMaterializar: {
+            /** Ayuda Monto */
+            ayuda_monto: string;
+            /** Guardar */
+            guardar: string;
+        };
+        /** TextosMeta */
+        TextosMeta: {
+            /** Moneda Codigo */
+            moneda_codigo: string;
+            retiro: components["schemas"]["TextosRetiro"];
+            adelanto: components["schemas"]["TextosAdelanto"];
+            pago: components["schemas"]["TextosPago"];
+            materializar: components["schemas"]["TextosMaterializar"];
+            activo: components["schemas"]["TextosActivo"];
+            registro: components["schemas"]["TextosRegistro"];
+            inversion: components["schemas"]["TextosInversion"];
+            transacciones: components["schemas"]["TextosTransacciones"];
+            moneda: components["schemas"]["TextosMoneda"];
+            backup: components["schemas"]["TextosBackup"];
+            peligro: components["schemas"]["TextosPeligro"];
+        };
+        /** TextosMoneda */
+        TextosMoneda: {
+            /** Titulo */
+            titulo: string;
+            /** Label */
+            label: string;
+            /** Hint */
+            hint: string;
+        };
+        /** TextosPago */
+        TextosPago: {
+            /** Label Saldo Pendiente */
+            label_saldo_pendiente: string;
+            /** Label Cuota Mensual */
+            label_cuota_mensual: string;
+            /** Label Monto */
+            label_monto: string;
+            /** Label Saldo Nuevo */
+            label_saldo_nuevo: string;
+            /** Placeholder Saldo Nuevo */
+            placeholder_saldo_nuevo: string;
+            /** Label Capital */
+            label_capital: string;
+            /** Label Intereses */
+            label_intereses: string;
+            /** Label Fecha */
+            label_fecha: string;
+            /** Label Editar */
+            label_editar: string;
+        };
+        /** TextosPeligro */
+        TextosPeligro: {
+            /** Titulo */
+            titulo: string;
+            /** Boton */
+            boton: string;
+            /** Nota */
+            nota: string;
+            /** Titulo Modal */
+            titulo_modal: string;
+            /** Etiqueta Confirmar */
+            etiqueta_confirmar: string;
+            /** Descripcion Confirmar */
+            descripcion_confirmar: string;
+            /** Label Palabra */
+            label_palabra: string;
+            /** Error Palabra */
+            error_palabra: string;
+        };
+        /** TextosRegistro */
+        TextosRegistro: {
+            /** Titulo */
+            titulo: string;
+            /** Label Crear Tx */
+            label_crear_tx: string;
+            /** Hint Crear Tx */
+            hint_crear_tx: string;
+            /** Label Registrar Tx */
+            label_registrar_tx: string;
+            /** Hint Registrar Tx */
+            hint_registrar_tx: string;
+        };
+        /** TextosRetiro */
+        TextosRetiro: {
+            /** Label Tipo */
+            label_tipo: string;
+            /** Label Monto Total */
+            label_monto_total: string;
+            /** Hint Monto Total */
+            hint_monto_total: string;
+            /** Label Monto Parcial */
+            label_monto_parcial: string;
+            /** Label Saldo Queda */
+            label_saldo_queda: string;
+            /** Hint Saldo Queda */
+            hint_saldo_queda: string;
+            /** Label Fecha */
+            label_fecha: string;
+            /** Placeholder Notas */
+            placeholder_notas: string;
+            /** Guardar */
+            guardar: string;
+        };
+        /** TextosTransacciones */
+        TextosTransacciones: {
+            /** Titulo Panel */
+            titulo_panel: string;
+            /** Boton Nuevo */
+            boton_nuevo: string;
+            /** Aria Filtros */
+            aria_filtros: string;
+            /** Aria Mes */
+            aria_mes: string;
+            /** Aria Tipo */
+            aria_tipo: string;
+            /** Aria Categoria */
+            aria_categoria: string;
+            /** Todos Meses */
+            todos_meses: string;
+            /** Todos Tipos */
+            todos_tipos: string;
+            /** Todas Categorias */
+            todas_categorias: string;
+            /** Label Pagado Con */
+            label_pagado_con: string;
         };
         /** TopGasto */
         TopGasto: {
@@ -3115,10 +3418,10 @@ export interface components {
             tarjeta_id: number | null;
             /** Monto Firmado */
             monto_firmado: number;
+            /** Monto Signo */
+            monto_signo: string;
             /** Tarjeta Nombre */
             tarjeta_nombre: string | null;
-            /** Tarjeta Franquicia */
-            tarjeta_franquicia: string | null;
             /** Metodo Pago */
             metodo_pago: string;
             /** Editable */
@@ -3127,6 +3430,8 @@ export interface components {
             tono: string;
             /** Icono Metodo */
             icono_metodo: string;
+            /** Icono Url */
+            icono_url: string;
         };
         /** TxCruda */
         TxCruda: {
@@ -3314,13 +3619,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Ok"];
-                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3488,13 +3791,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Ok"];
-                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3666,6 +3967,38 @@ export interface operations {
             };
         };
     };
+    calc_tasa_api_calc_tasa_get: {
+        parameters: {
+            query: {
+                valor: number;
+                tipo?: "ea" | "mv";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquivalenciaTasa"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     dashboard_resumen_api_dashboard_resumen_get: {
         parameters: {
             query?: never;
@@ -3787,38 +4120,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Movimientos"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    calc_tasa_api_calc_tasa_get: {
-        parameters: {
-            query: {
-                valor: number;
-                tipo?: "ea" | "mv";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EquivalenciaTasa"];
                 };
             };
             /** @description Validation Error */
@@ -5287,13 +5588,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Categorias"];
-                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

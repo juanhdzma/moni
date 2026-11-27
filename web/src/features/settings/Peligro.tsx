@@ -9,24 +9,26 @@ import { useModal } from '@/shell/providers/ModalProvider'
 import type { Meta } from '@/types'
 import { ConfirmarClave } from './ConfirmarClave'
 
-function TruncateConfirm({ truncate }: { truncate: Meta['truncate'] }) {
+function TruncateConfirm({ meta }: { meta: Meta }) {
   const { mutar } = useData()
   const [val, setVal] = useState('')
+  const { palabra } = meta.truncate
+  const t = meta.textos.peligro
 
   return (
     <ConfirmarClave
       peligro
-      etiqueta="Borrar todo"
-      descripcion={`${truncate.texto} Esta acción no se puede deshacer. Exportá un backup antes si no estás seguro.`}
-      validar={() => (val.trim() === truncate.palabra ? null : `Escribí ${truncate.palabra} (en mayúsculas) para confirmar`)}
+      etiqueta={t.etiqueta_confirmar}
+      descripcion={t.descripcion_confirmar}
+      validar={() => (val.trim() === palabra ? null : t.error_palabra)}
       onConfirmar={(clave) => mutar((onAfectadas) => vaciarDatos(clave, onAfectadas))}
       extra={
-        <Campo id="m-confirm-truncate" label={`Escribí ${truncate.palabra} para confirmar`}>
+        <Campo id="m-confirm-truncate" label={t.label_palabra}>
           <input
             className="form-input"
             type="text"
             id="m-confirm-truncate"
-            placeholder={truncate.palabra}
+            placeholder={palabra}
             autoComplete="off"
             value={val}
             onChange={(e) => setVal(e.target.value)}
@@ -39,23 +41,24 @@ function TruncateConfirm({ truncate }: { truncate: Meta['truncate'] }) {
 
 export function Peligro() {
   const { openModal } = useModal()
-  const truncate = useMeta()?.truncate
+  const meta = useMeta()
+  const t = meta?.textos.peligro
 
   return (
     <Panel
       id="settings-danger-card"
-      titulo="Zona de peligro"
+      titulo={t?.titulo ?? ''}
       className="border-deudas/40"
       extra={<TriangleAlert className="size-4 text-deudas" aria-hidden="true" />}
     >
-      <div className="mb-3 text-sm text-muted-foreground">{truncate ? `${truncate.texto} No se puede deshacer.` : ''}</div>
+      <div className="mb-3 text-sm text-muted-foreground">{t?.nota}</div>
       <button
         type="button"
         className="btn btn-danger btn-sm"
-        disabled={!truncate}
-        onClick={() => truncate && openModal('Borrar todos los datos', <TruncateConfirm truncate={truncate} />)}
+        disabled={!meta}
+        onClick={() => meta && openModal(meta.textos.peligro.titulo_modal, <TruncateConfirm meta={meta} />)}
       >
-        Borrar todos los datos
+        {t?.boton}
       </button>
     </Panel>
   )

@@ -13,25 +13,27 @@ import { Barra, FraseTexto, Panel, Periodos, Total } from '@/components/Panel'
 
 export function Gastos() {
   const { cop, copShort } = useMoneda()
-  const [period, setPeriod] = useState<PeriodoGastos>('1M')
-  const [abierta, setAbierta] = useState<string | null>(null)
-  const { data: g } = useVista(period, () => cargarGastos(period), DEPENDENCIAS_DE_VISTA.gastos)
   const meta = useMeta()
+  const [periodoElegido, setPeriod] = useState<PeriodoGastos | null>(null)
+  const period = periodoElegido ?? (meta?.defaults.periodo_gastos as PeriodoGastos | undefined)
+  const [abierta, setAbierta] = useState<string | null>(null)
+  const { data: g, error } = useVista(period ?? null, () => cargarGastos(period as PeriodoGastos), DEPENDENCIAS_DE_VISTA.gastos)
   const entries = g?.categorias ?? []
   const sel = abierta && entries.some((c) => c.categoria === abierta) ? abierta : null
 
   return (
     <Panel
       id="dash-gastos"
+      error={error}
       titulo="En qué se va tu plata"
       extra={
         <Periodos
           id="gastos-period-pills"
           label="Período de gastos"
           options={(meta?.periodos.gastos ?? [])}
-          value={period}
+          value={period ?? ''}
           onChange={(p) => {
-            setPeriod(p)
+            setPeriod(p as PeriodoGastos)
             setAbierta(null)
           }}
         />

@@ -8,7 +8,7 @@ export function ConfirmModal({ mensaje, onConfirmar, onCancelar }: Props) {
   return (
     <>
       <p className="mb-4 text-sm">{mensaje}</p>
-      <div className="flex justify-end gap-2">
+      <div className="modal-footer">
         <button type="button" className="btn btn-dim" onClick={onCancelar}>
           Cancelar
         </button>

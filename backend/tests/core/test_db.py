@@ -70,3 +70,10 @@ def test_dos_hilos_sobre_la_misma_tarjeta_no_pierden_ajustes(client, tarjeta):
     assert errores == []
     with db.conexion() as conn:
         assert conn.execute("SELECT saldo_actual FROM deudas WHERE id = ?", (tarjeta["id"],)).fetchone()[0] == 50_000
+
+
+def test_init_db_deja_data_en_0700_y_la_base_en_0600(entorno):
+    import stat
+
+    assert stat.S_IMODE(db.DB_PATH.parent.stat().st_mode) == 0o700
+    assert stat.S_IMODE(db.DB_PATH.stat().st_mode) == 0o600

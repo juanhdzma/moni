@@ -2,7 +2,7 @@ import { waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { failure } from '@/test/mockFetch'
-import { H, clickInGrid, mockInv, modal, setup, typeMoney, installFakeClock, type User } from './helpers'
+import { H, clickInGrid, mockInv, modal, setup, typeMoney, installFakeClock, type User } from './fixtures'
 
 installFakeClock()
 
@@ -16,7 +16,7 @@ describe('retiro', () => {
     const user = userEvent.setup()
     const f = mockInv({ 'POST /api/inv/5/retiro': {} })
     await abrir(user)
-    expect(document.getElementById('m-monto-total')).toHaveValue('1.010.000')
+    await waitFor(() => expect(document.getElementById('m-monto-total')).toHaveValue('1.010.000'))
     expect(document.getElementById('retiro-parcial-fields')).toBeNull()
     await user.click(modal().getByRole('button', { name: 'Confirmar retiro' }))
     await waitFor(() => expect(f.mutations()).toHaveLength(1))

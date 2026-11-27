@@ -7,7 +7,6 @@ from ..calculos import operaciones
 from ..calculos.catalogo.categorias import validar_categoria, validar_simbolo
 from ..calculos.catalogo.constantes import PALABRA_TRUNCATE, clase_deuda_de
 from ..calculos.base.errores import ErrorDeDominio
-from ..calculos.base.fechas import ahora_bogota_iso, hoy_bogota
 from ..calculos.base.formato import plural
 from ..calculos.operaciones.proximas import parse_clave
 from ..schemas.activo import ActivoIn
@@ -43,13 +42,22 @@ IMPORT_TABLES = [
 ]
 
 
-def _normalizar_inversion(fila):
+def _normalizar_inversion(fila, hoy, ahora):
     operaciones.normalizar_tasa(fila)
-    operaciones.completar_inversion(fila, None, hoy_bogota(), ahora_bogota_iso())
+    operaciones.completar_inversion(fila, None, hoy, ahora)
 
 
-def _normalizar_deuda(fila):
+def _normalizar_activo(fila, hoy, ahora):
+    operaciones.completar_activo(fila, None, hoy, ahora)
+
+
+def _normalizar_deuda(fila, hoy, ahora):
     operaciones.normalizar_tasa(fila)
+    fila.setdefault("total_intereses", 0)
+
+
+def _normalizar_tx(fila, hoy, ahora):
+    fila["fecha"] = fila["fecha"] or ahora
 
 
 def _clase_desde_es_tarjeta(fila: dict) -> dict:
@@ -59,15 +67,21 @@ def _clase_desde_es_tarjeta(fila: dict) -> dict:
     return {**sin_es_tarjeta, "clase_deuda": clase_deuda_de(fila["es_tarjeta"])}
 
 
-def _normalizar_op_oculta(fila):
+def _normalizar_op_oculta(fila, hoy, ahora):
     try:
         fila["tipo"], fila["fuente_id"], fila["fecha"] = parse_clave(fila["clave"])
     except ValueError as e:
         raise ErrorDeDominio(f"Operación oculta inválida: {e}") from e
-    fila["creada_en"] = fila["creada_en"] or ahora_bogota_iso()
+    fila["creada_en"] = fila["creada_en"] or ahora
 
 
-NORMALIZADORES = {"deudas": _normalizar_deuda, "inversiones": _normalizar_inversion, "ops_ocultas": _normalizar_op_oculta}
+NORMALIZADORES = {
+    "deudas": _normalizar_deuda,
+    "inversiones": _normalizar_inversion,
+    "activos": _normalizar_activo,
+    "transacciones": _normalizar_tx,
+    "ops_ocultas": _normalizar_op_oculta,
+}
 
 PRENORMALIZADORES = {"deudas": _clase_desde_es_tarjeta}
 
@@ -97,7 +111,7 @@ def _solo_campos_del_modelo(model, fila):
     return {k: v for k, v in fila.items() if k in model.model_fields}
 
 
-def _validar_fila(table, model, row, idx):
+def _validar_fila(table, model, row, idx, hoy=None, ahora=None):
     if not isinstance(row, dict):
         raise ErrorDeDominio(f"Fila {table}[{idx}]: se esperaba un objeto")
     try:
@@ -108,7 +122,7 @@ def _validar_fila(table, model, row, idx):
         if row.get(campo) is not None:
             limpia[campo] = _validar_extra(table, idx, campo, validador, row[campo])
     if table in NORMALIZADORES:
-        NORMALIZADORES[table](limpia)
+        NORMALIZADORES[table](limpia, hoy, ahora)
     return limpia
 
 
@@ -123,9 +137,9 @@ def _validar_categorias(filas):
     return filas
 
 
-def validar_import(payload):
+def validar_import(payload, hoy, ahora):
     validadas = {
-        table: [_validar_fila(table, model, r, i) for i, r in enumerate(payload.get(table) or [])]
+        table: [_validar_fila(table, model, r, i, hoy, ahora) for i, r in enumerate(payload.get(table) or [])]
         for table, _cols, model, _nombres in IMPORT_TABLES
     }
     _validar_categorias(validadas["categorias"])
@@ -147,6 +161,13 @@ def _texto_importado(counts):
     return "Importado: " + ", ".join(partes)
 
 
+def _exigir_tarjetas_de_las_tx(conn, transacciones):
+    tarjetas = {f["id"] for f in conn.execute("SELECT id FROM deudas WHERE es_tarjeta = 1")}
+    for i, tx in enumerate(transacciones):
+        if tx["tarjeta_id"] is not None and tx["tarjeta_id"] not in tarjetas:
+            raise ErrorDeDominio(f"Fila transacciones[{i}] inválida: tarjeta_id: La tarjeta indicada no existe")
+
+
 def insertar_import(conn, validadas):
     counts = {}
     try:
@@ -159,6 +180,7 @@ def insertar_import(conn, validadas):
                     [row.get(c) for c in cols],
                 )
             counts[table] = len(validadas[table])
+        _exigir_tarjetas_de_las_tx(conn, validadas["transacciones"])
         for ajuste in validadas["ajustes"]:
             store.guardar_moneda_simbolo(conn, ajuste["valor"])
         counts["ajustes"] = len(validadas["ajustes"])

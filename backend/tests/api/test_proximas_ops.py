@@ -14,11 +14,12 @@ def test_proximas_operaciones_forma_y_no_poda(client):
     assert set(r) == {"items", "extra", "texto_ver_todas", "texto_ver_menos", "frase", "texto_vacio"}
     deuda = next(i for i in r["items"] if i["tipo"] == "deuda")
     assert set(deuda) == {
-        "clave", "tipo", "fuente_id", "fecha", "dia", "mes_corto", "etiqueta", "sub", "monto", "sin_monto", "texto_dias", "vencida",
+        "clave", "tipo", "fuente_id", "fecha", "dia", "mes_corto", "etiqueta", "sub", "monto", "sin_monto", "monto_tono", "monto_signo", "texto_dias", "vencida",
     }
     fecha = (HOY + datetime.timedelta(days=3)).isoformat()
     assert deuda["clave"] == f"deuda:{s['deuda']['id']}:{fecha}"
     assert (deuda["monto"], deuda["sin_monto"], deuda["texto_dias"], deuda["vencida"], deuda["sub"]) == (-100_000, False, "en 3d", False, "Cuota deuda")
+    assert (deuda["monto_tono"], deuda["monto_signo"]) == ("negativo", "−")
 
     assert client.post("/api/ops-ocultas", json={"clave": deuda["clave"]}).status_code == 201
     assert client.post("/api/ops-ocultas", json={"clave": "deuda:999:2020-01-01"}).status_code == 201
@@ -31,19 +32,20 @@ def test_proximas_operaciones_forma_y_no_poda(client):
 def test_ops_ocultas_crud(client):
     s = sembrar(client)
     clave = f"deuda:{s['deuda']['id']}:2026-11-25"
-    assert client.get("/api/ops-ocultas").json() == {"items": []}
+    assert client.get("/api/ops-ocultas").json() == {"items": [], "texto_vacio": "Ninguna operación oculta."}
     r = client.post("/api/ops-ocultas", json={"clave": clave})
     assert r.status_code == 201 and r.json() == {"clave": clave}
     assert client.post("/api/ops-ocultas", json={"clave": clave}).status_code == 201
     items = client.get("/api/ops-ocultas").json()["items"]
-    assert items == [{"clave": clave, "tipo": "deuda", "fuente_id": s["deuda"]["id"], "fecha": "2026-11-25", "etiqueta": "Credito"}]
+    assert items == [{"clave": clave, "tipo": "deuda", "fuente_id": s["deuda"]["id"], "fecha": "2026-11-25", "etiqueta": "Credito", "texto": "Cuota · Credito · 25 nov. 2026"}]
     client.post("/api/ops-ocultas", json={"clave": "inversion:999:2026-11-25"})
     assert client.get("/api/ops-ocultas").json()["items"][1]["etiqueta"] is None
+    assert client.get("/api/ops-ocultas").json()["items"][1]["texto"] == "Rendimiento · ya no existe · 25 nov. 2026"
     assert client.delete("/api/ops-ocultas", params={"clave": clave}).status_code == 204
     borrado = client.delete("/api/ops-ocultas", params={"clave": clave})
     assert (borrado.status_code, borrado.json()) == (404, {"detail": "Operación oculta no encontrada"})
     assert client.delete("/api/ops-ocultas").status_code == 204
-    assert client.get("/api/ops-ocultas").json() == {"items": []}
+    assert client.get("/api/ops-ocultas").json() == {"items": [], "texto_vacio": "Ninguna operación oculta."}
 
 
 @pytest.mark.parametrize("clave", ["", "x:1:2026-01-01", "deuda:a:2026-01-01", "deuda:1:2026-13-45", "deuda:1:2026-1-1"])
@@ -68,7 +70,7 @@ def test_op_clave_no_oculta_si_la_mutacion_falla(client, prestamo):
     body = {"modo": "abono", "nuevo_saldo": 2_000_000, "total_pagado": 1, "fecha": HOY_ISO, "descripcion": "p", "op_clave": "deuda:1:2026-01-01"}
     assert client.post(f"/api/deuda/{prestamo['id']}/pago", json=body).status_code == 400
     assert client.post("/api/tx", json={"fecha": HOY_ISO, "tipo": "gasto", "categoria": "x", "monto": 1, "op_clave": "mala"}).status_code == 422
-    assert client.get("/api/ops-ocultas").json() == {"items": []}
+    assert client.get("/api/ops-ocultas").json() == {"items": [], "texto_vacio": "Ninguna operación oculta."}
 
 
 def test_proximas_usa_el_simbolo_de_moneda(client):

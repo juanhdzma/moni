@@ -8,10 +8,10 @@ HOY_ISO = HOY.isoformat()
 MES = HOY_ISO[:7]
 
 TX_KEYS = {"id", "fecha", "tipo", "categoria", "descripcion", "monto", "notas", "tarjeta_id"}
-TX_DERIVADOS = {"monto_firmado", "tarjeta_nombre", "tarjeta_franquicia", "metodo_pago", "editable", "tono", "icono_metodo"}
+TX_DERIVADOS = {"monto_firmado", "monto_signo", "tarjeta_nombre", "metodo_pago", "editable", "tono", "icono_metodo", "icono_url"}
 DEUDA_DERIVADOS = {
     "progreso_pct", "capital_pagado", "nivel_progreso",
-    "disponible", "uso_pct", "nivel_uso", "tono_progreso", "tono_uso",
+    "disponible", "uso_pct", "modos_disponibles", "icono_url", "tono_progreso", "tono_uso",
 }
 INV_DERIVADOS = {"ganancia", "ganancia_pct", "proximo_pago", "rendimiento_esperado", "desactualizado", "texto_tasa", "capitaliza_default"}
 ACTIVO_DERIVADOS = {"cambio", "cambio_pct", "desactualizado"}
@@ -20,6 +20,10 @@ REC_DERIVADOS = {"frecuencia_label", "mensual", "proximo_pago"}
 
 def fila_guardada(client, coleccion, row_id):
     return next(f for f in client.get("/api/backup").json()[coleccion] if f["id"] == row_id)
+
+
+def txs_guardadas(client):
+    return client.get("/api/backup").json()["transacciones"]
 
 
 def editable(deuda):

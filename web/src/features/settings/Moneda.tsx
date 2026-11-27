@@ -9,9 +9,10 @@ import { useData } from '@/shell/providers/DataProvider'
 export function Moneda() {
   const { estado, mutar, conBanner } = useData()
   const meta = useMeta()
+  const t = meta?.textos.moneda
   return (
-    <Panel id="settings-currency-card" titulo="Moneda">
-      <Campo id="settings-currency-select" label="Símbolo mostrado junto a los montos" className="mb-0">
+    <Panel id="settings-currency-card" titulo={t?.titulo ?? ''}>
+      <Campo id="settings-currency-select" label={t?.label ?? ''} className="mb-0">
         <Select
           compact
           id="settings-currency-select"
@@ -20,7 +21,7 @@ export function Moneda() {
           onChange={(symbol) => void conBanner(() => mutar((onAfectadas) => guardarAjustes({ moneda_simbolo: symbol }, onAfectadas)))}
         />
       </Campo>
-      <Hint className="mt-2">Solo cambia el símbolo mostrado. Los montos se guardan y calculan igual, en COP.</Hint>
+      <Hint className="mt-2">{t?.hint}</Hint>
     </Panel>
   )
 }

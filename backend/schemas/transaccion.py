@@ -3,12 +3,11 @@ from typing import Optional
 from pydantic import Field, field_validator, model_validator
 
 from ..calculos.catalogo.constantes import CATEGORIA_LARGO_MAX
-from ..calculos.base.fechas import ahora_bogota_iso
 from .validadores import Descripcion, Entrada, MontoPesos, Notas, TipoTx, clave_opcional, validar_fecha
 
 
 class TxIn(Entrada):
-    fecha: Optional[str] = Field(default=None, validate_default=True)
+    fecha: Optional[str] = None
     tipo: TipoTx
     categoria: str = Field(min_length=1, max_length=CATEGORIA_LARGO_MAX)
     descripcion: Descripcion = ""
@@ -20,7 +19,7 @@ class TxIn(Entrada):
     @field_validator("fecha")
     @classmethod
     def _v_fecha(cls, v):
-        return ahora_bogota_iso() if v is None else validar_fecha(v, requerida=True)
+        return None if v is None else validar_fecha(v, requerida=True)
 
     _v_clave = clave_opcional("op_clave")
 

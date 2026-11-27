@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { META } from '@/test/meta'
 import { mockFetch } from '@/test/mockFetch'
 import { renderWithProviders } from '@/test/render'
-import { CrearTxToggle, RegistrarToggle } from '@/controls/inputs/AdvancedToggle'
+import { CrearTxToggle, RegistrarToggle } from '@/controls/inputs/OpcionesRegistro'
 import { Campo, NumeroField } from '@/controls/inputs/Campo'
 import { FechaNotas } from '@/controls/forms/FormFields'
 import { FormFooter } from '@/controls/forms/FormFooter'
@@ -202,7 +202,7 @@ describe('FormValor', () => {
           label="Nuevo valor"
           valor={v}
           onValor={setV}
-          variacion={{ id: 'b', idDelta: 'd', idTotal: 't', labelTotal: 'Total', visible: true, preview: { delta: 5, total: 10, total_pct: 2 } }}
+          variacion={{ id: 'b', idDelta: 'd', idTotal: 't', labelTotal: 'Total', visible: true, preview: { delta: 5, delta_tono: 'positivo', delta_signo: '+', total: 10, total_tono: 'positivo', total_signo: '+', total_pct: 2 } }}
           fechaLabel="Fecha de valoración"
           fecha={f}
           onFecha={setF}

@@ -80,7 +80,7 @@ describe('Transacciones tab', () => {
               items: [mercado],
               filtros: { tipo: 'gasto', mes: '', cat: '' },
               pills: [{ campo: 'tipo', label: 'Gastos' }],
-              resumen: { titulo: 'Te quedó con estos filtros', ingresos: 0, gastos: 5000, gastos_firmado: -5000, neto: -5000, dato: { texto: 'entró $0 · salió $5.000', partes: [] }, segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000 }] },
+              resumen: { titulo: 'Te quedó con estos filtros', ingresos: 0, gastos: 5000, gastos_firmado: -5000, neto: -5000, neto_tono: 'negativo', neto_signo: '−', dato: { texto: 'entró $0 · salió $5.000', partes: [] }, segmentos: [{ key: 'Comida', label: 'Comida', valor: 5000, opacidad: 1 }] },
             })
           : listado(),
     })
@@ -151,7 +151,7 @@ describe('filtros obsoletos', () => {
 })
 
 describe('fila y columnas desde el backend', () => {
-  const transfer = { ...mercado, id: 3, tipo: 'transfer' as const, categoria: 'Pago deuda', descripcion: '', editable: false, tono: 'neutro', icono_metodo: 'efectivo', tarjeta_id: null, tarjeta_franquicia: null, grupo: 'Marzo - 2026' }
+  const transfer = { ...mercado, id: 3, tipo: 'transfer' as const, categoria: 'Pago deuda', descripcion: '', editable: false, tono: 'neutro', icono_metodo: 'efectivo', icono_url: '/assets/icons/efectivo.svg', monto_signo: '−', tarjeta_id: null, grupo: 'Marzo - 2026' }
 
   it('editable decide si la fila es un botón; tono pinta el monto; icono_metodo elige el asset', async () => {
     mockFetch({ 'GET /api/tx': listado({ items: [salario, mercado, transfer] }) })
@@ -165,8 +165,8 @@ describe('fila y columnas desde el backend', () => {
     expect(iconos).toEqual(['/assets/icons/efectivo.svg', '/assets/franquicias/visa.svg', '/assets/icons/efectivo.svg'])
   })
 
-  it('una icono_metodo desconocido cae a la franquicia Otra', async () => {
-    mockFetch({ 'GET /api/tx': listado({ items: [{ ...mercado, icono_metodo: 'Diners' }] }) })
+  it('el icono sale tal cual de icono_url, sin tabla de franquicias en el front', async () => {
+    mockFetch({ 'GET /api/tx': listado({ items: [{ ...mercado, icono_metodo: 'Diners', icono_url: '/assets/franquicias/otra.svg' }] }) })
     ui()
     await screen.findByText('Mercado')
     expect(document.querySelector('td[data-label="Método de pago"] img')).toHaveAttribute('src', '/assets/franquicias/otra.svg')

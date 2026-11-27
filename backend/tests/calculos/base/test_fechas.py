@@ -129,3 +129,17 @@ def test_es_desactualizado_sin_fecha_o_invalida_no_alerta():
     assert F.es_desactualizado("", D(2026, 8, 31)) is False
     assert F.es_desactualizado("basura", D(2026, 8, 31)) is False
     assert F.es_desactualizado("2020-01-01", D(2026, 8, 31)) is True
+
+
+@pytest.mark.parametrize("valor", ["2026-08-03T24:00", "2026-08-03T25:10", "2026-08-03T23:60"])
+def test_es_fecha_iso_rechaza_horas_fuera_de_rango_sin_depender_de_la_stdlib(valor):
+    assert F.es_fecha_iso(valor) is False
+    assert F.parse_fecha_hora(valor) is None
+
+
+def test_es_fecha_iso_rechaza_hora_de_un_digito():
+    assert F.es_fecha_iso("2026-08-03T9:5") is False
+
+
+def test_es_fecha_iso_acepta_los_bordes_de_la_hora():
+    assert F.es_fecha_iso("2026-08-03T00:00") and F.es_fecha_iso("2026-08-03T23:59")

@@ -51,9 +51,10 @@ class Deuda(DeudaCruda):
     tiene_cupo: bool
     disponible: float | None
     uso_pct: float
-    nivel_uso: Nivel
     tono_uso: str
+    icono_url: str
     pago: PagoSugerido
+    modos_disponibles: list[str]
     frases: FrasesDeuda
 
 

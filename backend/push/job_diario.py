@@ -53,6 +53,8 @@ def segundos_hasta_aviso(ahora: datetime.datetime) -> float:
 async def loop_diario():
     while True:
         await asyncio.sleep(segundos_hasta_aviso(ahora_bogota()))
+        if ahora_bogota().hour < HORA_AVISO:
+            continue
         try:
             await asyncio.to_thread(avisar)
         except Exception:

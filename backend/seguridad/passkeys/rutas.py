@@ -11,17 +11,22 @@ from .. import tiempo
 from ..bloqueo import fallo_generico, lock_ip, respuesta_si_bloqueada
 from ...core.db import conexion
 from ..ip import client_ip
+from ..limite import limitar, nuevo_registro
 from ...schemas.respuestas.comun import Ok
 from ...schemas.respuestas.seguridad import OpcionesLoginPasskey, OpcionesRegistroPasskey, PasskeyCreado, PasskeyFila
 from ..step_up import ConClave, exigir_clave
 from . import servicio
-from .challenges import consumir_challenge
+from .challenges import ChallengeVencido, consumir_challenge
 
 logger = logging.getLogger("moni.auth")
 
 router = APIRouter(prefix="/api/auth")
 
 Credencial = Annotated[dict, Body()]
+
+MAX_OPCIONES = 10
+VENTANA_OPCIONES_S = 60
+_lock_opciones, _opciones = nuevo_registro()
 
 
 def _json(texto: str) -> Response:
@@ -30,7 +35,9 @@ def _json(texto: str) -> Response:
 
 @router.post("/passkey/login/opciones", response_model=OpcionesLoginPasskey)
 def login_opciones(request: Request):
-    texto = servicio.opciones_login(client_ip(request))
+    ip = client_ip(request)
+    limitar(_lock_opciones, _opciones, ip, MAX_OPCIONES, VENTANA_OPCIONES_S, "Demasiados intentos")
+    texto = servicio.opciones_login(ip)
     if texto is None:
         return JSONResponse({"detail": "Sin passkeys"}, status_code=404)
     return _json(texto)
@@ -43,7 +50,10 @@ async def login_verificar(request: Request, credencial: Credencial):
         bloqueada = respuesta_si_bloqueada(ip)
         if bloqueada:
             return bloqueada
-        challenge = consumir_challenge(credencial, "login", ip)
+        try:
+            challenge = consumir_challenge(credencial, "login", ip)
+        except ChallengeVencido:
+            return JSONResponse({"detail": "El intento venció, probá de nuevo"}, status_code=401)
         if challenge is None:
             return await fallo_generico(request, "passkey")
         try:
@@ -77,7 +87,10 @@ def registro_verificar(request: Request, credencial: Credencial):
             status_code=422,
             detail=[{"loc": ["body", "nombre"], "msg": "Nombre inválido", "type": "value_error"}],
         )
-    challenge = consumir_challenge(credencial, "registro", client_ip(request))
+    try:
+        challenge = consumir_challenge(credencial, "registro", client_ip(request))
+    except ChallengeVencido:
+        challenge = None
     if challenge is None:
         raise HTTPException(status_code=400, detail="Registro inválido")
     try:
@@ -108,7 +121,7 @@ def listar(request: Request):
     ]
 
 
-@router.delete("/passkeys/{passkey_id}", response_model=Ok)
+@router.delete("/passkeys/{passkey_id}", status_code=204)
 def borrar(passkey_id: int, request: Request):
     sesiones.sesion_obligatoria(request)
     with conexion() as conn:
@@ -117,4 +130,3 @@ def borrar(passkey_id: int, request: Request):
     if not n:
         raise HTTPException(status_code=404, detail="Passkey no encontrado")
     logger.info("passkey eliminado id=%d", passkey_id)
-    return {"ok": True}

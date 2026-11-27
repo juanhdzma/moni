@@ -4,7 +4,7 @@ import re
 from ..base.fechas import mes_corto, parse_fecha, texto_dias
 from ..catalogo.constantes import tiene_saldo
 from ..base.errores import ErrorDeDominio
-from ..base.formato import cop, frase, plural
+from ..base.formato import cop, frase, plural, signo_de, tono_de_valor
 from .finanzas import proxima_fecha_inversion, rendimiento_esperado
 from .frecuencias import frecuencia_label, proxima_fecha_recurrente
 
@@ -107,6 +107,8 @@ def armar_proximas(candidatas: list[dict], hoy: datetime.date, simbolo: str = "$
                 "sub": c["sub"],
                 "monto": c["monto"],
                 "sin_monto": c["monto"] == 0,
+                "monto_tono": tono_de_valor(c["monto"]),
+                "monto_signo": signo_de(c["monto"]),
                 "texto_dias": texto_dias(dias),
                 "vencida": dias < 0,
             }

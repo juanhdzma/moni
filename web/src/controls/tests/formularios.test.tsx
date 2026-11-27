@@ -29,7 +29,7 @@ describe('Breakdown y Variacion', () => {
       <>
         <Breakdown id="b" visible={false}>
           <BreakdownRow id="r" label="Cambio">
-            <Variacion valor={-5000} porcentaje={-2} />
+            <Variacion valor={-5000} tono="negativo" signo="−" porcentaje={-2} />
           </BreakdownRow>
         </Breakdown>
       </>,

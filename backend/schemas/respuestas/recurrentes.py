@@ -26,6 +26,8 @@ class Recurrente(RecCruda):
 
 class ResumenRecurrentes(BaseModel):
     neto_mensual: float
+    neto_mensual_tono: str
+    neto_mensual_signo: str
     dato: Frase
     segmentos: list[Segmento]
     ingresos: list[Recurrente]

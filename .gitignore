@@ -42,6 +42,7 @@ docs/design/.impeccable/review/
 docs/design/.impeccable/questions/
 docs/design/.impeccable/mocks/
 docs/design/.impeccable/build/
+docs/design/.impeccable/hook.cache.json
 
 # Video de demo generado por /brag-slim
 brag-output/

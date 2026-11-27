@@ -17,7 +17,8 @@ def completar_inversion(datos: dict, anterior: dict | None, hoy, ahora: str) -> 
 
 
 def completar_activo(datos: dict, anterior: dict | None, hoy, ahora: str) -> dict:
-    datos["valor_actual"] = datos["valor_actual"] or datos["valor_inicial"]
+    if datos["valor_actual"] is None:
+        datos["valor_actual"] = datos["valor_inicial"]
     datos["fecha_adquisicion"] = datos["fecha_adquisicion"] or (anterior or {}).get("fecha_adquisicion") or hoy.isoformat()
     datos["valor_actualizado_en"] = _valor_actualizado_en(datos, anterior, datos["fecha_adquisicion"], ahora)
     return datos

@@ -42,6 +42,7 @@ def test_meta_defaults_y_push(client):
         "clase_deuda": "prestamo",
         "franquicia": "Visa",
         "tipo_retiro": "total",
+        "tipo_tx": "gasto",
         "periodo_gastos": "1M",
         "periodo_evolucion": "6M",
         "serie_evolucion": "patrimonio",
@@ -105,7 +106,7 @@ def test_meta_modos_de_pago(client):
 def test_meta_series_con_tono_limites_y_truncate(client):
     body = client.get("/api/meta").json()
     assert {s["value"]: s["tono"] for s in body["series_evolucion"]} == {"patrimonio": "cartera", "inversiones": "inversiones"}
-    assert body["limites"] == {"nombre": 40, "descripcion": 120, "notas": 200, "dia_pago_max": 31}
+    assert body["limites"] == {"nombre": 40, "descripcion": 120, "notas": 200, "dia_pago_max": 31, "clave": 256}
     assert body["truncate"]["palabra"] == "BORRAR"
     assert set(body["truncate"]["entidades"]) == {
         "deudas", "inversiones", "activos", "recurrentes", "transacciones", "categorías", "operaciones ocultas",
@@ -117,7 +118,18 @@ def test_meta_series_con_tono_limites_y_truncate(client):
 def test_meta_franquicias_y_tipos_manuales_salen_de_constantes(client):
     body = client.get("/api/meta").json()
     assert [f["value"] for f in body["franquicias"]] == ["Visa", "Mastercard", "Amex", "Otra", ""]
-    assert body["tipos_manuales"] == [{"value": "ingreso", "label": "Ingreso"}, {"value": "gasto", "label": "Gasto"}]
+    assert body["tipos_manuales"] == [
+        {"value": "ingreso", "label": "Ingreso", "editable": True, "permite_tarjeta": False},
+        {"value": "gasto", "label": "Gasto", "editable": True, "permite_tarjeta": True},
+    ]
+
+
+def test_meta_trae_las_reglas_de_retiro_y_rendimiento(client):
+    body = client.get("/api/meta").json()
+    assert {t["value"]: (t["pide_saldo_queda"], t["prellena_monto"]) for t in body["tipos_retiro"]} == {
+        "total": (False, True), "parcial": (True, False),
+    }
+    assert {d["value"]: d["capitaliza"] for d in body["destinos_rendimiento"]} == {"cuenta": False, "capitaliza": True}
 
 
 def test_meta_entidades_salen_de_core_afectadas(client):
@@ -127,3 +139,14 @@ def test_meta_entidades_salen_de_core_afectadas(client):
     assert body["entidades"] == list(TODAS)
     assert body["entidades_del_bootstrap"] == ["activos", "inversiones", "ajustes", "categorias"] == list(DEL_BOOTSTRAP)
     assert set(DEL_BOOTSTRAP) <= set(TODAS)
+
+
+def test_meta_trae_los_textos_de_formularios_y_ajustes(client):
+    textos = client.get("/api/meta").json()["textos"]
+    assert textos["moneda_codigo"] == "COP"
+    assert textos["retiro"]["hint_monto_total"].startswith("Pre-llenado con el valor actual")
+    assert textos["peligro"]["error_palabra"] == "Escribí BORRAR (en mayúsculas) para confirmar"
+    assert textos["peligro"]["nota"].endswith("No se puede deshacer.")
+    assert "Se conservan los ajustes" in textos["peligro"]["descripcion_confirmar"]
+    assert textos["moneda"]["hint"].endswith("en COP.")
+    assert textos["transacciones"]["todos_meses"] == "Todos los meses"

@@ -198,3 +198,49 @@ def test_sin_xff_no_hay_aviso(monkeypatch, caplog):
     caplog.set_level(logging.WARNING, logger="moni.auth")
     ip.client_ip(_request("203.0.113.1"))
     assert caplog.records == []
+
+
+def _servir_con_uvicorn(proxy_headers):
+    import socket
+    import threading
+    import time
+
+    import uvicorn
+    from fastapi import FastAPI
+
+    app = FastAPI()
+
+    @app.get("/ip")
+    def _ip(request: Request):
+        return {"ip": ip.client_ip(request)}
+
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        puerto = s.getsockname()[1]
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=puerto, proxy_headers=proxy_headers, log_level="error"))
+    hilo = threading.Thread(target=server.run, daemon=True)
+    hilo.start()
+    while not server.started:
+        time.sleep(0.01)
+    return server, hilo, puerto
+
+
+def test_xff_desde_loopback_bajo_uvicorn_real_lo_resuelve_moni_trusted_proxies(entorno, monkeypatch):
+    import http.client
+
+    monkeypatch.setenv("MONI_TRUSTED_PROXIES", "10.0.0.0/8")
+    server, hilo, puerto = _servir_con_uvicorn(proxy_headers=False)
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", puerto)
+        conn.request("GET", "/ip", headers={"X-Forwarded-For": "203.0.113.9"})
+        assert conn.getresponse().read() == b'{"ip":"127.0.0.1"}'
+    finally:
+        server.should_exit = True
+        hilo.join(5)
+
+
+def test_dockerfile_desactiva_los_proxy_headers_de_uvicorn():
+    from pathlib import Path
+
+    cmd = (Path(__file__).resolve().parents[3] / "Dockerfile").read_text().splitlines()[-1]
+    assert "--no-proxy-headers" in cmd
